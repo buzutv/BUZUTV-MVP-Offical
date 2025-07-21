@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import ForgotPassword from '@/components/auth/ForgotPassword';
 
 const Auth = () => {
   const { login, signup } = useAuth();
@@ -15,6 +16,7 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   // Check URL parameters on component mount
   useEffect(() => {
@@ -162,13 +164,24 @@ const Auth = () => {
             </form>
 
             {/* Toggle between sign in and sign up */}
-            <div className="text-center mt-6">
+            <div className="text-center mt-6 space-y-2">
               <button
                 onClick={() => setIsSignUp(!isSignUp)}
                 className="text-blue-400 hover:text-blue-300 transition-colors"
               >
                 {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
               </button>
+              
+              {!isSignUp && (
+                <div className="text-center">
+                  <button
+                    onClick={() => setShowForgotPassword(true)}
+                    className="text-gray-400 hover:text-blue-300 transition-colors text-sm"
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Demo Credentials */}
@@ -184,6 +197,13 @@ const Auth = () => {
           </div>
         </div>
       </div>
+      
+      {/* Forgot Password Modal */}
+      <ForgotPassword
+        isOpen={showForgotPassword}
+        onClose={() => setShowForgotPassword(false)}
+        onBackToLogin={() => setShowForgotPassword(false)}
+      />
     </div>
   );
 };

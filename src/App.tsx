@@ -12,6 +12,7 @@ import Series from "./pages/Series";
 import MyList from "./pages/MyList";
 import Settings from "./pages/Settings";
 import MovieDetail from "./pages/MovieDetail";
+import ResetPassword from "./pages/ResetPassword";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminMovies from "./pages/admin/AdminMovies";
@@ -109,6 +110,7 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/movies" element={<RequireAuth><Movies /></RequireAuth>} />
               <Route path="/series" element={<RequireAuth><Series /></RequireAuth>} />
               <Route path="/my-list" element={<RequireAuth><MyList /></RequireAuth>} />

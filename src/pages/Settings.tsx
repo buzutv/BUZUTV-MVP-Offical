@@ -1,9 +1,12 @@
-
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Eye, EyeOff } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Eye, EyeOff, User, Mail, Lock, Shield, LogOut, ArrowLeft } from "lucide-react";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -11,7 +14,7 @@ import { toast } from "sonner";
 const Settings = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [editMode, setEditMode] = useState(false);
+  const [activeTab, setActiveTab] = useState('profile');
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordPrompt, setPasswordPrompt] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -38,218 +41,408 @@ const Settings = () => {
   const handlePasswordConfirm = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    const { error: pwError } = await supabase.auth.signInWithPassword({
-      email: user?.email || "",
-      password: passwordPrompt,
-    });
-    if (pwError) {
-      setError("Incorrect password.");
+    
+    if (!passwordPrompt) {
+      setError("Please enter your current password.");
       return;
     }
-    setShowPasswordModal(false);
-    setEditMode(true);
-    setPasswordPrompt("");
+
+    try {
+      const { error: pwError } = await supabase.auth.signInWithPassword({
+        email: user?.email || "",
+        password: passwordPrompt,
+      });
+      
+      if (pwError) {
+        setError("Incorrect password. Please try again.");
+        return;
+      }
+      
+      setShowPasswordModal(false);
+      setPasswordPrompt("");
+      
+      // Now actually save the changes after successful authentication
+      await handleSave();
+      
+    } catch (error) {
+      setError("An error occurred during authentication.");
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const validateForm = () => {
+    if (form.password && form.password.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return false;
+    }
+    
+    if (form.password && form.password !== form.rePassword) {
+      setError("Passwords do not match.");
+      return false;
+    }
+    
+    if (form.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email)) {
+      setError("Please enter a valid email address.");
+      return false;
+    }
+    
+    return true;
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     setError("");
-    // Validation
-    if (form.password && form.password.length < 6) {
-      setError("Password must be at least 6 characters.");
+    
+    if (!validateForm()) {
       setIsSaving(false);
       return;
     }
-    if (form.password !== form.rePassword) {
-      setError("Passwords do not match.");
-      setIsSaving(false);
-      return;
-    }
-    if (form.email !== user?.email) {
-      // Check if email is valid
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email)) {
-        setError("Please enter a valid email address.");
-        setIsSaving(false);
-        return;
-      }
-    }
+
     try {
+      let updatedItems = [];
+
+      // Update email if changed
       if (form.email !== user?.email) {
-        const { error: emailError } = await supabase.auth.updateUser({ email: form.email });
+        const { error: emailError } = await supabase.auth.updateUser({ 
+          email: form.email 
+        });
+        
         if (emailError) {
           if (emailError.message.toLowerCase().includes("already registered")) {
-            setError("That email is already in use.");
+            setError("That email is already in use by another account.");
           } else {
             setError(emailError.message);
           }
           setIsSaving(false);
           return;
         }
+        
+        updatedItems.push("email");
+        toast.success("Email update initiated! Check your new email for verification.");
       }
+
+      // Update password if provided
       if (form.password) {
-        const { error: pwError } = await supabase.auth.updateUser({ password: form.password });
+        const { error: pwError } = await supabase.auth.updateUser({ 
+          password: form.password 
+        });
+        
         if (pwError) {
           setError(pwError.message);
           setIsSaving(false);
           return;
         }
+        
+        updatedItems.push("password");
+        toast.success("Password updated successfully!");
       }
+
+      // Update name/profile data
       if (form.name !== user?.name) {
-        await supabase.auth.updateUser({ data: { full_name: form.name, name: form.name } });
+        const { error: nameError } = await supabase.auth.updateUser({ 
+          data: { 
+            full_name: form.name, 
+            name: form.name 
+          } 
+        });
+        
+        if (nameError) {
+          console.warn("Name update error:", nameError);
+        } else {
+          updatedItems.push("name");
+          toast.success("Profile name updated successfully!");
+        }
       }
-      toast.success("Profile updated successfully!");
-      setEditMode(false);
+
+      // Reset password fields after successful update
       setForm(f => ({ ...f, password: "", rePassword: "" }));
+      
+      if (updatedItems.length === 0) {
+        toast.info("No changes were made to your profile.");
+      } else {
+        toast.success(`Successfully updated: ${updatedItems.join(", ")}`);
+      }
+      
     } catch (err: any) {
-      setError(err.message || "An error occurred.");
+      setError(err.message || "An unexpected error occurred.");
+      toast.error("Failed to update profile. Please try again.");
+    } finally {
+      setIsSaving(false);
     }
-    setIsSaving(false);
   };
 
-
+  const tabs = [
+    { id: 'profile', label: 'Profile', icon: User },
+    { id: 'security', label: 'Password', icon: Shield },
+  ];
 
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-900 text-white">
-        <nav className="fixed top-0 w-full z-50 bg-gray-900 border-b border-gray-800">
+        {/* Header */}
+        <nav className="fixed top-0 w-full z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-center justify-between h-16">
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => navigate("/")}
+                  className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                  <span>Back to Home</span>
+                </button>
+              </div>
+              
               <span className="text-2xl font-bold bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 bg-clip-text text-transparent">
                 Settings
               </span>
+              
+              <Button
+                onClick={handleLogout}
+                variant="outline"
+                className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
             </div>
           </div>
         </nav>
 
-        <div className="pt-20 max-w-xl mx-auto px-4 py-8">
-          <button
-            className="mb-4 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
-            onClick={() => navigate("/")}
-          >
-            Back to Home
-          </button>
-          <div className="bg-gray-800 rounded-lg p-6 relative shadow-lg">
-            <button
-              className="absolute top-4 right-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
-              onClick={handleUpdateInfo}
-              disabled={editMode}
-            >
-              Update Info
-            </button>
-            <h2 className="text-xl font-bold mb-6">User Information</h2>
-            <div className="space-y-4">
-              {error && <div className="text-red-400 font-medium mb-2">{error}</div>}
-              <div>
-                <label className="block text-sm font-medium mb-1">Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={form.name}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  disabled={!editMode}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={form.email}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  disabled={!editMode}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Password</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    value={form.password}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 pr-10"
-                    disabled={!editMode}
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-                    onClick={() => setShowPassword((v) => !v)}
-                    tabIndex={-1}
-                  >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
-              {editMode && (
-                <div>
-                  <label className="block text-sm font-medium mb-1">Re-enter Password</label>
-                  <div className="relative">
-                    <input
-                      type={showRePassword ? "text" : "password"}
-                      name="rePassword"
-                      value={form.rePassword}
+        <div className="pt-20 max-w-4xl mx-auto px-4 py-8">
+          {/* Tab Navigation */}
+          <div className="flex space-x-1 mb-8 bg-gray-800 rounded-lg p-1">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-all flex-1 justify-center ${
+                    activeTab === tab.id
+                      ? 'bg-purple-600 text-white'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Profile Tab */}
+          {activeTab === 'profile' && (
+            <Card className="bg-gray-800 border-gray-700">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2 text-white">
+                  <User className="w-5 h-5" />
+                  <span>Profile Information</span>
+                </CardTitle>
+                <CardDescription>
+                  Update your personal information and email address.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {error && (
+                  <div className="bg-red-900/20 border border-red-700 rounded-lg p-3">
+                    <p className="text-red-400 text-sm">{error}</p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2 text-white">
+                    <Label htmlFor="name" className="flex items-center space-x-2">
+                      <User className="w-4 h-4" />
+                      <span>Full Name</span>
+                    </Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      value={form.name}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 pr-10"
-                      disabled={!editMode}
+                      className="bg-gray-700 border-gray-600 text-white"
+                      placeholder="Enter your full name"
                     />
-                    <button
-                      type="button"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-                      onClick={() => setShowRePassword((v) => !v)}
-                      tabIndex={-1}
-                    >
-                      {showRePassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
+                  </div>
+
+                  <div className="space-y-2 text-white">
+                    <Label htmlFor="email" className="flex items-center space-x-2">
+                      <Mail className="w-4 h-4" />
+                      <span>Email Address</span>
+                    </Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={form.email}
+                      onChange={handleInputChange}
+                      className="bg-gray-700 border-gray-600 text-white"
+                      placeholder="Enter your email"
+                    />
                   </div>
                 </div>
-              )}
-              {editMode && (
-                <div className="text-xs text-gray-400 mb-2">
-                  For your security, your current password is never shown. Enter a new password to change it.
-                </div>
-              )}
 
-            </div>
-            <button
-              className="mt-8 w-full bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition-opacity disabled:opacity-50"
-              onClick={handleSave}
-              disabled={!editMode || isSaving}
-            >
-              {isSaving ? "Saving..." : "Save Changes"}
-            </button>
-          </div>
+                <div className="pt-4 border-t border-gray-700">
+                  <Button
+                    onClick={handleUpdateInfo}
+                    disabled={isSaving}
+                    className="bg-purple-600 hover:bg-purple-700"
+                  >
+                    {isSaving ? "Saving..." : "Update Profile"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Security Tab */}
+          {activeTab === 'security' && (
+            <Card className="bg-gray-800 border-gray-700 text-white">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Shield className="w-5 h-5" />
+                  <span>Password</span>
+                </CardTitle>
+                <CardDescription>
+                  Change your password.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {error && (
+                  <div className="bg-red-900/20 border border-red-700 rounded-lg p-3">
+                    <p className="text-red-400 text-sm">{error}</p>
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="flex items-center space-x-2">
+                      <Lock className="w-4 h-4" />
+                      <span>New Password</span>
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        name="password"
+                        type={showPassword ? "text" : "password"}
+                        value={form.password}
+                        onChange={handleInputChange}
+                        className="bg-gray-700 border-gray-600 text-white pr-10"
+                        placeholder="Enter new password (optional)"
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {form.password && (
+                    <div className="space-y-2">
+                      <Label htmlFor="rePassword">Confirm New Password</Label>
+                      <div className="relative">
+                        <Input
+                          id="rePassword"
+                          name="rePassword"
+                          type={showRePassword ? "text" : "password"}
+                          value={form.rePassword}
+                          onChange={handleInputChange}
+                          className="bg-gray-700 border-gray-600 text-white pr-10"
+                          placeholder="Confirm new password"
+                        />
+                        <button
+                          type="button"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                          onClick={() => setShowRePassword(!showRePassword)}
+                        >
+                          {showRePassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="text-xs text-gray-400 bg-gray-700/50 rounded-lg p-3">
+                    <p className="mb-1">Password requirements:</p>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>At least 6 characters long</li>
+                      <li>Leave empty to keep current password</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-gray-700">
+                  <Button
+                    onClick={handleUpdateInfo}
+                    disabled={isSaving}
+                    className="bg-purple-600 hover:bg-purple-700"
+                  >
+                    {isSaving ? "Updating..." : "Confirm & Update Settings"}
+                  </Button>
+                  <p className="text-xs text-gray-400 mt-2">
+                    You'll be asked to confirm your current password before changes are applied.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
-        {/* Password Prompt Modal */}
+        {/* Password Confirmation Modal */}
         <Dialog open={showPasswordModal} onOpenChange={setShowPasswordModal}>
           <DialogContent className="sm:max-w-md bg-gray-800 text-white border-gray-700">
+            <DialogHeader>
+              <DialogTitle className="flex items-center space-x-2">
+                <Shield className="w-5 h-5" />
+                <span>Confirm Your Identity</span>
+              </DialogTitle>
+            </DialogHeader>
+            
             <form onSubmit={handlePasswordConfirm} className="space-y-4">
-              <h3 className="text-lg font-bold mb-2">Enter your password to update info</h3>
-              <input
-                type="password"
-                value={passwordPrompt}
-                onChange={(e) => setPasswordPrompt(e.target.value)}
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                placeholder="Password"
-                autoFocus
-              />
-              <button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
-              >
-                Confirm
-              </button>
+              <div className="space-y-2">
+                <Label htmlFor="currentPassword">Current Password</Label>
+                <Input
+                  id="currentPassword"
+                  type="password"
+                  value={passwordPrompt}
+                  onChange={(e) => setPasswordPrompt(e.target.value)}
+                  className="bg-gray-700 border-gray-600 text-white"
+                  placeholder="Enter your current password"
+                  autoFocus
+                />
+              </div>
+              
+              {error && (
+                <div className="text-red-400 text-sm bg-red-900/20 border border-red-700 rounded p-2">
+                  {error}
+                </div>
+              )}
+              
+              <div className="flex space-x-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowPasswordModal(false)}
+                  className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="flex-1 bg-purple-600 hover:bg-purple-700"
+                >
+                  Confirm
+                </Button>
+              </div>
             </form>
           </DialogContent>
         </Dialog>
-
-
       </div>
     </ProtectedRoute>
   );
