@@ -111,13 +111,3 @@
   transition: transform 300ms ease 100ms;
   transform-origin: center center;
 }
-
-.movie-hover-container .movie-card:hover {
-  transform: scale(1.25) !important;
-  z-index: 50;
-}
-
-.movie-card {
-  position: relative;
-  z-index: 10;
-}
