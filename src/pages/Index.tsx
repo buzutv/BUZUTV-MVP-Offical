@@ -1,9 +1,6 @@
 import { useState } from 'react';
 import ChannelModal from "@/components/ChannelModal";
-import Navbar from "@/components/Navbar";
-import HeroCarousel from "@/components/HeroCarousel";
-import ContentRow from "@/components/ContentRow";
-import ChannelRow from "@/components/ChannelRow";
+import FullViewportHero from "@/components/FullViewportHero";
 import { useAppContent } from "@/hooks/useAppContent";
 import { useUserSubscriptions } from "@/hooks/useUserSubscriptions";
 import { useAuth } from "@/contexts/AuthContext";
@@ -61,24 +58,23 @@ const Index = () => {
         channel={selectedChannel}
       />
 
-      {/* Navigation is now global, do not render Navbar here */}
+      {/* Full Viewport Hero Section with Channels at Bottom */}
+      <FullViewportHero
+        items={featured}
+        allContent={content.allContent}
+        channels={channels}
+        onChannelClick={handleChannelClick}
+        subscriptionIds={subscriptionIds}
+        onSubscribe={toggleSubscription}
+      />
 
-      {/* Home content */}
-      <div className="pt-14">
-        {/* Hero Banner */}
-        <HeroCarousel items={featured} allContent={content.allContent} />
+      {/* Content Sections Below Hero */}
+      <div className="bg-gray-900 pt-16 relative">
+        <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-black to-gray-900 pointer-events-none" />
 
-        <div className="max-w-full px-2 py-8">
-          {/* Top Channels */}
-          <ChannelRow 
-            channels={channels}
-            onChannelClick={handleChannelClick}
-            subscriptionIds={subscriptionIds}
-            onSubscribe={toggleSubscription}
-          />
-
+        <div className="max-w-full ">
           {/* Show content only if we have any */}
-          {Object.values(homeContent).some(arr => arr.length > 0) || channels.length > 0 ? (
+          {Object.values(homeContent).some(arr => arr.length > 0) ? (
             <>
               {/* Content Rows - using pre-computed categories */}
               {homeContent.trending.length > 0 && (
