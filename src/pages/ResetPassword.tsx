@@ -129,7 +129,7 @@ const ResetPassword = () => {
                     <CheckCircle className="w-8 h-8 text-white" />
                   </div>
                 </div>
-                <h2 className="text-xl font-semibold">Password Reset Successful!</h2>
+                <h2 className="text-xl font-semibold text-white">Password Reset Successful!</h2>
                 <p className="text-gray-300 text-sm">
                   You'll be redirected to login shortly.
                 </p>

@@ -162,8 +162,6 @@ const Settings = () => {
       
       if (updatedItems.length === 0) {
         toast.info("No changes were made to your profile.");
-      } else {
-        toast.success(`Successfully updated: ${updatedItems.join(", ")}`);
       }
       
     } catch (err: any) {
@@ -178,6 +176,10 @@ const Settings = () => {
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'security', label: 'Password', icon: Shield },
   ];
+
+  const isPasswordUpdateInvalid =
+      !!form.password && (form.password.length < 6 || form.password !== form.rePassword);
+
 
   return (
     <ProtectedRoute>
@@ -319,6 +321,7 @@ const Settings = () => {
                 )}
 
                 <div className="space-y-4">
+                  {/* New Password Field */}
                   <div className="space-y-2">
                     <Label htmlFor="password" className="flex items-center space-x-2">
                       <Lock className="w-4 h-4" />
@@ -326,29 +329,32 @@ const Settings = () => {
                     </Label>
                     <div className="relative">
                       <Input
-                        id="password"
-                        name="password"
-                        type={showPassword ? "text" : "password"}
-                        value={form.password}
-                        onChange={handleInputChange}
-                        className="bg-gray-700 border-gray-600 text-white pr-10"
-                        placeholder="Enter new password (optional)"
+                          id="password"
+                          name="password"
+                          type={showPassword ? "text" : "password"}
+                          value={form.password}
+                          onChange={handleInputChange}
+                          className="bg-gray-700 border-gray-600 text-white pr-10"
+                          placeholder="Enter new password"
                       />
                       <button
-                        type="button"
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-                        onClick={() => setShowPassword(!showPassword)}
+                          type="button"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                          onClick={() => setShowPassword(!showPassword)}
                       >
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
                   </div>
 
-                  {form.password && (
-                    <div className="space-y-2">
-                      <Label htmlFor="rePassword">Confirm New Password</Label>
-                      <div className="relative">
-                        <Input
+                  {/* Confirm New Password Field */}
+                  <div className="space-y-2">
+                    <Label htmlFor="rePassword" className="flex items-center space-x-2">
+                      <Lock className="w-4 h-4" />
+                      <span>Confirm New Password</span>
+                    </Label>
+                    <div className="relative">
+                      <Input
                           id="rePassword"
                           name="rePassword"
                           type={showRePassword ? "text" : "password"}
@@ -356,18 +362,18 @@ const Settings = () => {
                           onChange={handleInputChange}
                           className="bg-gray-700 border-gray-600 text-white pr-10"
                           placeholder="Confirm new password"
-                        />
-                        <button
+                      />
+                      <button
                           type="button"
                           className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
                           onClick={() => setShowRePassword(!showRePassword)}
-                        >
-                          {showRePassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
+                      >
+                        {showRePassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
                     </div>
-                  )}
+                  </div>
 
+                  {/* Password rules */}
                   <div className="text-xs text-gray-400 bg-gray-700/50 rounded-lg p-3">
                     <p className="mb-1">Password requirements:</p>
                     <ul className="list-disc list-inside space-y-1">
@@ -377,14 +383,16 @@ const Settings = () => {
                   </div>
                 </div>
 
+
                 <div className="pt-4 border-t border-gray-700">
                   <Button
-                    onClick={handleUpdateInfo}
-                    disabled={isSaving}
-                    className="bg-purple-600 hover:bg-purple-700"
+                      onClick={handleUpdateInfo}
+                      disabled={isSaving || isPasswordUpdateInvalid}
+                      className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSaving ? "Updating..." : "Confirm & Update Settings"}
                   </Button>
+
                   <p className="text-xs text-gray-400 mt-2">
                     You'll be asked to confirm your current password before changes are applied.
                   </p>
