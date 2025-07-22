@@ -5,6 +5,7 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserFavorites } from '@/hooks/useUserFavorites';
 import { Play, Info, ArrowLeft, ArrowRight } from 'lucide-react';
 import MovieModal from './MovieModal';
 import SeriesModal from './SeriesModal';
@@ -44,6 +45,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
                                                              onSubscribe
                                                            }) => {
   const { isLoggedIn, setShowLoginModal } = useAuth();
+  const { favoriteIds, addToFavorites, removeFromFavorites } = useUserFavorites();
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'movie' | 'series' | null>(null);
   const [modalItem, setModalItem] = useState<HeroCarouselItem | null>(null);
@@ -104,6 +106,15 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
     setFullscreenOpen(false);
     setFullscreenUrl(null);
     setFullscreenTitle(null);
+  };
+
+  // Handle save/unsave for favorites
+  const handleSaveItem = (itemId: string) => {
+    if (favoriteIds.includes(itemId)) {
+      removeFromFavorites(itemId);
+    } else {
+      addToFavorites(itemId);
+    }
   };
 
   // Channel scroll functions
@@ -285,8 +296,8 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
                 isOpen={modalOpen}
                 onClose={handleCloseModal}
                 movie={modalItem as any}
-                isSaved={false}
-                onSave={() => {}}
+                isSaved={favoriteIds.includes(modalItem.id)}
+                onSave={() => handleSaveItem(modalItem.id)}
                 onPlay={() => handlePlay(modalItem)}
                 videoUrl={modalItem.videoUrl}
                 contentItem={modalItem}
@@ -299,8 +310,8 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
                 isOpen={modalOpen}
                 onClose={handleCloseModal}
                 series={modalItem as any}
-                isSaved={false}
-                onSave={() => {}}
+                isSaved={favoriteIds.includes(modalItem.id)}
+                onSave={() => handleSaveItem(modalItem.id)}
                 onPlayEpisode={(url, episodeTitle) => {
                   setFullscreenUrl(url);
                   setFullscreenTitle(episodeTitle);

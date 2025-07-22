@@ -4,6 +4,7 @@ import { Navigation, Autoplay } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserFavorites } from '@/hooks/useUserFavorites';
 import { Play, Info } from 'lucide-react';
 import './HeroCarousel.css'; // For custom arrow styles
 import MovieModal from './MovieModal';
@@ -33,6 +34,7 @@ interface HeroCarouselProps {
 
 const HeroCarousel: React.FC<HeroCarouselProps> = ({ items, allContent }) => {
   const { isLoggedIn, setShowLoginModal } = useAuth();
+  const { favoriteIds, addToFavorites, removeFromFavorites } = useUserFavorites();
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'movie' | 'series' | null>(null);
   const [modalItem, setModalItem] = useState<HeroCarouselItem | null>(null);
@@ -95,6 +97,15 @@ const HeroCarousel: React.FC<HeroCarouselProps> = ({ items, allContent }) => {
     setFullscreenOpen(false);
     setFullscreenUrl(null);
     setFullscreenTitle(null);
+  };
+
+  // Handle save/unsave for favorites
+  const handleSaveItem = (itemId: string) => {
+    if (favoriteIds.includes(itemId)) {
+      removeFromFavorites(itemId);
+    } else {
+      addToFavorites(itemId);
+    }
   };
 
   return (
@@ -185,14 +196,36 @@ const HeroCarousel: React.FC<HeroCarouselProps> = ({ items, allContent }) => {
       )}
       {/* Modals for More Info */}
       {modalOpen && modalType === 'movie' && modalItem && (
-        <MovieModal isOpen={modalOpen} onClose={handleCloseModal} movie={modalItem as any} isSaved={false} onSave={() => {}} onPlay={() => handlePlay(modalItem)} videoUrl={modalItem.videoUrl} contentItem={modalItem} channel={null} recommendedContent={recommendedContent} />
+        <MovieModal 
+          isOpen={modalOpen} 
+          onClose={handleCloseModal} 
+          movie={modalItem as any} 
+          isSaved={favoriteIds.includes(modalItem.id)} 
+          onSave={() => handleSaveItem(modalItem.id)} 
+          onPlay={() => handlePlay(modalItem)} 
+          videoUrl={modalItem.videoUrl} 
+          contentItem={modalItem} 
+          channel={null} 
+          recommendedContent={recommendedContent} 
+        />
       )}
       {modalOpen && modalType === 'series' && modalItem && (
-        <SeriesModal isOpen={modalOpen} onClose={handleCloseModal} series={modalItem as any} isSaved={false} onSave={() => {}} onPlayEpisode={(url, episodeTitle) => {
-          setFullscreenUrl(url);
-          setFullscreenTitle(episodeTitle);
-          setFullscreenOpen(true);
-        }} videoUrl={modalItem.videoUrl} contentItem={modalItem} channel={null} recommendedContent={recommendedContent} />
+        <SeriesModal 
+          isOpen={modalOpen} 
+          onClose={handleCloseModal} 
+          series={modalItem as any} 
+          isSaved={favoriteIds.includes(modalItem.id)} 
+          onSave={() => handleSaveItem(modalItem.id)} 
+          onPlayEpisode={(url, episodeTitle) => {
+            setFullscreenUrl(url);
+            setFullscreenTitle(episodeTitle);
+            setFullscreenOpen(true);
+          }} 
+          videoUrl={modalItem.videoUrl} 
+          contentItem={modalItem} 
+          channel={null} 
+          recommendedContent={recommendedContent} 
+        />
       )}
     </div>
   );
