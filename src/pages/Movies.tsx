@@ -172,7 +172,7 @@ const Movies = () => {
               </div>
 
               {/* Content Rows */}
-              <div className="max-w-full pb-4">
+              <div className="max-w-full p-4 px-8">
                 <ContentRow title="Recommended" movies={movieContent.recommended} />
                 <ContentRow title="Trending Movies" movies={movieContent.trending} />
                 <ContentRow title="New Movies" movies={movieContent.new} />

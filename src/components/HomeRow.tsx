@@ -39,7 +39,7 @@ const HomeRow = ({ title, items, onCardClick, isMoreLikeThis = false }: HomeRowP
                 <button
                     onClick={scrollLeft}
                     className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-black/60 hover:bg-black/80 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm"
-                    style={{ marginLeft: '-16px' }}
+                    style={{ marginLeft: '-10px' }}
                 >
                     <ArrowLeft className="w-5 h-5" />
                 </button>
@@ -48,7 +48,7 @@ const HomeRow = ({ title, items, onCardClick, isMoreLikeThis = false }: HomeRowP
                 <button
                     onClick={scrollRight}
                     className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-black/60 hover:bg-black/80 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm"
-                    style={{ marginRight: '-16px' }}
+                    style={{ marginRight: '-22px' }}
                 >
                     <ArrowRight className="w-5 h-5" />
                 </button>
