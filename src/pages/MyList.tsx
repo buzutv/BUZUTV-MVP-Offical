@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Heart } from "lucide-react";
 import MovieCard from "@/components/MovieCard";
 import ChannelCard from "@/components/ChannelCard";
 import ChannelModal from "@/components/ChannelModal";
@@ -8,6 +9,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import MovieHoverRow from "@/components/MovieHoverRow";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useUserSubscriptions } from "@/hooks/useUserSubscriptions";
+import { useUserChannelFavorites } from "@/hooks/useUserChannelFavorites";
 import { useAppContent } from "@/hooks/useAppContent";
 import SeriesCard from "@/components/SeriesCard";
 
@@ -16,6 +18,7 @@ const MyList = () => {
   const [showChannelModal, setShowChannelModal] = useState(false);
   const { favoriteIds, isLoading: favoritesLoading } = useUserFavorites();
   const { subscriptionIds, toggleSubscription, isLoading: subscriptionsLoading } = useUserSubscriptions();
+  const { favoriteChannelIds, isLoading: channelFavoritesLoading } = useUserChannelFavorites();
   const { movies, channels } = useAppContent();
   
   const savedContent = favoriteIds.length > 0 
@@ -24,6 +27,10 @@ const MyList = () => {
 
   const subscribedChannels = subscriptionIds.length > 0
     ? channels.filter(channel => subscriptionIds.includes(channel.id))
+    : [];
+    
+  const favoriteChannels = favoriteChannelIds.length > 0
+    ? channels.filter(channel => favoriteChannelIds.includes(channel.id))
     : [];
   
   // Separate movies and TV shows
@@ -40,7 +47,7 @@ const MyList = () => {
     setSelectedChannel(null);
   };
 
-  const isLoading = favoritesLoading || subscriptionsLoading;
+  const isLoading = favoritesLoading || subscriptionsLoading || channelFavoritesLoading;
 
   if (isLoading) {
     return (
@@ -77,7 +84,7 @@ const MyList = () => {
             {subscribedChannels.length > 0 && (
               <section className="mb-8">
                 <h2 className="text-2xl font-bold mb-4 px-4">
-                  My Subscriptions ({subscribedChannels.length})
+                  My Subscriptions
                 </h2>
                 <div className="flex space-x-4 overflow-x-auto scrollbar-hide px-4">
                   {subscribedChannels.map((channel) => (
@@ -95,11 +102,34 @@ const MyList = () => {
               </section>
             )}
 
+            {/* Favorite Channels */}
+            {favoriteChannels.length > 0 && (
+              <section className="mb-8">
+                <h2 className="text-2xl font-bold mb-4 px-4 flex items-center gap-2">
+                  <Heart className="w-6 h-6 text-red-500" fill="currentColor" />
+                  Favorite Channels
+                </h2>
+                <div className="flex space-x-4 overflow-x-auto scrollbar-hide px-4">
+                  {favoriteChannels.map((channel) => (
+                    <div key={channel.id} className="flex-shrink-0 w-48">
+                      <div onClick={() => handleChannelClick(channel)}>
+                        <ChannelCard 
+                          channel={channel}
+                          isSubscribed={subscriptionIds.includes(channel.id)}
+                          onSubscribe={toggleSubscription}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
             {/* Movies */}
             {savedMovies.length > 0 && (
               <section className="mb-8">
                 <h2 className="text-2xl font-bold mb-4 px-4">
-                  Movies ({savedMovies.length})
+                  Movies
                 </h2>
                 <div className="flex space-x-2 overflow-x-auto scrollbar-hide px-4">
                   <MovieHoverRow className="flex space-x-2">
@@ -117,7 +147,7 @@ const MyList = () => {
             {savedTVShows.length > 0 && (
               <section className="mb-8">
                 <h2 className="text-2xl font-bold mb-4 px-4">
-                  TV Shows ({savedTVShows.length})
+                  TV Shows
                 </h2>
                 <div className="flex space-x-2 overflow-x-auto scrollbar-hide px-4">
                   <MovieHoverRow className="flex space-x-2">
@@ -132,10 +162,10 @@ const MyList = () => {
             )}
 
             {/* Empty State */}
-            {savedContent.length === 0 && subscribedChannels.length === 0 && (
+            {savedContent.length === 0 && subscribedChannels.length === 0 && favoriteChannels.length === 0 && (
               <div className="text-center py-16">
                 <h2 className="text-2xl font-bold mb-4">Your favorites list is empty</h2>
-                <p className="text-gray-400 mb-8">Start adding movies and series to your favorites</p>
+                <p className="text-gray-400 mb-8">Start adding movies, series, and channels to your favorites</p>
                 <Link
                   to="/"
                   className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"

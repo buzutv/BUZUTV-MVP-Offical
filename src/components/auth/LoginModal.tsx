@@ -6,6 +6,7 @@ import { ArrowUpRight, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
+import ForgotPassword from './ForgotPassword';
 
 const LoginModal = () => {
   const { showLoginModal, setShowLoginModal, login, signup } = useAuth();
@@ -16,6 +17,7 @@ const LoginModal = () => {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,15 +165,33 @@ const LoginModal = () => {
           </Button>
         </form>
 
-        <div className="text-center mt-4">
+        <div className="text-center mt-4 space-y-2">
           <button
             onClick={() => setIsSignUp(!isSignUp)}
             className="text-blue-400 hover:text-blue-300 transition-colors"
           >
             {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
           </button>
+          
+          {!isSignUp && (
+            <div className="text-center">
+              <button
+                onClick={() => setShowForgotPassword(true)}
+                className="text-gray-400 hover:text-blue-300 transition-colors text-sm"
+              >
+                Forgot Password?
+              </button>
+            </div>
+          )}
         </div>
       </DialogContent>
+      
+      {/* Forgot Password Modal */}
+      <ForgotPassword
+        isOpen={showForgotPassword}
+        onClose={() => setShowForgotPassword(false)}
+        onBackToLogin={() => setShowForgotPassword(false)}
+      />
     </Dialog>
   );
 };

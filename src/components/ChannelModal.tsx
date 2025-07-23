@@ -1,11 +1,12 @@
 
 import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { X, Filter } from 'lucide-react';
+import { X, Filter, Heart } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import MovieCard from '@/components/MovieCard';
 import MovieHoverRow from '@/components/MovieHoverRow';
 import { useContent } from '@/hooks/useContent';
+import { useUserChannelFavorites } from '@/hooks/useUserChannelFavorites';
 import { Movie } from '@/data/mockMovies';
 
 interface Channel {
@@ -48,6 +49,23 @@ const ChannelModal = ({ isOpen, onClose, channel }: ChannelModalProps) => {
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string>('');
   
   const { content } = useContent();
+  const { favoriteChannelIds, addChannelToFavorites, removeChannelFromFavorites } = useUserChannelFavorites();
+
+  // Check if channel is in favorites
+  const isChannelFavorite = channel ? favoriteChannelIds.includes(channel.id) : false;
+
+  const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!channel) return;
+    
+    if (isChannelFavorite) {
+      removeChannelFromFavorites(channel.id);
+    } else {
+      addChannelToFavorites(channel.id);
+    }
+  };
 
   // Get content associated with this channel from backend data
   const channelContent = useMemo(() => {
@@ -179,7 +197,7 @@ const ChannelModal = ({ isOpen, onClose, channel }: ChannelModalProps) => {
             {/* Header */}
             <DialogHeader className="p-6 pb-4 border-b border-gray-700">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-4 flex-1">
                   {(channel.logo_url || channel.logoUrl) && (
                     <img
                       src={channel.logo_url || channel.logoUrl}
@@ -187,8 +205,20 @@ const ChannelModal = ({ isOpen, onClose, channel }: ChannelModalProps) => {
                       className="w-12 h-12 object-contain rounded"
                     />
                   )}
-                  <div>
-                    <DialogTitle className="text-3xl font-bold">{channel.name}</DialogTitle>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <DialogTitle className="text-3xl font-bold">{channel.name}</DialogTitle>
+                      <button
+                          onClick={handleToggleFavorite}
+                          className="bg-gray-700/80 hover:bg-gray-600/80 text-white p-3 rounded-full transition-colors backdrop-blur-sm"
+                          aria-label={isChannelFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                      >
+                        <Heart
+                            className={`w-6 h-6 ${isChannelFavorite ? 'fill-current text-red-500' : ''}`}
+                        />
+                      </button>
+
+                    </div>
                     {channel.description && (
                       <p className="text-gray-400 mt-1">{channel.description}</p>
                     )}

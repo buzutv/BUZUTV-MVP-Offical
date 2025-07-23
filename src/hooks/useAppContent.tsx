@@ -61,7 +61,9 @@ export const useAppContent = () => {
   const content = useMemo(() => {
     const movies = transformedContent.filter(item => item.type === "movie");
     const series = transformedContent.filter(item => item.type === "series");
-    
+    const kids = transformedContent.filter(item => item.type === "kids");
+
+
     return {
       movies: {
         all: movies,
@@ -87,6 +89,14 @@ export const useAppContent = () => {
           return acc;
         }, {} as Record<string, typeof series>)
       },
+      kids: {
+        all: kids,
+        movies: kids.filter(item => item.type === "movie"),
+        series: kids.filter(item => item.type === "series"),
+        featured: kids.filter(item => item.isFeatured),
+        trending: kids.filter(item => item.isTrending),
+        new: kids.slice(0, 8)
+      },
       home: {
         trending: transformedContent.filter(item => item.isTrending),
         action: transformedContent.filter(item => item.genre === "Action"),
@@ -110,6 +120,7 @@ export const useAppContent = () => {
     // Quick access to specific categories
     movieContent: content.movies,
     seriesContent: content.series,
+    kidsContent: content.kids,
     homeContent: content.home
   };
 };

@@ -124,15 +124,15 @@ const MovieCard = ({
         />
       )}
 
-      <div className="movie-card group">
-        <div className="block cursor-pointer" onClick={handleCardClick}>
+      <div className="movie-card group rounded-lg">
+        <div className="block cursor-pointer rounded-lg" onClick={handleCardClick}>
           <div className="relative overflow-hidden rounded-lg bg-gray-800 shadow-lg"
                style={{ aspectRatio: '16/9' }}>
-            <div className="w-full h-full overflow-hidden">
+            <div className="w-full h-full rounded-lg overflow-hidden">
               <img
-                src={movie.posterUrl}
-                alt={movie.title}
-                className="w-full h-full object-cover transition-transform duration-300"
+                  src={movie.posterUrl}
+                  alt={movie.title}
+                  className="w-full h-full rounded-lg object-cover transform transition-transform duration-300 hover:scale-[1.1]"
               />
             </div>
             
@@ -145,10 +145,20 @@ const MovieCard = ({
                 />
               </div>
             )}
-            
-            {/* Title always visible at bottom left */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
-              <h3 className="font-medium text-white text-sm line-clamp-2">{movie.title}</h3>
+
+            {/* Gradient overlays inside card */}
+            <div className="absolute inset-0 z-0 rounded-lg overflow-hidden pointer-events-none">
+              {/* Base gradient */}
+              <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+              {/* Darker gradient on hover */}
+              <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/90 via-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            </div>
+
+            {/* Title text positioned above the gradient */}
+            <div className="absolute bottom-0 left-0 right-0 z-10 p-3 pt-6 pointer-events-none">
+              <h3 className="font-medium text-white text-md line-clamp-2 transform transition-transform duration-300 origin-left group-hover:scale-[1.1]">
+                {movie.title}
+              </h3>
             </div>
 
             {/* Resume Button Overlay */}
