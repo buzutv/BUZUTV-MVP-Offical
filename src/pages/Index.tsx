@@ -164,7 +164,7 @@ const Index = () => {
               )}
               
               {/* Grid Layout for all filtered content */}
-              <div className="mt-8  px-4">
+              <div className="mt-8  pl-4">
                 <h2 className="text-xl font-semibold mb-4">
                   All Content
                 </h2>

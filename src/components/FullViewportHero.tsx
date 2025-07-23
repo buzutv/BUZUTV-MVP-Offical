@@ -164,7 +164,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
                     />
 
                     {/* Gradient Overlays */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/70 to-transparent h-[80%]" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
 
                     {/* Content */}
@@ -217,14 +217,6 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
                 </SwiperSlide>
             ))}
           </Swiper>
-
-          {/* Navigation Arrows */}
-          <button className="hero-prev absolute left-8 top-1/2 transform -translate-y-1/2 z-30 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm">
-            <ArrowLeft className="w-6 h-6" />
-          </button>
-          <button className="hero-next absolute right-8 top-1/2 transform -translate-y-1/2 z-30 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm">
-            <ArrowRight className="w-6 h-6" />
-          </button>
 
           {/* Bottom Gradient Transition */}
           <div className="absolute bottom-0 left-0 right-0 z-15 h-32 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent pointer-events-none" />

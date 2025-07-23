@@ -70,7 +70,7 @@ const Navbar = ({ searchQuery, onSearchChange, onSearchClear }: NavbarProps) => 
   };
 
   return (
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center h-14 transition-all duration-500">
+      <nav className="fixed top-6 left-0 right-0 z-50 flex items-center h-14 transition-all duration-500">
         <div className="max-w-full px-6 w-full flex items-center justify-between h-14 relative">
           {/* Logo */}
           <div className="flex-shrink-0">
@@ -84,38 +84,6 @@ const Navbar = ({ searchQuery, onSearchChange, onSearchClear }: NavbarProps) => 
           {/* Center Navigation Bar with blurred background */}
           <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
             <div className="flex items-center bg-black/20 backdrop-blur-md rounded-full px-2 py-1 border border-white/10">
-              {/* Search */}
-              <div className="relative">
-                {isSearchOpen || searchQuery ? (
-                    <div className="flex items-center px-3 py-2 rounded-full hover:bg-purple-600 transition-colors">
-                      <input
-                          ref={searchInputRef}
-                          type="text"
-                          placeholder="Search"
-                          value={searchQuery}
-                          onChange={onSearchChange}
-                          onBlur={handleSearchBlur}
-                          onKeyDown={handleSearchKeyDown}
-                          className="bg-transparent text-white placeholder-gray-300 w-32 focus:outline-none"
-                      />
-                      <Search className="text-gray-300 w-4 h-4 ml-2" />
-                    </div>
-                ) : (
-                    <button
-                        className="flex items-center px-3 py-2 rounded-full hover:bg-purple-600 transition-colors"
-                        onClick={() => {
-                          if (!isLoggedIn) {
-                            setShowLoginModal(true);
-                            return;
-                          }
-                          setIsSearchOpen(true);
-                        }}
-                        aria-label="Open search"
-                    >
-                      <Search className="text-white w-4 h-4" />
-                    </button>
-                )}
-              </div>
 
               {/* Navigation Links */}
               <Link
@@ -150,11 +118,44 @@ const Navbar = ({ searchQuery, onSearchChange, onSearchClear }: NavbarProps) => 
           </div>
 
           {/* Right Side - User */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 ">
+            {/* Search */}
+            <div className="relative bg-black/20 backdrop-blur-md rounded-full px-2 py-1 border border-white/10">
+              {isSearchOpen || searchQuery ? (
+                  <div className="flex items-center px-3 py-1 rounded-full transition-all">
+                    <input
+                        ref={searchInputRef}
+                        type="text"
+                        placeholder="Search"
+                        value={searchQuery}
+                        onChange={onSearchChange}
+                        onBlur={handleSearchBlur}
+                        onKeyDown={handleSearchKeyDown}
+                        className="bg-transparent text-white placeholder-gray-300 w-32 focus:outline-none"
+                    />
+                    <Search className="text-gray-300 w-4 h-4 ml-2" />
+                  </div>
+              ) : (
+                  <button
+                      className="flex items-center px-3 py-2 rounded-full transition-all"
+                      onClick={() => {
+                        if (!isLoggedIn) {
+                          setShowLoginModal(true);
+                          return;
+                        }
+                        setIsSearchOpen(true);
+                      }}
+                      aria-label="Open search"
+                  >
+                    <Search className="text-white w-4 h-4" />
+                  </button>
+              )}
+            </div>
+
             {/* User Authentication */}
             {isLoggedIn ? (
                 <DropdownMenu>
-                  <DropdownMenuTrigger className="flex items-center text-white hover:text-gray-300 transition-colors">
+                  <DropdownMenuTrigger className="flex items-center text-white hover:text-gray-300 transition-colors  bg-black/20 backdrop-blur-md rounded-full px-2 py-2 border border-white/10">
                     <User className="w-6 h-6" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="bg-gray-800 border-gray-700 text-white">
@@ -180,19 +181,19 @@ const Navbar = ({ searchQuery, onSearchChange, onSearchClear }: NavbarProps) => 
                 <div className="flex items-center space-x-3">
                   <button
                       onClick={handleLoginClick}
-                      className="text-white px-4 py-2 rounded-full text-sm font-medium bg-black/20 backdrop-blur-md border border-white/10 hover:bg-white/20 transition-colors"
+                      className="text-white px-4 py-2.5 rounded-full text-sm font-medium bg-black/20 backdrop-blur-md border border-white/10 hover:bg-white/20 transition-colors"
                   >
                     Log In
                   </button>
                   <button
                       onClick={handleSignUpClick}
-                      className="bg-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-purple-700 transition-colors"
+                      className="bg-purple-600 text-white px-4 py-2.5 rounded-full text-sm font-medium hover:bg-purple-700 transition-colors"
                   >
                     Sign Up
                   </button>
                   <button
                       onClick={handleLoginClick}
-                      className="flex items-center text-white hover:text-gray-300 transition-colors"
+                      className="flex items-center text-white hover:text-gray-300 transition-colors h-10 bg-black/20 backdrop-blur-md rounded-full p-2 border border-white/10"
                   >
                     <User className="w-6 h-6" />
                   </button>
