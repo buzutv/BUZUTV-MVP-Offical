@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Movies from "./pages/Movies";
 import Series from "./pages/Series";
+import Kids from "./pages/Kids";
 import MyList from "./pages/MyList";
 import Settings from "./pages/Settings";
 import MovieDetail from "./pages/MovieDetail";
@@ -113,6 +114,7 @@ const App = () => {
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/movies" element={<RequireAuth><Movies /></RequireAuth>} />
               <Route path="/series" element={<RequireAuth><Series /></RequireAuth>} />
+              <Route path="/kids" element={<RequireAuth><Kids /></RequireAuth>} />
               <Route path="/my-list" element={<RequireAuth><MyList /></RequireAuth>} />
               <Route path="/settings" element={<RequireAuth><Settings /></RequireAuth>} />
               <Route path="/movie/:id" element={<RequireAuth><MovieDetail /></RequireAuth>} />

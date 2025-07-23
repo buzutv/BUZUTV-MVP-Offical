@@ -112,6 +112,13 @@ const Navbar = ({
               TV Shows
             </Link>
             <Link
+              to="/kids"
+              className="group text-white px-4 py-2 rounded-full text-base font-medium leading-none align-middle transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:bg-purple-600 hover:shadow-[0_4px_10px_rgba(128,0,255,0.6)] will-change-transform"
+              onClick={(e) => handleNavClick(e, "/kids")}
+            >
+              Kids
+            </Link>
+            <Link
               to="/my-list"
               className="group text-white px-4 py-2 rounded-full text-base font-medium leading-none align-middle transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:bg-purple-600 hover:shadow-[0_4px_10px_rgba(128,0,255,0.6)] will-change-transform"
               onClick={(e) => handleNavClick(e, "/my-list")}
@@ -250,6 +257,13 @@ const Navbar = ({
             onClick={(e) => handleNavClick(e, "/series")}
           >
             TV Shows
+          </Link>
+          <Link
+            to="/kids"
+            className="block text-white hover:text-gray-300 transition-colors py-2 px-6"
+            onClick={(e) => handleNavClick(e, "/kids")}
+          >
+            Kids
           </Link>
           <Link
             to="/my-list"
