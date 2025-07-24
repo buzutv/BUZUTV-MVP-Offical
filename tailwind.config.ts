@@ -19,7 +19,7 @@ export default {
 		},
 		extend: {
       fontFamily: {
-      montserrat: ['Poppins', 'sans-serif'],
+      montserrat: ['Montserrat', 'sans-serif'],
       },
     colors: {
         border: 'hsl(var(--border))',
@@ -62,8 +62,22 @@ export default {
 					'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
 					accent: 'hsl(var(--sidebar-accent))',
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-					border: 'hsl(var(--sidebar-border))',
+					border: 'hslchnge (var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Brand colors (orange)
+				brand: {
+					DEFAULT: '#FD7923', // Main orange
+					50: '#FFF4ED',     // Very light orange
+					100: '#FFEAD5',    // Light orange tint
+					200: '#FED7AA',    // Lighter orange
+					300: '#FDBA74',    // Light orange
+					400: '#FB923C',    // Medium orange
+					500: '#FD7923',    // Main orange (DEFAULT)
+					600: '#EA580C',    // Darker orange
+					700: '#C2410C',    // Dark orange
+					800: '#9A3412',    // Very dark orange
+					900: '#7C2D12',    // Darkest orange
 				}
 			},
 			borderRadius: {
