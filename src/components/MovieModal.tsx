@@ -74,18 +74,15 @@ const MovieModal = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="max-w-[75vw] max-h-[90vh] bg-gray-900 text-white border-none p-0 overflow-hidden
+        className="max-w-[75vw] max-h-[90vh] text-white border-none p-0 overflow-hidden
              transition-all duration-1000 ease-in-out opacity-0 scale-95
              data-[state=open]:opacity-100 data-[state=open]:scale-100"
       >
         <DialogTitle className="sr-only">{movie.title}</DialogTitle>
         <ScrollArea className="h-[90vh] scroll-smooth">
-          <div className="relative">
-            {/* Hero Section with Fixed Gradient - 16:9 aspect ratio */}
-            <div
-              className="relative w-full overflow-hidden"
-              style={{ aspectRatio: "16 / 9" }}
-            >
+          <div className="relative min-h-full bg-gradient-to-t from-black via-brand-900 to-brand-800">
+            {/* Hero Section with Fixed Gradient */}
+            <div className="relative w-full h-[60vh] overflow-hidden">
               {/* Background Image */}
               <div className="absolute inset-0">
                 <img
@@ -96,7 +93,7 @@ const MovieModal = ({
               </div>
 
               {/* Only bottom gradient for fade effect */}
-              <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black via-black/60 to-transparent" />
 
               {/* Title and Info Container */}
               <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
@@ -109,11 +106,21 @@ const MovieModal = ({
                   <button
                     onClick={onPlay}
                     disabled={!videoUrl}
-                    className={`px-8 py-3 rounded-lg font-semibold flex items-center space-x-3 transition-colors ${
+                    className={`px-8 py-3 rounded-full font-bold flex items-center space-x-3 transition-all duration-300 hover:scale-105 justify-center ${
                       videoUrl
-                        ? "bg-white text-black hover:bg-gray-200"
+                        ? "bg-brand-500 text-white hover:bg-brand-600 shadow-[2px_19px_31px_rgba(30,27,95,0.35)]"
                         : "bg-gray-600 text-gray-400 cursor-not-allowed"
                     }`}
+                    style={
+                      videoUrl
+                        ? {
+                            backgroundImage: `
+                        radial-gradient(93% 87% at 87% 89%, rgba(0, 0, 0, 0.23) 0%, transparent 86.18%),
+                        radial-gradient(66% 87% at 26% 20%, rgba(255, 255, 255, 0.41) 0%, rgba(255, 255, 255, 0) 70%)
+                      `,
+                          }
+                        : {}
+                    }
                   >
                     <Play className="w-6 h-6 fill-current" />
                     <span>Play</span>
@@ -121,7 +128,7 @@ const MovieModal = ({
 
                   <button
                     onClick={onSave}
-                    className="bg-gray-700/80 hover:bg-gray-600/80 text-white p-3 rounded-full transition-colors backdrop-blur-sm"
+                    className="bg-black/20 backdrop-blur-md text-white p-3 rounded-full transition-all duration-200 border border-brand-500/50 hover:border-brand-500 hover:bg-black/30"
                   >
                     <Heart
                       className={`w-6 h-6 ${isSaved ? "fill-current text-red-500" : ""}`}
@@ -142,7 +149,7 @@ const MovieModal = ({
                     </span>
                   </div>
                   <span className="text-white font-medium">{movie.year}</span>
-                  <span className="border border-gray-400 px-2 py-0.5 text-xs text-gray-300 font-medium">
+                  <span className="border border-brand-500 px-2 py-0.5 text-xs text-gray-300 font-medium">
                     TV-MA
                   </span>
                   <span className="text-white">{movie.genre}</span>
@@ -158,7 +165,9 @@ const MovieModal = ({
             </div>
 
             {/* Content Section - Minimized gap */}
-            <div className="bg-gray-900 p-8 pt-4 pb-0">
+            <div className="p-8 pt-6 pb-0 relative">
+              <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-black to-transparent pointer-events-none" />
+
               {/* More Like This Section */}
               {filteredRecommendedContent.length > 0 && (
                 <HomeRow

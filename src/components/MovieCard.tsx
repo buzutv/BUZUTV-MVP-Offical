@@ -105,13 +105,13 @@ const MovieCard = ({
         />
       )}
 
-      <div className="movie-card group rounded-lg">
+      <div className="movie-card group rounded-lg hover:shadow-[0_0_15px_rgba(253,121,35,0.6)] transition-all duration-300">
         <div
           className="block cursor-pointer rounded-lg"
           onClick={handleCardClick}
         >
           <div
-            className="relative overflow-hidden rounded-lg bg-gray-800 shadow-lg"
+            className="relative overflow-hidden rounded-lg shadow-lg border border-transparent hover:border-brand-500 transition-all duration-300"
             style={{ aspectRatio: "16/9" }}
           >
             <div className="w-full h-full rounded-lg overflow-hidden">

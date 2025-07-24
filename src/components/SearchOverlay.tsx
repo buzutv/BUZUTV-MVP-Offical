@@ -47,9 +47,9 @@ const SearchOverlay = ({ isOpen, onClose, searchQuery = "", movieResults = [], s
   const hasResults = movieResults.length > 0 || seriesResults.length > 0 || channelResults.length > 0;
 
   return (
-    <div className="fixed left-0 right-0 z-50 bg-gray-900" style={{ top: '64px', height: 'calc(100vh - 64px)' }}>
+    <div className="fixed left-0 right-0 z-50 bg-gradient-to-t from-black via-brand-800 to-brand-500" style={{ top: '64px', height: 'calc(100vh - 64px)' }}>
       {/* Header */}
-      <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800 p-4 z-50">
+      <div className="sticky top-0 bg-black/20 backdrop-blur-sm p-4 z-50">
         <div className="max-w-7xl mx-auto flex items-center space-x-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -58,7 +58,7 @@ const SearchOverlay = ({ isOpen, onClose, searchQuery = "", movieResults = [], s
               placeholder="Search movies, series, channels..."
               value={searchQuery}
               readOnly
-              className="bg-gray-800 border border-gray-700 rounded-lg pl-12 pr-4 py-3 w-full focus:outline-none focus:border-blue-500 transition-colors text-white"
+              className="bg-black/20 backdrop-blur-md border border-transparent rounded-lg pl-12 pr-4 py-3 w-full focus:outline-none focus:border-brand-500 focus:shadow-[0_0_0_3px_rgba(253,121,35,0.3)] transition-all duration-200 text-white"
             />
           </div>
           <button
@@ -84,7 +84,7 @@ const SearchOverlay = ({ isOpen, onClose, searchQuery = "", movieResults = [], s
         )}
         {channelResults.length > 0 && (
           <div className="mb-8">
-            <h3 className="text-2xl font-semibold text-blue-400 mb-3">Channels</h3>
+            <h3 className="text-2xl font-semibold text-white mb-3">Channels</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {channelResults.map((channel) => (
                 <div key={channel.id} onClick={() => handleChannelClick(channel)} className="cursor-pointer">
@@ -100,7 +100,7 @@ const SearchOverlay = ({ isOpen, onClose, searchQuery = "", movieResults = [], s
         )}
         {movieResults.length > 0 && (
           <div className="mb-8">
-            <h3 className="text-2xl font-semibold text-purple-400 mb-3">Movies</h3>
+            <h3 className="text-2xl font-semibold text-white mb-3">Movies</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {movieResults.map((movie) => (
                 <div key={movie.id} className="group hover:scale-105 transition-transform duration-200">
@@ -112,7 +112,7 @@ const SearchOverlay = ({ isOpen, onClose, searchQuery = "", movieResults = [], s
         )}
         {seriesResults.length > 0 && (
           <div className="mb-8">
-            <h3 className="text-2xl font-semibold text-pink-400 mb-3">TV Shows</h3>
+            <h3 className="text-2xl font-semibold text-white mb-3">TV Shows</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {seriesResults.map((series) => (
                 <div key={series.id} className="group hover:scale-105 transition-transform duration-200">

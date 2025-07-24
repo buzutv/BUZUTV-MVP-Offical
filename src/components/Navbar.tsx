@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, Search, User, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import BrandButton from "@/components/ui/BrandButton";
 
 // Restore NavbarProps interface
 interface NavbarProps {
@@ -25,9 +26,19 @@ const Navbar = ({
 }: NavbarProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [hasNavigated, setHasNavigated] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const { isLoggedIn, user, logout, setShowLoginModal } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Helper function to check if link is active
+  const isActivePath = (path: string) => {
+    if (path === "/" && !hasNavigated) {
+      return false;
+    }
+    return location.pathname === path;
+  };
 
   const handleLoginClick = () => {
     navigate("/auth");
@@ -49,6 +60,7 @@ const Navbar = ({
       setIsMenuOpen(false);
       return;
     }
+    setHasNavigated(true);
     setIsMenuOpen(false);
     navigate(path);
   };
@@ -74,12 +86,12 @@ const Navbar = ({
   };
 
   return (
-    <nav className="fixed top-6 left-0 right-0 z-50 flex items-center h-14 transition-all duration-500">
-      <div className="max-w-full px-6 w-full flex items-center justify-between h-14 relative">
+    <nav className="fixed top-3 left-0 right-0 z-50 flex items-center h-14 transition-all duration-500 px-6">
+      <div className="max-w-full px-8 w-full flex items-center justify-between h-14 relative bg-black/20 backdrop-blur-md rounded-full border border-white/10">
         {/* Logo */}
         <div className="flex-shrink-0">
           <Link to="/" className="flex items-center">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 bg-clip-text text-transparent">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-brand-400 via-brand-500 to-brand-600 bg-clip-text text-transparent">
               BUZUTV
             </h1>
           </Link>
@@ -87,18 +99,46 @@ const Navbar = ({
 
         {/* Center Navigation Bar with blurred background */}
         <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
-          <div className="flex items-center bg-black/20 backdrop-blur-md rounded-full px-2 py-2 border border-white/10">
+          <div className="flex items-center gap-4">
             {/* Navigation Links */}
             <Link
               to="/"
-              className="group text-white px-4 py-2 rounded-full text-base font-medium leading-none align-middle transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:bg-purple-600 hover:shadow-[0_4px_10px_rgba(128,0,255,0.6)] will-change-transform"
+              className={`group text-white px-4 py-2 rounded-full text-base font-medium leading-5 align-middle transition-all duration-300 hover:scale-105 will-change-transform transform-gpu ${
+                isActivePath("/")
+                  ? "bg-brand-500 shadow-[2px_19px_31px_rgba(30,27,95,0.35)] hover:bg-brand-600"
+                  : "hover:text-white hover:bg-brand-500/20"
+              }`}
+              style={
+                isActivePath("/")
+                  ? {
+                      backgroundImage: `
+                  radial-gradient(93% 87% at 87% 89%, rgba(0, 0, 0, 0.23) 0%, transparent 86.18%),
+                  radial-gradient(66% 87% at 26% 20%, rgba(255, 255, 255, 0.41) 0%, rgba(255, 255, 255, 0) 70%)
+                `,
+                    }
+                  : {}
+              }
               onClick={(e) => handleNavClick(e, "/")}
             >
               Home
             </Link>
             <Link
               to="/movies"
-              className="group text-white px-4 py-2 rounded-full text-base font-medium leading-none align-middle transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:bg-purple-600 hover:shadow-[0_4px_10px_rgba(128,0,255,0.6)] will-change-transform"
+              className={`group text-white px-4 py-2 rounded-full text-base font-medium leading-5 align-middle transition-all duration-300 hover:scale-105 will-change-transform transform-gpu ${
+                isActivePath("/movies")
+                  ? "bg-brand-500 shadow-[2px_19px_31px_rgba(30,27,95,0.35)] hover:bg-brand-600"
+                  : "hover:text-white hover:bg-brand-500/20"
+              }`}
+              style={
+                isActivePath("/movies")
+                  ? {
+                      backgroundImage: `
+                  radial-gradient(93% 87% at 87% 89%, rgba(0, 0, 0, 0.23) 0%, transparent 86.18%),
+                  radial-gradient(66% 87% at 26% 20%, rgba(255, 255, 255, 0.41) 0%, rgba(255, 255, 255, 0) 70%)
+                `,
+                    }
+                  : {}
+              }
               onClick={(e) => handleNavClick(e, "/movies")}
             >
               Movies
@@ -106,21 +146,63 @@ const Navbar = ({
 
             <Link
               to="/series"
-              className="group text-white px-4 py-2 rounded-full text-base font-medium leading-none align-middle transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:bg-purple-600 hover:shadow-[0_4px_10px_rgba(128,0,255,0.6)] will-change-transform"
+              className={`group text-white px-4 py-2 rounded-full text-base font-medium leading-5 align-middle transition-all duration-300 hover:scale-105 will-change-transform transform-gpu ${
+                isActivePath("/series")
+                  ? "bg-brand-500 shadow-[2px_19px_31px_rgba(30,27,95,0.35)] hover:bg-brand-600"
+                  : "hover:text-white hover:bg-brand-500/20"
+              }`}
+              style={
+                isActivePath("/series")
+                  ? {
+                      backgroundImage: `
+                  radial-gradient(93% 87% at 87% 89%, rgba(0, 0, 0, 0.23) 0%, transparent 86.18%),
+                  radial-gradient(66% 87% at 26% 20%, rgba(255, 255, 255, 0.41) 0%, rgba(255, 255, 255, 0) 70%)
+                `,
+                    }
+                  : {}
+              }
               onClick={(e) => handleNavClick(e, "/series")}
             >
               TV Shows
             </Link>
             <Link
               to="/kids"
-              className="group text-white px-4 py-2 rounded-full text-base font-medium leading-none align-middle transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:bg-purple-600 hover:shadow-[0_4px_10px_rgba(128,0,255,0.6)] will-change-transform"
+              className={`group text-white px-4 py-2 rounded-full text-base font-medium leading-5 align-middle transition-all duration-300 hover:scale-105 will-change-transform transform-gpu ${
+                isActivePath("/kids")
+                  ? "bg-brand-500 shadow-[2px_19px_31px_rgba(30,27,95,0.35)] hover:bg-brand-600"
+                  : "hover:text-white hover:bg-brand-500/20"
+              }`}
+              style={
+                isActivePath("/kids")
+                  ? {
+                      backgroundImage: `
+                  radial-gradient(93% 87% at 87% 89%, rgba(0, 0, 0, 0.23) 0%, transparent 86.18%),
+                  radial-gradient(66% 87% at 26% 20%, rgba(255, 255, 255, 0.41) 0%, rgba(255, 255, 255, 0) 70%)
+                `,
+                    }
+                  : {}
+              }
               onClick={(e) => handleNavClick(e, "/kids")}
             >
               Kids
             </Link>
             <Link
               to="/my-list"
-              className="group text-white px-4 py-2 rounded-full text-base font-medium leading-none align-middle transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:bg-purple-600 hover:shadow-[0_4px_10px_rgba(128,0,255,0.6)] will-change-transform"
+              className={`group text-white px-4 py-2 rounded-full text-base font-medium leading-5 align-middle transition-all duration-300 hover:scale-105 will-change-transform transform-gpu ${
+                isActivePath("/my-list")
+                  ? "bg-brand-500 shadow-[2px_19px_31px_rgba(30,27,95,0.35)] hover:bg-brand-600"
+                  : "hover:text-white hover:bg-brand-500/20"
+              }`}
+              style={
+                isActivePath("/my-list")
+                  ? {
+                      backgroundImage: `
+                  radial-gradient(93% 87% at 87% 89%, rgba(0, 0, 0, 0.23) 0%, transparent 86.18%),
+                  radial-gradient(66% 87% at 26% 20%, rgba(255, 255, 255, 0.41) 0%, rgba(255, 255, 255, 0) 70%)
+                `,
+                    }
+                  : {}
+              }
               onClick={(e) => handleNavClick(e, "/my-list")}
             >
               Favorites
@@ -131,7 +213,7 @@ const Navbar = ({
         {/* Right Side - User */}
         <div className="flex items-center gap-4 ">
           {/* Search */}
-          <div className="relative bg-black/20 backdrop-blur-md rounded-full px-2 py-1 border border-white/10">
+          <div className="relative rounded-full px-2 py-1 ">
             {isSearchOpen || searchQuery ? (
               <div className="flex items-center px-3 py-1 rounded-full transition-all">
                 <input
@@ -166,7 +248,7 @@ const Navbar = ({
           {/* User Authentication */}
           {isLoggedIn ? (
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center text-white hover:text-gray-300 transition-colors  bg-black/20 backdrop-blur-md rounded-full px-2 py-2 border border-white/10">
+              <DropdownMenuTrigger className="flex items-center text-white hover:text-gray-300 transition-colors  px-2 py-2">
                 <User className="w-6 h-6" />
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-gray-800 border-gray-700 text-white">
@@ -199,18 +281,22 @@ const Navbar = ({
             </DropdownMenu>
           ) : (
             <div className="flex items-center space-x-3">
-              <button
+              <BrandButton
+                variant="no-border"
+                size="sm"
                 onClick={handleLoginClick}
-                className="text-white px-4 py-2.5 rounded-full text-sm font-medium bg-black/20 backdrop-blur-md border border-white/10 hover:bg-white/20 transition-colors"
+                className="text-sm font-medium"
               >
                 Log In
-              </button>
-              <button
+              </BrandButton>
+              <BrandButton
+                variant="primary"
+                size="sm"
                 onClick={handleSignUpClick}
-                className="bg-purple-600 text-white px-4 py-2.5 rounded-full text-sm font-medium hover:bg-purple-700 transition-colors"
+                className="text-sm font-medium"
               >
                 Sign Up
-              </button>
+              </BrandButton>
               <button
                 onClick={handleLoginClick}
                 className="flex items-center text-white hover:text-gray-300 transition-colors h-10 bg-black/20 backdrop-blur-md rounded-full p-2 border border-white/10"

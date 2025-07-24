@@ -123,10 +123,23 @@ const SeriesModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[75vw] max-h-[90vh] bg-gray-900 text-white border-none p-0 overflow-hidden transition-all duration-700 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100">
+      <DialogContent className="max-w-[75vw] max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-700 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100">
         <DialogTitle className="sr-only">{series.title}</DialogTitle>
         <ScrollArea className="h-[90vh]">
-          <div className="relative">
+          <div
+            className="relative min-h-full"
+            style={{
+              background: `
+      linear-gradient(
+        200deg,
+        rgb(249 115 22) 0%,
+        rgb(194 65 12) 30%,
+        black 65%,
+        black 100%    
+      )
+    `,
+            }}
+          >
             <div className="relative h-[60vh] overflow-hidden">
               <div className="absolute inset-0">
                 <img
@@ -135,7 +148,7 @@ const SeriesModal = ({
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black via-black/60 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
                 <h1 className="text-5xl font-bold text-white mb-6">
                   {series.title}
@@ -144,7 +157,13 @@ const SeriesModal = ({
                   {showPlayButton && (
                     <button
                       onClick={handlePlayFirstEpisode}
-                      className="px-8 py-3 rounded-lg font-semibold flex items-center space-x-3 transition-colors bg-white text-black hover:bg-gray-200"
+                      className="px-8 py-3 rounded-full font-bold flex items-center space-x-3 transition-all duration-300 hover:scale-105 bg-brand-500 text-white hover:bg-brand-600 shadow-[2px_19px_31px_rgba(30,27,95,0.35)] justify-center"
+                      style={{
+                        backgroundImage: `
+                          radial-gradient(93% 87% at 87% 89%, rgba(0, 0, 0, 0.23) 0%, transparent 86.18%),
+                          radial-gradient(66% 87% at 26% 20%, rgba(255, 255, 255, 0.41) 0%, rgba(255, 255, 255, 0) 70%)
+                        `,
+                      }}
                     >
                       <Play className="w-6 h-6 fill-current" />
                       <span>Play</span>
@@ -152,7 +171,7 @@ const SeriesModal = ({
                   )}
                   <button
                     onClick={onSave}
-                    className="bg-gray-700/80 hover:bg-gray-600/80 text-white p-3 rounded-full transition-colors backdrop-blur-sm"
+                    className="bg-black/20 backdrop-blur-md text-white p-3 rounded-full transition-all duration-200 border border-brand-500/50 hover:border-brand-500 hover:bg-black/30"
                   >
                     <Heart
                       className={`w-6 h-6 ${isSaved ? "fill-current text-red-500" : ""}`}
@@ -173,7 +192,7 @@ const SeriesModal = ({
                     </span>
                   </div>
                   <span className="text-white font-medium">{series.year}</span>
-                  <span className="border border-gray-400 px-2 py-0.5 text-xs text-gray-300 font-medium">
+                  <span className="border border-brand-500 px-2 py-0.5 text-xs text-gray-300 font-medium">
                     TV-MA
                   </span>
                   <span className="text-white">{series.genre}</span>
@@ -190,16 +209,23 @@ const SeriesModal = ({
               </div>
             </div>
 
-            <div className="bg-gray-900 p-8 pt-4">
+            <div className="p-8 pt-6 relative">
+              <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-black to-transparent pointer-events-none" />
               {seasonsData.length > 0 && (
                 <div className="mb-8">
                   <Tabs defaultValue="season-1" className="w-full">
-                    <TabsList className="grid w-full grid-cols-auto bg-gray-800">
+                    <TabsList className="grid w-full grid-cols-auto bg-black border border-brand-500/20 rounded-lg hover:border-brand-500/40 transition-all duration-300 group">
                       {seasonsData.map((season) => (
                         <TabsTrigger
                           key={season.season_number}
                           value={`season-${season.season_number}`}
-                          className="data-[state=active]:bg-white data-[state=active]:text-black"
+                          className="data-[state=active]:bg-brand-500 data-[state=active]:text-white data-[state=active]:shadow-[2px_19px_31px_rgba(30,27,95,0.35)] data-[state=active]:hover:bg-brand-600 hover:text-white hover:bg-brand-500/20 transition-all duration-300 hover:scale-105 will-change-transform transform-gpu leading-5"
+                          style={{
+                            backgroundImage: `
+                              radial-gradient(93% 87% at 87% 89%, rgba(0, 0, 0, 0.23) 0%, transparent 86.18%),
+                              radial-gradient(66% 87% at 26% 20%, rgba(255, 255, 255, 0.41) 0%, rgba(255, 255, 255, 0) 70%)
+                            `,
+                          }}
                         >
                           Season {season.season_number}
                         </TabsTrigger>
@@ -215,17 +241,25 @@ const SeriesModal = ({
                           {season.episodes.map((episode) => (
                             <div
                               key={episode.id}
-                              className="flex items-center space-x-3 bg-gray-800 rounded-lg p-3 hover:bg-gray-700 transition-colors group h-16"
+                              className="border border-brand-500/20 flex items-center space-x-3 bg-black  rounded-lg p-3 hover:border-brand-500/40 transition-all duration-300 group h-12"
                             >
-                              <div className="flex-shrink-0 w-6 h-6 bg-gray-600 rounded-full flex items-center justify-center text-xs font-bold">
+                              <div
+                                className="flex-shrink-0 w-6 h-6 bg-brand-500 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-[2px_19px_31px_rgba(30,27,95,0.35)] will-change-transform transform-gpu"
+                                style={{
+                                  backgroundImage: `
+                                    radial-gradient(93% 87% at 87% 89%, rgba(0, 0, 0, 0.23) 0%, transparent 86.18%),
+                                    radial-gradient(66% 87% at 26% 20%, rgba(255, 255, 255, 0.41) 0%, rgba(255, 255, 255, 0) 70%)
+                                  `,
+                                }}
+                              >
                                 {episode.episode_number}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <h4 className="font-medium text-white truncate text-sm">
-                                  {episode.title}
-                                </h4>
+                                {/*<h4 className="font-medium text-white truncate text-sm">*/}
+                                {/*  {episode.title}*/}
+                                {/*</h4>*/}
                                 <div className="flex items-center space-x-2">
-                                  <p className="text-xs text-gray-400 truncate max-w-96">
+                                  <p className="font-medium text-white truncate text-sm max-w-96">
                                     {episode.description ||
                                       `Episode ${episode.episode_number} of ${series.title}`}
                                   </p>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface FilterBarProps {
   activeGenre: string;
@@ -9,27 +9,48 @@ interface FilterBarProps {
 const FilterBar: React.FC<FilterBarProps> = ({
   activeGenre,
   onGenreChange,
-  availableGenres
+  availableGenres,
 }) => {
+  const handleGenreClick = (genre: string) => {
+    console.log("🎭 [FilterBar] Genre button clicked:", {
+      clickedGenre: genre,
+      previousGenre: activeGenre,
+      normalizedClicked: genre.toLowerCase(),
+      normalizedPrevious: activeGenre.toLowerCase(),
+    });
+    onGenreChange(genre.toLowerCase());
+  };
+
   return (
-    <div className="px-4 sm:px-6 lg:px-8 pt-6">
+    <div className="px-4 sm:px-6 lg:px-8">
       {/* Genre Filters */}
       <div className="flex justify-center">
-        <div className="bg-black/20 backdrop-blur-sm rounded-full p-1 inline-flex">
+        <div className="bg-black/20 backdrop-blur-sm rounded-full p-1 inline-flex gap-2">
           {availableGenres.map((genre) => (
-          <button
-            key={genre}
-            onClick={() => onGenreChange(genre.toLowerCase())}
-            className={`
-              px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200
-              ${activeGenre.toLowerCase() === genre.toLowerCase() 
-                ? 'bg-purple-600 text-white' 
-                : 'text-gray-300 hover:text-white hover:bg-purple-600/20'
+            <button
+              key={genre}
+              onClick={() => handleGenreClick(genre)}
+              className={`
+              px-4 py-1.5 rounded-full text-sm font-medium leading-5 transition-all duration-300 hover:scale-105 will-change-transform transform-gpu
+              ${
+                activeGenre.toLowerCase() === genre.toLowerCase()
+                  ? "bg-brand-500 text-white shadow-[2px_19px_31px_rgba(30,27,95,0.35)] hover:bg-brand-600"
+                  : "text-white hover:text-white hover:bg-brand-500/20"
               }
             `}
-          >
-            {genre}
-          </button>
+              style={
+                activeGenre.toLowerCase() === genre.toLowerCase()
+                  ? {
+                      backgroundImage: `
+                  radial-gradient(93% 87% at 87% 89%, rgba(0, 0, 0, 0.23) 0%, transparent 86.18%),
+                  radial-gradient(66% 87% at 26% 20%, rgba(255, 255, 255, 0.41) 0%, rgba(255, 255, 255, 0) 70%)
+                `,
+                    }
+                  : {}
+              }
+            >
+              {genre}
+            </button>
           ))}
         </div>
       </div>
