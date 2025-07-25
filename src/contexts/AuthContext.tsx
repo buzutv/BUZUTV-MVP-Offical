@@ -15,7 +15,9 @@ interface AuthContextType {
   showLoginModal: boolean;
   setShowLoginModal: (show: boolean) => void;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  loginWithPhone: (phone: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
+  signInWithGoogle: () => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
 }
 
@@ -133,6 +135,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { success: true };
   };
 
+  const loginWithPhone = async (phone: string, password: string) => {
+    setIsLoading(true);
+    
+    const { data, error } = await supabase.auth.signInWithPassword({
+      phone,
+      password,
+    });
+
+    setIsLoading(false);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  };
+
   const signup = async (email: string, password: string, name: string) => {
     setIsLoading(true);
 
@@ -157,6 +176,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { success: true };
   };
 
+  const signInWithGoogle = async () => {
+    setIsLoading(true);
+    
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/`,
+      }
+    });
+
+    setIsLoading(false);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  };
+
   const logout = async () => {
     await supabase.auth.signOut();
   };
@@ -168,7 +206,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     showLoginModal,
     setShowLoginModal,
     login,
+    loginWithPhone,
     signup,
+    signInWithGoogle,
     logout,
   };
 

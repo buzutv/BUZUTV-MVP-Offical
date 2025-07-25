@@ -1,12 +1,27 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, EyeOff, User, Mail, Lock, Shield, LogOut, ArrowLeft } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  ArrowLeft,
+  Eye,
+  EyeOff,
+  Lock,
+  LogOut,
+  Mail,
+  Phone,
+  User,
+} from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -14,438 +29,724 @@ import { toast } from "sonner";
 const Settings = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('profile');
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [passwordPrompt, setPasswordPrompt] = useState("");
+  const [showPasswordChangeModal, setShowPasswordChangeModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showRePassword, setShowRePassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [form, setForm] = useState({
-    name: user?.name || "",
+    firstName: "",
+    lastName: "",
     email: user?.email || "",
+    phone: "",
+    currentPassword: "",
     password: "",
     rePassword: "",
   });
+  const [fieldStates, setFieldStates] = useState({
+    firstName: false,
+    lastName: false,
+    email: false,
+    phone: false,
+  });
   const [isSaving, setIsSaving] = useState(false);
+  const [savingStates, setSavingStates] = useState({
+    firstName: false,
+    lastName: false,
+    email: false,
+    phone: false,
+  });
   const [error, setError] = useState("");
+
+  // Sync form with user data when user changes
+  useEffect(() => {
+    if (user) {
+      const fullName = user.name || "";
+      const nameParts = fullName.split(" ");
+      const firstName = nameParts[0] || "";
+      const lastName = nameParts.slice(1).join(" ") || "";
+
+      setForm((prev) => ({
+        ...prev,
+        firstName,
+        lastName,
+        email: user.email || "",
+        phone: user.phone || user.user_metadata?.phone || "",
+      }));
+    }
+  }, [user]);
 
   const handleLogout = () => {
     logout();
     navigate("/");
   };
 
-  const handleUpdateInfo = () => {
-    setShowPasswordModal(true);
+  const handleFieldToggle = (field: string) => {
+    setFieldStates((prev) => ({
+      ...prev,
+      [field]: !prev[field as keyof typeof prev],
+    }));
     setError("");
   };
 
-  const handlePasswordConfirm = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handlePasswordChangeClick = () => {
+    setShowPasswordChangeModal(true);
     setError("");
-    
-    if (!passwordPrompt) {
-      setError("Please enter your current password.");
-      return;
-    }
+  };
+
+  const handleUpdateFirstName = async () => {
+    setSavingStates((prev) => ({ ...prev, firstName: true }));
+    setError("");
 
     try {
-      const { error: pwError } = await supabase.auth.signInWithPassword({
-        email: user?.email || "",
-        password: passwordPrompt,
-      });
-      
-      if (pwError) {
-        setError("Incorrect password. Please try again.");
-        return;
-      }
-      
-      setShowPasswordModal(false);
-      setPasswordPrompt("");
-      
-      // Now actually save the changes after successful authentication
-      await handleSave();
-      
-    } catch (error) {
-      setError("An error occurred during authentication.");
-    }
-  };
+      const currentFirstName = user?.name?.split(" ")[0] || "";
+      if (form.firstName !== currentFirstName) {
+        const currentLastName = user?.name?.split(" ").slice(1).join(" ") || "";
+        const newFullName = `${form.firstName} ${currentLastName}`.trim();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const validateForm = () => {
-    if (form.password && form.password.length < 6) {
-      setError("Password must be at least 6 characters long.");
-      return false;
-    }
-    
-    if (form.password && form.password !== form.rePassword) {
-      setError("Passwords do not match.");
-      return false;
-    }
-    
-    if (form.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email)) {
-      setError("Please enter a valid email address.");
-      return false;
-    }
-    
-    return true;
-  };
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    setError("");
-    
-    if (!validateForm()) {
-      setIsSaving(false);
-      return;
-    }
-
-    try {
-      let updatedItems = [];
-
-      // Update email if changed
-      if (form.email !== user?.email) {
-        const { error: emailError } = await supabase.auth.updateUser({ 
-          email: form.email 
+        const { error: nameError } = await supabase.auth.updateUser({
+          data: {
+            full_name: newFullName,
+            name: newFullName,
+          },
         });
-        
+
+        if (nameError) {
+          setError(nameError.message);
+        } else {
+          toast.success("First name updated successfully!");
+          setFieldStates((prev) => ({ ...prev, firstName: false }));
+        }
+      } else {
+        toast.info("No changes were made to your first name.");
+      }
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred.");
+    } finally {
+      setSavingStates((prev) => ({ ...prev, firstName: false }));
+    }
+  };
+
+  const handleUpdateLastName = async () => {
+    setSavingStates((prev) => ({ ...prev, lastName: true }));
+    setError("");
+
+    try {
+      const currentLastName = user?.name?.split(" ").slice(1).join(" ") || "";
+      if (form.lastName !== currentLastName) {
+        const currentFirstName = user?.name?.split(" ")[0] || "";
+        const newFullName = `${currentFirstName} ${form.lastName}`.trim();
+
+        const { error: nameError } = await supabase.auth.updateUser({
+          data: {
+            full_name: newFullName,
+            name: newFullName,
+          },
+        });
+
+        if (nameError) {
+          setError(nameError.message);
+        } else {
+          toast.success("Last name updated successfully!");
+          setFieldStates((prev) => ({ ...prev, lastName: false }));
+        }
+      } else {
+        toast.info("No changes were made to your last name.");
+      }
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred.");
+    } finally {
+      setSavingStates((prev) => ({ ...prev, lastName: false }));
+    }
+  };
+
+  const handleUpdateEmail = async () => {
+    setSavingStates((prev) => ({ ...prev, email: true }));
+    setError("");
+
+    try {
+      if (form.email !== user?.email) {
+        // Add email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(form.email)) {
+          setError("Please enter a valid email address.");
+          return;
+        }
+
+        const { error: emailError } = await supabase.auth.updateUser({
+          email: form.email,
+        });
+
         if (emailError) {
           if (emailError.message.toLowerCase().includes("already registered")) {
             setError("That email is already in use by another account.");
           } else {
             setError(emailError.message);
           }
-          setIsSaving(false);
-          return;
-        }
-        
-        updatedItems.push("email");
-        toast.success("Email update initiated! Check your new email for verification.");
-      }
-
-      // Update password if provided
-      if (form.password) {
-        const { error: pwError } = await supabase.auth.updateUser({ 
-          password: form.password 
-        });
-        
-        if (pwError) {
-          setError(pwError.message);
-          setIsSaving(false);
-          return;
-        }
-        
-        updatedItems.push("password");
-        toast.success("Password updated successfully!");
-      }
-
-      // Update name/profile data
-      if (form.name !== user?.name) {
-        const { error: nameError } = await supabase.auth.updateUser({ 
-          data: { 
-            full_name: form.name, 
-            name: form.name 
-          } 
-        });
-        
-        if (nameError) {
-          console.warn("Name update error:", nameError);
         } else {
-          updatedItems.push("name");
-          toast.success("Profile name updated successfully!");
+          toast.success(
+            "Email update initiated! Check your new email for verification.",
+          );
+          setFieldStates((prev) => ({ ...prev, email: false }));
         }
+      } else {
+        toast.info("No changes were made to your email.");
       }
-
-      // Reset password fields after successful update
-      setForm(f => ({ ...f, password: "", rePassword: "" }));
-      
-      if (updatedItems.length === 0) {
-        toast.info("No changes were made to your profile.");
-      }
-      
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred.");
-      toast.error("Failed to update profile. Please try again.");
+    } finally {
+      setSavingStates((prev) => ({ ...prev, email: false }));
+    }
+  };
+
+  const handleUpdatePhone = async () => {
+    setSavingStates((prev) => ({ ...prev, phone: true }));
+    setError("");
+
+    try {
+      const currentPhone = user?.phone || user?.user_metadata?.phone || "";
+      if (form.phone !== currentPhone) {
+        // Add phone validation (basic format check)
+        const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+        if (
+          form.phone &&
+          !phoneRegex.test(form.phone.replace(/[\s\-\(\)]/g, ""))
+        ) {
+          setError("Please enter a valid phone number.");
+          return;
+        }
+
+        const { error: phoneError } = await supabase.auth.updateUser({
+          phone: form.phone,
+          data: {
+            phone: form.phone,
+          },
+        });
+
+        if (phoneError) {
+          setError(phoneError.message);
+        } else {
+          toast.success("Phone number updated successfully!");
+          setFieldStates((prev) => ({ ...prev, phone: false }));
+        }
+      } else {
+        toast.info("No changes were made to your phone number.");
+      }
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred.");
+    } finally {
+      setSavingStates((prev) => ({ ...prev, phone: false }));
+    }
+  };
+
+  const handlePasswordChangeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setIsSaving(true);
+
+    if (!validatePasswordForm()) {
+      setIsSaving(false);
+      return;
+    }
+
+    try {
+      // First verify current password by attempting to sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user?.email || "",
+        password: form.currentPassword,
+      });
+
+      if (signInError) {
+        setError("Current password is incorrect.");
+        setIsSaving(false);
+        return;
+      }
+
+      // If current password is correct, update to new password
+      const { error: pwError } = await supabase.auth.updateUser({
+        password: form.password,
+      });
+
+      if (pwError) {
+        setError(pwError.message);
+        setIsSaving(false);
+        return;
+      }
+
+      toast.success("Password updated successfully!");
+      setShowPasswordChangeModal(false);
+      setForm((f) => ({
+        ...f,
+        currentPassword: "",
+        password: "",
+        rePassword: "",
+      }));
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred.");
     } finally {
       setIsSaving(false);
     }
   };
 
-  const tabs = [
-    { id: 'profile', label: 'Profile', icon: User },
-    { id: 'security', label: 'Password', icon: Shield },
-  ];
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    console.log("📝 Input change:", { field: name, value, currentForm: form });
+    setForm({ ...form, [name]: value });
+  };
 
-  const isPasswordUpdateInvalid =
-      !!form.password && (form.password.length < 6 || form.password !== form.rePassword);
+  const validatePasswordForm = () => {
+    if (!form.currentPassword) {
+      setError("Please enter your current password.");
+      return false;
+    }
 
+    if (!form.password) {
+      setError("Please enter a new password.");
+      return false;
+    }
+
+    if (form.password.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return false;
+    }
+
+    if (form.password !== form.rePassword) {
+      setError("Passwords do not match.");
+      return false;
+    }
+
+    return true;
+  };
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-900 text-white">
+      <div className="min-h-screen text-white relative">
+        {/* Brand Background Gradient */}
+        <div
+          className="fixed inset-0"
+          style={{
+            background: `
+              linear-gradient(
+                200deg,
+                rgb(249 115 22) 0%,
+                rgb(194 65 12) 20%,
+                black 45%,
+                black 100%    
+              )
+            `,
+          }}
+        ></div>
+
         {/* Header */}
-        <nav className="fixed top-0 w-full z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
+        <nav className="fixed top-0 w-full z-50 bg-black/20 backdrop-blur-md">
           <div className="max-w-7xl mx-auto px-4">
-            <div className="flex items-center justify-between h-16">
+            <div className="flex items-center justify-between h-20">
               <div className="flex items-center space-x-4">
-                <button
+                <Button
                   onClick={() => navigate("/")}
-                  className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors"
+                  className="flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm bg-black/20 backdrop-blur-md border border-brand-500 hover:bg-white/20"
                 >
-                  <ArrowLeft className="w-5 h-5" />
-                  <span>Back to Home</span>
-                </button>
+                  <ArrowLeft className="w-4 h-4" />
+                  Back to Home
+                </Button>
               </div>
-              
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 bg-clip-text text-transparent">
+
+              <span className="text-2xl font-bold bg-gradient-to-r from-brand-400 via-brand-500 to-brand-600 bg-clip-text text-transparent">
                 Settings
               </span>
-              
+
               <Button
                 onClick={handleLogout}
-                variant="outline"
-                className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
+                className="flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm bg-black/20 backdrop-blur-md border border-brand-500 hover:bg-white/20"
               >
-                <LogOut className="w-4 h-4 mr-2" />
+                <LogOut className="w-4 h-4" />
                 Sign Out
               </Button>
             </div>
           </div>
         </nav>
 
-        <div className="pt-20 max-w-4xl mx-auto px-4 py-8">
-          {/* Tab Navigation */}
-          <div className="flex space-x-1 mb-8 bg-gray-800 rounded-lg p-1">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-all flex-1 justify-center ${
-                    activeTab === tab.id
-                      ? 'bg-purple-600 text-white'
-                      : 'text-gray-400 hover:text-white hover:bg-gray-700'
-                  }`}
+        <div className="pt-24 max-w-4xl mx-auto px-4 py-8 relative z-10">
+          <Card className="bg-black/40 border-white/20 backdrop-blur-md">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-4 text-white">
+                <Avatar className="h-16 w-16 ring-2 ring-white/10">
+                  <AvatarImage
+                    src={
+                      user?.user_metadata?.avatar_url ||
+                      user?.user_metadata?.picture
+                    }
+                    alt={user?.name || "Profile"}
+                    className="object-cover"
+                  />
+                  <AvatarFallback className="bg-gradient-to-br from-brand-400 to-brand-600 text-white antialiased">
+                    <User className="w-8 h-8" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col">
+                  <span className="text-xl">Profile Settings</span>
+                  <span className="text-sm text-white/70">
+                    {user?.name || "User"}
+                  </span>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {error && (
+                <div className="bg-red-900/30 border border-red-400/50 rounded-lg p-3 backdrop-blur-sm">
+                  <p className="text-red-400 text-sm">{error}</p>
+                </div>
+              )}
+
+              {/* First Name Field */}
+              <div className="flex flex-col md:flex-row md:items-end gap-4">
+                <div className="w-full md:flex-[0_0_50%]">
+                  <Label
+                    htmlFor="firstName"
+                    className="flex items-center space-x-2 text-white mb-2"
+                  >
+                    <User className="w-4 h-4" />
+                    <span>First Name</span>
+                  </Label>
+                  <Input
+                    id="firstName"
+                    name="firstName"
+                    value={form.firstName}
+                    onChange={handleInputChange}
+                    disabled={!fieldStates.firstName}
+                    className="bg-black/30 border-white/30 text-white disabled:opacity-50 backdrop-blur-sm placeholder:text-white/50"
+                    placeholder="Enter your first name"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handleFieldToggle("firstName")}
+                    className={`flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm w-[170px] ${
+                      fieldStates.firstName
+                        ? "bg-black/20 backdrop-blur-md border border-brand-500 hover:bg-white/20"
+                        : "bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 hover:from-brand-700 hover:via-brand-800 hover:to-brand-900"
+                    }`}
+                  >
+                    {fieldStates.firstName ? "Cancel" : "Change First Name"}
+                  </Button>
+                  {fieldStates.firstName && (
+                    <Button
+                      onClick={handleUpdateFirstName}
+                      disabled={savingStates.firstName}
+                      className="flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm bg-brand-500 hover:bg-brand-600 whitespace-nowrap"
+                    >
+                      {savingStates.firstName ? "Saving..." : "Save changes"}
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Last Name Field */}
+              <div className="flex flex-col md:flex-row md:items-end gap-4">
+                <div className="w-full md:flex-[0_0_50%]">
+                  <Label
+                    htmlFor="lastName"
+                    className="flex items-center space-x-2 text-white mb-2"
+                  >
+                    <User className="w-4 h-4" />
+                    <span>Last Name</span>
+                  </Label>
+                  <Input
+                    id="lastName"
+                    name="lastName"
+                    value={form.lastName}
+                    onChange={handleInputChange}
+                    disabled={!fieldStates.lastName}
+                    className="bg-black/30 border-white/30 text-white disabled:opacity-50 backdrop-blur-sm placeholder:text-white/50"
+                    placeholder="Enter your last name"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handleFieldToggle("lastName")}
+                    className={`flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm w-[170px] ${
+                      fieldStates.lastName
+                        ? "bg-black/20 backdrop-blur-md border border-brand-500 hover:bg-white/20"
+                        : "bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 hover:from-brand-700 hover:via-brand-800 hover:to-brand-900"
+                    }`}
+                  >
+                    {fieldStates.lastName ? "Cancel" : "Change Last Name"}
+                  </Button>
+                  {fieldStates.lastName && (
+                    <Button
+                      onClick={handleUpdateLastName}
+                      disabled={savingStates.lastName}
+                      className="flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm bg-brand-500 hover:bg-brand-600 whitespace-nowrap"
+                    >
+                      {savingStates.lastName ? "Saving..." : "Save changes"}
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Email Field */}
+              <div className="flex flex-col md:flex-row md:items-end gap-4">
+                <div className="w-full md:flex-[0_0_50%]">
+                  <Label
+                    htmlFor="email"
+                    className="flex items-center space-x-2 text-white mb-2"
+                  >
+                    <Mail className="w-4 h-4" />
+                    <span>Email Address</span>
+                  </Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={form.email}
+                    onChange={handleInputChange}
+                    disabled={!fieldStates.email}
+                    className="bg-black/30 border-white/30 text-white disabled:opacity-50 backdrop-blur-sm placeholder:text-white/50"
+                    placeholder="Enter your email"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handleFieldToggle("email")}
+                    className={`flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm w-[190px] ${
+                      fieldStates.email
+                        ? "bg-black/20 backdrop-blur-md border border-brand-500 hover:bg-white/20"
+                        : "bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 hover:from-brand-700 hover:via-brand-800 hover:to-brand-900"
+                    }`}
+                  >
+                    {fieldStates.email ? "Cancel" : "Change Email Address"}
+                  </Button>
+                  {fieldStates.email && (
+                    <Button
+                      onClick={handleUpdateEmail}
+                      disabled={savingStates.email}
+                      className="flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm bg-brand-500 hover:bg-brand-600 whitespace-nowrap"
+                    >
+                      {savingStates.email ? "Saving..." : "Save changes"}
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Phone Number Field */}
+              <div className="flex flex-col md:flex-row md:items-end gap-4">
+                <div className="w-full md:flex-[0_0_50%]">
+                  <Label
+                    htmlFor="phone"
+                    className="flex items-center space-x-2 text-white mb-2"
+                  >
+                    <Phone className="w-4 h-4" />
+                    <span>Phone Number</span>
+                  </Label>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    value={form.phone}
+                    onChange={handleInputChange}
+                    disabled={!fieldStates.phone}
+                    className="bg-black/30 border-white/30 text-white disabled:opacity-50 backdrop-blur-sm placeholder:text-white/50"
+                    placeholder="Enter your phone number"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handleFieldToggle("phone")}
+                    className={`flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm w-[195px] ${
+                      fieldStates.phone
+                        ? "bg-black/20 backdrop-blur-md border border-brand-500 hover:bg-white/20"
+                        : "bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 hover:from-brand-700 hover:via-brand-800 hover:to-brand-900"
+                    }`}
+                  >
+                    {fieldStates.phone ? "Cancel" : "Change Phone Number"}
+                  </Button>
+                  {fieldStates.phone && (
+                    <Button
+                      onClick={handleUpdatePhone}
+                      disabled={savingStates.phone}
+                      className="flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm bg-brand-500 hover:bg-brand-600 whitespace-nowrap"
+                    >
+                      {savingStates.phone ? "Saving..." : "Save changes"}
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Password Field */}
+              <div className="flex flex-col md:flex-row md:items-end gap-4">
+                <div className="w-full md:flex-[0_0_50%]">
+                  <Label className="flex items-center space-x-2 text-white mb-2">
+                    <Lock className="w-4 h-4" />
+                    <span>Password</span>
+                  </Label>
+                  <Input
+                    type="password"
+                    value="••••••••••••"
+                    disabled
+                    className="bg-black/30 border-white/30 text-white disabled:opacity-50 backdrop-blur-sm placeholder:text-white/50"
+                    placeholder="Current password"
+                  />
+                </div>
+                <Button
+                  onClick={handlePasswordChangeClick}
+                  className="flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm w-[150px] bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 hover:from-brand-700 hover:via-brand-800 hover:to-brand-900"
                 >
-                  <Icon className="w-4 h-4" />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Profile Tab */}
-          {activeTab === 'profile' && (
-            <Card className="bg-gray-800 border-gray-700">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-white">
-                  <User className="w-5 h-5" />
-                  <span>Profile Information</span>
-                </CardTitle>
-                <CardDescription>
-                  Update your personal information and email address.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {error && (
-                  <div className="bg-red-900/20 border border-red-700 rounded-lg p-3">
-                    <p className="text-red-400 text-sm">{error}</p>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2 text-white">
-                    <Label htmlFor="name" className="flex items-center space-x-2">
-                      <User className="w-4 h-4" />
-                      <span>Full Name</span>
-                    </Label>
-                    <Input
-                      id="name"
-                      name="name"
-                      value={form.name}
-                      onChange={handleInputChange}
-                      className="bg-gray-700 border-gray-600 text-white"
-                      placeholder="Enter your full name"
-                    />
-                  </div>
-
-                  <div className="space-y-2 text-white">
-                    <Label htmlFor="email" className="flex items-center space-x-2">
-                      <Mail className="w-4 h-4" />
-                      <span>Email Address</span>
-                    </Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={form.email}
-                      onChange={handleInputChange}
-                      className="bg-gray-700 border-gray-600 text-white"
-                      placeholder="Enter your email"
-                    />
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-gray-700">
-                  <Button
-                    onClick={handleUpdateInfo}
-                    disabled={isSaving}
-                    className="bg-purple-600 hover:bg-purple-700"
-                  >
-                    {isSaving ? "Saving..." : "Update Profile"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Security Tab */}
-          {activeTab === 'security' && (
-            <Card className="bg-gray-800 border-gray-700 text-white">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Shield className="w-5 h-5" />
-                  <span>Password</span>
-                </CardTitle>
-                <CardDescription>
-                  Change your password.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {error && (
-                  <div className="bg-red-900/20 border border-red-700 rounded-lg p-3">
-                    <p className="text-red-400 text-sm">{error}</p>
-                  </div>
-                )}
-
-                <div className="space-y-4">
-                  {/* New Password Field */}
-                  <div className="space-y-2">
-                    <Label htmlFor="password" className="flex items-center space-x-2">
-                      <Lock className="w-4 h-4" />
-                      <span>New Password</span>
-                    </Label>
-                    <div className="relative">
-                      <Input
-                          id="password"
-                          name="password"
-                          type={showPassword ? "text" : "password"}
-                          value={form.password}
-                          onChange={handleInputChange}
-                          className="bg-gray-700 border-gray-600 text-white pr-10"
-                          placeholder="Enter new password"
-                      />
-                      <button
-                          type="button"
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-                          onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Confirm New Password Field */}
-                  <div className="space-y-2">
-                    <Label htmlFor="rePassword" className="flex items-center space-x-2">
-                      <Lock className="w-4 h-4" />
-                      <span>Confirm New Password</span>
-                    </Label>
-                    <div className="relative">
-                      <Input
-                          id="rePassword"
-                          name="rePassword"
-                          type={showRePassword ? "text" : "password"}
-                          value={form.rePassword}
-                          onChange={handleInputChange}
-                          className="bg-gray-700 border-gray-600 text-white pr-10"
-                          placeholder="Confirm new password"
-                      />
-                      <button
-                          type="button"
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-                          onClick={() => setShowRePassword(!showRePassword)}
-                      >
-                        {showRePassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Password rules */}
-                  <div className="text-xs text-gray-400 bg-gray-700/50 rounded-lg p-3">
-                    <p className="mb-1">Password requirements:</p>
-                    <ul className="list-disc list-inside space-y-1">
-                      <li>At least 6 characters long</li>
-                      <li>Leave empty to keep current password</li>
-                    </ul>
-                  </div>
-                </div>
-
-
-                <div className="pt-4 border-t border-gray-700">
-                  <Button
-                      onClick={handleUpdateInfo}
-                      disabled={isSaving || isPasswordUpdateInvalid}
-                      className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isSaving ? "Updating..." : "Confirm & Update Settings"}
-                  </Button>
-
-                  <p className="text-xs text-gray-400 mt-2">
-                    You'll be asked to confirm your current password before changes are applied.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                  Change Password
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Password Confirmation Modal */}
-        <Dialog open={showPasswordModal} onOpenChange={setShowPasswordModal}>
-          <DialogContent className="sm:max-w-md bg-gray-800 text-white border-gray-700">
+        {/* Password Change Modal */}
+        <Dialog
+          open={showPasswordChangeModal}
+          onOpenChange={setShowPasswordChangeModal}
+        >
+          <DialogContent className="sm:max-w-md bg-black/80 text-white border-brand-500 backdrop-blur-md">
             <DialogHeader>
               <DialogTitle className="flex items-center space-x-2">
-                <Shield className="w-5 h-5" />
-                <span>Confirm Your Identity</span>
+                <Lock className="w-5 h-5 text-brand-400" />
+                <span>Change Password</span>
               </DialogTitle>
             </DialogHeader>
-            
-            <form onSubmit={handlePasswordConfirm} className="space-y-4">
+
+            <form onSubmit={handlePasswordChangeSubmit} className="space-y-4">
+              {/* Current Password Field */}
               <div className="space-y-2">
-                <Label htmlFor="currentPassword">Current Password</Label>
-                <Input
-                  id="currentPassword"
-                  type="password"
-                  value={passwordPrompt}
-                  onChange={(e) => setPasswordPrompt(e.target.value)}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  placeholder="Enter your current password"
-                  autoFocus
-                />
+                <Label
+                  htmlFor="currentPassword"
+                  className="flex items-center space-x-2"
+                >
+                  <span>Current Password</span>
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="currentPassword"
+                    name="currentPassword"
+                    type={showCurrentPassword ? "text" : "password"}
+                    value={form.currentPassword}
+                    onChange={handleInputChange}
+                    className="bg-black/30 border-white/30 text-white pr-10 backdrop-blur-sm placeholder:text-white/50"
+                    placeholder="Enter current password"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  >
+                    {showCurrentPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
               </div>
-              
+
+              {/* New Password Field */}
+              <div className="space-y-2">
+                <Label
+                  htmlFor="newPassword"
+                  className="flex items-center space-x-2"
+                >
+                  <span>New Password</span>
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="newPassword"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    value={form.password}
+                    onChange={handleInputChange}
+                    className="bg-black/30 border-white/30 text-white pr-10 backdrop-blur-sm placeholder:text-white/50"
+                    placeholder="Enter new password"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm New Password Field */}
+              <div className="space-y-2">
+                <Label
+                  htmlFor="confirmNewPassword"
+                  className="flex items-center space-x-2"
+                >
+                  <span>Confirm New Password</span>
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="confirmNewPassword"
+                    name="rePassword"
+                    type={showRePassword ? "text" : "password"}
+                    value={form.rePassword}
+                    onChange={handleInputChange}
+                    className="bg-black/30 border-white/30 text-white pr-10 backdrop-blur-sm placeholder:text-white/50"
+                    placeholder="Confirm new password"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white"
+                    onClick={() => setShowRePassword(!showRePassword)}
+                  >
+                    {showRePassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Password rules */}
+              <div className="text-xs text-white/70 bg-black/30 rounded-lg p-3 backdrop-blur-sm">
+                <p className="mb-1">Password requirements:</p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Current password must be correct</li>
+                  <li>New password must be at least 6 characters long</li>
+                  <li>Both new password fields must match</li>
+                </ul>
+              </div>
+
               {error && (
-                <div className="text-red-400 text-sm bg-red-900/20 border border-red-700 rounded p-2">
+                <div className="text-red-400 text-sm bg-red-900/30 border border-red-400/50 rounded p-2 backdrop-blur-sm">
                   {error}
                 </div>
               )}
-              
+
               <div className="flex space-x-2">
                 <Button
                   type="button"
-                  variant="outline"
-                  onClick={() => setShowPasswordModal(false)}
-                  className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700"
+                  onClick={() => {
+                    setShowPasswordChangeModal(false);
+                    setForm((f) => ({
+                      ...f,
+                      currentPassword: "",
+                      password: "",
+                      rePassword: "",
+                    }));
+                    setError("");
+                  }}
+                  className="flex-1 flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm bg-black/20 backdrop-blur-md border border-brand-500 hover:bg-white/20"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  className="flex-1 bg-purple-600 hover:bg-purple-700"
+                  disabled={isSaving}
+                  className="flex-1 flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm bg-brand-500 hover:bg-brand-600"
                 >
-                  Confirm
+                  {isSaving ? "Updating..." : "Update Password"}
                 </Button>
               </div>
             </form>
