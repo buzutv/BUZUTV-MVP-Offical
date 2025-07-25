@@ -247,11 +247,11 @@ const Navbar = ({
 
           {/* User Authentication */}
           {isLoggedIn ? (
-            <DropdownMenu>
+            <DropdownMenu modal={false}>
               <DropdownMenuTrigger className="flex items-center text-white hover:text-gray-300 transition-colors  px-2 py-2">
                 <User className="w-6 h-6" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-gray-800 border-gray-700 text-white">
+              <DropdownMenuContent className="bg-black/20 backdrop-blur-md border border-white/10 text-white">
                 <DropdownMenuItem asChild>
                   <Link
                     to="/settings"
@@ -270,7 +270,7 @@ const Navbar = ({
                     </Link>
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuSeparator className="bg-gray-700" />
+                <DropdownMenuSeparator className="bg-white/10" />
                 <DropdownMenuItem
                   onClick={handleLogout}
                   className="flex items-center space-x-2 cursor-pointer"
