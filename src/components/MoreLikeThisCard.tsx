@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Play } from "lucide-react";
 import FullscreenPlayer from "./FullscreenPlayer";
 import MovieModal from "./MovieModal";
 import SeriesModal from "./SeriesModal";
@@ -84,13 +83,16 @@ const MoreLikeThisCard = ({ item }: { item: any }) => {
       )}
 
       <div className="relative flex-shrink-0 w-64 group rounded-lg group-hover:shadow-[0_0_15px_rgba(253,121,35,0.6)] transition-all duration-300">
-        <div className="relative overflow-hidden rounded-lg shadow-lg h-40 border border-transparent group-hover:border-brand-500 transition-all duration-300">
+        <div
+          className="relative overflow-hidden rounded-lg shadow-lg border-2 border-transparent group-hover:scale-105 group-hover:border-white group-hover:shadow-[0_0_15px_rgba(255,255,255,0.6)] transition-all duration-300"
+          style={{ aspectRatio: "16/9" }}
+        >
           <img
             src={item.posterUrl}
             alt={item.title}
             className="w-full h-full object-cover rounded-lg transform transition-transform duration-300 group-hover:scale-[1.1]"
           />
-          
+
           <div className="absolute inset-0 z-0 rounded-lg overflow-hidden pointer-events-none">
             <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/90 via-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -105,8 +107,7 @@ const MoreLikeThisCard = ({ item }: { item: any }) => {
           <button
             className="absolute inset-0 z-20"
             onClick={handleCardClick}
-          >
-          </button>
+          ></button>
         </div>
       </div>
 
