@@ -1,8 +1,11 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import SeriesCard from "@/components/SeriesCard";
 import MovieHoverRow from "@/components/MovieHoverRow";
 import HeroBanner from "@/components/HeroBanner";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import FilterBar from "@/components/FilterBar";
+import HomeRow from "@/components/HomeRow";
+import ContentGrid from "@/components/ContentGrid";
 import { useAppContent } from "@/hooks/useAppContent";
 import {
   Carousel,
@@ -18,15 +21,51 @@ import { useChannels } from "@/hooks/useChannels";
 import FullscreenPlayer from "@/components/FullscreenPlayer";
 
 const Series = () => {
-  const { seriesContent, isLoading } = useAppContent();
+  const { seriesContent, isLoading, content } = useAppContent();
   const [selectedSeries, setSelectedSeries] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fullscreenVideoUrl, setFullscreenVideoUrl] = useState("");
   const [fullscreenVideoTitle, setFullscreenVideoTitle] = useState("");
+  const [activeGenre, setActiveGenre] = useState("all");
   const { favoriteIds, addToFavorites, removeFromFavorites } =
     useUserFavorites();
-  const { content } = useContent();
+  const { content: rawContent } = useContent();
   const { channels } = useChannels();
+
+  // Get genres that actually have series content (excluding kids)
+  const availableSeriesGenres = React.useMemo(() => {
+    if (!seriesContent.all || seriesContent.all.length === 0) {
+      return ["All"];
+    }
+
+    const seriesGenres = [...new Set(
+      seriesContent.all
+        .map(series => series.genre)
+        .filter(Boolean)
+    )];
+
+    return ["All", ...seriesGenres.sort()];
+  }, [seriesContent.all]);
+
+  const handleGenreChange = (genre: string) => {
+    setActiveGenre(genre);
+  };
+
+  // Get filtered series based on active genre
+  const getFilteredSeries = () => {
+    if (activeGenre === "all") {
+      return seriesContent.all;
+    }
+    return seriesContent.all.filter(
+      (series) => series.genre.toLowerCase() === activeGenre.toLowerCase()
+    );
+  };
+
+  const filteredSeries = getFilteredSeries();
+
+  const handleHomeRowCardClick = () => {
+    return false; // Series page doesn't need login modal for card clicks
+  };
 
   if (isLoading) {
     return (
@@ -74,7 +113,20 @@ const Series = () => {
   return (
     <ProtectedRoute>
       {/* Fixed background gradient */}
-      <div className="fixed inset-0 bg-gradient-to-t from-black via-brand-800 to-brand-500"></div>
+      <div
+        className="fixed inset-0"
+        style={{
+          background: `
+      linear-gradient(
+        200deg,
+        rgb(249 115 22) 0%,
+        rgb(194 65 12) 20%,
+        black 45%,
+        black 100%    
+      )
+    `,
+        }}
+      ></div>
 
       <div className="relative min-h-screen text-white">
         {/* Removed Navbar */}
@@ -99,7 +151,7 @@ const Series = () => {
                       Top Ranked Series
                     </h2>
                     <div
-                      className="flex flex-col space-y-2 w-full"
+                      className="flex flex-col space-y-3 w-full"
                       style={{ height: "calc(60vh - 2rem)" }}
                     >
                       {seriesContent.topRanked
@@ -107,12 +159,12 @@ const Series = () => {
                         .map((show, index) => (
                           <div
                             key={show.id}
-                            className="relative flex items-center bg-gray-800 rounded-lg shadow-lg p-2 group border-2 border-transparent hover:border-blue-500 hover:border-opacity-80 min-h-[60px] h-[calc((60vh-2rem)/5-0.5rem)] cursor-pointer"
+                            className="relative flex items-center bg-black/40 backdrop-blur-md rounded-lg shadow-lg p-2 group border-2 border-white/10 hover:border-brand-500/50 min-h-[60px] h-[calc((60vh-2rem)/5-0.5rem)] cursor-pointer transition-all duration-300"
                             onClick={() => setSelectedSeries(show)}
                           >
                             {/* Ranking Badge */}
                             <div className="absolute -left-6 top-1/2 -translate-y-1/2 z-10">
-                              <span className="bg-blue-600 text-white text-base font-bold px-3 py-1 rounded-full shadow-lg border-4 border-gray-900">
+                              <span className="bg-[#131313] text-white text-base font-bold px-3 py-1 rounded-full border-2 border-brand-500/50 shadow-lg backdrop-blur-sm">
                                 #{index + 1}
                               </span>
                             </div>
@@ -120,7 +172,7 @@ const Series = () => {
                             <img
                               src={show.posterUrl}
                               alt={show.title}
-                              className="w-16 h-20 object-cover rounded-lg mr-3 flex-shrink-0 border-2 border-gray-700"
+                              className="w-16 h-20 object-cover rounded-lg mr-3 flex-shrink-0 border-1 border-brand-500/10 shadow-lg"
                             />
                             {/* Info */}
                             <div className="flex-1 min-w-0">
@@ -135,9 +187,11 @@ const Series = () => {
                                   {show.rating}
                                 </span>
                               </div>
-                              <span className="inline-block bg-black/60 text-xs text-white px-2 py-0.5 rounded">
-                                {show.genre}
-                              </span>
+                              <div className="flex justify-end">
+                                <span className="inline-block bg-black/60 text-xs text-white px-2 py-0.5 rounded">
+                                  {show.genre}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -146,19 +200,29 @@ const Series = () => {
                       (() => {
                         // Match SeriesCard modal logic
                         const isSaved = favoriteIds.includes(selectedSeries.id);
-                        const contentItem = content.find(
+                        const contentItem = rawContent.find(
                           (item) => item.id === selectedSeries.id,
                         );
                         const videoUrl = contentItem?.video_url;
                         const channel = channels.find(
                           (ch) => ch.id === selectedSeries.channelId,
                         );
-                        const recommendedContent = content
+                        console.log('🐛 [Series Page] Debug More Like This filtering:');
+                        console.log('Selected series:', selectedSeries.title, 'ID:', selectedSeries.id, 'Genre:', selectedSeries.genre);
+                        console.log('Total rawContent before filtering:', rawContent.length);
+                        
+                        const recommendedContent = rawContent
                           .filter(
-                            (item) =>
-                              item.id !== selectedSeries.id &&
-                              (item.genre === selectedSeries.genre ||
-                                item.channel_id === selectedSeries.channelId),
+                            (item) => {
+                              const passesId = item.id !== selectedSeries.id;
+                              const passesKids = !item.is_kids;
+                              const passesGenre = item.genre === selectedSeries.genre ||
+                                item.channel_id === selectedSeries.channelId;
+                              
+                              console.log(`[Series Page] Item: ${item.title} | ID match: ${passesId} | Not kids: ${passesKids} (is_kids: ${item.is_kids}) | Genre/Channel match: ${passesGenre}`);
+                              
+                              return passesId && passesKids && passesGenre;
+                            }
                           )
                           .slice(0, 6);
                         const handleSaveModal = () => {
@@ -210,127 +274,175 @@ const Series = () => {
                 </div>
               </div>
 
-              <div className="max-w-full pb-4">
-                <SeriesRow
-                  title="New TV Shows"
-                  series={
-                    seriesContent.new.length > 0
-                      ? seriesContent.new
-                      : seriesContent.all.slice(0, 20)
-                  }
+              {/* Filter Bar */}
+              <div className="mb-4 px-6">
+                <FilterBar
+                  activeGenre={activeGenre}
+                  onGenreChange={handleGenreChange}
+                  availableGenres={availableSeriesGenres}
                 />
-                <SeriesRow
-                  title="Continue Watching"
-                  series={
-                    seriesContent.recommended.length > 0
-                      ? seriesContent.recommended.slice(0, 15)
-                      : seriesContent.all.slice(5, 20)
-                  }
-                />
-                <SeriesRow
-                  title="Recommended"
-                  series={
-                    seriesContent.recommended.length > 0
-                      ? seriesContent.recommended
-                      : seriesContent.all.slice(10, 30)
-                  }
-                />
-                <SeriesRow
-                  title="Comedy"
-                  series={
-                    seriesContent.byGenre.Comedy?.length > 0
-                      ? seriesContent.byGenre.Comedy
-                      : seriesContent.all
-                          .filter((s) =>
-                            s.genre?.toLowerCase().includes("comedy"),
-                          )
-                          .slice(0, 20) || seriesContent.all.slice(15, 35)
-                  }
-                />
-                <SeriesRow
-                  title="Drama"
-                  series={
-                    seriesContent.byGenre.Drama?.length > 0
-                      ? seriesContent.byGenre.Drama
-                      : seriesContent.all
-                          .filter((s) =>
-                            s.genre?.toLowerCase().includes("drama"),
-                          )
-                          .slice(0, 20) || seriesContent.all.slice(20, 40)
-                  }
-                />
-                <SeriesRow
-                  title="Sports"
-                  series={
-                    seriesContent.byGenre.Sports?.length > 0
-                      ? seriesContent.byGenre.Sports
-                      : seriesContent.all
-                          .filter((s) =>
-                            s.genre?.toLowerCase().includes("sport"),
-                          )
-                          .slice(0, 20) || seriesContent.all.slice(25, 45)
-                  }
-                />
-                <SeriesRow
-                  title="Romance"
-                  series={
-                    seriesContent.byGenre.Romance?.length > 0
-                      ? seriesContent.byGenre.Romance
-                      : seriesContent.all
-                          .filter((s) =>
-                            s.genre?.toLowerCase().includes("romance"),
-                          )
-                          .slice(0, 20) || seriesContent.all.slice(30, 50)
-                  }
-                />
-                <SeriesRow
-                  title="Action"
-                  series={
-                    seriesContent.byGenre.Action?.length > 0
-                      ? seriesContent.byGenre.Action
-                      : seriesContent.all
-                          .filter((s) =>
-                            s.genre?.toLowerCase().includes("action"),
-                          )
-                          .slice(0, 20) || seriesContent.all.slice(35, 55)
-                  }
-                />
-                <SeriesRow
-                  title="Lifestyle"
-                  series={
-                    seriesContent.byGenre.Lifestyle?.length > 0
-                      ? seriesContent.byGenre.Lifestyle
-                      : seriesContent.all
-                          .filter((s) =>
-                            s.genre?.toLowerCase().includes("lifestyle"),
-                          )
-                          .slice(0, 20) || seriesContent.all.slice(40, 60)
-                  }
-                />
-                <SeriesRow
-                  title="Documentary"
-                  series={
-                    seriesContent.byGenre.Documentary?.length > 0
-                      ? seriesContent.byGenre.Documentary
-                      : seriesContent.all
-                          .filter((s) =>
-                            s.genre?.toLowerCase().includes("documentary"),
-                          )
-                          .slice(0, 20) || seriesContent.all.slice(45, 65)
-                  }
-                />
-                <SeriesRow
-                  title="Informational"
-                  series={
-                    seriesContent.byGenre.Informational?.length > 0
-                      ? seriesContent.byGenre.Informational
-                      : seriesContent.all
-                          .filter((s) =>
-                            s.genre?.toLowerCase().includes("informational"),
-                          )
-                          .slice(0, 20) || seriesContent.all.slice(50, 70)
-                  }
-                />
+              </div>
+
+              {/* Content Sections */}
+              <div className="max-w-full px-6">
+                {activeGenre === "all" ? (
+                  // Show all series rows when "All" is selected
+                  <>
+                    {/* New TV Shows - Sort by created_at (newest first) */}
+                    {(() => {
+                      const newSeries = seriesContent.all
+                        .filter((series) => series.created_at)
+                        .sort(
+                          (a, b) =>
+                            new Date(b.created_at).getTime() -
+                            new Date(a.created_at).getTime(),
+                        )
+                        .slice(0, 8);
+
+                      return (
+                        newSeries.length > 0 && (
+                          <HomeRow
+                            title="New TV Shows"
+                            items={newSeries}
+                            onCardClick={handleHomeRowCardClick}
+                          />
+                        )
+                      );
+                    })()}
+
+                    {/* Continue Watching - Show trending series */}
+                    {seriesContent.trending.length > 0 && (
+                      <HomeRow
+                        title="Continue Watching"
+                        items={seriesContent.trending.slice(0, 8)}
+                        onCardClick={handleHomeRowCardClick}
+                      />
+                    )}
+
+                    {/* Recommended */}
+                    {seriesContent.recommended.length > 0 && (
+                      <HomeRow
+                        title="Recommended"
+                        items={seriesContent.recommended.slice(0, 8)}
+                        onCardClick={handleHomeRowCardClick}
+                      />
+                    )}
+
+                    {/* Comedy */}
+                    {seriesContent.byGenre.Comedy && seriesContent.byGenre.Comedy.length > 0 && (
+                      <HomeRow
+                        title="Comedy"
+                        items={seriesContent.byGenre.Comedy.slice(0, 8)}
+                        onCardClick={handleHomeRowCardClick}
+                      />
+                    )}
+
+                    {/* Drama */}
+                    {seriesContent.byGenre.Drama && seriesContent.byGenre.Drama.length > 0 && (
+                      <HomeRow
+                        title="Drama"
+                        items={seriesContent.byGenre.Drama.slice(0, 8)}
+                        onCardClick={handleHomeRowCardClick}
+                      />
+                    )}
+
+                    {/* Sports */}
+                    {seriesContent.byGenre.Sports && seriesContent.byGenre.Sports.length > 0 && (
+                      <HomeRow
+                        title="Sports"
+                        items={seriesContent.byGenre.Sports.slice(0, 8)}
+                        onCardClick={handleHomeRowCardClick}
+                      />
+                    )}
+
+                    {/* Romance */}
+                    {seriesContent.byGenre.Romance && seriesContent.byGenre.Romance.length > 0 && (
+                      <HomeRow
+                        title="Romance"
+                        items={seriesContent.byGenre.Romance.slice(0, 8)}
+                        onCardClick={handleHomeRowCardClick}
+                      />
+                    )}
+
+                    {/* Action */}
+                    {seriesContent.byGenre.Action && seriesContent.byGenre.Action.length > 0 && (
+                      <HomeRow
+                        title="Action"
+                        items={seriesContent.byGenre.Action.slice(0, 8)}
+                        onCardClick={handleHomeRowCardClick}
+                      />
+                    )}
+
+                    {/* Lifestyle */}
+                    {seriesContent.byGenre.Lifestyle && seriesContent.byGenre.Lifestyle.length > 0 && (
+                      <HomeRow
+                        title="Lifestyle"
+                        items={seriesContent.byGenre.Lifestyle.slice(0, 8)}
+                        onCardClick={handleHomeRowCardClick}
+                      />
+                    )}
+
+                    {/* Documentary */}
+                    {seriesContent.byGenre.Documentary && seriesContent.byGenre.Documentary.length > 0 && (
+                      <HomeRow
+                        title="Documentary"
+                        items={seriesContent.byGenre.Documentary.slice(0, 8)}
+                        onCardClick={handleHomeRowCardClick}
+                      />
+                    )}
+
+                    {/* Informational */}
+                    {seriesContent.byGenre.Informational && seriesContent.byGenre.Informational.length > 0 && (
+                      <HomeRow
+                        title="Informational"
+                        items={seriesContent.byGenre.Informational.slice(0, 8)}
+                        onCardClick={handleHomeRowCardClick}
+                      />
+                    )}
+                  </>
+                ) : (
+                  // Show filtered content for specific genre
+                  <>
+                    {filteredSeries.length > 0 && (
+                      <>
+                        {/* New content row */}
+                        <HomeRow
+                          title="New TV Shows"
+                          items={filteredSeries.slice(0, 8)}
+                          onCardClick={handleHomeRowCardClick}
+                        />
+
+                        {/* Recommended row */}
+                        <HomeRow
+                          title="Recommended"
+                          items={filteredSeries.slice(2, 10)}
+                          onCardClick={handleHomeRowCardClick}
+                        />
+                      </>
+                    )}
+
+                    {/* Grid Layout for all filtered series */}
+                    <div className="mt-8 pl-4">
+                      <h2 className="text-xl font-semibold mb-4">All Series</h2>
+
+                      {filteredSeries.length > 0 ? (
+                        <ContentGrid
+                          items={filteredSeries}
+                          onCardClick={handleHomeRowCardClick}
+                        />
+                      ) : (
+                        <div className="text-center py-16">
+                          <h3 className="text-xl font-bold mb-2">
+                            No series found
+                          </h3>
+                          <p className="text-gray-400">
+                            No {activeGenre} series available at the moment
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             </>
           ) : (

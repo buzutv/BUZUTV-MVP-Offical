@@ -1,9 +1,11 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import OptimizedMovieCard from "@/components/OptimizedMovieCard";
 import MovieHoverRow from "@/components/MovieHoverRow";
-import ContentRow from "@/components/ContentRow";
 import HeroBanner from "@/components/HeroBanner";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import FilterBar from "@/components/FilterBar";
+import HomeRow from "@/components/HomeRow";
+import ContentGrid from "@/components/ContentGrid";
 import { useAppContent } from "@/hooks/useAppContent";
 import {
   Carousel,
@@ -19,11 +21,12 @@ import { useChannels } from "@/hooks/useChannels";
 import FullscreenPlayer from "@/components/FullscreenPlayer";
 
 const Movies = () => {
-  const { movieContent, isLoading } = useAppContent();
+  const { movieContent, isLoading, content } = useAppContent();
   const [selectedMovie, setSelectedMovie] = useState(null);
+  const [activeGenre, setActiveGenre] = useState("all");
 
   // Debug log for Movies page content
-  console.log('🎬 [Movies] Page content loaded:', {
+  console.log("🎬 [Movies] Page content loaded:", {
     isLoading,
     totalMovies: movieContent.all.length,
     featuredMovies: movieContent.featured.length,
@@ -31,18 +34,53 @@ const Movies = () => {
     topRankedMovies: movieContent.topRanked.length,
     recommendedMovies: movieContent.recommended.length,
     newMovies: movieContent.new.length,
-    genreBreakdown: Object.entries(movieContent.byGenre).map(([genre, movies]) => ({
-      genre,
-      count: movies.length,
-      titles: movies.slice(0, 3).map(m => m.title)
-    })).filter(g => g.count > 0),
-    sampleMovieTitles: movieContent.all.slice(0, 5).map(m => m.title)
+    genreBreakdown: Object.entries(movieContent.byGenre)
+      .map(([genre, movies]) => ({
+        genre,
+        count: movies.length,
+        titles: movies.slice(0, 3).map((m) => m.title),
+      }))
+      .filter((g) => g.count > 0),
+    sampleMovieTitles: movieContent.all.slice(0, 5).map((m) => m.title),
   });
   const { favoriteIds, addToFavorites, removeFromFavorites } =
     useUserFavorites();
-  const { content } = useContent();
+  const { content: rawContent } = useContent();
   const { channels } = useChannels();
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Get genres that actually have movie content (excluding kids)
+  const availableMovieGenres = React.useMemo(() => {
+    if (!movieContent.all || movieContent.all.length === 0) {
+      return ["All"];
+    }
+
+    const movieGenres = [
+      ...new Set(movieContent.all.map((movie) => movie.genre).filter(Boolean)),
+    ];
+
+    return ["All", ...movieGenres.sort()];
+  }, [movieContent.all]);
+
+  const handleGenreChange = (genre: string) => {
+    setActiveGenre(genre);
+  };
+
+  // Get filtered movies based on active genre
+  const getFilteredMovies = () => {
+    if (activeGenre === "all") {
+      return movieContent.all;
+    }
+    return movieContent.all.filter(
+      (movie) => movie.genre.toLowerCase() === activeGenre.toLowerCase(),
+    );
+  };
+
+  const filteredMovies = getFilteredMovies();
+
+  const handleHomeRowCardClick = () => {
+    return false; // Movies page doesn't need login modal for card clicks
+  };
 
   // Add click logic for Top Ranked
   const handleCardClick = (movie) => {
@@ -95,7 +133,20 @@ const Movies = () => {
   return (
     <ProtectedRoute>
       {/* Fixed background gradient */}
-      <div className="fixed inset-0 bg-gradient-to-t from-black via-brand-800 to-brand-500"></div>
+      <div
+        className="fixed inset-0"
+        style={{
+          background: `
+      linear-gradient(
+        200deg,
+        rgb(249 115 22) 0%,
+        rgb(194 65 12) 20%,
+        black 45%,
+        black 100%    
+      )
+    `,
+        }}
+      ></div>
 
       <div className="relative min-h-screen text-white">
         {/* Navigation is now global, do not render Navbar here */}
@@ -116,7 +167,7 @@ const Movies = () => {
                       Top Ranked Movies
                     </h2>
                     <div
-                      className="flex flex-col space-y-2 w-full"
+                      className="flex flex-col space-y-3 w-full"
                       style={{ height: "calc(60vh - 2rem)" }}
                     >
                       {movieContent.topRanked
@@ -124,12 +175,12 @@ const Movies = () => {
                         .map((movie, index) => (
                           <div
                             key={movie.id}
-                            className="relative flex items-center bg-gray-800 rounded-lg shadow-lg p-2 group border-2 border-transparent hover:border-blue-500 hover:border-opacity-80 min-h-[60px] h-[calc((60vh-2rem)/5-0.5rem)] cursor-pointer"
+                            className="relative flex items-center bg-black/40 backdrop-blur-md rounded-lg shadow-lg p-2 group border-2 border-white/10 hover:border-brand-500/50 min-h-[60px] h-[calc((60vh-2rem)/5-0.5rem)] cursor-pointer transition-all duration-300"
                             onClick={() => handleCardClick(movie)}
                           >
                             {/* Ranking Badge */}
                             <div className="absolute -left-6 top-1/2 -translate-y-1/2 z-10">
-                              <span className="bg-blue-600 text-white text-base font-bold px-3 py-1 rounded-full shadow-lg border-4 border-gray-900">
+                              <span className="bg-[#131313] text-white text-base font-bold px-3 py-1 rounded-full border-2 border-brand-500/50 shadow-lg backdrop-blur-sm">
                                 #{index + 1}
                               </span>
                             </div>
@@ -137,7 +188,7 @@ const Movies = () => {
                             <img
                               src={movie.posterUrl}
                               alt={movie.title}
-                              className="w-16 h-20 object-cover rounded-lg mr-3 flex-shrink-0 border-2 border-gray-700"
+                              className="w-16 h-20 object-cover rounded-lg mr-3 flex-shrink-0 border-1 border-brand-500/10 shadow-lg"
                             />
                             {/* Info */}
                             <div className="flex-1 min-w-0">
@@ -152,9 +203,11 @@ const Movies = () => {
                                   {movie.rating}
                                 </span>
                               </div>
-                              <span className="inline-block bg-black/60 text-xs text-white px-2 py-0.5 rounded">
-                                {movie.genre}
-                              </span>
+                              <div className="flex justify-end">
+                                <span className="inline-block bg-black/60 text-xs text-white px-2 py-0.5 rounded">
+                                  {movie.genre}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -163,19 +216,29 @@ const Movies = () => {
                       (() => {
                         // Match MovieCard modal logic
                         const isSaved = favoriteIds.includes(selectedMovie.id);
-                        const contentItem = content.find(
+                        const contentItem = rawContent.find(
                           (item) => item.id === selectedMovie.id,
                         );
                         const videoUrl = contentItem?.video_url;
                         const channel = channels.find(
                           (ch) => ch.id === selectedMovie.channelId,
                         );
-                        const recommendedContent = content
+                        console.log('🐛 [Movies Page] Debug More Like This filtering:');
+                        console.log('Selected movie:', selectedMovie.title, 'ID:', selectedMovie.id, 'Genre:', selectedMovie.genre);
+                        console.log('Total rawContent before filtering:', rawContent.length);
+                        
+                        const recommendedContent = rawContent
                           .filter(
-                            (item) =>
-                              item.id !== selectedMovie.id &&
-                              (item.genre === selectedMovie.genre ||
-                                item.channel_id === selectedMovie.channelId),
+                            (item) => {
+                              const passesId = item.id !== selectedMovie.id;
+                              const passesKids = !item.is_kids;
+                              const passesGenre = item.genre === selectedMovie.genre ||
+                                item.channel_id === selectedMovie.channelId;
+                              
+                              console.log(`[Movies Page] Item: ${item.title} | ID match: ${passesId} | Not kids: ${passesKids} (is_kids: ${item.is_kids}) | Genre/Channel match: ${passesGenre}`);
+                              
+                              return passesId && passesKids && passesGenre;
+                            }
                           )
                           .slice(0, 6);
                         const handleSaveModal = () => {
@@ -222,52 +285,183 @@ const Movies = () => {
                 </div>
               </div>
 
-              {/* Content Rows */}
-              <div className="max-w-full p-4 px-8">
-                <ContentRow
-                  title="New Movies"
-                  movies={movieContent.new.length > 0 ? movieContent.new : movieContent.all.slice(0, 20)}
+              {/* Filter Bar */}
+              <div className="mb-4 px-6">
+                <FilterBar
+                  activeGenre={activeGenre}
+                  onGenreChange={handleGenreChange}
+                  availableGenres={availableMovieGenres}
                 />
-                <ContentRow
-                  title="Continue Watching"
-                  movies={movieContent.recommended.length > 0 ? movieContent.recommended.slice(0, 15) : movieContent.all.slice(5, 20)}
-                />
-                <ContentRow
-                  title="Recommended"
-                  movies={movieContent.recommended.length > 0 ? movieContent.recommended : movieContent.all.slice(10, 30)}
-                />
-                <ContentRow
-                  title="Comedy"
-                  movies={movieContent.byGenre.Comedy?.length > 0 ? movieContent.byGenre.Comedy : movieContent.all.filter(m => m.genre?.toLowerCase().includes('comedy')).slice(0, 20) || movieContent.all.slice(15, 35)}
-                />
-                <ContentRow
-                  title="Drama"
-                  movies={movieContent.byGenre.Drama?.length > 0 ? movieContent.byGenre.Drama : movieContent.all.filter(m => m.genre?.toLowerCase().includes('drama')).slice(0, 20) || movieContent.all.slice(20, 40)}
-                />
-                <ContentRow
-                  title="Sports"
-                  movies={movieContent.byGenre.Sports?.length > 0 ? movieContent.byGenre.Sports : movieContent.all.filter(m => m.genre?.toLowerCase().includes('sport')).slice(0, 20) || movieContent.all.slice(25, 45)}
-                />
-                <ContentRow
-                  title="Romance"
-                  movies={movieContent.byGenre.Romance?.length > 0 ? movieContent.byGenre.Romance : movieContent.all.filter(m => m.genre?.toLowerCase().includes('romance')).slice(0, 20) || movieContent.all.slice(30, 50)}
-                />
-                <ContentRow
-                  title="Action"
-                  movies={movieContent.byGenre.Action?.length > 0 ? movieContent.byGenre.Action : movieContent.all.filter(m => m.genre?.toLowerCase().includes('action')).slice(0, 20) || movieContent.all.slice(35, 55)}
-                />
-                <ContentRow
-                  title="Lifestyle"
-                  movies={movieContent.byGenre.Lifestyle?.length > 0 ? movieContent.byGenre.Lifestyle : movieContent.all.filter(m => m.genre?.toLowerCase().includes('lifestyle')).slice(0, 20) || movieContent.all.slice(40, 60)}
-                />
-                <ContentRow
-                  title="Documentary"
-                  movies={movieContent.byGenre.Documentary?.length > 0 ? movieContent.byGenre.Documentary : movieContent.all.filter(m => m.genre?.toLowerCase().includes('documentary')).slice(0, 20) || movieContent.all.slice(45, 65)}
-                />
-                <ContentRow
-                  title="Informational"
-                  movies={movieContent.byGenre.Informational?.length > 0 ? movieContent.byGenre.Informational : movieContent.all.filter(m => m.genre?.toLowerCase().includes('informational')).slice(0, 20) || movieContent.all.slice(50, 70)}
-                />
+              </div>
+
+              {/* Content Sections */}
+              <div className="max-w-full px-6">
+                {activeGenre === "all" ? (
+                  // Show all movie rows when "All" is selected
+                  <>
+                    {/* New Movies - Sort by created_at (newest first) */}
+                    {(() => {
+                      const newMovies = movieContent.all
+                        .filter((movie) => movie.created_at)
+                        .sort(
+                          (a, b) =>
+                            new Date(b.created_at).getTime() -
+                            new Date(a.created_at).getTime(),
+                        )
+                        .slice(0, 8);
+
+                      return (
+                        newMovies.length > 0 && (
+                          <HomeRow
+                            title="New Movies"
+                            items={newMovies}
+                            onCardClick={handleHomeRowCardClick}
+                          />
+                        )
+                      );
+                    })()}
+
+                    {/* Continue Watching - Show trending movies */}
+                    {movieContent.trending.length > 0 && (
+                      <HomeRow
+                        title="Continue Watching"
+                        items={movieContent.trending.slice(0, 8)}
+                        onCardClick={handleHomeRowCardClick}
+                      />
+                    )}
+
+                    {/* Recommended */}
+                    {movieContent.recommended.length > 0 && (
+                      <HomeRow
+                        title="Recommended"
+                        items={movieContent.recommended.slice(0, 8)}
+                        onCardClick={handleHomeRowCardClick}
+                      />
+                    )}
+
+                    {/* Comedy */}
+                    {movieContent.byGenre.Comedy &&
+                      movieContent.byGenre.Comedy.length > 0 && (
+                        <HomeRow
+                          title="Comedy"
+                          items={movieContent.byGenre.Comedy.slice(0, 8)}
+                          onCardClick={handleHomeRowCardClick}
+                        />
+                      )}
+
+                    {/* Drama */}
+                    {movieContent.byGenre.Drama &&
+                      movieContent.byGenre.Drama.length > 0 && (
+                        <HomeRow
+                          title="Drama"
+                          items={movieContent.byGenre.Drama.slice(0, 8)}
+                          onCardClick={handleHomeRowCardClick}
+                        />
+                      )}
+
+                    {/* Sports */}
+                    {movieContent.byGenre.Sports &&
+                      movieContent.byGenre.Sports.length > 0 && (
+                        <HomeRow
+                          title="Sports"
+                          items={movieContent.byGenre.Sports.slice(0, 8)}
+                          onCardClick={handleHomeRowCardClick}
+                        />
+                      )}
+
+                    {/* Romance */}
+                    {movieContent.byGenre.Romance &&
+                      movieContent.byGenre.Romance.length > 0 && (
+                        <HomeRow
+                          title="Romance"
+                          items={movieContent.byGenre.Romance.slice(0, 8)}
+                          onCardClick={handleHomeRowCardClick}
+                        />
+                      )}
+
+                    {/* Action */}
+                    {movieContent.byGenre.Action &&
+                      movieContent.byGenre.Action.length > 0 && (
+                        <HomeRow
+                          title="Action"
+                          items={movieContent.byGenre.Action.slice(0, 8)}
+                          onCardClick={handleHomeRowCardClick}
+                        />
+                      )}
+
+                    {/* Lifestyle */}
+                    {movieContent.byGenre.Lifestyle &&
+                      movieContent.byGenre.Lifestyle.length > 0 && (
+                        <HomeRow
+                          title="Lifestyle"
+                          items={movieContent.byGenre.Lifestyle.slice(0, 8)}
+                          onCardClick={handleHomeRowCardClick}
+                        />
+                      )}
+
+                    {/* Documentary */}
+                    {movieContent.byGenre.Documentary &&
+                      movieContent.byGenre.Documentary.length > 0 && (
+                        <HomeRow
+                          title="Documentary"
+                          items={movieContent.byGenre.Documentary.slice(0, 8)}
+                          onCardClick={handleHomeRowCardClick}
+                        />
+                      )}
+
+                    {/* Informational */}
+                    {movieContent.byGenre.Informational &&
+                      movieContent.byGenre.Informational.length > 0 && (
+                        <HomeRow
+                          title="Informational"
+                          items={movieContent.byGenre.Informational.slice(0, 8)}
+                          onCardClick={handleHomeRowCardClick}
+                        />
+                      )}
+                  </>
+                ) : (
+                  // Show filtered content for specific genre
+                  <>
+                    {filteredMovies.length > 0 && (
+                      <>
+                        {/* New content row */}
+                        <HomeRow
+                          title="New Movies"
+                          items={filteredMovies.slice(0, 8)}
+                          onCardClick={handleHomeRowCardClick}
+                        />
+
+                        {/* Recommended row */}
+                        <HomeRow
+                          title="Recommended"
+                          items={filteredMovies.slice(2, 10)}
+                          onCardClick={handleHomeRowCardClick}
+                        />
+                      </>
+                    )}
+
+                    {/* Grid Layout for all filtered movies */}
+                    <div className="mt-8 pl-4">
+                      <h2 className="text-xl font-semibold mb-4">All Movies</h2>
+
+                      {filteredMovies.length > 0 ? (
+                        <ContentGrid
+                          items={filteredMovies}
+                          onCardClick={handleHomeRowCardClick}
+                        />
+                      ) : (
+                        <div className="text-center py-16">
+                          <h3 className="text-xl font-bold mb-2">
+                            No movies found
+                          </h3>
+                          <p className="text-gray-400">
+                            No {activeGenre} movies available at the moment
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             </>
           ) : (
