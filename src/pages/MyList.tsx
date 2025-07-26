@@ -44,28 +44,6 @@ const MyList = () => {
   const savedMovies = savedContent.filter((item) => item.type === "movie");
   const savedTVShows = savedContent.filter((item) => item.type === "series");
 
-  // Debug log for MyList page content
-  console.log("❤️ [MyList] User favorites and subscriptions:", {
-    totalMoviesAvailable: movies.length,
-    totalChannelsAvailable: channels.length,
-    favoriteIds: favoriteIds,
-    savedContentCount: savedContent.length,
-    savedMoviesCount: savedMovies.length,
-    savedTVShowsCount: savedTVShows.length,
-    subscribedChannelsCount: subscribedChannels.length,
-    favoriteChannelsCount: favoriteChannels.length,
-    savedContentTypes: savedContent.reduce(
-      (acc, item) => {
-        acc[item.type] = (acc[item.type] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>,
-    ),
-    savedContentTitles: savedContent.slice(0, 5).map((item) => item.title),
-    subscribedChannelNames: subscribedChannels.map((ch) => ch.name),
-    favoriteChannelNames: favoriteChannels.map((ch) => ch.name),
-  });
-
   const handleChannelClick = (channel: any) => {
     setSelectedChannel(channel);
     setShowChannelModal(true);
@@ -92,8 +70,20 @@ const MyList = () => {
   return (
     <ProtectedRoute>
       {/* Fixed background gradient */}
-      <div className="fixed inset-0 bg-gradient-to-t from-black via-brand-800 to-brand-500"></div>
-
+      {/* Fixed background gradient */}
+      <div
+        className="fixed inset-0"
+        style={{
+          background: `
+  linear-gradient(
+    200deg,
+    #311066 0%,   /* very dark violet */
+    #1D0833 20%,  /* deep blackish purple */
+    #120222 45%,  /* near-black violet */
+    black 100%    /* pure black */
+`,
+        }}
+      ></div>
       <div className="relative min-h-screen text-white">
         {/* Channel Modal */}
         <ChannelModal

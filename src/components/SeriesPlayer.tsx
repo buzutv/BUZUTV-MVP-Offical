@@ -159,9 +159,6 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
               allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
               allowFullScreen
               sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-              onError={() => {
-                console.log("YouTube video failed to load");
-              }}
             />
           ) : (
             <video
@@ -170,9 +167,6 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
               controls
               autoPlay
               className="w-full h-full object-contain"
-              onError={() => {
-                console.log("Video failed to load");
-              }}
             />
           )
         ) : (

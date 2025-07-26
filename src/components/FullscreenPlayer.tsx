@@ -39,18 +39,14 @@ const FullscreenPlayer = ({ isOpen, onClose, videoUrl, title }: FullscreenPlayer
   // Set up iframe with autoplay when opened
   useEffect(() => {
     if (isOpen && iframeRef.current && videoUrl) {
-      console.log('Setting up fullscreen video with URL:', videoUrl);
       const embedUrl = getYouTubeEmbedUrl(videoUrl);
-      console.log('Converted embed URL:', embedUrl);
       
       if (embedUrl) {
         const autoplayUrl = `${embedUrl}?autoplay=1&mute=0&controls=1&showinfo=0&rel=0&playsinline=1&enablejsapi=1`;
-        console.log('Final autoplay URL:', autoplayUrl);
         iframeRef.current.src = autoplayUrl;
       }
     } else if (!isOpen && iframeRef.current) {
       // Clear the iframe when closing to stop playback
-      console.log('Clearing iframe src to stop playback');
       iframeRef.current.src = '';
     }
   }, [isOpen, videoUrl]);

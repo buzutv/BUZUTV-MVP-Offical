@@ -14,12 +14,6 @@ const FilterBar: React.FC<FilterBarProps> = ({
   variant = "default",
 }) => {
   const handleGenreClick = (genre: string) => {
-    console.log("🎭 [FilterBar] Genre button clicked:", {
-      clickedGenre: genre,
-      previousGenre: activeGenre,
-      normalizedClicked: genre.toLowerCase(),
-      normalizedPrevious: activeGenre.toLowerCase(),
-    });
     onGenreChange(genre.toLowerCase());
   };
 

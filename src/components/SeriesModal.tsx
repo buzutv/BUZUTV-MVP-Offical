@@ -123,19 +123,6 @@ const SeriesModal = ({
   const showPlayButton =
     seasonsData.length > 0 && seasonsData[0]?.episodes?.length > 0;
 
-  console.log("🐛 [SeriesModal] Debug More Like This filtering:");
-  console.log(
-    "Series:",
-    series.title,
-    "ID:",
-    series.id,
-    "Genre:",
-    series.genre,
-  );
-  console.log(
-    "Total recommendedContent before filtering:",
-    recommendedContent.length,
-  );
 
   const filteredRecommendedContent = recommendedContent.filter((item) => {
     const passesId = item.id !== series.id;
@@ -149,9 +136,6 @@ const SeriesModal = ({
       item.channel_id === series.channelId ||
       item.channel_id === contentItem?.channel_id;
 
-    console.log(
-      `[SeriesModal] Item: ${item.title} | ID match: ${passesId} | Kids filter: ${passesKids} (is_kids: ${item.is_kids}, current series isKids: ${series.isKids || contentItem?.is_kids}) | Genre/Channel match: ${passesGenre}`,
-    );
 
     return passesId && passesKids && passesGenre;
   });

@@ -202,7 +202,6 @@ const ChannelModal = ({ isOpen, onClose, channel }: ChannelModalProps) => {
                 autoPlay
                 className="w-full h-full object-contain"
                 onError={() => {
-                  console.log("Video failed to load");
                   setIsPlaying(false);
                 }}
               />

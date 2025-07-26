@@ -3,7 +3,7 @@ import { ArrowLeft, Heart, Play, Plus, Star } from "lucide-react";
 import { mockMovies } from "@/data/mockMovies";
 import MovieCard from "@/components/MovieCard";
 import FullscreenPlayer from "@/components/FullscreenPlayer";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useContent } from "@/hooks/useContent";
 
 const MovieDetail = () => {
@@ -29,12 +29,10 @@ const MovieDetail = () => {
   };
 
   const handlePlay = () => {
-    console.log("Movie detail play button clicked for:", movie?.title);
     setIsFullscreen(true);
   };
 
   const handleExitFullscreen = () => {
-    console.log("Exiting fullscreen from movie detail");
     setIsFullscreen(false);
   };
 
@@ -55,22 +53,17 @@ const MovieDetail = () => {
   }
 
   // Get recommended items (same genre, excluding current movie and kids content)
-  console.log('🐛 [MovieDetail] Debug More Like This filtering:');
-  console.log('Current movie:', movie.title, 'ID:', movie.id, 'Genre:', movie.genre);
-  console.log('Total mockMovies before filtering:', mockMovies.length);
-  
+
   const recommendedItems = mockMovies
     .filter((m) => {
       const passesId = m.id !== movie.id;
       const passesGenre = m.genre === movie.genre;
       // If current movie is kids content, show only kids content in recommendations
       // If current movie is not kids content, exclude kids content from recommendations
-      const passesKids = movie.isKids 
-        ? m.isKids === true  // Show only kids content
-        : !m.isKids;         // Exclude kids content
-      
-      console.log(`[MovieDetail] Item: ${m.title} | ID match: ${passesId} | Genre match: ${passesGenre} | Kids filter: ${passesKids} (isKids: ${m.isKids}, current movie isKids: ${movie.isKids})`);
-      
+      const passesKids = movie.isKids
+        ? m.isKids === true // Show only kids content
+        : !m.isKids; // Exclude kids content
+
       return passesId && passesGenre && passesKids;
     })
     .slice(0, 6);
@@ -82,7 +75,20 @@ const MovieDetail = () => {
   return (
     <div className="min-h-screen text-white">
       {/* Fixed background gradient */}
-      <div className="fixed inset-0 bg-gradient-to-t from-black via-brand-900 to-brand-700"></div>
+      {/* Fixed background gradient */}
+      <div
+        className="fixed inset-0"
+        style={{
+          background: `
+  linear-gradient(
+    200deg,
+    #311066 0%,   /* very dark violet */
+    #1D0833 20%,  /* deep blackish purple */
+    #120222 45%,  /* near-black violet */
+    black 100%    /* pure black */
+`,
+        }}
+      ></div>
       <div className="relative">
         {/* Fullscreen Movie Player */}
         <FullscreenPlayer

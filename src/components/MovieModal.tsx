@@ -48,30 +48,6 @@ const MovieModal = ({
   };
 
   // Filter recommended content by same genre or channel (unless filtering is skipped)
-  console.log("🐛 [MovieModal] Debug More Like This filtering:");
-  console.log("skipContentFiltering:", skipContentFiltering);
-  console.log("Movie:", movie.title, "ID:", movie.id, "Genre:", movie.genre);
-  console.log(
-    "Total recommendedContent before filtering:",
-    recommendedContent.length,
-  );
-  console.log(
-    "recommendedContent received:",
-    recommendedContent.length,
-    "items",
-  );
-  console.log(
-    "recommendedContent titles:",
-    recommendedContent.map((item) => item.title),
-  );
-  console.log(
-    "recommendedContent is_kids values:",
-    recommendedContent.map((item) => ({
-      title: item.title,
-      is_kids: item.is_kids,
-      isKids: item.isKids,
-    })),
-  );
 
   const filteredRecommendedContent = skipContentFiltering
     ? recommendedContent.filter((item) => item.id !== movie.id)
@@ -90,22 +66,10 @@ const MovieModal = ({
           item.channel_id === movie.channelId ||
           item.channel_id === contentItem?.channel_id;
 
-        console.log(
-          `[MovieModal] Item: ${item.title} | ID match: ${passesId} | Kids filter: ${passesKids} (is_kids: ${item.is_kids}, current movie isKids: ${movie.isKids || contentItem?.is_kids}) | Genre/Channel match: ${passesGenre}`,
-        );
 
         return passesId && passesKids && passesGenre;
       });
 
-  console.log(
-    "After MovieModal filtering:",
-    filteredRecommendedContent.length,
-    "items",
-  );
-  console.log(
-    "Final filtered titles:",
-    filteredRecommendedContent.map((item) => item.title),
-  );
 
   const normalizedRecommendedContent = filteredRecommendedContent.map(
     (item) => ({

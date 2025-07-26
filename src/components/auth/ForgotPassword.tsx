@@ -47,7 +47,6 @@ const ForgotPassword = ({ isOpen, onClose, onBackToLogin }: ForgotPasswordProps)
       } else {
         setEmailSent(true);
         toast.success('Password reset email sent!');
-        console.log('Reset email sent to:', email, 'with redirect:', redirectUrl);
       }
     } catch (error) {
       console.error('Reset password error:', error);

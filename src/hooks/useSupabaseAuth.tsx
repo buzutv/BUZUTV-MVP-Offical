@@ -23,7 +23,6 @@ export const useSupabaseAuth = () => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state change:', event, session);
         setSession(session);
         setUser(session?.user ?? null);
         
