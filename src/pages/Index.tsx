@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import ChannelModal from "@/components/ChannelModal";
 import FullViewportHero from "@/components/FullViewportHero";
 import FilterBar from "@/components/FilterBar";
@@ -9,90 +9,97 @@ import { useAuth } from "@/contexts/AuthContext";
 import HomeRow from "@/components/HomeRow";
 import { featuredContentIds } from "@/data/featuredContentIds";
 
-const Index = () => {
+const Index = React.memo(() => {
   const [selectedChannel, setSelectedChannel] = useState<any>(null);
   const [showChannelModal, setShowChannelModal] = useState(false);
   const [activeGenre, setActiveGenre] = useState("all");
 
+  const startTime = performance.now();
   const { homeContent, channels, isLoading, content, kidsContent } =
     useAppContent();
 
-  // Get genres that actually have content in the database (excluding kids-only genres)
-  const availableGenresWithContent = React.useMemo(() => {
+  const availableGenresWithContent = useMemo(() => {
     if (!content.allContent || content.allContent.length === 0) {
-      return ["All"]; // Always show "All" option
+      return ["All"];
     }
 
-    // Get unique genres from non-kids content only
     const contentGenres = [
       ...new Set(
         content.allContent
-          .filter((item) => !item.isKids) // Only get genres from non-kids content
+          .filter((item) => !item.isKids)
           .map((item) => item.genre)
-          .filter(Boolean), // Remove null/undefined genres
+          .filter(Boolean),
       ),
     ];
 
-    // Always include "All" at the beginning, then add genres that have content
     return ["All", ...contentGenres.sort()];
   }, [content.allContent]);
 
   const { subscriptionIds, toggleSubscription } = useUserSubscriptions();
   const { isLoggedIn, setShowLoginModal } = useAuth();
 
-  // Build featured array from full content objects
-  const featured = featuredContentIds
-    .map((id) => content.allContent.find((item) => item.id === id))
-    .filter(Boolean);
+  const featured = useMemo(
+    () =>
+      featuredContentIds
+        .map((id) => content.allContent.find((item) => item.id === id))
+        .filter(Boolean),
+    [content.allContent],
+  );
 
-  const handleChannelClick = (channel: any) => {
-    if (!isLoggedIn) {
-      setShowLoginModal(true);
-      return;
-    }
-    setSelectedChannel(channel);
-    setShowChannelModal(true);
-  };
+  const handleChannelClick = useCallback(
+    (channel: any) => {
+      if (!isLoggedIn) {
+        setShowLoginModal(true);
+        return;
+      }
+      setSelectedChannel(channel);
+      setShowChannelModal(true);
+    },
+    [isLoggedIn, setShowLoginModal],
+  );
 
-  const handleCloseChannelModal = () => {
+  const handleCloseChannelModal = useCallback(() => {
     setShowChannelModal(false);
     setSelectedChannel(null);
-  };
+  }, []);
 
-  const handleHomeRowCardClick = () => {
+  const handleHomeRowCardClick = useCallback(() => {
     if (!isLoggedIn) {
       setShowLoginModal(true);
       return true;
     }
     return false;
-  };
+  }, [isLoggedIn, setShowLoginModal]);
 
-  const handleGenreChange = (genre: string) => {
+  const handleGenreChange = useCallback((genre: string) => {
     setActiveGenre(genre);
-  };
+  }, []);
 
-  // Get filtered content based on active genre
-  const getFilteredContent = () => {
+  const filteredContent = useMemo(() => {
     if (activeGenre === "all") {
       return content.allContent.filter((item) => !item.isKids);
     }
-
-    // Filter by genre
     return content.allContent.filter(
       (item) =>
         item.genre.toLowerCase() === activeGenre.toLowerCase() && !item.isKids,
     );
-  };
-
-  const filteredContent = getFilteredContent();
+  }, [content.allContent, activeGenre]);
 
   if (isLoading) {
+    console.log("🏠 [Index] Still loading...");
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
         <div className="text-2xl">Loading...</div>
       </div>
     );
   }
+
+  console.log("🏠 [Index] Rendering complete, data loaded:", {
+    homeContentCount: homeContent.trending?.length || 0,
+    channelsCount: channels?.length || 0,
+    contentCount: content.allContent?.length || 0,
+    renderTime: performance.now() - startTime,
+  });
 
   return (
     <div className="min-h-screen text-white">
@@ -302,6 +309,8 @@ const Index = () => {
       </div>
     </div>
   );
-};
+});
+
+Index.displayName = "Index";
 
 export default Index;

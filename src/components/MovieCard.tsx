@@ -1,6 +1,6 @@
+import React, { useState, useCallback, useMemo } from "react";
 import { Play } from "lucide-react";
 import { Movie } from "@/data/mockMovies";
-import { useState } from "react";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
@@ -17,7 +17,7 @@ interface MovieCardProps {
   onOpen?: () => boolean;
 }
 
-const MovieCard = ({
+const MovieCard = React.memo(({
   movie,
   showSaveButton = true,
   showProgress = false,
@@ -26,40 +26,37 @@ const MovieCard = ({
   onPlayFullscreen,
   onOpen,
 }: MovieCardProps) => {
-  const { favoriteIds, addToFavorites, removeFromFavorites } =
-    useUserFavorites();
+  const { favoriteIds, addToFavorites, removeFromFavorites } = useUserFavorites();
   const { content } = useContent();
   const { channels } = useChannels();
 
-  const [currentModalMovie, setCurrentModalMovie] = useState<Movie | null>(
-    null,
-  );
+  const [currentModalMovie, setCurrentModalMovie] = useState<Movie | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const actualMovie = currentModalMovie || movie;
-
-  const isSaved = favoriteIds.includes(actualMovie.id);
-  const contentItem = content.find((item) => item.id === actualMovie.id);
+  
+  const isSaved = useMemo(() => favoriteIds.includes(actualMovie.id), [favoriteIds, actualMovie.id]);
+  const contentItem = useMemo(() => content.find((item) => item.id === actualMovie.id), [content, actualMovie.id]);
   const videoUrl = contentItem?.video_url;
-  const channel = channels.find((ch) => ch.id === actualMovie.channelId);
+  const channel = useMemo(() => channels.find((ch) => ch.id === actualMovie.channelId), [channels, actualMovie.channelId]);
 
-  const handleSave = (e: React.MouseEvent) => {
+  const handleSave = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-
+    
     if (isSaved) {
       removeFromFavorites(actualMovie.id);
     } else {
       addToFavorites(actualMovie.id);
     }
-  };
+  }, [isSaved, actualMovie.id, addToFavorites, removeFromFavorites]);
 
-  const handleCardClick = () => {
+  const handleCardClick = useCallback(() => {
     if (onOpen && onOpen() === true) return;
     setCurrentModalMovie(actualMovie);
-  };
+  }, [onOpen, actualMovie]);
 
-  const handleModalPlayClick = () => {
+  const handleModalPlayClick = useCallback(() => {
     if (contentItem?.video_url) {
       if (onPlayFullscreen) {
         onPlayFullscreen(contentItem.video_url);
@@ -71,28 +68,29 @@ const MovieCard = ({
         }, 200);
       }
     }
-  };
+  }, [contentItem?.video_url, onPlayFullscreen]);
 
-  const handleExitFullscreen = () => {
+  const handleExitFullscreen = useCallback(() => {
     setIsFullscreen(false);
-  };
+  }, []);
 
-  const handleSaveModal = () => {
+  const handleSaveModal = useCallback(() => {
     if (isSaved) {
       removeFromFavorites(actualMovie.id);
     } else {
       addToFavorites(actualMovie.id);
     }
-  };
+  }, [isSaved, actualMovie.id, addToFavorites, removeFromFavorites]);
 
-  const recommendedContent = content
-    .filter(
-      (item) =>
+  const recommendedContent = useMemo(() => 
+    content
+      .filter((item) => 
         item.id !== actualMovie.id &&
-        (item.genre === actualMovie.genre ||
-          item.channel_id === actualMovie.channelId),
-    )
-    .slice(0, 6);
+        (item.genre === actualMovie.genre || item.channel_id === actualMovie.channelId)
+      )
+      .slice(0, 6),
+    [content, actualMovie.id, actualMovie.genre, actualMovie.channelId]
+  );
 
   return (
     <>
@@ -120,6 +118,8 @@ const MovieCard = ({
                 src={actualMovie.posterUrl}
                 alt={actualMovie.title}
                 className="w-full h-full rounded-lg object-cover transform transition-transform duration-300 hover:scale-[1.1]"
+                loading="lazy"
+                decoding="async"
               />
             </div>
 
@@ -166,10 +166,19 @@ const MovieCard = ({
         contentItem={contentItem}
         channel={channel}
         recommendedContent={recommendedContent}
-        onOpenRelatedMovie={(movie) => setCurrentModalMovie(movie)}
+        onOpenRelatedMovie={setCurrentModalMovie}
       />
     </>
   );
-};
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.movie.id === nextProps.movie.id &&
+    prevProps.showProgress === nextProps.showProgress &&
+    prevProps.progressPercent === nextProps.progressPercent &&
+    prevProps.showResumeButton === nextProps.showResumeButton
+  );
+});
+
+MovieCard.displayName = "MovieCard";
 
 export default MovieCard;

@@ -3,7 +3,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -50,9 +51,32 @@ function RequireAdmin({ children }: { children: JSX.Element }) {
   return children;
 }
 
+// Route change monitor component
+const RouteChangeMonitor = () => {
+  const location = useLocation();
+  
+  useEffect(() => {
+    const start = performance.now();
+    console.log("🚀 [Router] Navigation started to:", location.pathname);
+    
+    // Monitor when the route change completes
+    const timer = setTimeout(() => {
+      console.log("🚀 [Router] Navigation completed to:", location.pathname, "in", performance.now() - start, "ms");
+    }, 0);
+    
+    return () => clearTimeout(timer);
+  }, [location]);
+  
+  return null;
+};
+
 const App = () => {
+  console.log("🏁 [App] Component rendering started", performance.now());
+  
   const [searchQuery, setSearchQuery] = useState("");
+  const appStartTime = performance.now();
   const { content, channels, isLoading } = useAppContent();
+  console.log("🏁 [App] useAppContent hook took:", performance.now() - appStartTime, "ms");
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -91,6 +115,7 @@ const App = () => {
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <RouteChangeMonitor />
             <LoginModal />
             {/* Global Search Overlay */}
             {showSearchOverlay && (

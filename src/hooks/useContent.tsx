@@ -26,6 +26,8 @@ export interface Content {
 }
 
 const fetchContentData = async (): Promise<Content[]> => {
+  const start = performance.now();
+
   const { data, error } = await supabase
     .from("content")
     .select("*")
@@ -37,14 +39,12 @@ const fetchContentData = async (): Promise<Content[]> => {
     throw error;
   }
 
-
-  // Transform the data to ensure type compatibility
+  const transformStart = performance.now();
   const transformedData = (data || []).map((item) => ({
     ...item,
-    type: item.type as "movie" | "series", // Type assertion for database data
-    is_kids: (item as any).is_kids ?? false, // Ensure is_kids is always a boolean
+    type: item.type as "movie" | "series",
+    is_kids: (item as any).is_kids ?? false,
   }));
-
 
   return transformedData;
 };

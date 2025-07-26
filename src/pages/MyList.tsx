@@ -1,7 +1,7 @@
-import { useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Heart } from "lucide-react";
-import MovieCard from "@/components/MovieCard";
+import OptimizedMovieCard from "@/components/OptimizedMovieCard";
 import ChannelCard from "@/components/ChannelCard";
 import ChannelModal from "@/components/ChannelModal";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
@@ -12,50 +12,80 @@ import { useUserChannelFavorites } from "@/hooks/useUserChannelFavorites";
 import { useAppContent } from "@/hooks/useAppContent";
 import SeriesCard from "@/components/SeriesCard";
 
-const MyList = () => {
+const MyList = React.memo(() => {
   const [selectedChannel, setSelectedChannel] = useState<any>(null);
   const [showChannelModal, setShowChannelModal] = useState(false);
+
+  const startTime = performance.now();
   const { favoriteIds, isLoading: favoritesLoading } = useUserFavorites();
+
+  const subsStart = performance.now();
   const {
     subscriptionIds,
     toggleSubscription,
     isLoading: subscriptionsLoading,
   } = useUserSubscriptions();
+
+  const channelFavStart = performance.now();
   const { favoriteChannelIds, isLoading: channelFavoritesLoading } =
     useUserChannelFavorites();
+
+  const appContentStart = performance.now();
   const { movies, channels } = useAppContent();
 
-  const savedContent =
-    favoriteIds.length > 0
-      ? movies.filter((item) => favoriteIds.includes(item.id))
-      : [];
+  const savedContent = useMemo(() => {
+    const filterStart = performance.now();
+    const result =
+      favoriteIds.length > 0
+        ? movies.filter((item) => favoriteIds.includes(item.id))
+        : [];
+    return result;
+  }, [favoriteIds, movies]);
 
-  const subscribedChannels =
-    subscriptionIds.length > 0
-      ? channels.filter((channel) => subscriptionIds.includes(channel.id))
-      : [];
+  const subscribedChannels = useMemo(() => {
+    const filterStart = performance.now();
+    const result =
+      subscriptionIds.length > 0
+        ? channels.filter((channel) => subscriptionIds.includes(channel.id))
+        : [];
+    return result;
+  }, [subscriptionIds, channels]);
 
-  const favoriteChannels =
-    favoriteChannelIds.length > 0
-      ? channels.filter((channel) => favoriteChannelIds.includes(channel.id))
-      : [];
+  const favoriteChannels = useMemo(() => {
+    const filterStart = performance.now();
+    const result =
+      favoriteChannelIds.length > 0
+        ? channels.filter((channel) => favoriteChannelIds.includes(channel.id))
+        : [];
+    return result;
+  }, [favoriteChannelIds, channels]);
 
-  // Separate movies and TV shows
-  const savedMovies = savedContent.filter((item) => item.type === "movie");
-  const savedTVShows = savedContent.filter((item) => item.type === "series");
+  const savedMovies = useMemo(() => {
+    const result = savedContent.filter((item) => item.type === "movie");
+    return result;
+  }, [savedContent]);
 
-  const handleChannelClick = (channel: any) => {
+  const savedTVShows = useMemo(() => {
+    const result = savedContent.filter((item) => item.type === "series");
+    return result;
+  }, [savedContent]);
+
+  const handleChannelClick = useCallback((channel: any) => {
     setSelectedChannel(channel);
     setShowChannelModal(true);
-  };
+  }, []);
 
-  const handleCloseChannelModal = () => {
+  const handleCloseChannelModal = useCallback(() => {
     setShowChannelModal(false);
     setSelectedChannel(null);
-  };
+  }, []);
 
-  const isLoading =
-    favoritesLoading || subscriptionsLoading || channelFavoritesLoading;
+  const isLoading = useMemo(() => {
+    const loading =
+      favoritesLoading || subscriptionsLoading || channelFavoritesLoading;
+
+    return loading;
+  }, [favoritesLoading, subscriptionsLoading, channelFavoritesLoading]);
 
   if (isLoading) {
     return (
@@ -69,7 +99,6 @@ const MyList = () => {
 
   return (
     <ProtectedRoute>
-      {/* Fixed background gradient */}
       {/* Fixed background gradient */}
       <div
         className="fixed inset-0"
@@ -91,9 +120,6 @@ const MyList = () => {
           onClose={handleCloseChannelModal}
           channel={selectedChannel}
         />
-
-        {/* Navigation */}
-        {/* Removed Navbar */}
 
         <div className="pt-16">
           <div className="max-w-full px-2 py-8">
@@ -158,7 +184,10 @@ const MyList = () => {
                   <MovieHoverRow className="flex space-x-2">
                     {savedMovies.map((movie) => (
                       <div key={movie.id} className="flex-shrink-0 w-64">
-                        <MovieCard movie={movie} showSaveButton={false} />
+                        <OptimizedMovieCard
+                          movie={movie}
+                          showSaveButton={false}
+                        />
                       </div>
                     ))}
                   </MovieHoverRow>
@@ -206,6 +235,8 @@ const MyList = () => {
       </div>
     </ProtectedRoute>
   );
-};
+});
+
+MyList.displayName = "MyList";
 
 export default MyList;

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, Search, User, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,7 +17,7 @@ interface NavbarProps {
   onSearchClear: () => void;
 }
 
-const Navbar = ({
+const Navbar = React.memo(({
   searchQuery,
   onSearchChange,
   onSearchClear,
@@ -30,16 +30,16 @@ const Navbar = ({
   const navigate = useNavigate();
   const location = useLocation();
 
-  const isActivePath = (path: string) => {
+  const isActivePath = useCallback((path: string) => {
     if (path === "/" && !hasNavigated) return false;
     return location.pathname === path;
-  };
+  }, [location.pathname, hasNavigated]);
 
-  const handleLoginClick = () => navigate("/auth");
-  const handleSignUpClick = () => navigate("/auth?mode=signup");
-  const handleLogout = () => logout();
+  const handleLoginClick = useCallback(() => navigate("/auth"), [navigate]);
+  const handleSignUpClick = useCallback(() => navigate("/auth?mode=signup"), [navigate]);
+  const handleLogout = useCallback(() => logout(), [logout]);
 
-  const handleNavClick = (e: React.MouseEvent, path: string) => {
+  const handleNavClick = useCallback((e: React.MouseEvent, path: string) => {
     if (!isLoggedIn && path !== "/") {
       e.preventDefault();
       setShowLoginModal(true);
@@ -49,7 +49,7 @@ const Navbar = ({
     setHasNavigated(true);
     setIsMenuOpen(false);
     navigate(path);
-  };
+  }, [isLoggedIn, setShowLoginModal, navigate]);
 
   useEffect(() => {
     if (isSearchOpen && searchInputRef.current) {
@@ -57,21 +57,31 @@ const Navbar = ({
     }
   }, [isSearchOpen]);
 
-  const handleSearchBlur = () => {
+  const handleSearchBlur = useCallback(() => {
     if (!searchQuery) setIsSearchOpen(false);
-  };
+  }, [searchQuery]);
 
-  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleSearchKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Escape" && !searchQuery) setIsSearchOpen(false);
-  };
+  }, [searchQuery]);
+
+  const navItems = useMemo(() => [
+    { to: "/", label: "Home" },
+    { to: "/movies", label: "Movies" },
+    { to: "/series", label: "TV Shows" },
+    { to: "/kids", label: "Kids" },
+    { to: "/my-list", label: "Favorites" },
+  ], []);
+
+  const shouldShowNav = useMemo(() => 
+    !location.pathname.startsWith("/auth") && location.pathname !== "/settings",
+    [location.pathname]
+  );
 
   return (
     <nav
       className={`fixed top-3 left-0 right-0 z-50 px-4 md:px-6 h-14 transition-all duration-500 ${
-        location.pathname.startsWith("/auth") ||
-        location.pathname === "/settings"
-          ? "hidden"
-          : "flex"
+        shouldShowNav ? "flex" : "hidden"
       } md:flex items-center`}
     >
       <div
@@ -95,13 +105,7 @@ const Navbar = ({
         {isLoggedIn && (
           <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
             <div className="hidden md:flex items-center gap-4 whitespace-nowrap">
-              {[
-                { to: "/", label: "Home" },
-                { to: "/movies", label: "Movies" },
-                { to: "/series", label: "TV Shows" },
-                { to: "/kids", label: "Kids" },
-                { to: "/my-list", label: "Favorites" },
-              ].map(({ to, label }) => (
+              {navItems.map(({ to, label }) => (
                 <Link
                   key={to}
                   to={to}
@@ -252,13 +256,7 @@ const Navbar = ({
             : "opacity-0 -translate-y-4 pointer-events-none"
         }`}
       >
-        {[
-          { to: "/", label: "Home" },
-          { to: "/movies", label: "Movies" },
-          { to: "/series", label: "TV Shows" },
-          { to: "/kids", label: "Kids" },
-          { to: "/my-list", label: "Favorites" },
-        ].map(({ to, label }) => (
+        {navItems.map(({ to, label }) => (
           <Link
             key={to}
             to={to}
@@ -294,6 +292,10 @@ const Navbar = ({
       </div>
     </nav>
   );
-};
+}, (prevProps, nextProps) => {
+  return prevProps.searchQuery === nextProps.searchQuery;
+});
+
+Navbar.displayName = "Navbar";
 
 export default Navbar;

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import OptimizedMovieCard from "@/components/OptimizedMovieCard";
 import MovieHoverRow from "@/components/MovieHoverRow";
 import HeroBanner from "@/components/HeroBanner";
@@ -20,8 +20,13 @@ import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
 import FullscreenPlayer from "@/components/FullscreenPlayer";
 
-const Movies = () => {
+const Movies = React.memo(() => {
+  console.log("🎬 [Movies] Component rendering started", performance.now());
+  
+  const startTime = performance.now();
   const { movieContent, isLoading, content } = useAppContent();
+  console.log("🎬 [Movies] useAppContent took:", performance.now() - startTime, "ms");
+  
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [activeGenre, setActiveGenre] = useState("all");
 
@@ -31,8 +36,7 @@ const Movies = () => {
   const { channels } = useChannels();
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Get genres that actually have movie content (excluding kids)
-  const availableMovieGenres = React.useMemo(() => {
+  const availableMovieGenres = useMemo(() => {
     if (!movieContent.all || movieContent.all.length === 0) {
       return ["All"];
     }
@@ -44,32 +48,29 @@ const Movies = () => {
     return ["All", ...movieGenres.sort()];
   }, [movieContent.all]);
 
-  const handleGenreChange = (genre: string) => {
+  const handleGenreChange = useCallback((genre: string) => {
     setActiveGenre(genre);
-  };
+  }, []);
 
-  // Get filtered movies based on active genre
-  const getFilteredMovies = () => {
+  const filteredMovies = useMemo(() => {
     if (activeGenre === "all") {
       return movieContent.all;
     }
     return movieContent.all.filter(
       (movie) => movie.genre.toLowerCase() === activeGenre.toLowerCase(),
     );
-  };
+  }, [movieContent.all, activeGenre]);
 
-  const filteredMovies = getFilteredMovies();
+  const handleHomeRowCardClick = useCallback(() => {
+    return false;
+  }, []);
 
-  const handleHomeRowCardClick = () => {
-    return false; // Movies page doesn't need login modal for card clicks
-  };
-
-  // Add click logic for Top Ranked
-  const handleCardClick = (movie) => {
+  const handleCardClick = useCallback((movie) => {
     setSelectedMovie(movie);
-  };
+  }, []);
 
   if (isLoading) {
+    console.log("🎬 [Movies] Still loading...");
     return (
       <ProtectedRoute>
         <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
@@ -78,6 +79,12 @@ const Movies = () => {
       </ProtectedRoute>
     );
   }
+
+  console.log("🎬 [Movies] Rendering complete, data loaded:", {
+    movieCount: movieContent.all?.length || 0,
+    contentCount: content.allContent?.length || 0,
+    renderTime: performance.now() - startTime
+  });
 
   const MovieRow = ({
     title,
@@ -464,6 +471,8 @@ const Movies = () => {
       </div>
     </ProtectedRoute>
   );
-};
+});
+
+Movies.displayName = "Movies";
 
 export default Movies;

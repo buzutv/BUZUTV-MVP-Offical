@@ -5,7 +5,6 @@ import { genres } from "@/data/mockMovies";
 
 // Transform database content to match Movie interface
 const transformDatabaseContent = (dbContent: any[]) => {
-
   const transformed = dbContent.map((item) => ({
     id: item.id,
     title: item.title,
@@ -46,22 +45,112 @@ const transformDatabaseChannels = (dbChannels: any[]) => {
 };
 
 export const useAppContent = () => {
+  const hookStartTime = performance.now();
+  console.log("📊 [useAppContent] Hook started");
+
   const { content: dbContent, isLoading: dbContentLoading } = useContent();
   const { channels: dbChannels, isLoading: dbChannelsLoading } = useChannels();
 
-  // Transform data when available
+  console.log("📊 [useAppContent] Data loading states:", {
+    dbContentLoading,
+    dbChannelsLoading,
+    contentCount: dbContent?.length || 0,
+    channelsCount: dbChannels?.length || 0,
+  });
+
+  console.log("📊 [useAppContent] Data loading states:", {
+    dbContentLoading,
+    dbChannelsLoading,
+    contentCount: dbContent?.length || 0,
+    channelsCount: dbChannels?.length || 0,
+  });
+
   const transformedContent = useMemo(() => {
-    if (dbContentLoading || !dbContent.length) return [];
-    return transformDatabaseContent(dbContent);
+    const start = performance.now();
+    if (dbContentLoading || !dbContent?.length) {
+      console.log(
+        "📊 [useAppContent] Skipping content transformation - still loading or no data",
+      );
+      return [];
+    }
+    const result = transformDatabaseContent(dbContent);
+    console.log(
+      "📊 [useAppContent] transformDatabaseContent took:",
+      performance.now() - start,
+      "ms",
+    );
+    return result;
   }, [dbContent, dbContentLoading]);
 
   const transformedChannels = useMemo(() => {
-    if (dbChannelsLoading || !dbChannels.length) return [];
-    return transformDatabaseChannels(dbChannels);
+    const start = performance.now();
+    if (dbChannelsLoading || !dbChannels?.length) {
+      console.log(
+        "📊 [useAppContent] Skipping channels transformation - still loading or no data",
+      );
+      return [];
+    }
+    const result = transformDatabaseChannels(dbChannels);
+    console.log(
+      "📊 [useAppContent] transformDatabaseChannels took:",
+      performance.now() - start,
+      "ms",
+    );
+    return result;
   }, [dbChannels, dbChannelsLoading]);
 
-  // Pre-compute all categories and filters
   const content = useMemo(() => {
+    const start = performance.now();
+
+    if (!transformedContent.length) {
+      console.log(
+        "📊 [useAppContent] No transformed content, returning empty structure",
+      );
+      return {
+        movies: {
+          all: [],
+          kids: [],
+          featured: [],
+          trending: [],
+          topRanked: [],
+          recommended: [],
+          new: [],
+          byGenre: {},
+        },
+        series: {
+          all: [],
+          kids: [],
+          featured: [],
+          trending: [],
+          topRanked: [],
+          recommended: [],
+          new: [],
+          byGenre: {},
+        },
+        kids: {
+          all: [],
+          movies: [],
+          series: [],
+          featured: [],
+          trending: [],
+          new: [],
+          byGenre: {},
+        },
+        home: {
+          trending: [],
+          action: [],
+          drama: [],
+          romance: [],
+          comedy: [],
+          documentary: [],
+          informational: [],
+        },
+        allContent: [],
+      };
+    }
+
+    console.log("📊 [useAppContent] Starting content organization...");
+
     const movies = transformedContent.filter(
       (item) => item.type === "movie" && !item.isKids,
     );
@@ -148,20 +237,30 @@ export const useAppContent = () => {
       },
       allContent: transformedContent,
     };
+
+    console.log(
+      "📊 [useAppContent] Content organization complete:",
+      performance.now() - start,
+      "ms",
+    );
+    return result;
   }, [transformedContent]);
 
-
-  return {
-    // Legacy support - return all movies for components that still need it
+  const result = {
     movies: transformedContent,
     channels: transformedChannels,
     isLoading: dbContentLoading || dbChannelsLoading,
-    // New optimized data structure
     content,
-    // Quick access to specific categories
     movieContent: content.movies,
     seriesContent: content.series,
     kidsContent: content.kids,
     homeContent: content.home,
   };
+
+  console.log(
+    "📊 [useAppContent] Hook complete, total time:",
+    performance.now() - hookStartTime,
+    "ms",
+  );
+  return result;
 };

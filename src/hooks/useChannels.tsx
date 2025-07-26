@@ -1,7 +1,6 @@
-
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { useContentCache } from '@/hooks/useContentCache';
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useContentCache } from "@/hooks/useContentCache";
 
 export interface Channel {
   id: string;
@@ -15,15 +14,17 @@ export interface Channel {
 }
 
 const fetchChannelsData = async (): Promise<Channel[]> => {
+  const start = performance.now();
+
   const { data, error } = await supabase
-    .from('channels')
-    .select('*')
-    .eq('is_active', true)
-    .order('name');
+    .from("channels")
+    .select("*")
+    .eq("is_active", true)
+    .order("name");
 
   if (error) {
-    console.error('Error fetching channels:', error);
-    toast.error('Failed to load channels');
+    console.error("❌ [useChannels] Error fetching channels:", error);
+    toast.error("Failed to load channels");
     throw error;
   }
 
@@ -31,16 +32,17 @@ const fetchChannelsData = async (): Promise<Channel[]> => {
 };
 
 export const useChannels = () => {
-  const { data: channels, isLoading, error, refetch } = useContentCache(
-    'channels',
-    fetchChannelsData,
-    []
-  );
+  const {
+    data: channels,
+    isLoading,
+    error,
+    refetch,
+  } = useContentCache("channels", fetchChannelsData, []);
 
   return {
     channels: channels || [],
     isLoading,
     error,
-    refetch
+    refetch,
   };
 };
