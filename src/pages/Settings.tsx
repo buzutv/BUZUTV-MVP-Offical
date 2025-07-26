@@ -350,9 +350,7 @@ const Settings = () => {
                 </Button>
               </div>
 
-              <span className="text-2xl font-bold bg-gradient-to-r from-brand-400 via-brand-500 to-brand-600 bg-clip-text text-transparent">
-                Settings
-              </span>
+              <span className="text-2xl font-bold tex-white">Settings</span>
 
               <Button
                 onClick={handleLogout}

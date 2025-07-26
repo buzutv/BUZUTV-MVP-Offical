@@ -26,6 +26,7 @@ export interface HeroCarouselItem {
   rating?: number;
   channelId?: string;
   seasons_data?: any;
+  isKids?: boolean;
 }
 
 interface FullViewportHeroProps {
@@ -100,11 +101,22 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
     setModalType(item.type || "movie");
     setModalItem(item);
     const recs = allContent
-      .filter(
-        (c) =>
-          c.id !== item.id &&
-          (c.genre === item.genre || c.channelId === item.channelId),
-      )
+      .filter((c) => {
+        const passesId = c.id !== item.id;
+        // If current item is kids content, show only kids content in recommendations
+        // If current item is not kids content, exclude kids content from recommendations
+        const passesKids = item.isKids
+          ? c.isKids === true // Show only kids content
+          : !c.isKids; // Exclude kids content
+        const passesGenre =
+          c.genre === item.genre || c.channelId === item.channelId;
+
+        console.log(
+          `[FullViewportHero] Item: ${c.title} | ID match: ${passesId} | Kids filter: ${passesKids} (isKids: ${c.isKids}, current item isKids: ${item.isKids}) | Genre/Channel match: ${passesGenre}`,
+        );
+
+        return passesId && passesKids && passesGenre;
+      })
       .slice(0, 6);
     setRecommendedContent(recs);
     setModalOpen(true);
@@ -340,7 +352,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
       )}
 
       {/* Custom Pagination Styles */}
-      <style jsx>{`
+      <style>{`
         .swiper-pagination-bullet-hero {
           width: 12px;
           height: 12px;

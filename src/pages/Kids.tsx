@@ -1,7 +1,9 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import ContentRow from "@/components/ContentRow";
 import HeroBanner from "@/components/HeroBanner";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import FilterBar from "@/components/FilterBar";
+import ContentGrid from "@/components/ContentGrid";
 import { useAppContent } from "@/hooks/useAppContent";
 import MovieModal from "@/components/MovieModal";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
@@ -10,17 +12,18 @@ import { useChannels } from "@/hooks/useChannels";
 import FullscreenPlayer from "@/components/FullscreenPlayer";
 
 const Kids = () => {
-  const { movieContent, isLoading } = useAppContent();
+  const { kidsContent, isLoading } = useAppContent();
   const [selectedMovie, setSelectedMovie] = useState(null);
+  const [activeGenre, setActiveGenre] = useState("all");
   const { favoriteIds, addToFavorites, removeFromFavorites } =
     useUserFavorites();
   const { content } = useContent();
   const { channels } = useChannels();
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Filter content for kids (you can adjust this filter based on your data structure)
-  const kidsContent = useMemo(() => {
-    if (!movieContent.all)
+  // Enhanced kids content with additional categories
+  const enhancedKidsContent = useMemo(() => {
+    if (!kidsContent.all || kidsContent.all.length === 0)
       return {
         all: [],
         featured: [],
@@ -31,22 +34,22 @@ const Kids = () => {
         byGenre: {},
       };
 
-    const kidsMovies = movieContent.all.filter(
-      (movie) =>
-        movie.genre?.toLowerCase().includes("kids") ||
-        movie.genre?.toLowerCase().includes("family") ||
-        movie.genre?.toLowerCase().includes("animation") ||
-        movie.genre?.toLowerCase().includes("children") ||
-        movie.genre?.toLowerCase().includes("action"),
-    );
+    const kidsMovies = kidsContent.all;
 
     return {
       all: kidsMovies,
-      featured: kidsMovies.slice(0, 5),
+      featured:
+        kidsContent.featured.length > 0
+          ? kidsContent.featured
+          : kidsMovies.slice(0, 5),
       topRanked: kidsMovies.slice(0, 10),
       recommended: kidsMovies.slice(0, 20),
-      trending: kidsMovies.slice(5, 25),
-      new: kidsMovies.slice(10, 30),
+      trending:
+        kidsContent.trending.length > 0
+          ? kidsContent.trending
+          : kidsMovies.slice(0, 8),
+      new:
+        kidsContent.new.length > 0 ? kidsContent.new : kidsMovies.slice(0, 8),
       byGenre: {
         Animation: kidsMovies.filter((m) =>
           m.genre?.toLowerCase().includes("animation"),
@@ -57,9 +60,47 @@ const Kids = () => {
         Adventure: kidsMovies.filter((m) =>
           m.genre?.toLowerCase().includes("adventure"),
         ),
+        Action: kidsMovies.filter((m) =>
+          m.genre?.toLowerCase().includes("action"),
+        ),
       },
     };
-  }, [movieContent]);
+  }, [kidsContent]);
+
+  // Get genres that actually have kids content
+  const availableKidsGenres = useMemo(() => {
+    if (!enhancedKidsContent.all || enhancedKidsContent.all.length === 0) {
+      return ["All"];
+    }
+
+    const kidsGenres = [
+      ...new Set(
+        enhancedKidsContent.all.map((item) => item.genre).filter(Boolean),
+      ),
+    ];
+
+    return ["All", ...kidsGenres.sort()];
+  }, [enhancedKidsContent.all]);
+
+  const handleGenreChange = (genre: string) => {
+    setActiveGenre(genre);
+  };
+
+  // Get filtered kids content based on active genre
+  const getFilteredKidsContent = () => {
+    if (activeGenre === "all") {
+      return enhancedKidsContent.all;
+    }
+    return enhancedKidsContent.all.filter(
+      (item) => item.genre?.toLowerCase() === activeGenre.toLowerCase(),
+    );
+  };
+
+  const filteredKidsContent = getFilteredKidsContent();
+
+  const handleHomeRowCardClick = () => {
+    return false; // Kids page doesn't need login modal for card clicks
+  };
 
   // Add click logic for Top Ranked
   const handleCardClick = (movie) => {
@@ -84,14 +125,14 @@ const Kids = () => {
         {/* Navigation is now global, do not render Navbar here */}
         <div className="pt-16">
           {/* Main Layout */}
-          {kidsContent.all.length > 0 ? (
+          {enhancedKidsContent.all.length > 0 ? (
             <>
               {/* Top Section */}
               <div className="max-w-full px-2 py-4">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-6 px-4">
                   {/* Left - Hero Banner */}
                   <div className="lg:col-span-2">
-                    <HeroBanner movies={kidsContent.featured} />
+                    <HeroBanner movies={enhancedKidsContent.featured} variant="kids" />
                   </div>
                   {/* Right - Top Ranked */}
                   <div>
@@ -99,46 +140,50 @@ const Kids = () => {
                       Top Kids Shows
                     </h2>
                     <div
-                      className="flex flex-col space-y-2 w-full"
+                      className="flex flex-col space-y-3 w-full"
                       style={{ height: "calc(60vh - 2rem)" }}
                     >
-                      {kidsContent.topRanked.slice(0, 5).map((movie, index) => (
-                        <div
-                          key={movie.id}
-                          className="relative flex items-center bg-white/20 backdrop-blur-sm rounded-lg shadow-lg p-2 group border-2 border-transparent hover:border-yellow-400 hover:border-opacity-80 min-h-[60px] h-[calc((60vh-2rem)/5-0.5rem)] cursor-pointer"
-                          onClick={() => handleCardClick(movie)}
-                        >
-                          {/* Ranking Badge */}
-                          <div className="absolute -left-6 top-1/2 -translate-y-1/2 z-10">
-                            <span className="bg-yellow-500 text-blue-800 text-base font-bold px-3 py-1 rounded-full shadow-lg border-4 border-white">
-                              #{index + 1}
-                            </span>
-                          </div>
-                          {/* Poster Image */}
-                          <img
-                            src={movie.posterUrl}
-                            alt={movie.title}
-                            className="w-16 h-20 object-cover rounded-lg mr-3 flex-shrink-0 border-2 border-white/50"
-                          />
-                          {/* Info */}
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-blue-800 text-base mb-0.5 line-clamp-1">
-                              {movie.title}
-                            </h3>
-                            <div className="flex items-center space-x-2 text-xs text-blue-700 mb-0.5">
-                              <span>{movie.year}</span>
-                              <span>•</span>
-                              <span className="flex items-center">
-                                <span className="text-yellow-500">★</span>{" "}
-                                {movie.rating}
+                      {enhancedKidsContent.topRanked
+                        .slice(0, 5)
+                        .map((movie, index) => (
+                          <div
+                            key={movie.id}
+                            className="relative flex items-center bg-white/20 backdrop-blur-sm rounded-lg shadow-lg p-2 group border-2 border-transparent hover:border-yellow-400 hover:border-opacity-80 min-h-[60px] h-[calc((60vh-2rem)/5-0.5rem)] cursor-pointer"
+                            onClick={() => handleCardClick(movie)}
+                          >
+                            {/* Ranking Badge */}
+                            <div className="absolute -left-6 top-1/2 -translate-y-1/2 z-10">
+                              <span className="bg-yellow-500 text-blue-800 text-base font-bold px-3 py-1 rounded-full shadow-lg border-4 border-white">
+                                #{index + 1}
                               </span>
                             </div>
-                            <span className="inline-block bg-blue-600/60 text-xs text-white px-2 py-0.5 rounded">
-                              {movie.genre}
-                            </span>
+                            {/* Poster Image */}
+                            <img
+                              src={movie.posterUrl}
+                              alt={movie.title}
+                              className="w-16 h-20 object-cover rounded-lg mr-3 flex-shrink-0 border-2 border-white/50"
+                            />
+                            {/* Info */}
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-blue-800 text-base mb-0.5 line-clamp-1">
+                                {movie.title}
+                              </h3>
+                              <div className="flex items-center space-x-2 text-xs text-blue-700 mb-0.5">
+                                <span>{movie.year}</span>
+                                <span>•</span>
+                                <span className="flex items-center">
+                                  <span className="text-yellow-500">★</span>{" "}
+                                  {movie.rating}
+                                </span>
+                              </div>
+                              <div className="flex justify-end">
+                                <span className="inline-block bg-blue-600/60 text-xs text-white px-2 py-0.5 rounded">
+                                  {movie.genre}
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
                     </div>
                     {selectedMovie &&
                       (() => {
@@ -151,14 +196,55 @@ const Kids = () => {
                         const channel = channels.find(
                           (ch) => ch.id === selectedMovie.channelId,
                         );
+                        console.log(
+                          "🐛 [Kids.tsx] Debug recommendedContent filtering:",
+                        );
+                        console.log("All content:", content.length, "items");
+                        console.log(
+                          "Selected movie:",
+                          selectedMovie.title,
+                          "isKids:",
+                          selectedMovie.isKids,
+                        );
+                        console.log(
+                          "Sample content is_kids values:",
+                          content.slice(0, 5).map((item) => ({
+                            title: item.title,
+                            is_kids: item.is_kids,
+                            type: typeof item.is_kids,
+                          })),
+                        );
+
+                        const kidsFilteredContent = content.filter(
+                          (item) => item.is_kids === true,
+                        );
+                        console.log(
+                          "Kids content found:",
+                          kidsFilteredContent.length,
+                          "items",
+                        );
+                        console.log(
+                          "Kids content titles:",
+                          kidsFilteredContent.map((item) => item.title),
+                        );
+
                         const recommendedContent = content
                           .filter(
                             (item) =>
                               item.id !== selectedMovie.id &&
-                              (item.genre === selectedMovie.genre ||
-                                item.channel_id === selectedMovie.channelId),
+                              item.is_kids === true,
                           )
                           .slice(0, 6);
+
+                        console.log(
+                          "Final recommendedContent:",
+                          recommendedContent.length,
+                          "items",
+                        );
+                        console.log(
+                          "Recommended titles:",
+                          recommendedContent.map((item) => item.title),
+                        );
                         const handleSaveModal = () => {
                           if (isSaved) {
                             removeFromFavorites(selectedMovie.id);
@@ -195,6 +281,8 @@ const Kids = () => {
                               contentItem={contentItem}
                               channel={channel}
                               recommendedContent={recommendedContent}
+                              skipContentFiltering={true}
+                              customBackground="bg-gradient-to-br from-sky-400 via-blue-300 to-yellow-300"
                             />
                           </>
                         );
@@ -203,27 +291,134 @@ const Kids = () => {
                 </div>
               </div>
 
-              {/* Content Rows */}
+              {/* Filter Bar */}
+              <div className="mb-4 px-6">
+                <FilterBar
+                  activeGenre={activeGenre}
+                  onGenreChange={handleGenreChange}
+                  availableGenres={availableKidsGenres}
+                  variant="kids"
+                />
+              </div>
+
+              {/* Content Sections */}
               <div className="max-w-full p-4 px-8">
-                <ContentRow
-                  title="Recommended for Kids"
-                  movies={kidsContent.recommended}
-                />
-                <ContentRow
-                  title="Popular Kids Shows"
-                  movies={kidsContent.trending}
-                />
-                <ContentRow title="New Kids Content" movies={kidsContent.new} />
-                {/* Genre Sections */}
-                {Object.entries(kidsContent.byGenre).map(
-                  ([genre, genreMovies]) =>
-                    genreMovies.length > 0 && (
+                {activeGenre === "all" ? (
+                  // Show all kids content rows when "All" is selected
+                  <>
+                    {/* New Kids */}
+                    {enhancedKidsContent.new.length > 0 && (
                       <ContentRow
-                        key={genre}
-                        title={genre}
-                        movies={genreMovies}
+                        title="New Kids"
+                        movies={enhancedKidsContent.new}
                       />
-                    ),
+                    )}
+
+                    {/* Continue Watching */}
+                    {enhancedKidsContent.trending.length > 0 && (
+                      <ContentRow
+                        title="Continue Watching"
+                        movies={enhancedKidsContent.trending}
+                      />
+                    )}
+
+                    {/* Recommended */}
+                    {enhancedKidsContent.recommended.length > 0 && (
+                      <ContentRow
+                        title="Recommended"
+                        movies={enhancedKidsContent.recommended}
+                      />
+                    )}
+
+                    {/* TV Shows - Filter kids content by series type */}
+                    {(() => {
+                      const kidsShows = enhancedKidsContent.all.filter(
+                        (item) => item.type === "series",
+                      );
+                      return (
+                        kidsShows.length > 0 && (
+                          <ContentRow
+                            title="TV Shows"
+                            movies={kidsShows.slice(0, 8)}
+                          />
+                        )
+                      );
+                    })()}
+
+                    {/* Movies - Filter kids content by movie type */}
+                    {(() => {
+                      const kidsMovies = enhancedKidsContent.all.filter(
+                        (item) => item.type === "movie",
+                      );
+                      return (
+                        kidsMovies.length > 0 && (
+                          <ContentRow
+                            title="Movies"
+                            movies={kidsMovies.slice(0, 8)}
+                          />
+                        )
+                      );
+                    })()}
+
+                    {/* Educational - Filter kids content by Educational genre */}
+                    {(() => {
+                      const educationalContent = enhancedKidsContent.all.filter(
+                        (item) =>
+                          item.genre?.toLowerCase().includes("educational"),
+                      );
+                      return (
+                        educationalContent.length > 0 && (
+                          <ContentRow
+                            title="Educational"
+                            movies={educationalContent}
+                          />
+                        )
+                      );
+                    })()}
+                  </>
+                ) : (
+                  // Show filtered content for specific genre
+                  <>
+                    {filteredKidsContent.length > 0 && (
+                      <>
+                        {/* New content row */}
+                        <ContentRow
+                          title="New Kids Content"
+                          movies={filteredKidsContent.slice(0, 8)}
+                        />
+
+                        {/* Recommended row */}
+                        <ContentRow
+                          title="Recommended"
+                          movies={filteredKidsContent.slice(2, 10)}
+                        />
+                      </>
+                    )}
+
+                    {/* Grid Layout for all filtered kids content */}
+                    <div className="mt-8 mb-8 pl-4">
+                      <h2 className="text-xl font-semibold mb-4 text-blue-800">
+                        All {activeGenre} Kids Content
+                      </h2>
+
+                      {filteredKidsContent.length > 0 ? (
+                        <ContentGrid
+                          items={filteredKidsContent}
+                          onCardClick={handleHomeRowCardClick}
+                        />
+                      ) : (
+                        <div className="text-center py-16">
+                          <h3 className="text-xl font-bold mb-2 text-blue-800">
+                            No kids content found
+                          </h3>
+                          <p className="text-blue-700">
+                            No {activeGenre} kids content available at the
+                            moment
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </>
                 )}
               </div>
             </>

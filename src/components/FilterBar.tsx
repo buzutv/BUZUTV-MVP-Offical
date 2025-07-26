@@ -4,12 +4,14 @@ interface FilterBarProps {
   activeGenre: string;
   onGenreChange: (genre: string) => void;
   availableGenres: string[];
+  variant?: "default" | "kids";
 }
 
 const FilterBar: React.FC<FilterBarProps> = ({
   activeGenre,
   onGenreChange,
   availableGenres,
+  variant = "default",
 }) => {
   const handleGenreClick = (genre: string) => {
     console.log("🎭 [FilterBar] Genre button clicked:", {
@@ -20,6 +22,14 @@ const FilterBar: React.FC<FilterBarProps> = ({
     });
     onGenreChange(genre.toLowerCase());
   };
+
+  const isKidsVariant = variant === "kids";
+  const activeButtonClass = isKidsVariant
+    ? "bg-blue-500 text-white shadow-[2px_19px_31px_rgba(59,130,246,0.35)] hover:bg-blue-600"
+    : "bg-brand-500 text-white shadow-[2px_19px_31px_rgba(30,27,95,0.35)] hover:bg-brand-600";
+  const hoverButtonClass = isKidsVariant
+    ? "text-white hover:text-white hover:bg-blue-500/20"
+    : "text-white hover:text-white hover:bg-brand-500/20";
 
   return (
     <div className="px-4 sm:px-6 lg:px-8">
@@ -34,8 +44,8 @@ const FilterBar: React.FC<FilterBarProps> = ({
               px-4 py-1.5 rounded-full text-sm font-medium leading-5 transition-all duration-300 hover:scale-105 will-change-transform transform-gpu
               ${
                 activeGenre.toLowerCase() === genre.toLowerCase()
-                  ? "bg-brand-500 text-white shadow-[2px_19px_31px_rgba(30,27,95,0.35)] hover:bg-brand-600"
-                  : "text-white hover:text-white hover:bg-brand-500/20"
+                  ? activeButtonClass
+                  : hoverButtonClass
               }
             `}
               style={

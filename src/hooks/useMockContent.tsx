@@ -15,6 +15,7 @@ const transformDatabaseContent = (dbContent: any[]) => {
     title: item.title,
     description: item.description || '',
     type: item.type, // Convert series to tv for type compatibility
+    isKids: item.is_kids || false,
     genre: item.genre || 'Drama',
     year: item.year || new Date().getFullYear(),
     rating: item.rating || 0,

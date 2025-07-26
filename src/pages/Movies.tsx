@@ -231,11 +231,15 @@ const Movies = () => {
                           .filter(
                             (item) => {
                               const passesId = item.id !== selectedMovie.id;
-                              const passesKids = !item.is_kids;
+                              // If current movie is kids content, show only kids content in recommendations
+                              // If current movie is not kids content, exclude kids content from recommendations
+                              const passesKids = selectedMovie.is_kids || contentItem?.is_kids 
+                                ? item.is_kids === true  // Show only kids content
+                                : !item.is_kids;         // Exclude kids content
                               const passesGenre = item.genre === selectedMovie.genre ||
                                 item.channel_id === selectedMovie.channelId;
                               
-                              console.log(`[Movies Page] Item: ${item.title} | ID match: ${passesId} | Not kids: ${passesKids} (is_kids: ${item.is_kids}) | Genre/Channel match: ${passesGenre}`);
+                              console.log(`[Movies Page] Item: ${item.title} | ID match: ${passesId} | Kids filter: ${passesKids} (is_kids: ${item.is_kids}, current movie is_kids: ${selectedMovie.is_kids || contentItem?.is_kids}) | Genre/Channel match: ${passesGenre}`);
                               
                               return passesId && passesKids && passesGenre;
                             }
@@ -441,7 +445,7 @@ const Movies = () => {
                     )}
 
                     {/* Grid Layout for all filtered movies */}
-                    <div className="mt-8 pl-4">
+                    <div className="mt-8 mb-8 pl-4">
                       <h2 className="text-xl font-semibold mb-4">All Movies</h2>
 
                       {filteredMovies.length > 0 ? (

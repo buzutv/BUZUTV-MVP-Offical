@@ -42,9 +42,10 @@ const seasonSchema = z.object({
 });
 
 const movieSchema = z.object({
+  isKids: z.boolean().default(false),
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
-  type: z.enum(["movie", "series", "kids"]),
+  type: z.enum(["movie", "series"]),
   genre: z.string().optional(),
   year: z.string().optional(),
   rating: z.string().optional(),
@@ -76,6 +77,7 @@ const MovieForm: React.FC<MovieFormProps> = ({
   const form = useForm<MovieFormData>({
     resolver: zodResolver(movieSchema),
     defaultValues: {
+      isKids: initialData?.isKids ?? false,
       title: initialData?.title || "",
       description: initialData?.description || "",
       type: initialData?.type || "movie",
@@ -164,6 +166,27 @@ const MovieForm: React.FC<MovieFormProps> = ({
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <FormField
           control={form.control}
+          name="isKids"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-600 p-4">
+              <div className="space-y-0.5">
+                <FormLabel className="text-white">Kids Content</FormLabel>
+                <div className="text-sm text-gray-400">
+                  Mark this content as appropriate for kids
+                </div>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
           name="title"
           render={({ field }) => (
             <FormItem>
@@ -218,7 +241,6 @@ const MovieForm: React.FC<MovieFormProps> = ({
                   <SelectContent className="bg-gray-700 border-gray-600">
                     <SelectItem value="movie">Movie</SelectItem>
                     <SelectItem value="series">Series</SelectItem>
-                    <SelectItem value="kids">Kids</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />

@@ -25,6 +25,7 @@ import SeriesModal from "./SeriesModal";
 
 interface HeroBannerProps {
   movies: Movie[];
+  variant?: "default" | "kids";
 }
 
 // Helper function to convert YouTube URLs to embed format
@@ -43,7 +44,7 @@ const getYouTubeEmbedUrl = (url: string): string | null => {
   return null;
 };
 
-const HeroBanner = ({ movies }: HeroBannerProps) => {
+const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
   const [showModal, setShowModal] = useState(false);
   const [modalMovie, setModalMovie] = useState<Movie | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -160,10 +161,14 @@ const HeroBanner = ({ movies }: HeroBannerProps) => {
         const filtered = content.filter(
           (item) => {
             const passesId = item.id !== modalMovie.id;
-            const passesKids = !item.is_kids;
+            // If current movie is kids content, show only kids content in recommendations
+            // If current movie is not kids content, exclude kids content from recommendations
+            const passesKids = modalMovie.isKids || modalContentItem?.is_kids 
+              ? item.is_kids === true  // Show only kids content
+              : !item.is_kids;         // Exclude kids content
             const passesGenre = item.genre === modalMovie.genre || item.channel_id === modalMovie.channelId;
             
-            console.log(`Item: ${item.title} | ID match: ${passesId} | Not kids: ${passesKids} (is_kids: ${item.is_kids}) | Genre/Channel match: ${passesGenre}`);
+            console.log(`Item: ${item.title} | ID match: ${passesId} | Kids filter: ${passesKids} (is_kids: ${item.is_kids}, current movie isKids: ${modalMovie.isKids || modalContentItem?.is_kids}) | Genre/Channel match: ${passesGenre}`);
             
             return passesId && passesKids && passesGenre;
           }
@@ -189,6 +194,14 @@ const HeroBanner = ({ movies }: HeroBannerProps) => {
 
   // Determine if Watch Now should be enabled
   const watchNowEnabled = !!contentItem?.video_url;
+
+  // Color variants for kids theme
+  const isKidsVariant = variant === "kids";
+  const playButtonClass = isKidsVariant
+    ? "bg-blue-500 hover:bg-blue-600 text-white shadow-[2px_19px_31px_rgba(59,130,246,0.35)]"
+    : "bg-brand-500 hover:bg-brand-600 text-white shadow-[2px_19px_31px_rgba(30,27,95,0.35)]";
+  const infoBorderClass = isKidsVariant ? "border-blue-400" : "border-brand-500";
+  const genreBgClass = isKidsVariant ? "bg-blue-500/70" : "bg-brand-500/70";
 
   return (
     <>
@@ -234,7 +247,7 @@ const HeroBanner = ({ movies }: HeroBannerProps) => {
                         {movie.title}
                       </h1>
                       <div className="flex items-center space-x-3 mb-6">
-                        <span className="bg-brand-500/70 text-white px-2 py-1 rounded text-sm">
+                        <span className={`${genreBgClass} text-white px-2 py-1 rounded text-sm`}>
                           {movie.genre}
                         </span>
                         <span className="text-gray-300 text-sm">
@@ -255,7 +268,7 @@ const HeroBanner = ({ movies }: HeroBannerProps) => {
                             disabled={!watchNowEnabled}
                             className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all duration-300 hover:scale-105 text-sm ${
                               watchNowEnabled
-                                ? "bg-brand-500 hover:bg-brand-600 text-white shadow-[2px_19px_31px_rgba(30,27,95,0.35)]"
+                                ? playButtonClass
                                 : "bg-gray-600 text-gray-400 cursor-not-allowed"
                             }`}
                             style={
@@ -276,14 +289,14 @@ const HeroBanner = ({ movies }: HeroBannerProps) => {
                         {/* For series, show a non-clickable pill instead of More Info */}
                         {movie.type === "series" ? (
                           <span
-                            className="flex items-center gap-2 bg-black/20 backdrop-blur-md border border-brand-500 text-white px-4 py-2 rounded-full font-bold text-sm cursor-default select-none"
+                            className={`flex items-center gap-2 bg-black/20 backdrop-blur-md border ${infoBorderClass} text-white px-4 py-2 rounded-full font-bold text-sm cursor-default select-none`}
                           >
                             Watch Now Below!
                           </span>
                         ) : (
                           <button
                             onClick={handleMoreInfo}
-                            className="flex items-center gap-2 bg-black/20 backdrop-blur-md border border-brand-500 hover:bg-white/20 text-white px-4 py-2 rounded-full font-bold transition-all duration-300 hover:scale-105 text-sm"
+                            className={`flex items-center gap-2 bg-black/20 backdrop-blur-md border ${infoBorderClass} hover:bg-white/20 text-white px-4 py-2 rounded-full font-bold transition-all duration-300 hover:scale-105 text-sm`}
                           >
                             <Info className="w-4 h-4" />
                             <span>Info</span>
@@ -482,7 +495,7 @@ const HeroBanner = ({ movies }: HeroBannerProps) => {
       </Dialog>
 
       {/* Custom Pagination Styles */}
-      <style jsx>{`
+      <style>{`
         .swiper-pagination-bullet-movies {
           width: 8px;
           height: 8px;

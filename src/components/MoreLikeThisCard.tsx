@@ -82,9 +82,9 @@ const MoreLikeThisCard = ({ item }: { item: any }) => {
         />
       )}
 
-      <div className="relative flex-shrink-0 w-64 group rounded-lg group-hover:shadow-[0_0_15px_rgba(253,121,35,0.6)] transition-all duration-300">
+      <div className="relative flex-shrink-0 w-64 group rounded-lg group-hover:shadow-[0_0_4px_rgba(255,255,255,0.6)] transition-all duration-300">
         <div
-          className="relative overflow-hidden rounded-lg shadow-lg border-2 border-transparent group-hover:scale-105 group-hover:border-white group-hover:shadow-[0_0_15px_rgba(255,255,255,0.6)] transition-all duration-300"
+          className="relative overflow-hidden rounded-lg shadow-lg border-2 border-transparent group-hover:scale-105 group-hover:border-white group-hover:shadow-[0_0_4px_rgba(255,255,255,0.6)] transition-all duration-300"
           style={{ aspectRatio: "16/9" }}
         >
           <img

@@ -106,13 +106,38 @@ const SeriesModal = ({
   const showPlayButton =
     seasonsData.length > 0 && seasonsData[0]?.episodes?.length > 0;
 
-  const filteredRecommendedContent = recommendedContent.filter(
-    (item) =>
-      item.id !== series.id &&
-      (item.genre === series.genre ||
-        item.channel_id === series.channelId ||
-        item.channel_id === contentItem?.channel_id),
+  console.log("🐛 [SeriesModal] Debug More Like This filtering:");
+  console.log(
+    "Series:",
+    series.title,
+    "ID:",
+    series.id,
+    "Genre:",
+    series.genre,
   );
+  console.log(
+    "Total recommendedContent before filtering:",
+    recommendedContent.length,
+  );
+
+  const filteredRecommendedContent = recommendedContent.filter((item) => {
+    const passesId = item.id !== series.id;
+    // If current series is kids content, show only kids content in recommendations
+    // If current series is not kids content, exclude kids content from recommendations
+    const passesKids = series.isKids || contentItem?.is_kids 
+      ? item.is_kids === true  // Show only kids content
+      : !item.is_kids;         // Exclude kids content
+    const passesGenre =
+      item.genre === series.genre ||
+      item.channel_id === series.channelId ||
+      item.channel_id === contentItem?.channel_id;
+
+    console.log(
+      `[SeriesModal] Item: ${item.title} | ID match: ${passesId} | Kids filter: ${passesKids} (is_kids: ${item.is_kids}, current series isKids: ${series.isKids || contentItem?.is_kids}) | Genre/Channel match: ${passesGenre}`,
+    );
+
+    return passesId && passesKids && passesGenre;
+  });
 
   const normalizedRecommendedContent = filteredRecommendedContent.map(
     (item) => ({
@@ -214,7 +239,7 @@ const SeriesModal = ({
               {seasonsData.length > 0 && (
                 <div className="mb-8">
                   <Tabs defaultValue="season-1" className="w-full">
-                    <TabsList className="grid w-full grid-cols-auto bg-black border border-brand-500/20 rounded-lg hover:border-brand-500/40 transition-all duration-300 group">
+                    <TabsList className="grid w-full grid-cols-auto bg-transparent  transition-all duration-300 group">
                       {seasonsData.map((season) => (
                         <TabsTrigger
                           key={season.season_number}

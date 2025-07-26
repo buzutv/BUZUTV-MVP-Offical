@@ -86,7 +86,14 @@ const Navbar = ({
   };
 
   return (
-    <nav className="fixed top-3 left-0 right-0 z-50 flex items-center h-14 transition-all duration-500 px-6">
+    <nav
+      className={`fixed top-3 left-0 right-0 z-50 flex items-center h-14 transition-all duration-500 px-6 ${
+        location.pathname.startsWith("/auth") ||
+        location.pathname === "/settings"
+          ? "hidden"
+          : ""
+      }`}
+    >
       <div className="max-w-full px-8 w-full flex items-center justify-between h-14 relative bg-black/20 backdrop-blur-md rounded-full border border-white/10">
         {/* Logo */}
         <div className="flex-shrink-0">
@@ -169,8 +176,8 @@ const Navbar = ({
               to="/kids"
               className={`group text-white px-4 py-2 rounded-full text-base font-medium leading-5 align-middle transition-all duration-300 hover:scale-105 will-change-transform transform-gpu ${
                 isActivePath("/kids")
-                  ? "bg-brand-500 shadow-[2px_19px_31px_rgba(30,27,95,0.35)] hover:bg-brand-600"
-                  : "hover:text-white hover:bg-brand-500/20"
+                  ? "bg-blue-500 shadow-[2px_19px_31px_rgba(59,130,246,0.35)] hover:bg-blue-600"
+                  : "hover:text-white hover:bg-blue-500/20"
               }`}
               style={
                 isActivePath("/kids")
@@ -186,6 +193,7 @@ const Navbar = ({
             >
               Kids
             </Link>
+
             <Link
               to="/my-list"
               className={`group text-white px-4 py-2 rounded-full text-base font-medium leading-5 align-middle transition-all duration-300 hover:scale-105 will-change-transform transform-gpu ${
@@ -213,7 +221,13 @@ const Navbar = ({
         {/* Right Side - User */}
         <div className="flex items-center gap-4 ">
           {/* Search */}
-          <div className="relative rounded-full px-2 py-1 ">
+          <div
+            className={`relative rounded-full px-2 py-1 ${
+              isSearchOpen || searchQuery
+                ? "border border-white/10 bg-black/10"
+                : ""
+            }`}
+          >
             {isSearchOpen || searchQuery ? (
               <div className="flex items-center px-3 py-1 rounded-full transition-all">
                 <input

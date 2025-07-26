@@ -215,11 +215,15 @@ const Series = () => {
                           .filter(
                             (item) => {
                               const passesId = item.id !== selectedSeries.id;
-                              const passesKids = !item.is_kids;
+                              // If current series is kids content, show only kids content in recommendations
+                              // If current series is not kids content, exclude kids content from recommendations
+                              const passesKids = selectedSeries.is_kids || contentItem?.is_kids 
+                                ? item.is_kids === true  // Show only kids content
+                                : !item.is_kids;         // Exclude kids content
                               const passesGenre = item.genre === selectedSeries.genre ||
                                 item.channel_id === selectedSeries.channelId;
                               
-                              console.log(`[Series Page] Item: ${item.title} | ID match: ${passesId} | Not kids: ${passesKids} (is_kids: ${item.is_kids}) | Genre/Channel match: ${passesGenre}`);
+                              console.log(`[Series Page] Item: ${item.title} | ID match: ${passesId} | Kids filter: ${passesKids} (is_kids: ${item.is_kids}, current series is_kids: ${selectedSeries.is_kids || contentItem?.is_kids}) | Genre/Channel match: ${passesGenre}`);
                               
                               return passesId && passesKids && passesGenre;
                             }
@@ -422,7 +426,7 @@ const Series = () => {
                     )}
 
                     {/* Grid Layout for all filtered series */}
-                    <div className="mt-8 pl-4">
+                    <div className="mt-8 mb-8 pl-4">
                       <h2 className="text-xl font-semibold mb-4">All Series</h2>
 
                       {filteredSeries.length > 0 ? (

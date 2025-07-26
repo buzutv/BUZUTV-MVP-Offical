@@ -17,6 +17,8 @@ interface MovieModalProps {
   channel?: any;
   recommendedContent: any[];
   onOpenRelatedMovie?: (movie: Movie) => void;
+  skipContentFiltering?: boolean;
+  customBackground?: string;
 }
 
 const MovieModal = ({
@@ -31,6 +33,8 @@ const MovieModal = ({
   channel,
   recommendedContent,
   onOpenRelatedMovie,
+  skipContentFiltering = false,
+  customBackground,
 }: MovieModalProps) => {
   // Format duration from minutes to "Xh Ym" format
   const formatDuration = (minutes: number | undefined) => {
@@ -43,13 +47,64 @@ const MovieModal = ({
     return `${mins}m`;
   };
 
-  // Filter recommended content by same genre or channel
-  const filteredRecommendedContent = recommendedContent.filter(
-    (item) =>
-      item.id !== movie.id &&
-      (item.genre === movie.genre ||
-        item.channel_id === movie.channelId ||
-        item.channel_id === contentItem?.channel_id),
+  // Filter recommended content by same genre or channel (unless filtering is skipped)
+  console.log("🐛 [MovieModal] Debug More Like This filtering:");
+  console.log("skipContentFiltering:", skipContentFiltering);
+  console.log("Movie:", movie.title, "ID:", movie.id, "Genre:", movie.genre);
+  console.log(
+    "Total recommendedContent before filtering:",
+    recommendedContent.length,
+  );
+  console.log(
+    "recommendedContent received:",
+    recommendedContent.length,
+    "items",
+  );
+  console.log(
+    "recommendedContent titles:",
+    recommendedContent.map((item) => item.title),
+  );
+  console.log(
+    "recommendedContent is_kids values:",
+    recommendedContent.map((item) => ({
+      title: item.title,
+      is_kids: item.is_kids,
+      isKids: item.isKids,
+    })),
+  );
+
+  const filteredRecommendedContent = skipContentFiltering
+    ? recommendedContent.filter((item) => item.id !== movie.id)
+    : recommendedContent.filter((item) => {
+        const passesId = item.id !== movie.id;
+
+        // If current movie is kids content, show only kids content in recommendations
+        // If current movie is not kids content, exclude kids content from recommendations
+        const passesKids =
+          movie.isKids || contentItem?.is_kids
+            ? item.is_kids === true // Show only kids content
+            : !item.is_kids; // Exclude kids content
+
+        const passesGenre =
+          item.genre === movie.genre ||
+          item.channel_id === movie.channelId ||
+          item.channel_id === contentItem?.channel_id;
+
+        console.log(
+          `[MovieModal] Item: ${item.title} | ID match: ${passesId} | Kids filter: ${passesKids} (is_kids: ${item.is_kids}, current movie isKids: ${movie.isKids || contentItem?.is_kids}) | Genre/Channel match: ${passesGenre}`,
+        );
+
+        return passesId && passesKids && passesGenre;
+      });
+
+  console.log(
+    "After MovieModal filtering:",
+    filteredRecommendedContent.length,
+    "items",
+  );
+  console.log(
+    "Final filtered titles:",
+    filteredRecommendedContent.map((item) => item.title),
   );
 
   const normalizedRecommendedContent = filteredRecommendedContent.map(
@@ -74,13 +129,11 @@ const MovieModal = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="max-w-[75vw] max-h-[90vh] text-white border-none p-0 overflow-hidden
-             transition-all duration-1000 ease-in-out opacity-0 scale-95
-             data-[state=open]:opacity-100 data-[state=open]:scale-100"
+        className={`max-w-[75vw] max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-1000 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 ${customBackground || "bg-gray-900"}`}
       >
         <DialogTitle className="sr-only">{movie.title}</DialogTitle>
         <ScrollArea className="h-[90vh] scroll-smooth">
-          <div className="relative min-h-full bg-gradient-to-t from-black via-brand-900 to-brand-800">
+          <div className="relative min-h-full bg-gradient-to-t from-black/50 via-transparent to-transparent">
             {/* Hero Section with Fixed Gradient */}
             <div className="relative w-full h-[60vh] overflow-hidden">
               {/* Background Image */}

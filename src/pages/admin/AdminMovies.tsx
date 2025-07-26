@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, Edit, Trash2, Plus, Star, TrendingUp, Film, Tv } from "lucide-react";
+import { Search, Edit, Trash2, Plus, Star, TrendingUp, Film, Tv, Baby } from "lucide-react";
 import { toast } from "sonner";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { useMockContent } from "@/hooks/useMockContent";
@@ -13,6 +13,7 @@ const AdminMovies = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGenre, setSelectedGenre] = useState("All");
   const [selectedType, setSelectedType] = useState("All");
+  const [selectedKidsFilter, setSelectedKidsFilter] = useState("All");
   const [selectedMovies, setSelectedMovies] = useState<string[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -32,7 +33,10 @@ const AdminMovies = () => {
     const matchesSearch = movie.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesGenre = selectedGenre === "All" || movie.genre === selectedGenre;
     const matchesType = selectedType === "All" || movie.type === selectedType;
-    return matchesSearch && matchesGenre && matchesType;
+    const matchesKids = selectedKidsFilter === "All" || 
+      (selectedKidsFilter === "Kids" && movie.isKids) ||
+      (selectedKidsFilter === "Non-Kids" && !movie.isKids);
+    return matchesSearch && matchesGenre && matchesType && matchesKids;
   });
 
   const handleSelectMovie = (movieId: string) => {
@@ -164,7 +168,16 @@ const AdminMovies = () => {
             >
               <option value="All">All Types</option>
               <option value="movie">Movies</option>
-              <option value="tv">Series</option>
+              <option value="series">Series</option>
+            </select>
+            <select
+              value={selectedKidsFilter}
+              onChange={(e) => setSelectedKidsFilter(e.target.value)}
+              className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 transition-colors"
+            >
+              <option value="All">All Content</option>
+              <option value="Kids">Kids Only</option>
+              <option value="Non-Kids">Non-Kids Only</option>
             </select>
           </div>
         </div>
@@ -227,6 +240,9 @@ const AdminMovies = () => {
                       Year
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      Kids
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                       Status
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
@@ -281,6 +297,16 @@ const AdminMovies = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-gray-300">{movie.year}</td>
+                      <td className="px-6 py-4">
+                        {movie.isKids ? (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-600 text-white">
+                            <Baby className="w-3 h-3 mr-1" />
+                            Kids
+                          </span>
+                        ) : (
+                          <span className="text-gray-500 text-xs">—</span>
+                        )}
+                      </td>
                       <td className="px-6 py-4">
                         <div className="flex space-x-2">
                           {movie.isTrending && (
