@@ -339,7 +339,8 @@ const Settings = () => {
         {/* Header */}
         <nav className="fixed top-0 w-full z-50 bg-black/20 backdrop-blur-md">
           <div className="max-w-7xl mx-auto px-4">
-            <div className="flex items-center justify-between h-20">
+            {/* Desktop Layout */}
+            <div className="hidden sm:flex items-center justify-between h-20">
               <div className="flex items-center space-x-4">
                 <Button
                   onClick={() => navigate("/")}
@@ -350,7 +351,7 @@ const Settings = () => {
                 </Button>
               </div>
 
-              <span className="text-2xl font-bold tex-white">Settings</span>
+              <span className="text-2xl font-bold text-white">Settings</span>
 
               <Button
                 onClick={handleLogout}
@@ -359,6 +360,33 @@ const Settings = () => {
                 <LogOut className="w-4 h-4" />
                 Sign Out
               </Button>
+            </div>
+
+            {/* Mobile Layout - Stacked Vertically */}
+            <div className="block sm:hidden py-4">
+              <div className="flex flex-col items-center space-y-3">
+                {/* Title */}
+                <span className="text-xl font-bold text-white">Settings</span>
+                
+                {/* Buttons Row */}
+                <div className="flex items-center space-x-3 w-full justify-center">
+                  <Button
+                    onClick={() => navigate("/")}
+                    className="flex items-center justify-center gap-2 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-4 py-2 text-xs bg-black/20 backdrop-blur-md border border-brand-500 hover:bg-white/20"
+                  >
+                    <ArrowLeft className="w-3 h-3" />
+                    Back to Home
+                  </Button>
+
+                  <Button
+                    onClick={handleLogout}
+                    className="flex items-center justify-center gap-2 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-4 py-2 text-xs bg-black/20 backdrop-blur-md border border-brand-500 hover:bg-white/20"
+                  >
+                    <LogOut className="w-3 h-3" />
+                    Sign Out
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </nav>

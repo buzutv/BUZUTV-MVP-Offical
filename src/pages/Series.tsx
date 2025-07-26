@@ -134,15 +134,22 @@ const Series = () => {
         <div className="pt-16">
           {seriesContent.all.length > 0 ? (
             <>
-              <div className="max-w-full px-2 py-4">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-6 px-4">
-                  <div className="lg:col-span-2">
+              <div className="max-w-full px-2 pt-4 relative">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 px-4">
+                  <div className="lg:col-span-2 relative">
                     <HeroBanner
                       movies={
                         seriesContent.featured.length > 0
                           ? seriesContent.featured
                           : seriesContent.all.slice(0, 3)
                       }
+                    />
+                    {/* Bottom gradient transition */}
+                    <div 
+                      className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none" 
+                      style={{
+                        background: 'linear-gradient(to bottom right, black 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.4) 70%, transparent 100%)'
+                      }}
                     />
                   </div>
 
@@ -279,7 +286,7 @@ const Series = () => {
               </div>
 
               {/* Filter Bar */}
-              <div className="mb-4 px-6">
+              <div className="mb-4 px-6 pt-8">
                 <FilterBar
                   activeGenre={activeGenre}
                   onGenreChange={handleGenreChange}

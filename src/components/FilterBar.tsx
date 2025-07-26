@@ -35,35 +35,83 @@ const FilterBar: React.FC<FilterBarProps> = ({
     <div className="px-4 sm:px-6 lg:px-8">
       {/* Genre Filters */}
       <div className="flex justify-center">
-        <div className="bg-black/20 backdrop-blur-sm rounded-full p-1 inline-flex gap-2">
-          {availableGenres.map((genre) => (
-            <button
-              key={genre}
-              onClick={() => handleGenreClick(genre)}
-              className={`
-              px-4 py-1.5 rounded-full text-sm font-medium leading-5 transition-all duration-300 hover:scale-105 will-change-transform transform-gpu
-              ${
-                activeGenre.toLowerCase() === genre.toLowerCase()
-                  ? activeButtonClass
-                  : hoverButtonClass
-              }
-            `}
-              style={
-                activeGenre.toLowerCase() === genre.toLowerCase()
-                  ? {
-                      backgroundImage: `
-                  radial-gradient(93% 87% at 87% 89%, rgba(0, 0, 0, 0.23) 0%, transparent 86.18%),
-                  radial-gradient(66% 87% at 26% 20%, rgba(255, 255, 255, 0.41) 0%, rgba(255, 255, 255, 0) 70%)
-                `,
-                    }
-                  : {}
-              }
-            >
-              {genre}
-            </button>
-          ))}
+        {/* Desktop: Horizontal scroll container */}
+        <div className="hidden sm:block">
+          <div className="bg-black/20 backdrop-blur-sm rounded-full p-1 inline-flex gap-2">
+            {availableGenres.map((genre) => (
+              <button
+                key={genre}
+                onClick={() => handleGenreClick(genre)}
+                className={`
+                px-4 py-1.5 rounded-full text-sm font-medium leading-5 transition-all duration-300 hover:scale-105 will-change-transform transform-gpu
+                ${
+                  activeGenre.toLowerCase() === genre.toLowerCase()
+                    ? activeButtonClass
+                    : hoverButtonClass
+                }
+              `}
+                style={
+                  activeGenre.toLowerCase() === genre.toLowerCase()
+                    ? {
+                        backgroundImage: `
+                    radial-gradient(93% 87% at 87% 89%, rgba(0, 0, 0, 0.23) 0%, transparent 86.18%),
+                    radial-gradient(66% 87% at 26% 20%, rgba(255, 255, 255, 0.41) 0%, rgba(255, 255, 255, 0) 70%)
+                  `,
+                      }
+                    : {}
+                }
+              >
+                {genre}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Mobile: Scrollable horizontal container */}
+        <div className="block sm:hidden w-full">
+          <div className="bg-black/20 backdrop-blur-sm rounded-full p-1 overflow-x-auto scrollbar-hide">
+            <div className="flex gap-2 min-w-max px-2">
+              {availableGenres.map((genre) => (
+                <button
+                  key={genre}
+                  onClick={() => handleGenreClick(genre)}
+                  className={`
+                  px-3 py-1.5 rounded-full text-xs font-medium leading-5 transition-all duration-300 whitespace-nowrap flex-shrink-0
+                  ${
+                    activeGenre.toLowerCase() === genre.toLowerCase()
+                      ? activeButtonClass
+                      : hoverButtonClass
+                  }
+                `}
+                  style={
+                    activeGenre.toLowerCase() === genre.toLowerCase()
+                      ? {
+                          backgroundImage: `
+                      radial-gradient(93% 87% at 87% 89%, rgba(0, 0, 0, 0.23) 0%, transparent 86.18%),
+                      radial-gradient(66% 87% at 26% 20%, rgba(255, 255, 255, 0.41) 0%, rgba(255, 255, 255, 0) 70%)
+                    `,
+                        }
+                      : {}
+                  }
+                >
+                  {genre}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Mobile scrollbar hide styles */}
+      <style>{`
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
   );
 };

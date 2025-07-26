@@ -155,11 +155,19 @@ const Movies = () => {
           {movieContent.all.length > 0 ? (
             <>
               {/* Top Section */}
-              <div className="max-w-full px-2 py-4">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-6 px-4">
+              <div className="max-w-full px-2 pt-4 relative">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 px-4">
                   {/* Left - Hero Banner */}
-                  <div className="lg:col-span-2">
+                  <div className="lg:col-span-2 relative">
                     <HeroBanner movies={movieContent.featured} />
+                    {/* Bottom gradient transition */}
+                    <div
+                      className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none"
+                      style={{
+                        background:
+                          "linear-gradient(to bottom right, black 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.4) 70%, transparent 100%)",
+                      }}
+                    />
                   </div>
                   {/* Right - Top Ranked */}
                   <div>
@@ -223,27 +231,26 @@ const Movies = () => {
                         const channel = channels.find(
                           (ch) => ch.id === selectedMovie.channelId,
                         );
-                        console.log('🐛 [Movies Page] Debug More Like This filtering:');
-                        console.log('Selected movie:', selectedMovie.title, 'ID:', selectedMovie.id, 'Genre:', selectedMovie.genre);
-                        console.log('Total rawContent before filtering:', rawContent.length);
-                        
+
                         const recommendedContent = rawContent
-                          .filter(
-                            (item) => {
-                              const passesId = item.id !== selectedMovie.id;
-                              // If current movie is kids content, show only kids content in recommendations
-                              // If current movie is not kids content, exclude kids content from recommendations
-                              const passesKids = selectedMovie.is_kids || contentItem?.is_kids 
-                                ? item.is_kids === true  // Show only kids content
-                                : !item.is_kids;         // Exclude kids content
-                              const passesGenre = item.genre === selectedMovie.genre ||
-                                item.channel_id === selectedMovie.channelId;
-                              
-                              console.log(`[Movies Page] Item: ${item.title} | ID match: ${passesId} | Kids filter: ${passesKids} (is_kids: ${item.is_kids}, current movie is_kids: ${selectedMovie.is_kids || contentItem?.is_kids}) | Genre/Channel match: ${passesGenre}`);
-                              
-                              return passesId && passesKids && passesGenre;
-                            }
-                          )
+                          .filter((item) => {
+                            const passesId = item.id !== selectedMovie.id;
+                            // If current movie is kids content, show only kids content in recommendations
+                            // If current movie is not kids content, exclude kids content from recommendations
+                            const passesKids =
+                              selectedMovie.is_kids || contentItem?.is_kids
+                                ? item.is_kids === true // Show only kids content
+                                : !item.is_kids; // Exclude kids content
+                            const passesGenre =
+                              item.genre === selectedMovie.genre ||
+                              item.channel_id === selectedMovie.channelId;
+
+                            console.log(
+                              `[Movies Page] Item: ${item.title} | ID match: ${passesId} | Kids filter: ${passesKids} (is_kids: ${item.is_kids}, current movie is_kids: ${selectedMovie.is_kids || contentItem?.is_kids}) | Genre/Channel match: ${passesGenre}`,
+                            );
+
+                            return passesId && passesKids && passesGenre;
+                          })
                           .slice(0, 6);
                         const handleSaveModal = () => {
                           if (isSaved) {
@@ -290,7 +297,7 @@ const Movies = () => {
               </div>
 
               {/* Filter Bar */}
-              <div className="mb-4 px-6">
+              <div className="mb-4 px-6  pt-8">
                 <FilterBar
                   activeGenre={activeGenre}
                   onGenreChange={handleGenreChange}

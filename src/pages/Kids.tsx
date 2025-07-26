@@ -128,11 +128,14 @@ const Kids = () => {
           {enhancedKidsContent.all.length > 0 ? (
             <>
               {/* Top Section */}
-              <div className="max-w-full px-2 py-4">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-6 px-4">
+              <div className="max-w-full px-2 pt-4 relative">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 px-4">
                   {/* Left - Hero Banner */}
-                  <div className="lg:col-span-2">
-                    <HeroBanner movies={enhancedKidsContent.featured} variant="kids" />
+                  <div className="lg:col-span-2 relative">
+                    <HeroBanner
+                      movies={enhancedKidsContent.featured}
+                      variant="kids"
+                    />
                   </div>
                   {/* Right - Top Ranked */}
                   <div>
@@ -292,7 +295,7 @@ const Kids = () => {
               </div>
 
               {/* Filter Bar */}
-              <div className="mb-4 px-6">
+              <div className="mb-4 px-6 pt-8">
                 <FilterBar
                   activeGenre={activeGenre}
                   onGenreChange={handleGenreChange}
@@ -302,7 +305,7 @@ const Kids = () => {
               </div>
 
               {/* Content Sections */}
-              <div className="max-w-full p-4 px-8">
+              <div className="max-w-full px-6">
                 {activeGenre === "all" ? (
                   // Show all kids content rows when "All" is selected
                   <>
@@ -396,8 +399,8 @@ const Kids = () => {
                     )}
 
                     {/* Grid Layout for all filtered kids content */}
-                    <div className="mt-8 mb-8 pl-4">
-                      <h2 className="text-xl font-semibold mb-4 text-blue-800">
+                    <div className="mt-8 mb-4 pl-4">
+                      <h2 className="text-2xl font-bold mb-4 text-white">
                         All {activeGenre} Kids Content
                       </h2>
 
@@ -408,7 +411,7 @@ const Kids = () => {
                         />
                       ) : (
                         <div className="text-center py-16">
-                          <h3 className="text-xl font-bold mb-2 text-blue-800">
+                          <h3 className="text-xl font-bold mb-2 text-white">
                             No kids content found
                           </h3>
                           <p className="text-blue-700">

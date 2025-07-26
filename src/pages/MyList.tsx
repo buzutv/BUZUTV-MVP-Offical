@@ -45,7 +45,7 @@ const MyList = () => {
   const savedTVShows = savedContent.filter((item) => item.type === "series");
 
   // Debug log for MyList page content
-  console.log('❤️ [MyList] User favorites and subscriptions:', {
+  console.log("❤️ [MyList] User favorites and subscriptions:", {
     totalMoviesAvailable: movies.length,
     totalChannelsAvailable: channels.length,
     favoriteIds: favoriteIds,
@@ -54,13 +54,16 @@ const MyList = () => {
     savedTVShowsCount: savedTVShows.length,
     subscribedChannelsCount: subscribedChannels.length,
     favoriteChannelsCount: favoriteChannels.length,
-    savedContentTypes: savedContent.reduce((acc, item) => {
-      acc[item.type] = (acc[item.type] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>),
-    savedContentTitles: savedContent.slice(0, 5).map(item => item.title),
-    subscribedChannelNames: subscribedChannels.map(ch => ch.name),
-    favoriteChannelNames: favoriteChannels.map(ch => ch.name)
+    savedContentTypes: savedContent.reduce(
+      (acc, item) => {
+        acc[item.type] = (acc[item.type] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    ),
+    savedContentTitles: savedContent.slice(0, 5).map((item) => item.title),
+    subscribedChannelNames: subscribedChannels.map((ch) => ch.name),
+    favoriteChannelNames: favoriteChannels.map((ch) => ch.name),
   });
 
   const handleChannelClick = (channel: any) => {
@@ -107,7 +110,7 @@ const MyList = () => {
             {/* Page Title */}
             <div className="px-4 mb-8">
               <h1 className="text-4xl font-bold text-white mb-2">My List</h1>
-              <p className="text-gray-400">
+              <p className="text-white">
                 Your saved movies, shows, and subscriptions
               </p>
             </div>
@@ -197,7 +200,7 @@ const MyList = () => {
                   <h2 className="text-2xl font-bold mb-4">
                     Your favorites list is empty
                   </h2>
-                  <p className="text-gray-400 mb-8">
+                  <p className="text-white mb-8">
                     Start adding movies, series, and channels to your favorites
                   </p>
                   <Link

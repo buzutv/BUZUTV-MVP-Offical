@@ -184,27 +184,27 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
               <div className="relative w-full h-full">
                 {/* Background Image */}
                 <div
-                  className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
+                  className="absolute inset-0 w-full h-full bg-cover bg-no-repeat hero-bg-mobile md:hero-bg-desktop"
                   style={{
                     backgroundImage: `url(${slide.posterUrl || "/placeholder.svg"})`,
                   }}
                 />
 
                 {/* Gradient Overlays */}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/70 to-transparent h-[80%]" />
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/70 to-transparent h-[70%]" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
 
                 {/* Content */}
-                <div className="relative z-10 flex flex-col justify-center h-full px-8 md:px-16 lg:px-24 max-w-4xl ">
-                  <div className="space-y-6">
+                <div className="relative z-10 flex flex-col h-full px-4 md:px-16 lg:px-24 max-w-4xl pb-48">
+                  <div className="space-y-4 md:space-y-6 mt-auto md: pb-8">
                     {/* Movie Title */}
-                    <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
+                    <h1 className="text-3xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
                       {slide.title}
                     </h1>
 
                     {/* Description */}
                     {slide.description && (
-                      <p className="text-lg md:text-xl text-gray-200 max-w-2xl leading-relaxed">
+                      <p className="text-base md:text-xl text-gray-200 max-w-2xl leading-relaxed line-clamp-3 md:line-clamp-none">
                         {slide.description}
                       </p>
                     )}
@@ -369,6 +369,20 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
 
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
+        }
+
+        .hero-bg-mobile {
+          background-position: center 20%;
+        }
+
+        .hero-bg-desktop {
+          background-position: center center;
+        }
+
+        @media (max-width: 768px) {
+          .hero-bg-mobile {
+            background-position: center 20%;
+          }
         }
       `}</style>
     </div>
