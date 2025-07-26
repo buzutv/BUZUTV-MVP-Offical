@@ -189,7 +189,7 @@ const ChannelModal = ({ isOpen, onClose, channel }: ChannelModalProps) => {
           <div className="w-full h-full flex items-center justify-center">
             {currentVideoUrl.includes("youtube.com/embed") ? (
               <iframe
-                src={`${currentVideoUrl}?autoplay=1&controls=1&modestbranding=1&rel=0&fs=1&playsinline=1`}
+                src={`${currentVideoUrl}?autoplay=1&controls=1&rel=0&fs=1&playsinline=1`}
                 className="w-full h-full"
                 allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
                 allowFullScreen

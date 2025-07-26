@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Heart, Play, Star } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Movie } from "@/data/mockMovies";
 import HomeRow from "@/components/HomeRow";
+import SeriesPlayer from "@/components/SeriesPlayer";
 
 interface Episode {
   id: string;
@@ -48,6 +50,9 @@ const SeriesModal = ({
   seasons = [],
   onOpenRelatedSeries,
 }: SeriesModalProps) => {
+  const [isSeriesPlayerOpen, setIsSeriesPlayerOpen] = useState(false);
+  const [currentPlayingEpisode, setCurrentPlayingEpisode] = useState<Episode | null>(null);
+  const [currentPlayingSeason, setCurrentPlayingSeason] = useState<number>(1);
   const formatDuration = (minutes: number | undefined) => {
     if (!minutes) return "N/A";
     const hours = Math.floor(minutes / 60);
@@ -90,17 +95,29 @@ const SeriesModal = ({
   const handlePlayFirstEpisode = () => {
     const firstEpisode = seasonsData[0]?.episodes[0];
     if (firstEpisode?.video_url) {
-      onPlayEpisode(
-        firstEpisode.video_url,
-        `${series.title} - ${firstEpisode.title}`,
-      );
+      setCurrentPlayingEpisode(firstEpisode);
+      setCurrentPlayingSeason(seasonsData[0].season_number);
+      setIsSeriesPlayerOpen(true);
     }
   };
 
   const handlePlayEpisode = (episode: Episode) => {
     if (episode.video_url) {
-      onPlayEpisode(episode.video_url, `${series.title} - ${episode.title}`);
+      setCurrentPlayingEpisode(episode);
+      // Find which season this episode belongs to
+      const episodeSeason = seasonsData.find(season => 
+        season.episodes.some(ep => ep.id === episode.id)
+      );
+      if (episodeSeason) {
+        setCurrentPlayingSeason(episodeSeason.season_number);
+      }
+      setIsSeriesPlayerOpen(true);
     }
+  };
+
+  const handleCloseSeriesPlayer = () => {
+    setIsSeriesPlayerOpen(false);
+    setCurrentPlayingEpisode(null);
   };
 
   const showPlayButton =
@@ -147,6 +164,7 @@ const SeriesModal = ({
   );
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[75vw] max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-700 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100">
         <DialogTitle className="sr-only">{series.title}</DialogTitle>
@@ -322,6 +340,18 @@ const SeriesModal = ({
         </ScrollArea>
       </DialogContent>
     </Dialog>
+    {/* Series Player */}
+    {isSeriesPlayerOpen && currentPlayingEpisode && (
+      <SeriesPlayer
+        isOpen={isSeriesPlayerOpen}
+        onClose={handleCloseSeriesPlayer}
+        seriesTitle={series.title}
+        seasons={seasonsData}
+        currentEpisode={currentPlayingEpisode}
+        currentSeason={currentPlayingSeason}
+      />
+    )}
+  </>
   );
 };
 

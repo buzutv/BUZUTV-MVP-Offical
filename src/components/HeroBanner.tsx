@@ -338,7 +338,7 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
           <div className="w-full h-full flex items-center justify-center">
             {embedUrl.includes("youtube.com/embed") ? (
               <iframe
-                src={`${embedUrl}?autoplay=1&controls=1&modestbranding=1&rel=0&fs=1&playsinline=1`}
+                src={`${embedUrl}?autoplay=1&controls=1&rel=0&fs=1&playsinline=1`}
                 className="w-full h-full"
                 allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
                 allowFullScreen

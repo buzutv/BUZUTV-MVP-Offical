@@ -44,7 +44,7 @@ const FullscreenPlayer = ({ isOpen, onClose, videoUrl, title }: FullscreenPlayer
       console.log('Converted embed URL:', embedUrl);
       
       if (embedUrl) {
-        const autoplayUrl = `${embedUrl}?autoplay=1&mute=0&controls=1&showinfo=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1`;
+        const autoplayUrl = `${embedUrl}?autoplay=1&mute=0&controls=1&showinfo=0&rel=0&playsinline=1&enablejsapi=1`;
         console.log('Final autoplay URL:', autoplayUrl);
         iframeRef.current.src = autoplayUrl;
       }
