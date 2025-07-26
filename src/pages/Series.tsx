@@ -38,11 +38,11 @@ const Series = () => {
       return ["All"];
     }
 
-    const seriesGenres = [...new Set(
-      seriesContent.all
-        .map(series => series.genre)
-        .filter(Boolean)
-    )];
+    const seriesGenres = [
+      ...new Set(
+        seriesContent.all.map((series) => series.genre).filter(Boolean),
+      ),
+    ];
 
     return ["All", ...seriesGenres.sort()];
   }, [seriesContent.all]);
@@ -57,7 +57,7 @@ const Series = () => {
       return seriesContent.all;
     }
     return seriesContent.all.filter(
-      (series) => series.genre.toLowerCase() === activeGenre.toLowerCase()
+      (series) => series.genre.toLowerCase() === activeGenre.toLowerCase(),
     );
   };
 
@@ -117,14 +117,13 @@ const Series = () => {
         className="fixed inset-0"
         style={{
           background: `
-      linear-gradient(
-        200deg,
-        rgb(249 115 22) 0%,
-        rgb(194 65 12) 20%,
-        black 45%,
-        black 100%    
-      )
-    `,
+  linear-gradient(
+    200deg,
+    #311066 0%,   /* very dark violet */
+    #1D0833 20%,  /* deep blackish purple */
+    #120222 45%,  /* near-black violet */
+    black 100%    /* pure black */
+`,
         }}
       ></div>
 
@@ -145,10 +144,11 @@ const Series = () => {
                       }
                     />
                     {/* Bottom gradient transition */}
-                    <div 
-                      className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none" 
+                    <div
+                      className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none"
                       style={{
-                        background: 'linear-gradient(to bottom right, black 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.4) 70%, transparent 100%)'
+                        background:
+                          "linear-gradient(to bottom right, black 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.4) 70%, transparent 100%)",
                       }}
                     />
                   </div>
@@ -214,27 +214,22 @@ const Series = () => {
                         const channel = channels.find(
                           (ch) => ch.id === selectedSeries.channelId,
                         );
-                        console.log('🐛 [Series Page] Debug More Like This filtering:');
-                        console.log('Selected series:', selectedSeries.title, 'ID:', selectedSeries.id, 'Genre:', selectedSeries.genre);
-                        console.log('Total rawContent before filtering:', rawContent.length);
-                        
+
                         const recommendedContent = rawContent
-                          .filter(
-                            (item) => {
-                              const passesId = item.id !== selectedSeries.id;
-                              // If current series is kids content, show only kids content in recommendations
-                              // If current series is not kids content, exclude kids content from recommendations
-                              const passesKids = selectedSeries.is_kids || contentItem?.is_kids 
-                                ? item.is_kids === true  // Show only kids content
-                                : !item.is_kids;         // Exclude kids content
-                              const passesGenre = item.genre === selectedSeries.genre ||
-                                item.channel_id === selectedSeries.channelId;
-                              
-                              console.log(`[Series Page] Item: ${item.title} | ID match: ${passesId} | Kids filter: ${passesKids} (is_kids: ${item.is_kids}, current series is_kids: ${selectedSeries.is_kids || contentItem?.is_kids}) | Genre/Channel match: ${passesGenre}`);
-                              
-                              return passesId && passesKids && passesGenre;
-                            }
-                          )
+                          .filter((item) => {
+                            const passesId = item.id !== selectedSeries.id;
+                            // If current series is kids content, show only kids content in recommendations
+                            // If current series is not kids content, exclude kids content from recommendations
+                            const passesKids =
+                              selectedSeries.is_kids || contentItem?.is_kids
+                                ? item.is_kids === true // Show only kids content
+                                : !item.is_kids; // Exclude kids content
+                            const passesGenre =
+                              item.genre === selectedSeries.genre ||
+                              item.channel_id === selectedSeries.channelId;
+
+                            return passesId && passesKids && passesGenre;
+                          })
                           .slice(0, 6);
                         const handleSaveModal = () => {
                           if (isSaved) {
@@ -340,76 +335,87 @@ const Series = () => {
                     )}
 
                     {/* Comedy */}
-                    {seriesContent.byGenre.Comedy && seriesContent.byGenre.Comedy.length > 0 && (
-                      <HomeRow
-                        title="Comedy"
-                        items={seriesContent.byGenre.Comedy.slice(0, 8)}
-                        onCardClick={handleHomeRowCardClick}
-                      />
-                    )}
+                    {seriesContent.byGenre.Comedy &&
+                      seriesContent.byGenre.Comedy.length > 0 && (
+                        <HomeRow
+                          title="Comedy"
+                          items={seriesContent.byGenre.Comedy.slice(0, 8)}
+                          onCardClick={handleHomeRowCardClick}
+                        />
+                      )}
 
                     {/* Drama */}
-                    {seriesContent.byGenre.Drama && seriesContent.byGenre.Drama.length > 0 && (
-                      <HomeRow
-                        title="Drama"
-                        items={seriesContent.byGenre.Drama.slice(0, 8)}
-                        onCardClick={handleHomeRowCardClick}
-                      />
-                    )}
+                    {seriesContent.byGenre.Drama &&
+                      seriesContent.byGenre.Drama.length > 0 && (
+                        <HomeRow
+                          title="Drama"
+                          items={seriesContent.byGenre.Drama.slice(0, 8)}
+                          onCardClick={handleHomeRowCardClick}
+                        />
+                      )}
 
                     {/* Sports */}
-                    {seriesContent.byGenre.Sports && seriesContent.byGenre.Sports.length > 0 && (
-                      <HomeRow
-                        title="Sports"
-                        items={seriesContent.byGenre.Sports.slice(0, 8)}
-                        onCardClick={handleHomeRowCardClick}
-                      />
-                    )}
+                    {seriesContent.byGenre.Sports &&
+                      seriesContent.byGenre.Sports.length > 0 && (
+                        <HomeRow
+                          title="Sports"
+                          items={seriesContent.byGenre.Sports.slice(0, 8)}
+                          onCardClick={handleHomeRowCardClick}
+                        />
+                      )}
 
                     {/* Romance */}
-                    {seriesContent.byGenre.Romance && seriesContent.byGenre.Romance.length > 0 && (
-                      <HomeRow
-                        title="Romance"
-                        items={seriesContent.byGenre.Romance.slice(0, 8)}
-                        onCardClick={handleHomeRowCardClick}
-                      />
-                    )}
+                    {seriesContent.byGenre.Romance &&
+                      seriesContent.byGenre.Romance.length > 0 && (
+                        <HomeRow
+                          title="Romance"
+                          items={seriesContent.byGenre.Romance.slice(0, 8)}
+                          onCardClick={handleHomeRowCardClick}
+                        />
+                      )}
 
                     {/* Action */}
-                    {seriesContent.byGenre.Action && seriesContent.byGenre.Action.length > 0 && (
-                      <HomeRow
-                        title="Action"
-                        items={seriesContent.byGenre.Action.slice(0, 8)}
-                        onCardClick={handleHomeRowCardClick}
-                      />
-                    )}
+                    {seriesContent.byGenre.Action &&
+                      seriesContent.byGenre.Action.length > 0 && (
+                        <HomeRow
+                          title="Action"
+                          items={seriesContent.byGenre.Action.slice(0, 8)}
+                          onCardClick={handleHomeRowCardClick}
+                        />
+                      )}
 
                     {/* Lifestyle */}
-                    {seriesContent.byGenre.Lifestyle && seriesContent.byGenre.Lifestyle.length > 0 && (
-                      <HomeRow
-                        title="Lifestyle"
-                        items={seriesContent.byGenre.Lifestyle.slice(0, 8)}
-                        onCardClick={handleHomeRowCardClick}
-                      />
-                    )}
+                    {seriesContent.byGenre.Lifestyle &&
+                      seriesContent.byGenre.Lifestyle.length > 0 && (
+                        <HomeRow
+                          title="Lifestyle"
+                          items={seriesContent.byGenre.Lifestyle.slice(0, 8)}
+                          onCardClick={handleHomeRowCardClick}
+                        />
+                      )}
 
                     {/* Documentary */}
-                    {seriesContent.byGenre.Documentary && seriesContent.byGenre.Documentary.length > 0 && (
-                      <HomeRow
-                        title="Documentary"
-                        items={seriesContent.byGenre.Documentary.slice(0, 8)}
-                        onCardClick={handleHomeRowCardClick}
-                      />
-                    )}
+                    {seriesContent.byGenre.Documentary &&
+                      seriesContent.byGenre.Documentary.length > 0 && (
+                        <HomeRow
+                          title="Documentary"
+                          items={seriesContent.byGenre.Documentary.slice(0, 8)}
+                          onCardClick={handleHomeRowCardClick}
+                        />
+                      )}
 
                     {/* Informational */}
-                    {seriesContent.byGenre.Informational && seriesContent.byGenre.Informational.length > 0 && (
-                      <HomeRow
-                        title="Informational"
-                        items={seriesContent.byGenre.Informational.slice(0, 8)}
-                        onCardClick={handleHomeRowCardClick}
-                      />
-                    )}
+                    {seriesContent.byGenre.Informational &&
+                      seriesContent.byGenre.Informational.length > 0 && (
+                        <HomeRow
+                          title="Informational"
+                          items={seriesContent.byGenre.Informational.slice(
+                            0,
+                            8,
+                          )}
+                          onCardClick={handleHomeRowCardClick}
+                        />
+                      )}
                   </>
                 ) : (
                   // Show filtered content for specific genre

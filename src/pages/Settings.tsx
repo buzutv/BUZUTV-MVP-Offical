@@ -289,7 +289,6 @@ const Settings = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    console.log("📝 Input change:", { field: name, value, currentForm: form });
     setForm({ ...form, [name]: value });
   };
 
@@ -325,14 +324,13 @@ const Settings = () => {
           className="fixed inset-0"
           style={{
             background: `
-              linear-gradient(
-                200deg,
-                rgb(249 115 22) 0%,
-                rgb(194 65 12) 20%,
-                black 45%,
-                black 100%    
-              )
-            `,
+  linear-gradient(
+    200deg,
+    #311066 0%,   /* very dark violet */
+    #1D0833 20%,  /* deep blackish purple */
+    #120222 45%,  /* near-black violet */
+    black 100%    /* pure black */
+`,
           }}
         ></div>
 
@@ -367,7 +365,7 @@ const Settings = () => {
               <div className="flex flex-col items-center space-y-3">
                 {/* Title */}
                 <span className="text-xl font-bold text-white">Settings</span>
-                
+
                 {/* Buttons Row */}
                 <div className="flex items-center space-x-3 w-full justify-center">
                   <Button

@@ -8,7 +8,6 @@ import { useUserSubscriptions } from "@/hooks/useUserSubscriptions";
 import { useAuth } from "@/contexts/AuthContext";
 import HomeRow from "@/components/HomeRow";
 import { featuredContentIds } from "@/data/featuredContentIds";
-import { genres } from "@/data/mockMovies";
 
 const Index = () => {
   const [selectedChannel, setSelectedChannel] = useState<any>(null);
@@ -25,35 +24,19 @@ const Index = () => {
     }
 
     // Get unique genres from non-kids content only
-    const contentGenres = [...new Set(
-      content.allContent
-        .filter(item => !item.isKids) // Only get genres from non-kids content
-        .map(item => item.genre)
-        .filter(Boolean) // Remove null/undefined genres
-    )];
-
-    console.log("🐛 [Index.tsx] Available genres with content (non-kids):", contentGenres);
+    const contentGenres = [
+      ...new Set(
+        content.allContent
+          .filter((item) => !item.isKids) // Only get genres from non-kids content
+          .map((item) => item.genre)
+          .filter(Boolean), // Remove null/undefined genres
+      ),
+    ];
 
     // Always include "All" at the beginning, then add genres that have content
     return ["All", ...contentGenres.sort()];
   }, [content.allContent]);
 
-  // Debug logging for homepage content
-  console.log("🐛 [Index.tsx] Homepage debug info:");
-  console.log("Total content items:", content.allContent?.length || 0);
-  console.log("Sample content flags:", content.allContent?.slice(0, 3).map(item => ({
-    title: item.title,
-    isFeatured: item.isFeatured,
-    isTrending: item.isTrending,
-    isKids: item.isKids,
-    type: item.type
-  })));
-  console.log("Featured items count:", content.allContent?.filter(item => item.isFeatured === true).length || 0);
-  console.log("Trending items count:", content.allContent?.filter(item => item.isTrending === true).length || 0);
-  console.log("Kids items count:", content.allContent?.filter(item => item.isKids === true).length || 0);
-  console.log("Featured movies:", content.allContent?.filter(item => item.type === "movie" && item.isFeatured === true).length || 0);
-  console.log("Featured shows:", content.allContent?.filter(item => item.type === "series" && item.isFeatured === true).length || 0);
-  console.log("homeContent.trending:", homeContent.trending?.length || 0);
   const { subscriptionIds, toggleSubscription } = useUserSubscriptions();
   const { isLoggedIn, setShowLoginModal } = useAuth();
 
@@ -96,7 +79,8 @@ const Index = () => {
 
     // Filter by genre
     return content.allContent.filter(
-      (item) => item.genre.toLowerCase() === activeGenre.toLowerCase() && !item.isKids,
+      (item) =>
+        item.genre.toLowerCase() === activeGenre.toLowerCase() && !item.isKids,
     );
   };
 
@@ -117,14 +101,13 @@ const Index = () => {
         className="fixed inset-0"
         style={{
           background: `
-      linear-gradient(
-        200deg,
-        rgb(249 115 22) 0%,
-        rgb(194 65 12) 20%,
-        black 45%,
-        black 100%    
-      )
-    `,
+  linear-gradient(
+    200deg,
+    #311066 0%,   /* very dark violet */
+    #1D0833 20%,  /* deep blackish purple */
+    #120222 45%,  /* near-black violet */
+    black 100%    /* pure black */
+`,
         }}
       ></div>
 
@@ -174,13 +157,6 @@ const Index = () => {
 
                 {/* New Movies and Shows - Sort by created_at (newest first) */}
                 {(() => {
-                  console.log("🐛 [Index.tsx] New Movies and Shows debug:");
-                  console.log("All content with created_at:", content.allContent?.map(item => ({
-                    title: item.title,
-                    created_at: item.created_at,
-                    hasCreatedAt: !!item.created_at
-                  })));
-                  
                   const newContent = content.allContent
                     .filter((item) => item.created_at && !item.isKids) // Only items with created_at date and not kids content
                     .sort(
@@ -189,9 +165,6 @@ const Index = () => {
                         new Date(a.created_at).getTime(),
                     )
                     .slice(0, 8);
-
-                  console.log("Filtered new content:", newContent.length, "items");
-                  console.log("New content titles:", newContent.map(item => item.title));
 
                   return (
                     newContent.length > 0 && (
@@ -234,7 +207,10 @@ const Index = () => {
                 {(() => {
                   const featuredMovies = content.allContent
                     .filter(
-                      (item) => item.type === "movie" && item.isFeatured === true && !item.isKids,
+                      (item) =>
+                        item.type === "movie" &&
+                        item.isFeatured === true &&
+                        !item.isKids,
                     )
                     .slice(0, 8);
 
@@ -253,7 +229,10 @@ const Index = () => {
                 {(() => {
                   const featuredShows = content.allContent
                     .filter(
-                      (item) => item.type === "series" && item.isFeatured === true && !item.isKids,
+                      (item) =>
+                        item.type === "series" &&
+                        item.isFeatured === true &&
+                        !item.isKids,
                     )
                     .slice(0, 8);
 

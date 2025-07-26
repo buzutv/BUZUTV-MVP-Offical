@@ -69,7 +69,9 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
         if (typeof seasonsData === "string") {
           try {
             seasonsData = JSON.parse(seasonsData);
-          } catch {}
+          } catch {
+            // Parsing failed, continue with original data
+          }
         }
         if (
           Array.isArray(seasonsData) &&
@@ -111,9 +113,6 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
         const passesGenre =
           c.genre === item.genre || c.channelId === item.channelId;
 
-        console.log(
-          `[FullViewportHero] Item: ${c.title} | ID match: ${passesId} | Kids filter: ${passesKids} (isKids: ${c.isKids}, current item isKids: ${item.isKids}) | Genre/Channel match: ${passesGenre}`,
-        );
 
         return passesId && passesKids && passesGenre;
       })

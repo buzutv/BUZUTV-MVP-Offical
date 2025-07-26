@@ -21,8 +21,6 @@ import { useChannels } from "@/hooks/useChannels";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import SeriesModal from "./SeriesModal";
 
-// Remove import MoreLikeThisCard from './MoreLikeThisCard';
-
 interface HeroBannerProps {
   movies: Movie[];
   variant?: "default" | "kids";
@@ -63,7 +61,9 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
       if (typeof seasonsData === "string") {
         try {
           seasonsData = JSON.parse(seasonsData);
-        } catch {}
+        } catch {
+          // Parsing failed, continue with original data
+        }
       }
       if (
         Array.isArray(seasonsData) &&
@@ -154,29 +154,24 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
   // Get recommended content from backend (same channel or genre)
   const recommendedContent = modalMovie
     ? (() => {
-        console.log('🐛 [HeroBanner] Debug More Like This filtering:');
-        console.log('Current movie:', modalMovie.title, 'ID:', modalMovie.id, 'Genre:', modalMovie.genre);
-        console.log('Total content items before filtering:', content.length);
-        
-        const filtered = content.filter(
-          (item) => {
-            const passesId = item.id !== modalMovie.id;
-            // If current movie is kids content, show only kids content in recommendations
-            // If current movie is not kids content, exclude kids content from recommendations
-            const passesKids = modalMovie.isKids || modalContentItem?.is_kids 
-              ? item.is_kids === true  // Show only kids content
-              : !item.is_kids;         // Exclude kids content
-            const passesGenre = item.genre === modalMovie.genre || item.channel_id === modalMovie.channelId;
-            
-            console.log(`Item: ${item.title} | ID match: ${passesId} | Kids filter: ${passesKids} (is_kids: ${item.is_kids}, current movie isKids: ${modalMovie.isKids || modalContentItem?.is_kids}) | Genre/Channel match: ${passesGenre}`);
-            
-            return passesId && passesKids && passesGenre;
-          }
-        );
-        
-        console.log('Filtered recommendations:', filtered.length, 'items');
-        console.log('Final recommendations:', filtered.slice(0, 6).map(item => `${item.title} (is_kids: ${item.is_kids})`));
-        
+
+        const filtered = content.filter((item) => {
+          const passesId = item.id !== modalMovie.id;
+          // If current movie is kids content, show only kids content in recommendations
+          // If current movie is not kids content, exclude kids content from recommendations
+          const passesKids =
+            modalMovie.isKids || modalContentItem?.is_kids
+              ? item.is_kids === true // Show only kids content
+              : !item.is_kids; // Exclude kids content
+          const passesGenre =
+            item.genre === modalMovie.genre ||
+            item.channel_id === modalMovie.channelId;
+
+
+          return passesId && passesKids && passesGenre;
+        });
+
+
         return filtered.slice(0, 6);
       })()
     : [];
@@ -200,7 +195,9 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
   const playButtonClass = isKidsVariant
     ? "bg-blue-500 hover:bg-blue-600 text-white shadow-[2px_19px_31px_rgba(59,130,246,0.35)]"
     : "bg-brand-500 hover:bg-brand-600 text-white shadow-[2px_19px_31px_rgba(30,27,95,0.35)]";
-  const infoBorderClass = isKidsVariant ? "border-blue-400" : "border-brand-500";
+  const infoBorderClass = isKidsVariant
+    ? "border-blue-400"
+    : "border-brand-500";
   const genreBgClass = isKidsVariant ? "bg-blue-500/70" : "bg-brand-500/70";
 
   return (
@@ -218,11 +215,15 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
             bulletClass: "swiper-pagination-bullet-movies",
             bulletActiveClass: "swiper-pagination-bullet-movies-active",
           }}
-          autoplay={{ delay: 5000, disableOnInteraction: false }}
+          autoplay={
+            isPlaying ? false : { delay: 5000, disableOnInteraction: false }
+          }
           loop={movies.length > 1}
           className="h-full w-full"
           onSlideChange={(swiper) => {
-            setCurrentMovie(movies[swiper.realIndex] || movies[0]);
+            if (!isPlaying) {
+              setCurrentMovie(movies[swiper.realIndex] || movies[0]);
+            }
           }}
         >
           {movies.map((movie, idx) => (
@@ -247,7 +248,9 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                         {movie.title}
                       </h1>
                       <div className="flex items-center space-x-3 mb-6">
-                        <span className={`${genreBgClass} text-white px-2 py-1 rounded text-sm`}>
+                        <span
+                          className={`${genreBgClass} text-white px-2 py-1 rounded text-sm`}
+                        >
                           {movie.genre}
                         </span>
                         <span className="text-gray-300 text-sm">
@@ -343,9 +346,6 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                 allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
                 allowFullScreen
                 sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-                onError={() => {
-                  console.log("YouTube video failed to load");
-                }}
               />
             ) : (
               <video
@@ -354,7 +354,6 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                 autoPlay
                 className="w-full h-full object-contain"
                 onError={() => {
-                  console.log("Video failed to load");
                   setIsPlaying(false);
                 }}
               />
@@ -363,14 +362,15 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
         </div>
       )}
 
-      {/* More Info Modal - Consistent with MovieCard */}
+      {/* More Info Modal - Consistent with MovieModal */}
       <Dialog open={showModal && !isPlaying} onOpenChange={setShowModal}>
-        <DialogContent className="max-w-[75vw] max-h-[90vh] bg-gray-900 text-white border-none p-0 overflow-hidden">
+        <DialogContent className="max-w-[75vw] max-h-[90vh] bg-gray-900 text-white border-none p-0 overflow-hidden transition-all duration-1000 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100">
           <DialogTitle className="sr-only">{modalMovie?.title}</DialogTitle>
-          <ScrollArea className="h-[90vh]">
-            <div className="relative">
-              {/* Hero Section */}
-              <div className="relative h-[60vh] overflow-hidden">
+          <ScrollArea className="h-[90vh] scroll-smooth">
+            <div className="relative min-h-full bg-gradient-to-t from-black/50 via-transparent to-transparent">
+              {/* Hero Section with Fixed Gradient */}
+              <div className="relative w-full h-[60vh] overflow-hidden">
+                {/* Background Image */}
                 <div className="absolute inset-0">
                   <img
                     src={modalMovie?.posterUrl}
@@ -379,22 +379,35 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                   />
                 </div>
 
-                <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent" />
+                {/* Only bottom gradient for fade effect */}
+                <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black via-black/60 to-transparent" />
 
+                {/* Title and Info Container */}
                 <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
                   <h1 className="text-5xl font-bold text-white mb-6">
                     {modalMovie?.title}
                   </h1>
 
+                  {/* Action Buttons Row */}
                   <div className="flex items-center space-x-4 mb-4">
                     <button
                       onClick={handleModalPlayClick}
                       disabled={!modalVideoUrl}
-                      className={`px-8 py-3 rounded-lg font-semibold flex items-center space-x-3 transition-colors ${
+                      className={`px-8 py-3 rounded-full font-bold flex items-center space-x-3 transition-all duration-300 hover:scale-105 justify-center ${
                         modalVideoUrl
-                          ? "bg-white text-black hover:bg-gray-200"
+                          ? "bg-brand-500 text-white hover:bg-brand-600 shadow-[2px_19px_31px_rgba(30,27,95,0.35)]"
                           : "bg-gray-600 text-gray-400 cursor-not-allowed"
                       }`}
+                      style={
+                        modalVideoUrl
+                          ? {
+                              backgroundImage: `
+                          radial-gradient(93% 87% at 87% 89%, rgba(0, 0, 0, 0.23) 0%, transparent 86.18%),
+                          radial-gradient(66% 87% at 26% 20%, rgba(255, 255, 255, 0.41) 0%, rgba(255, 255, 255, 0) 70%)
+                        `,
+                            }
+                          : {}
+                      }
                     >
                       <Play className="w-6 h-6 fill-current" />
                       <span>Play</span>
@@ -402,7 +415,7 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
 
                     <button
                       onClick={handleSave}
-                      className="bg-gray-700/80 hover:bg-gray-600/80 text-white p-3 rounded-full transition-colors backdrop-blur-sm"
+                      className="bg-black/20 backdrop-blur-md text-white p-3 rounded-full transition-all duration-200 border border-brand-500/50 hover:border-brand-500 hover:bg-black/30"
                     >
                       <Heart
                         className={`w-6 h-6 ${isSaved ? "fill-current text-red-500" : ""}`}
@@ -414,6 +427,7 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                     </span>
                   </div>
 
+                  {/* Netflix-style Info Row */}
                   <div className="flex items-center space-x-4 text-sm">
                     <div className="flex items-center space-x-1">
                       <Star className="w-4 h-4 text-yellow-400 fill-current" />
@@ -421,53 +435,41 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                         {modalMovie?.rating}
                       </span>
                     </div>
-                    <span className="text-white font-medium">
-                      {modalMovie?.year}
-                    </span>
-                    <span className="border border-gray-400 px-2 py-0.5 text-xs text-gray-300 font-medium">
+                    <span className="text-white font-medium">{modalMovie?.year}</span>
+                    <span className="border border-brand-500 px-2 py-0.5 text-xs text-gray-300 font-medium">
                       TV-MA
                     </span>
                     <span className="text-white">{modalMovie?.genre}</span>
-
-                    {channel && channel.logo_url && (
-                      <div className="flex items-center">
-                        <img
-                          src={channel.logo_url}
-                          alt={channel.name}
-                          className="w-8 h-8 object-contain rounded"
-                        />
-                      </div>
+                    {channel?.logo_url && (
+                      <img
+                        src={channel.logo_url}
+                        alt={channel.name}
+                        className="w-8 h-8 object-contain rounded"
+                      />
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* Content Section - removed margin and description */}
-              <div className="bg-gray-900 p-8">
+              {/* Content Section - Minimized gap */}
+              <div className="p-8 pt-6 pb-0 relative">
+                <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-black to-transparent pointer-events-none" />
+
                 {/* More Like This Section */}
                 {recommendedContent.length > 0 && (
-                  <div>
-                    <h3 className="text-xl font-bold mb-4">More Like This</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-1">
-                      {recommendedContent.map((item) => (
-                        <div key={item.id} className="group cursor-pointer">
-                          <div className="aspect-video relative overflow-hidden rounded-lg bg-gray-800">
-                            <img
-                              src={item.poster_url || "/placeholder.svg"}
-                              alt={item.title}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300 flex items-center justify-center">
-                              <Play className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 fill-current" />
-                            </div>
-                          </div>
-                          <h4 className="text-sm font-medium text-white mt-2 line-clamp-2">
-                            {item.title}
-                          </h4>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  <HomeRow
+                    title="More Like This"
+                    items={recommendedContent.map((item) => ({
+                      ...item,
+                      posterUrl: item.poster_url || item.posterUrl,
+                    }))}
+                    isMoreLikeThis={true}
+                    onItemClick={(movie) => {
+                      setShowModal(false); // Close current modal
+                      setModalMovie(movie); // Set new modal movie
+                      setShowModal(true); // Open new modal with selected movie
+                    }}
+                  />
                 )}
               </div>
             </div>

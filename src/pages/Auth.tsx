@@ -142,18 +142,18 @@ const Auth = () => {
   return (
     <div className="min-h-screen text-white relative">
       {/* Brand Background Gradient */}
+      {/* Fixed background gradient */}
       <div
         className="fixed inset-0"
         style={{
           background: `
-            linear-gradient(
-              200deg,
-              rgb(249 115 22) 0%,
-              rgb(194 65 12) 20%,
-              black 45%,
-              black 100%    
-            )
-          `,
+  linear-gradient(
+    200deg,
+    #311066 0%,   /* very dark violet */
+    #1D0833 20%,  /* deep blackish purple */
+    #120222 45%,  /* near-black violet */
+    black 100%    /* pure black */
+`,
         }}
       ></div>
 

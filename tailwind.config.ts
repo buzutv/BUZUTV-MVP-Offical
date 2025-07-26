@@ -65,20 +65,20 @@ export default {
 					border: 'hslchnge (var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Brand colors (orange)
+				// Brand colors (purple)
 				brand: {
-					DEFAULT: '#FD7923', // Main orange
-					50: '#FFF4ED',     // Very light orange
-					100: '#FFEAD5',    // Light orange tint
-					200: '#FED7AA',    // Lighter orange
-					300: '#FDBA74',    // Light orange
-					400: '#FB923C',    // Medium orange
-					500: '#FD7923',    // Main orange (DEFAULT)
-					600: '#EA580C',    // Darker orange
-					700: '#C2410C',    // Dark orange
-					800: '#9A3412',    // Very dark orange
-					900: '#7C2D12',    // Darkest orange
-				}
+          DEFAULT: '#712AFF',   // Main purple
+          50:  '#F4F0FF',       // Very light purple
+          100: '#E6DEFF',       // Light purple tint
+          200: '#C8B5FF',       // Lighter purple
+          300: '#AB8DFF',       // Light purple
+          400: '#8D64FF',       // Medium purple
+          500: '#712AFF',       // Main purple (DEFAULT)
+          600: '#5A20CC',       // Slightly darker purple
+          700: '#451899',       // Dark purple
+          800: '#311066',       // Very dark purple
+          900: '#1D0833',       // Darkest purple
+        }
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

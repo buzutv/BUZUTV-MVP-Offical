@@ -199,38 +199,6 @@ const Kids = () => {
                         const channel = channels.find(
                           (ch) => ch.id === selectedMovie.channelId,
                         );
-                        console.log(
-                          "🐛 [Kids.tsx] Debug recommendedContent filtering:",
-                        );
-                        console.log("All content:", content.length, "items");
-                        console.log(
-                          "Selected movie:",
-                          selectedMovie.title,
-                          "isKids:",
-                          selectedMovie.isKids,
-                        );
-                        console.log(
-                          "Sample content is_kids values:",
-                          content.slice(0, 5).map((item) => ({
-                            title: item.title,
-                            is_kids: item.is_kids,
-                            type: typeof item.is_kids,
-                          })),
-                        );
-
-                        const kidsFilteredContent = content.filter(
-                          (item) => item.is_kids === true,
-                        );
-                        console.log(
-                          "Kids content found:",
-                          kidsFilteredContent.length,
-                          "items",
-                        );
-                        console.log(
-                          "Kids content titles:",
-                          kidsFilteredContent.map((item) => item.title),
-                        );
-
                         const recommendedContent = content
                           .filter(
                             (item) =>
@@ -238,16 +206,6 @@ const Kids = () => {
                               item.is_kids === true,
                           )
                           .slice(0, 6);
-
-                        console.log(
-                          "Final recommendedContent:",
-                          recommendedContent.length,
-                          "items",
-                        );
-                        console.log(
-                          "Recommended titles:",
-                          recommendedContent.map((item) => item.title),
-                        );
                         const handleSaveModal = () => {
                           if (isSaved) {
                             removeFromFavorites(selectedMovie.id);

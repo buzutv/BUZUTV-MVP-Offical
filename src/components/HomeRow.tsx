@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import MovieCard from "@/components/MovieCard";
 import SeriesCard from "@/components/SeriesCard";
@@ -32,7 +32,7 @@ const HomeRow = ({
     if (scrollContainerRef.current) {
       const container = scrollContainerRef.current;
       const canScroll = container.scrollWidth > container.clientWidth;
-      
+
       if (!canScroll) {
         setCanScrollLeft(false);
         setCanScrollRight(false);
@@ -53,12 +53,12 @@ const HomeRow = ({
 
     const container = scrollContainerRef.current;
     if (container) {
-      container.addEventListener('scroll', checkScrollability);
-      window.addEventListener('resize', checkScrollability);
-      
+      container.addEventListener("scroll", checkScrollability);
+      window.addEventListener("resize", checkScrollability);
+
       return () => {
-        container.removeEventListener('scroll', checkScrollability);
-        window.removeEventListener('resize', checkScrollability);
+        container.removeEventListener("scroll", checkScrollability);
+        window.removeEventListener("resize", checkScrollability);
       };
     }
   }, [items.length]);
@@ -79,7 +79,7 @@ const HomeRow = ({
 
   return (
     <section className="mb-6">
-      <div className="px-4 mb-4">
+      <div className="px-4 mb-2">
         <h2 className="text-2xl font-bold">{title}</h2>
       </div>
 

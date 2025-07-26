@@ -25,24 +25,6 @@ const Movies = () => {
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [activeGenre, setActiveGenre] = useState("all");
 
-  // Debug log for Movies page content
-  console.log("🎬 [Movies] Page content loaded:", {
-    isLoading,
-    totalMovies: movieContent.all.length,
-    featuredMovies: movieContent.featured.length,
-    trendingMovies: movieContent.trending.length,
-    topRankedMovies: movieContent.topRanked.length,
-    recommendedMovies: movieContent.recommended.length,
-    newMovies: movieContent.new.length,
-    genreBreakdown: Object.entries(movieContent.byGenre)
-      .map(([genre, movies]) => ({
-        genre,
-        count: movies.length,
-        titles: movies.slice(0, 3).map((m) => m.title),
-      }))
-      .filter((g) => g.count > 0),
-    sampleMovieTitles: movieContent.all.slice(0, 5).map((m) => m.title),
-  });
   const { favoriteIds, addToFavorites, removeFromFavorites } =
     useUserFavorites();
   const { content: rawContent } = useContent();
@@ -137,14 +119,13 @@ const Movies = () => {
         className="fixed inset-0"
         style={{
           background: `
-      linear-gradient(
-        200deg,
-        rgb(249 115 22) 0%,
-        rgb(194 65 12) 20%,
-        black 45%,
-        black 100%    
-      )
-    `,
+  linear-gradient(
+    200deg,
+    #311066 0%,   /* very dark violet */
+    #1D0833 20%,  /* deep blackish purple */
+    #120222 45%,  /* near-black violet */
+    black 100%    /* pure black */
+`,
         }}
       ></div>
 
@@ -244,10 +225,6 @@ const Movies = () => {
                             const passesGenre =
                               item.genre === selectedMovie.genre ||
                               item.channel_id === selectedMovie.channelId;
-
-                            console.log(
-                              `[Movies Page] Item: ${item.title} | ID match: ${passesId} | Kids filter: ${passesKids} (is_kids: ${item.is_kids}, current movie is_kids: ${selectedMovie.is_kids || contentItem?.is_kids}) | Genre/Channel match: ${passesGenre}`,
-                            );
 
                             return passesId && passesKids && passesGenre;
                           })
