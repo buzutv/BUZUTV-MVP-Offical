@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import ContentRow from "@/components/ContentRow";
+import HomeRow from "@/components/HomeRow";
 import HeroBanner from "@/components/HeroBanner";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import FilterBar from "@/components/FilterBar";
@@ -301,25 +301,28 @@ const Kids = () => {
                   <>
                     {/* New Kids */}
                     {enhancedKidsContent.new.length > 0 && (
-                      <ContentRow
+                      <HomeRow
                         title="New Kids"
-                        movies={enhancedKidsContent.new}
+                        items={enhancedKidsContent.new}
+                        onCardClick={handleHomeRowCardClick}
                       />
                     )}
 
                     {/* Continue Watching */}
                     {enhancedKidsContent.trending.length > 0 && (
-                      <ContentRow
+                      <HomeRow
                         title="Continue Watching"
-                        movies={enhancedKidsContent.trending}
+                        items={enhancedKidsContent.trending}
+                        onCardClick={handleHomeRowCardClick}
                       />
                     )}
 
                     {/* Recommended */}
                     {enhancedKidsContent.recommended.length > 0 && (
-                      <ContentRow
+                      <HomeRow
                         title="Recommended"
-                        movies={enhancedKidsContent.recommended}
+                        items={enhancedKidsContent.recommended}
+                        onCardClick={handleHomeRowCardClick}
                       />
                     )}
 
@@ -330,9 +333,10 @@ const Kids = () => {
                       );
                       return (
                         kidsShows.length > 0 && (
-                          <ContentRow
+                          <HomeRow
                             title="TV Shows"
-                            movies={kidsShows.slice(0, 8)}
+                            items={kidsShows.slice(0, 8)}
+                            onCardClick={handleHomeRowCardClick}
                           />
                         )
                       );
@@ -345,9 +349,10 @@ const Kids = () => {
                       );
                       return (
                         kidsMovies.length > 0 && (
-                          <ContentRow
+                          <HomeRow
                             title="Movies"
-                            movies={kidsMovies.slice(0, 8)}
+                            items={kidsMovies.slice(0, 8)}
+                            onCardClick={handleHomeRowCardClick}
                           />
                         )
                       );
@@ -361,9 +366,10 @@ const Kids = () => {
                       );
                       return (
                         educationalContent.length > 0 && (
-                          <ContentRow
+                          <HomeRow
                             title="Educational"
-                            movies={educationalContent}
+                            items={educationalContent}
+                            onCardClick={handleHomeRowCardClick}
                           />
                         )
                       );
@@ -375,15 +381,17 @@ const Kids = () => {
                     {filteredKidsContent.length > 0 && (
                       <>
                         {/* New content row */}
-                        <ContentRow
+                        <HomeRow
                           title="New Kids Content"
-                          movies={filteredKidsContent.slice(0, 8)}
+                          items={filteredKidsContent.slice(0, 8)}
+                          onCardClick={handleHomeRowCardClick}
                         />
 
                         {/* Recommended row */}
-                        <ContentRow
+                        <HomeRow
                           title="Recommended"
-                          movies={filteredKidsContent.slice(2, 10)}
+                          items={filteredKidsContent.slice(2, 10)}
+                          onCardClick={handleHomeRowCardClick}
                         />
                       </>
                     )}

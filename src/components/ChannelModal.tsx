@@ -278,12 +278,19 @@ const ChannelModal = ({ isOpen, onClose, channel }: ChannelModalProps) => {
                       e.target.value as "newest" | "oldest" | "year" | "rating",
                     )
                   }
-                  className="bg-black/30 backdrop-blur-md border border-brand-500/30 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-500 text-white hover:bg-black/50 transition-all duration-200"
+                  className="bg-black/40 backdrop-blur-md border border-brand-500/40 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 text-white hover:bg-black/60 hover:border-brand-500/60 transition-all duration-300 appearance-none cursor-pointer shadow-lg min-w-[140px]"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                    backgroundPosition: 'right 8px center',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundSize: '16px',
+                    paddingRight: '40px'
+                  }}
                 >
-                  <option value="newest">Newest First</option>
-                  <option value="oldest">Oldest First</option>
-                  <option value="year">By Year</option>
-                  <option value="rating">By Rating</option>
+                  <option value="newest" className="bg-black text-white">Newest First</option>
+                  <option value="oldest" className="bg-black text-white">Oldest First</option>
+                  <option value="year" className="bg-black text-white">By Year</option>
+                  <option value="rating" className="bg-black text-white">By Rating</option>
                 </select>
 
                 {/* Type filter */}
@@ -291,11 +298,18 @@ const ChannelModal = ({ isOpen, onClose, channel }: ChannelModalProps) => {
                   <select
                     value={typeFilter}
                     onChange={(e) => setTypeFilter(e.target.value)}
-                    className="bg-black/30 backdrop-blur-md border border-brand-500/30 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-500 text-white hover:bg-black/50 transition-all duration-200"
+                    className="bg-black/40 backdrop-blur-md border border-brand-500/40 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 text-white hover:bg-black/60 hover:border-brand-500/60 transition-all duration-300 appearance-none cursor-pointer shadow-lg min-w-[120px]"
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                      backgroundPosition: 'right 8px center',
+                      backgroundRepeat: 'no-repeat',
+                      backgroundSize: '16px',
+                      paddingRight: '40px'
+                    }}
                   >
-                    <option value="all">All Types</option>
+                    <option value="all" className="bg-black text-white">All Types</option>
                     {availableTypes.map((type) => (
-                      <option key={type} value={type}>
+                      <option key={type} value={type} className="bg-black text-white">
                         {type === "movie" ? "Movies" : "TV Shows"}
                       </option>
                     ))}
@@ -307,11 +321,18 @@ const ChannelModal = ({ isOpen, onClose, channel }: ChannelModalProps) => {
                   <select
                     value={genreFilter}
                     onChange={(e) => setGenreFilter(e.target.value)}
-                    className="bg-black/30 backdrop-blur-md border border-brand-500/30 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-500 text-white hover:bg-black/50 transition-all duration-200"
+                    className="bg-black/40 backdrop-blur-md border border-brand-500/40 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 text-white hover:bg-black/60 hover:border-brand-500/60 transition-all duration-300 appearance-none cursor-pointer shadow-lg min-w-[130px]"
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                      backgroundPosition: 'right 8px center',
+                      backgroundRepeat: 'no-repeat',
+                      backgroundSize: '16px',
+                      paddingRight: '40px'
+                    }}
                   >
-                    <option value="all">All Genres</option>
+                    <option value="all" className="bg-black text-white">All Genres</option>
                     {availableGenres.map((genre) => (
-                      <option key={genre} value={genre}>
+                      <option key={genre} value={genre} className="bg-black text-white">
                         {genre}
                       </option>
                     ))}
@@ -323,11 +344,18 @@ const ChannelModal = ({ isOpen, onClose, channel }: ChannelModalProps) => {
                   <select
                     value={yearFilter}
                     onChange={(e) => setYearFilter(e.target.value)}
-                    className="bg-black/30 backdrop-blur-md border border-brand-500/30 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-500 text-white hover:bg-black/50 transition-all duration-200"
+                    className="bg-black/40 backdrop-blur-md border border-brand-500/40 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 text-white hover:bg-black/60 hover:border-brand-500/60 transition-all duration-300 appearance-none cursor-pointer shadow-lg min-w-[110px]"
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                      backgroundPosition: 'right 8px center',
+                      backgroundRepeat: 'no-repeat',
+                      backgroundSize: '16px',
+                      paddingRight: '40px'
+                    }}
                   >
-                    <option value="all">All Years</option>
+                    <option value="all" className="bg-black text-white">All Years</option>
                     {availableYears.map((year) => (
-                      <option key={year} value={year}>
+                      <option key={year} value={year} className="bg-black text-white">
                         {year}
                       </option>
                     ))}

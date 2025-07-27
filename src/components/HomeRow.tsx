@@ -88,7 +88,7 @@ const HomeRow = React.memo(
     if (items.length === 0) return null;
 
     return (
-      <section className="mb-6">
+      <section className="pb-6">
         <div className="px-4 mb-2">
           <h2 className="text-2xl font-bold">{title}</h2>
         </div>
@@ -131,20 +131,20 @@ const HomeRow = React.memo(
                     onItemClick ? (
                       // Use regular cards that will trigger onItemClick for kids modals
                       item.type === "series" ? (
-                        <SeriesCard 
-                          series={item} 
+                        <SeriesCard
+                          series={item}
                           onOpen={() => {
                             onItemClick(item);
                             return true; // Prevent default modal
-                          }} 
+                          }}
                         />
                       ) : (
-                        <OptimizedMovieCard 
-                          movie={item} 
+                        <OptimizedMovieCard
+                          movie={item}
                           onOpen={() => {
                             onItemClick(item);
                             return true; // Prevent default modal
-                          }} 
+                          }}
                         />
                       )
                     ) : (

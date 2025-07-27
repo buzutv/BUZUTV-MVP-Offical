@@ -22,6 +22,7 @@ import { useChannels } from "@/hooks/useChannels";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import BrandButton from "@/components/ui/BrandButton";
 import SeriesModal from "./SeriesModal";
+import KidsSeriesModal from "./KidsSeriesModal";
 import HomeRow from "./HomeRow";
 
 interface HeroBannerProps {
@@ -389,7 +390,7 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                 </div>
 
                 {/* Only bottom gradient for fade effect */}
-                <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black via-black/60 to-transparent" />
+                <div className={`absolute bottom-0 left-0 right-0 h-48 ${variant === "kids" ? "bg-gradient-to-t from-blue-400 via-blue-400/30 to-transparent" : "bg-gradient-to-t from-black via-black/60 to-transparent"}`} />
 
                 {/* Title and Info Container */}
                 <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
@@ -422,7 +423,7 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
 
                     <button
                       onClick={handleSave}
-                      className="bg-black/20 backdrop-blur-md text-white p-2 rounded-full transition-all duration-200 border border-brand-500/50 hover:border-brand-500 hover:bg-black/30"
+                      className={`bg-black/20 backdrop-blur-md text-white p-2 rounded-full transition-all duration-200 border ${variant === "kids" ? "border-blue-400/50 hover:border-blue-400" : "border-brand-500/50 hover:border-brand-500"} hover:bg-black/30`}
                     >
                       <Heart
                         className={`w-5 h-5 ${isSaved ? "fill-current text-red-500" : ""}`}
@@ -445,8 +446,8 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                     <span className="text-white font-medium">
                       {modalMovie?.year}
                     </span>
-                    <span className="border border-brand-500 px-2 py-0.5 text-xs text-gray-300 font-medium">
-                      TV-MA
+                    <span className={`border ${variant === "kids" ? "border-blue-400 px-2 py-0.5 text-xs text-white font-medium bg-blue-500/90" : "border-brand-500 px-2 py-0.5 text-xs text-gray-300 font-medium"}`}>
+                      {variant === "kids" ? "KIDS" : "TV-MA"}
                     </span>
                     <span className="text-white">{modalMovie?.genre}</span>
                     {channel?.logo_url && (
@@ -462,7 +463,7 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
 
               {/* Content Section - Minimized gap */}
               <div className="p-8 pt-6 pb-0 relative">
-                <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-black to-transparent pointer-events-none" />
+                <div className={`absolute top-0 left-0 right-0 h-4 ${variant === "kids" ? "bg-gradient-to-b from-blue-400 to-transparent" : "bg-gradient-to-b from-black to-transparent"} pointer-events-none`} />
 
                 {/* More Like This Section */}
                 {recommendedContent.length > 0 && (
@@ -486,27 +487,42 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
         </DialogContent>
         {/* Pass seasons_data to the modal if this is a series */}
         {modalMovie && modalMovie.type === "series" && modalContentItem && (
-          <SeriesModal
-            isOpen={showModal && !isPlaying}
-            onClose={setShowModal}
-            series={modalMovie}
-            isSaved={isSaved}
-            onSave={handleSave}
-            onPlayEpisode={() => {}}
-            videoUrl={modalVideoUrl}
-            contentItem={{
-              ...modalContentItem,
-              seasons_data: modalSeasonsData,
-            }}
-            channel={channel}
-            recommendedContent={recommendedContent}
-            seasons={modalSeasonsData}
-            customBackground={
-              variant === "kids"
-                ? "bg-gradient-to-tl from-yellow-300 via-blue-300 to-sky-400"
-                : "bg-gradient-to-br from-black via-slate-900 to-violet-900"
-            }
-          />
+          variant === "kids" ? (
+            <KidsSeriesModal
+              isOpen={showModal && !isPlaying}
+              onClose={setShowModal}
+              series={modalMovie}
+              isSaved={isSaved}
+              onSave={handleSave}
+              onPlayEpisode={() => {}}
+              videoUrl={modalVideoUrl}
+              contentItem={{
+                ...modalContentItem,
+                seasons_data: modalSeasonsData,
+              }}
+              channel={channel}
+              recommendedContent={recommendedContent}
+              seasons={modalSeasonsData}
+            />
+          ) : (
+            <SeriesModal
+              isOpen={showModal && !isPlaying}
+              onClose={setShowModal}
+              series={modalMovie}
+              isSaved={isSaved}
+              onSave={handleSave}
+              onPlayEpisode={() => {}}
+              videoUrl={modalVideoUrl}
+              contentItem={{
+                ...modalContentItem,
+                seasons_data: modalSeasonsData,
+              }}
+              channel={channel}
+              recommendedContent={recommendedContent}
+              seasons={modalSeasonsData}
+              customBackground="bg-gradient-to-br from-black via-slate-900 to-violet-900"
+            />
+          )
         )}
       </Dialog>
 

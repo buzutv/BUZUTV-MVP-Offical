@@ -119,7 +119,6 @@ const Index = React.memo(() => {
     );
   }
 
-
   return (
     <div className="min-h-screen text-white">
       {/* Fixed background gradient */}
@@ -319,7 +318,7 @@ const Index = React.memo(() => {
           </div>
 
           {/* Footer */}
-          <footer className="bg-gray-800 border-t border-gray-700 py-8">
+          <footer className=" border-t border-white/10 py-8">
             <div className="max-w-7xl mx-auto px-4 text-center text-gray-400">
               <p>&copy; 2024 BUZUTV. All rights reserved.</p>
             </div>

@@ -21,7 +21,6 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
 
-
   useEffect(() => {
     const mode = searchParams.get("mode");
     if (mode === "signup") setIsSignUp(true);
@@ -33,8 +32,7 @@ const Auth = () => {
     const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
 
     if (isSignUp) {
-      if (!email)
-        return toast.error("Email is required");
+      if (!email) return toast.error("Email is required");
       if (!password || !confirmPassword || !firstName || !lastName)
         return toast.error("Please fill in all fields");
       if (password !== confirmPassword)
@@ -130,11 +128,7 @@ const Auth = () => {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-20">
             <Link to="/" className="flex items-center">
-              <img 
-                src="/logo.png" 
-                alt="BUZUTV" 
-                className="h-10 w-auto"
-              />
+              <img src="/logo.png" alt="BUZUTV" className="h-10 w-auto" />
             </Link>
 
             <BrandButton
@@ -156,18 +150,10 @@ const Auth = () => {
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold flex items-center justify-center gap-3">
                 {isSignUp ? "Sign Up" : "Log In"} to{" "}
-                <img 
-                  src="/logo.png" 
-                  alt="BUZUTV" 
-                  className="h-8 w-auto"
-                />
+                <img src="/logo.png" alt="BUZUTV" className="h-8 w-auto" />
               </h1>
               <p className="text-gray-400 mt-2 text-sm">
-                {isSignUp ? (
-                  "Create your account"
-                ) : (
-                  "Welcome back"
-                )}
+                {isSignUp ? "Create your account" : "Welcome back"}
               </p>
             </div>
 
@@ -292,7 +278,6 @@ const Auth = () => {
                 {isLoading ? "Please wait..." : isSignUp ? "Sign Up" : "Log In"}
               </button>
             </form>
-
 
             {/* Toggle between log in and sign up */}
             <div className="text-center mt-6 space-y-4">

@@ -99,7 +99,7 @@ const MoreLikeThisCard = ({ item }: { item: any }) => {
           </div>
 
           <div className="absolute bottom-0 left-0 right-0 z-10 p-3 pt-6 pointer-events-none">
-            <h3 className="font-medium text-white text-sm line-clamp-2 transform transition-transform duration-300 origin-left group-hover:scale-[1.1]">
+            <h3 className="font-medium text-white text-md line-clamp-2 transform transition-transform duration-300 origin-left group-hover:scale-[1.1]">
               {item.title}
             </h3>
           </div>
