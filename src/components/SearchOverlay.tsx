@@ -1,16 +1,10 @@
-
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Search, X } from "lucide-react";
-import { mockMovies } from "@/data/mockMovies";
 import MovieCard from "./MovieCard";
 import ChannelCard from "./ChannelCard";
 import SeriesCard from "./SeriesCard";
-import FullscreenPlayer from "./FullscreenPlayer";
 import { useUserSubscriptions } from "@/hooks/useUserSubscriptions";
 import ChannelModal from "./ChannelModal";
-import MovieModal from "./MovieModal";
-import SeriesModal from "./SeriesModal";
-import MovieHoverRow from "./MovieHoverRow";
 
 interface SearchOverlayProps {
   isOpen: boolean;
@@ -21,7 +15,14 @@ interface SearchOverlayProps {
   channelResults?: any[];
 }
 
-const SearchOverlay = ({ isOpen, onClose, searchQuery = "", movieResults = [], seriesResults = [], channelResults = [] }: SearchOverlayProps) => {
+const SearchOverlay = ({
+  isOpen,
+  onClose,
+  searchQuery = "",
+  movieResults = [],
+  seriesResults = [],
+  channelResults = [],
+}: SearchOverlayProps) => {
   const { subscriptionIds, toggleSubscription } = useUserSubscriptions();
   const [selectedChannel, setSelectedChannel] = useState<any>(null);
   const [selectedMovie, setSelectedMovie] = useState<any>(null);
@@ -30,13 +31,18 @@ const SearchOverlay = ({ isOpen, onClose, searchQuery = "", movieResults = [], s
 
   // Hide navbar when any modal or fullscreen is open
   useEffect(() => {
-    const navbar = document.querySelector('nav');
-    if ((selectedChannel || selectedMovie || selectedSeries || fullscreenOpen) && navbar) {
-      navbar.style.display = 'none';
+    const navbar = document.querySelector("nav");
+    if (
+      (selectedChannel || selectedMovie || selectedSeries || fullscreenOpen) &&
+      navbar
+    ) {
+      navbar.style.display = "none";
     } else if (navbar) {
-      navbar.style.display = '';
+      navbar.style.display = "";
     }
-    return () => { if (navbar) navbar.style.display = ''; };
+    return () => {
+      if (navbar) navbar.style.display = "";
+    };
   }, [selectedChannel, selectedMovie, selectedSeries, fullscreenOpen]);
 
   const handleChannelClick = (channel: any) => setSelectedChannel(channel);
@@ -44,10 +50,16 @@ const SearchOverlay = ({ isOpen, onClose, searchQuery = "", movieResults = [], s
 
   if (!isOpen) return null;
 
-  const hasResults = movieResults.length > 0 || seriesResults.length > 0 || channelResults.length > 0;
+  const hasResults =
+    movieResults.length > 0 ||
+    seriesResults.length > 0 ||
+    channelResults.length > 0;
 
   return (
-    <div className="fixed left-0 right-0 z-50 bg-gradient-to-t from-black via-brand-800 to-brand-500" style={{ top: '64px', height: 'calc(100vh - 64px)' }}>
+    <div
+      className="fixed left-0 right-0 z-50 bg-gradient-to-t from-black via-brand-800 to-brand-500"
+      style={{ top: "64px", height: "calc(100vh - 64px)" }}
+    >
       {/* Header */}
       <div className="sticky top-0 bg-black/20 backdrop-blur-sm p-4 z-50">
         <div className="max-w-7xl mx-auto flex items-center space-x-4">
@@ -64,7 +76,7 @@ const SearchOverlay = ({ isOpen, onClose, searchQuery = "", movieResults = [], s
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-white transition-colors"
-            style={{ position: 'absolute', right: 32, top: 24 }}
+            style={{ position: "absolute", right: 32, top: 24 }}
             aria-label="Close search overlay"
           >
             <X className="w-6 h-6" />
@@ -73,10 +85,17 @@ const SearchOverlay = ({ isOpen, onClose, searchQuery = "", movieResults = [], s
       </div>
 
       {/* Search Results - scrollable, no visible scrollbar */}
-      <div className="max-w-7xl mx-auto px-4 py-8 overflow-y-auto scrollbar-hide" style={{ maxHeight: 'calc(100vh - 64px - 80px)' }}>
+      <div
+        className="max-w-7xl mx-auto px-4 py-8 overflow-y-auto scrollbar-hide"
+        style={{ maxHeight: "calc(100vh - 64px - 80px)" }}
+      >
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-white">
-            {searchQuery ? `Results for "${searchQuery}"` : 'Browse All Content'}
+            {!searchQuery && (
+              <h2 className="text-xl font-semibold text-white inline-flex items-center justify-center gap-3 rounded-full bg-gradient-to-br from-brand-500 via-brand-600 to-brand-700 px-6 py-2 shadow hover:from-brand-600 hover:to-brand-800 transition-all">
+                Browse All Content
+              </h2>
+            )}
           </h2>
         </div>
         {!hasResults && (
@@ -87,9 +106,13 @@ const SearchOverlay = ({ isOpen, onClose, searchQuery = "", movieResults = [], s
             <h3 className="text-2xl font-semibold text-white mb-3">Channels</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {channelResults.map((channel) => (
-                <div key={channel.id} onClick={() => handleChannelClick(channel)} className="cursor-pointer">
-                  <ChannelCard 
-                    channel={channel} 
+                <div
+                  key={channel.id}
+                  onClick={() => handleChannelClick(channel)}
+                  className="cursor-pointer"
+                >
+                  <ChannelCard
+                    channel={channel}
                     isSubscribed={subscriptionIds.includes(channel.id)}
                     onSubscribe={toggleSubscription}
                   />
@@ -103,7 +126,10 @@ const SearchOverlay = ({ isOpen, onClose, searchQuery = "", movieResults = [], s
             <h3 className="text-2xl font-semibold text-white mb-3">Movies</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {movieResults.map((movie) => (
-                <div key={movie.id} className="group hover:scale-105 transition-transform duration-200">
+                <div
+                  key={movie.id}
+                  className="group hover:scale-105 transition-transform duration-200"
+                >
                   <MovieCard movie={movie} />
                 </div>
               ))}
@@ -115,7 +141,10 @@ const SearchOverlay = ({ isOpen, onClose, searchQuery = "", movieResults = [], s
             <h3 className="text-2xl font-semibold text-white mb-3">TV Shows</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {seriesResults.map((series) => (
-                <div key={series.id} className="group hover:scale-105 transition-transform duration-200">
+                <div
+                  key={series.id}
+                  className="group hover:scale-105 transition-transform duration-200"
+                >
                   <SeriesCard series={series} />
                 </div>
               ))}
