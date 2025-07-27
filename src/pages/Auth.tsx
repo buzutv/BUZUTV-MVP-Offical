@@ -70,7 +70,7 @@ const Auth = () => {
         }
 
         // Email sign-up
-        const result = await signup(email, password, fullName);
+        const result = await signup(email, password, fullName, phone);
         if (result.success) {
           toast.success("Account created successfully!");
           navigate("/");
