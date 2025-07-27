@@ -119,12 +119,6 @@ const Index = React.memo(() => {
     );
   }
 
-  console.log("🏠 [Index] Rendering complete, data loaded:", {
-    homeContentCount: homeContent.trending?.length || 0,
-    channelsCount: channels?.length || 0,
-    contentCount: content.allContent?.length || 0,
-    renderTime: performance.now() - startTime,
-  });
 
   return (
     <div className="min-h-screen text-white">

@@ -117,9 +117,7 @@ const Navbar = React.memo(
         >
           <div className="flex-shrink-0">
             <Link to="/" className="flex items-center">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-brand-400 via-brand-500 to-brand-600 bg-clip-text text-transparent">
-                BUZUTV
-              </h1>
+              <img src="/logo.png" alt="BUZUTV" className="h-10 w-auto" />
             </Link>
           </div>
 

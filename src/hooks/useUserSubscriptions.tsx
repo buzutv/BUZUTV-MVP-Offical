@@ -11,7 +11,6 @@ const subscriptionsCache = new Map<
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export const useUserSubscriptions = () => {
-  console.log("📺 [useUserSubscriptions] Hook called");
   const [subscriptionIds, setSubscriptionIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
@@ -52,10 +51,6 @@ export const useUserSubscriptions = () => {
         setIsLoading(false);
       }
 
-      console.log(
-        "📺 [useUserSubscriptions] Subscriptions loaded:",
-        result.length,
-      );
     } catch (error) {
       console.error("Error fetching subscriptions:", error);
       if (mountedRef.current) {
@@ -74,7 +69,6 @@ export const useUserSubscriptions = () => {
       const now = Date.now();
 
       if (cached && now - cached.timestamp < CACHE_DURATION) {
-        console.log("📺 [useUserSubscriptions] ✅ Cache hit");
         setSubscriptionIds(cached.data);
         setIsLoading(false);
         return;

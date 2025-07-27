@@ -57,11 +57,10 @@ const RouteChangeMonitor = () => {
   
   useEffect(() => {
     const start = performance.now();
-    console.log("🚀 [Router] Navigation started to:", location.pathname);
     
     // Monitor when the route change completes
     const timer = setTimeout(() => {
-      console.log("🚀 [Router] Navigation completed to:", location.pathname, "in", performance.now() - start, "ms");
+      // Navigation completed
     }, 0);
     
     return () => clearTimeout(timer);
@@ -71,12 +70,8 @@ const RouteChangeMonitor = () => {
 };
 
 const App = () => {
-  console.log("🏁 [App] Component rendering started", performance.now());
-  
   const [searchQuery, setSearchQuery] = useState("");
-  const appStartTime = performance.now();
   const { content, channels, isLoading } = useAppContent();
-  console.log("🏁 [App] useAppContent hook took:", performance.now() - appStartTime, "ms");
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);

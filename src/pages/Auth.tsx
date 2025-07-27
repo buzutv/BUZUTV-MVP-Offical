@@ -129,10 +129,12 @@ const Auth = () => {
       <nav className="fixed top-0 w-full z-50 bg-black/20 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-20">
-            <Link to="/" className="flex items-center space-x-2">
-              <span className="text-2xl font-bold bg-gradient-to-r from-brand-400 via-brand-500 to-brand-600 bg-clip-text text-transparent">
-                BUZUTV
-              </span>
+            <Link to="/" className="flex items-center">
+              <img 
+                src="/logo.png" 
+                alt="BUZUTV" 
+                className="h-10 w-auto"
+              />
             </Link>
 
             <BrandButton
@@ -152,11 +154,13 @@ const Auth = () => {
           <div className="bg-black/40 border-white/20 backdrop-blur-md rounded-lg shadow-xl p-8">
             {/* Header */}
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold">
+              <h1 className="text-3xl font-bold flex items-center justify-center gap-3">
                 {isSignUp ? "Sign Up" : "Log In"} to{" "}
-                <span className="bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 bg-clip-text text-transparent">
-                  BUZUTV
-                </span>
+                <img 
+                  src="/logo.png" 
+                  alt="BUZUTV" 
+                  className="h-8 w-auto"
+                />
               </h1>
               <p className="text-gray-400 mt-2 text-sm">
                 {isSignUp ? (

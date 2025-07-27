@@ -177,11 +177,13 @@ const LoginModal = () => {
           <div className="p-6 flex flex-col gap-4 pb-4">
             <DialogHeader>
               <div className="flex items-center justify-between">
-                <DialogTitle className="text-xl font-bold">
+                <DialogTitle className="text-xl font-bold flex items-center gap-2">
                   {isSignUp ? "Sign Up" : "Log In"} to{" "}
-                  <span className="bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 bg-clip-text text-transparent">
-                    BUZUTV
-                  </span>
+                  <img 
+                    src="/logo.png" 
+                    alt="BUZUTV" 
+                    className="h-6 w-auto"
+                  />
                 </DialogTitle>
                 <div className="flex items-center space-x-2">
                   <button

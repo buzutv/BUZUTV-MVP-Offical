@@ -67,7 +67,6 @@ const Movies = React.memo(() => {
   }, []);
 
   if (isLoading) {
-    console.log("🎬 [Movies] Still loading...");
     return (
       <ProtectedRoute>
         <div className="min-h-screen text-white">
@@ -93,11 +92,6 @@ const Movies = React.memo(() => {
     );
   }
 
-  console.log("🎬 [Movies] Rendering complete, data loaded:", {
-    movieCount: movieContent.all?.length || 0,
-    contentCount: content.allContent?.length || 0,
-    renderTime: performance.now() - startTime,
-  });
 
   const MovieRow = ({
     title,
