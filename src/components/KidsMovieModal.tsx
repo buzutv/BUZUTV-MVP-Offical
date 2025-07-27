@@ -42,10 +42,11 @@ const KidsMovieModal = ({
   const [isNestedFullscreen, setIsNestedFullscreen] = useState(false);
   const [nestedVideoUrl, setNestedVideoUrl] = useState<string>("");
   const [nestedVideoTitle, setNestedVideoTitle] = useState<string>("");
-  const { favoriteIds, addToFavorites, removeFromFavorites } = useUserFavorites();
+  const { favoriteIds, addToFavorites, removeFromFavorites } =
+    useUserFavorites();
   const { content } = useContent();
   const { channels } = useChannels();
-  
+
   // Format duration from minutes to "Xh Ym" format
   const formatDuration = (minutes: number | undefined) => {
     if (!minutes) return "N/A";
@@ -84,12 +85,10 @@ const KidsMovieModal = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent
-          className="max-w-[75vw] max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-1000 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 bg-gradient-to-tl from-yellow-300 via-blue-300 to-sky-400"
-        >
+        <DialogContent className="max-w-[75vw] max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-1000 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 bg-gradient-to-tl from-yellow-300 via-blue-300 to-sky-400">
           <DialogTitle className="sr-only">{movie.title}</DialogTitle>
           <ScrollArea className="h-[90vh] scroll-smooth">
-            <div className="relative min-h-full bg-gradient-to-t from-black/50 via-transparent to-transparent">
+            <div className="relative min-h-full">
               {/* Hero Section with Fixed Gradient */}
               <div className="relative w-full h-[60vh] overflow-hidden">
                 {/* Background Image */}
@@ -107,8 +106,10 @@ const KidsMovieModal = ({
                 {/* Title and Info Container */}
                 <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
                   <h1
-                    className="text-5xl font-bold text-white mb-6 drop-shadow-lg text-shadow-lg"
-                    style={{ textShadow: "2px 2px 4px rgba(59, 130, 246, 0.8)" }}
+                    className="text-5xl font-bold text-white mb-6"
+                    style={{
+                      textShadow: "2px 2px 4px rgba(59, 130, 246, 0.8)",
+                    }}
                   >
                     {movie.title}
                   </h1>
@@ -132,10 +133,10 @@ const KidsMovieModal = ({
 
                     <button
                       onClick={onSave}
-                      className="bg-black/20 backdrop-blur-md text-white p-3 rounded-full transition-all duration-200 border border-blue-400/50 hover:border-blue-400 hover:bg-blue-500/60"
+                      className="bg-black/20 backdrop-blur-md text-white p-2 rounded-full transition-all duration-200 border  border-blue-400/50 hover:border-blue-400 hover:bg-black/30"
                     >
                       <Heart
-                        className={`w-6 h-6 ${isSaved ? "fill-current text-red-500" : ""}`}
+                        className={`w-5 h-5 ${isSaved ? "fill-current text-red-500" : ""}`}
                       />
                     </button>
 
@@ -160,7 +161,9 @@ const KidsMovieModal = ({
                     <span className="border border-blue-400 px-2 py-0.5 text-xs text-white font-medium bg-blue-500/90">
                       KIDS
                     </span>
-                    <span className="bg-yellow-500 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">{movie.genre}</span>
+                    <span className="bg-yellow-500 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                      {movie.genre}
+                    </span>
                     {channel?.logo_url && (
                       <img
                         src={channel.logo_url}
@@ -192,72 +195,82 @@ const KidsMovieModal = ({
           </ScrollArea>
         </DialogContent>
       </Dialog>
-      
+
       {/* Nested modals for "More Like This" items */}
-      {nestedMovie && (() => {
-        const nestedIsSaved = favoriteIds.includes(nestedMovie.id);
-        const nestedContentItem = content.find((item) => item.id === nestedMovie.id);
-        const nestedVideoUrl = nestedContentItem?.video_url;
-        const nestedChannel = channels.find((ch) => ch.id === nestedMovie.channelId);
-        const nestedRecommendedContent = content
-          .filter((item) => item.id !== nestedMovie.id && item.is_kids === true)
-          .slice(0, 6);
-        
-        const handleNestedSave = () => {
-          if (nestedIsSaved) {
-            removeFromFavorites(nestedMovie.id);
-          } else {
-            addToFavorites(nestedMovie.id);
-          }
-        };
-        
-        const handleNestedPlay = () => {
-          if (nestedVideoUrl) {
-            // Close the nested modal and start fullscreen player
+      {nestedMovie &&
+        (() => {
+          const nestedIsSaved = favoriteIds.includes(nestedMovie.id);
+          const nestedContentItem = content.find(
+            (item) => item.id === nestedMovie.id,
+          );
+          const nestedVideoUrl = nestedContentItem?.video_url;
+          const nestedChannel = channels.find(
+            (ch) => ch.id === nestedMovie.channelId,
+          );
+          const nestedRecommendedContent = content
+            .filter(
+              (item) => item.id !== nestedMovie.id && item.is_kids === true,
+            )
+            .slice(0, 6);
+
+          const handleNestedSave = () => {
+            if (nestedIsSaved) {
+              removeFromFavorites(nestedMovie.id);
+            } else {
+              addToFavorites(nestedMovie.id);
+            }
+          };
+
+          const handleNestedPlay = () => {
+            if (nestedVideoUrl) {
+              // Close the nested modal and start fullscreen player
+              setNestedMovie(null);
+              setNestedVideoUrl(nestedVideoUrl);
+              setNestedVideoTitle(nestedMovie.title);
+              setIsNestedFullscreen(true);
+            }
+          };
+
+          const handleNestedPlayEpisode = (
+            url: string,
+            episodeTitle: string,
+          ) => {
+            // Close the nested modal and start fullscreen player for episodes
             setNestedMovie(null);
-            setNestedVideoUrl(nestedVideoUrl);
-            setNestedVideoTitle(nestedMovie.title);
+            setNestedVideoUrl(url);
+            setNestedVideoTitle(episodeTitle);
             setIsNestedFullscreen(true);
-          }
-        };
-        
-        const handleNestedPlayEpisode = (url: string, episodeTitle: string) => {
-          // Close the nested modal and start fullscreen player for episodes
-          setNestedMovie(null);
-          setNestedVideoUrl(url);
-          setNestedVideoTitle(episodeTitle);
-          setIsNestedFullscreen(true);
-        };
-        
-        return nestedMovie.type === "series" ? (
-          <KidsSeriesModal
-            isOpen={!!nestedMovie}
-            onClose={() => setNestedMovie(null)}
-            series={nestedMovie}
-            isSaved={nestedIsSaved}
-            onSave={handleNestedSave}
-            onPlayEpisode={handleNestedPlayEpisode}
-            videoUrl={nestedVideoUrl}
-            contentItem={nestedContentItem}
-            channel={nestedChannel}
-            recommendedContent={nestedRecommendedContent}
-          />
-        ) : (
-          <KidsMovieModal
-            isOpen={!!nestedMovie}
-            onClose={() => setNestedMovie(null)}
-            movie={nestedMovie}
-            isSaved={nestedIsSaved}
-            onSave={handleNestedSave}
-            onPlay={handleNestedPlay}
-            videoUrl={nestedVideoUrl}
-            contentItem={nestedContentItem}
-            channel={nestedChannel}
-            recommendedContent={nestedRecommendedContent}
-          />
-        );
-      })()}
-      
+          };
+
+          return nestedMovie.type === "series" ? (
+            <KidsSeriesModal
+              isOpen={!!nestedMovie}
+              onClose={() => setNestedMovie(null)}
+              series={nestedMovie}
+              isSaved={nestedIsSaved}
+              onSave={handleNestedSave}
+              onPlayEpisode={handleNestedPlayEpisode}
+              videoUrl={nestedVideoUrl}
+              contentItem={nestedContentItem}
+              channel={nestedChannel}
+              recommendedContent={nestedRecommendedContent}
+            />
+          ) : (
+            <KidsMovieModal
+              isOpen={!!nestedMovie}
+              onClose={() => setNestedMovie(null)}
+              movie={nestedMovie}
+              isSaved={nestedIsSaved}
+              onSave={handleNestedSave}
+              onPlay={handleNestedPlay}
+              videoUrl={nestedVideoUrl}
+              contentItem={nestedContentItem}
+              channel={nestedChannel}
+              recommendedContent={nestedRecommendedContent}
+            />
+          );
+        })()}
+
       {/* Nested Fullscreen Player */}
       {isNestedFullscreen && nestedVideoUrl && (
         <FullscreenPlayer

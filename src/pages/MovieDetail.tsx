@@ -203,10 +203,10 @@ const MovieDetail = () => {
 
                   <button
                     onClick={handleFavorite}
-                    className="p-3 rounded-full bg-gray-800 hover:bg-gray-700 transition-colors"
+                    className="bg-black/20 backdrop-blur-md text-white p-2 rounded-full transition-all duration-200 border border-brand-500/50 hover:border-brand-500 hover:bg-black/30"
                   >
                     <Heart
-                      className={`w-6 h-6 ${isFavorited ? "fill-current text-red-500" : "text-gray-400"}`}
+                      className={`w-5 h-5 ${isFavorited ? "fill-current text-red-500" : ""}`}
                     />
                   </button>
                 </div>

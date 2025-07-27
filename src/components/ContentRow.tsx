@@ -17,13 +17,15 @@ const ContentRow = React.memo(({ title, movies }: ContentRowProps) => {
 
   const checkScrollability = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    
+
     timeoutRef.current = setTimeout(() => {
       if (scrollContainerRef.current) {
         const container = scrollContainerRef.current;
         const isScrollable = container.scrollWidth > container.clientWidth;
         const isAtStart = container.scrollLeft <= 0;
-        const isAtEnd = container.scrollLeft >= container.scrollWidth - container.clientWidth - 1;
+        const isAtEnd =
+          container.scrollLeft >=
+          container.scrollWidth - container.clientWidth - 1;
 
         setCanScrollLeft(isScrollable && !isAtStart);
         setCanScrollRight(isScrollable && !isAtEnd);
@@ -36,7 +38,9 @@ const ContentRow = React.memo(({ title, movies }: ContentRowProps) => {
 
     const container = scrollContainerRef.current;
     if (container) {
-      container.addEventListener("scroll", checkScrollability, { passive: true });
+      container.addEventListener("scroll", checkScrollability, {
+        passive: true,
+      });
       window.addEventListener("resize", checkScrollability, { passive: true });
 
       return () => {
@@ -68,7 +72,7 @@ const ContentRow = React.memo(({ title, movies }: ContentRowProps) => {
   if (movies.length === 0) return null;
 
   return (
-    <section className="mb-12">
+    <section className="pb-12">
       <div className="px-4 mb-2">
         <h2 className="text-2xl font-bold">{title}</h2>
       </div>

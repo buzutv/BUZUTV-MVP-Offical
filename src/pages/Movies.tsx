@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import OptimizedMovieCard from "@/components/OptimizedMovieCard";
 import MovieHoverRow from "@/components/MovieHoverRow";
 import HeroBanner from "@/components/HeroBanner";
@@ -21,12 +21,9 @@ import { useChannels } from "@/hooks/useChannels";
 import FullscreenPlayer from "@/components/FullscreenPlayer";
 
 const Movies = React.memo(() => {
-  console.log("🎬 [Movies] Component rendering started", performance.now());
-  
   const startTime = performance.now();
   const { movieContent, isLoading, content } = useAppContent();
-  console.log("🎬 [Movies] useAppContent took:", performance.now() - startTime, "ms");
-  
+
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [activeGenre, setActiveGenre] = useState("all");
 
@@ -99,7 +96,7 @@ const Movies = React.memo(() => {
   console.log("🎬 [Movies] Rendering complete, data loaded:", {
     movieCount: movieContent.all?.length || 0,
     contentCount: content.allContent?.length || 0,
-    renderTime: performance.now() - startTime
+    renderTime: performance.now() - startTime,
   });
 
   const MovieRow = ({
@@ -164,14 +161,6 @@ const Movies = React.memo(() => {
                   {/* Left - Hero Banner */}
                   <div className="lg:col-span-2 relative">
                     <HeroBanner movies={movieContent.featured} />
-                    {/* Bottom gradient transition */}
-                    <div
-                      className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none"
-                      style={{
-                        background:
-                          "linear-gradient(to bottom right, black 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.4) 70%, transparent 100%)",
-                      }}
-                    />
                   </div>
                   {/* Right - Top Ranked */}
                   <div>
@@ -453,7 +442,7 @@ const Movies = React.memo(() => {
 
                     {/* Grid Layout for all filtered movies */}
                     <div className="mt-8 mb-8 pl-4">
-                      <h2 className="text-xl font-semibold mb-4">All Movies</h2>
+                      <h2 className="text-2xl font-bold mb-4">All Movies</h2>
 
                       {filteredMovies.length > 0 ? (
                         <ContentGrid

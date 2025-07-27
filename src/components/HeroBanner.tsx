@@ -13,6 +13,7 @@ import { Autoplay, Navigation, Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
+import "./HeroCarousel.css";
 import { Movie } from "@/data/mockMovies";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -201,7 +202,10 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
 
   return (
     <>
-      <div className="relative h-[60vh] overflow-hidden">
+      <div
+        className="relative w-full overflow-hidden"
+        style={{ aspectRatio: "16/9" }}
+      >
         <Swiper
           modules={[Navigation, Autoplay, Pagination]}
           slidesPerView={1}
@@ -230,39 +234,21 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
               <div className="relative w-full h-full">
                 {/* Background */}
                 <div
-                  className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                  className="absolute inset-0 bg-center bg-no-repeat bg-cover hero-slide"
                   style={{
                     backgroundImage: `url(${movie.posterUrl})`,
                   }}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-transparent to-transparent" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+                  <div
+                    className={`absolute bottom-0 left-0 right-0 h-[40%] ${isKidsVariant ? "bg-gradient-to-t from-blue-400/80 via-blue-400/70 to-transparent" : "bg-gradient-to-t from-black/80 via-black/70 to-transparent"}`}
+                  />
                 </div>
 
                 {/* Content - Positioned with more bottom spacing */}
-                <div className="relative z-10 flex items-end h-full pb-16">
+                <div className="relative z-10 flex items-end h-full pb-2 md:pb-8">
                   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
                     <div className="max-w-xl">
-                      <h1 className="text-3xl md:text-4xl font-bold mb-3 text-white">
-                        {movie.title}
-                      </h1>
                       <div className="flex items-center space-x-3 mb-6">
-                        <span
-                          className={`${genreBgClass} text-white px-2 py-1 rounded text-sm`}
-                        >
-                          {movie.genre}
-                        </span>
-                        <span className="text-gray-300 text-sm">
-                          {movie.year}
-                        </span>
-                        <div className="flex items-center space-x-1">
-                          <span className="text-yellow-400">★</span>
-                          <span className="text-white text-sm">
-                            {movie.rating}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-3">
                         {/* Only show Play button if not a series */}
                         {movie.type !== "series" && (
                           <BrandButton
@@ -288,21 +274,45 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                         )}
                         {/* For series, show a non-clickable pill instead of More Info */}
                         {movie.type === "series" ? (
-                          <span
-                            className={`flex items-center gap-2 bg-black/20 backdrop-blur-md border ${infoBorderClass} text-white px-4 py-2 rounded-full font-bold text-sm cursor-default select-none`}
+                          <BrandButton
+                            variant={
+                              variant === "kids" ? "kidsSecondary" : "secondary"
+                            }
+                            size="sm"
+                            className="cursor-default select-none"
                           >
                             Watch Now Below!
-                          </span>
+                          </BrandButton>
                         ) : (
-                          <button
+                          <BrandButton
                             onClick={handleMoreInfo}
-                            className={`flex items-center gap-2 bg-black/20 backdrop-blur-md border ${infoBorderClass} hover:bg-white/20 text-white px-4 py-2 rounded-full font-bold transition-all duration-300 hover:scale-105 text-sm`}
+                            variant={
+                              variant === "kids" ? "kidsSecondary" : "secondary"
+                            }
+                            size="sm"
                           >
                             <Info className="w-4 h-4" />
                             <span>Info</span>
-                          </button>
+                          </BrandButton>
                         )}
                       </div>
+                      <div className="flex items-center space-x-3 mb-6">
+                        <span
+                          className={`${genreBgClass} text-white px-2 py-1 rounded text-sm`}
+                        >
+                          {movie.genre}
+                        </span>
+                        <span className="text-white text-sm">{movie.year}</span>
+                        <div className="flex items-center space-x-1">
+                          <span className="text-yellow-400">★</span>
+                          <span className="text-white text-sm">
+                            {movie.rating}
+                          </span>
+                        </div>
+                      </div>
+                      <h1 className="text-3xl md:text-4xl font-bold mb-3 text-white">
+                        {movie.title}
+                      </h1>
                     </div>
                   </div>
                 </div>
@@ -361,10 +371,12 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
 
       {/* More Info Modal - Consistent with MovieModal */}
       <Dialog open={showModal && !isPlaying} onOpenChange={setShowModal}>
-        <DialogContent className={`max-w-[75vw] max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-1000 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 ${variant === "kids" ? "bg-gradient-to-tl from-yellow-300 via-blue-300 to-sky-400" : "bg-gradient-to-br from-black via-slate-900 to-violet-900"}`}>
+        <DialogContent
+          className={`max-w-[75vw] max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-1000 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 ${variant === "kids" ? "bg-gradient-to-tl from-yellow-300 via-blue-300 to-sky-400" : "bg-gradient-to-br from-black via-slate-900 to-violet-900"}`}
+        >
           <DialogTitle className="sr-only">{modalMovie?.title}</DialogTitle>
           <ScrollArea className="h-[90vh] scroll-smooth">
-            <div className="relative min-h-full bg-gradient-to-t from-black/50 via-transparent to-transparent">
+            <div className="relative min-h-full">
               {/* Hero Section with Fixed Gradient */}
               <div className="relative w-full h-[60vh] overflow-hidden">
                 {/* Background Image */}
@@ -410,10 +422,10 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
 
                     <button
                       onClick={handleSave}
-                      className="bg-black/20 backdrop-blur-md text-white p-3 rounded-full transition-all duration-200 border border-brand-500/50 hover:border-brand-500 hover:bg-black/30"
+                      className="bg-black/20 backdrop-blur-md text-white p-2 rounded-full transition-all duration-200 border border-brand-500/50 hover:border-brand-500 hover:bg-black/30"
                     >
                       <Heart
-                        className={`w-6 h-6 ${isSaved ? "fill-current text-red-500" : ""}`}
+                        className={`w-5 h-5 ${isSaved ? "fill-current text-red-500" : ""}`}
                       />
                     </button>
 
@@ -489,7 +501,11 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
             channel={channel}
             recommendedContent={recommendedContent}
             seasons={modalSeasonsData}
-            customBackground={variant === "kids" ? "bg-gradient-to-tl from-yellow-300 via-blue-300 to-sky-400" : "bg-gradient-to-br from-black via-slate-900 to-violet-900"}
+            customBackground={
+              variant === "kids"
+                ? "bg-gradient-to-tl from-yellow-300 via-blue-300 to-sky-400"
+                : "bg-gradient-to-br from-black via-slate-900 to-violet-900"
+            }
           />
         )}
       </Dialog>

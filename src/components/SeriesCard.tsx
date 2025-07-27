@@ -117,7 +117,7 @@ const SeriesCard = ({
           onClick={handleCardClick}
         >
           <div
-            className="relative overflow-hidden rounded-lg shadow-lg border-2 border-transparent group-hover:scale-105 group-hover:border-white group-hover:shadow-[0_0_4px_rgba(255,255,255,0.6)] transition-all duration-300"
+            className="relative overflow-hidden rounded-lg border-2 border-transparent group-hover:scale-105 group-hover:border-white group-hover:shadow-[0_0_4px_rgba(255,255,255,0.6)] transition-all duration-300"
             style={{ aspectRatio: "16/9" }}
           >
             <div className="w-full h-full rounded-lg overflow-hidden">
@@ -138,8 +138,12 @@ const SeriesCard = ({
             )}
 
             <div className="absolute inset-0 z-0 rounded-lg overflow-hidden pointer-events-none">
-              <div className={`absolute bottom-0 left-0 right-0 h-1/2 ${location.pathname === "/kids" ? "bg-gradient-to-t from-blue-400 via-blue-400/30 to-transparent" : "bg-gradient-to-t from-black/90 via-black/50 to-transparent"}`} />
-              <div className={`absolute bottom-0 left-0 right-0 h-1/2 ${location.pathname === "/kids" ? "bg-gradient-to-t from-blue-400 via-blue-400/50 to-transparent" : "bg-gradient-to-t from-black/90 via-black/70 to-transparent"} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+              <div
+                className={`absolute bottom-0 left-0 right-0 h-1/2 ${location.pathname === "/kids" ? "bg-gradient-to-t from-blue-400 via-blue-400/30 to-transparent" : "bg-gradient-to-t from-black/90 via-black/50 to-transparent"}`}
+              />
+              <div
+                className={`absolute bottom-0 left-0 right-0 h-1/2 ${location.pathname === "/kids" ? "bg-gradient-to-t from-blue-400 via-blue-400/50 to-transparent" : "bg-gradient-to-t from-black/90 via-black/70 to-transparent"} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+              />
             </div>
 
             <div className="absolute bottom-0 left-0 right-0 z-10 p-3 pt-6 pointer-events-none">

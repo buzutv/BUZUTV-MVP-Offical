@@ -93,8 +93,10 @@ const MovieModal = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
         className={`max-w-[75vw] max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-1000 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 ${customBackground ? customBackground : ""}`}
-        style={!customBackground ? {
-          background: `
+        style={
+          !customBackground
+            ? {
+                background: `
             linear-gradient(
               200deg,
               #311066 0%,   /* very dark violet */
@@ -102,11 +104,13 @@ const MovieModal = ({
               #120222 45%,  /* near-black violet */
               black 100%    /* pure black */
             )`,
-        } : {}}
+              }
+            : {}
+        }
       >
         <DialogTitle className="sr-only">{movie.title}</DialogTitle>
         <ScrollArea className="h-[90vh] scroll-smooth">
-          <div className="relative min-h-full bg-gradient-to-t from-black/50 via-transparent to-transparent">
+          <div className="relative min-h-full ">
             {/* Hero Section with Fixed Gradient */}
             <div className="relative w-full h-[60vh] overflow-hidden">
               {/* Background Image */}
@@ -148,10 +152,10 @@ const MovieModal = ({
 
                   <button
                     onClick={onSave}
-                    className="bg-black/20 backdrop-blur-md text-white p-3 rounded-full transition-all duration-200 border border-brand-500/50 hover:border-brand-500 hover:bg-black/30"
+                    className="bg-black/20 backdrop-blur-md text-white p-2 rounded-full transition-all duration-200 border border-brand-500/50 hover:border-brand-500 hover:bg-black/30"
                   >
                     <Heart
-                      className={`w-6 h-6 ${isSaved ? "fill-current text-red-500" : ""}`}
+                      className={`w-5 h-5 ${isSaved ? "fill-current text-red-500" : ""}`}
                     />
                   </button>
 

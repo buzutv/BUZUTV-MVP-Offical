@@ -53,7 +53,6 @@ const SeriesModal = ({
   onOpenRelatedSeries,
   customBackground,
 }: SeriesModalProps) => {
-
   const [isSeriesPlayerOpen, setIsSeriesPlayerOpen] = useState(false);
   const [currentPlayingEpisode, setCurrentPlayingEpisode] =
     useState<Episode | null>(null);
@@ -152,8 +151,9 @@ const SeriesModal = ({
   );
 
   const finalClassName = `max-w-[75vw] max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-700 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 ${customBackground ? customBackground : ""}`;
-  const finalStyle = !customBackground ? {
-    background: `
+  const finalStyle = !customBackground
+    ? {
+        background: `
       linear-gradient(
         200deg,
         #311066 0%,   /* very dark violet */
@@ -161,19 +161,16 @@ const SeriesModal = ({
         #120222 45%,  /* near-black violet */
         black 100%    /* pure black */
       )`,
-  } : {};
-
+      }
+    : {};
 
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent 
-          className={finalClassName}
-          style={finalStyle}
-        >
+        <DialogContent className={finalClassName} style={finalStyle}>
           <DialogTitle className="sr-only">{series.title}</DialogTitle>
           <ScrollArea className="h-[90vh]">
-            <div className="relative min-h-full bg-gradient-to-t from-black/50 via-transparent to-transparent">
+            <div className="relative min-h-full">
               <div className="relative h-[60vh] overflow-hidden">
                 <div className="absolute inset-0">
                   <img
@@ -204,14 +201,10 @@ const SeriesModal = ({
                     )}
                     <button
                       onClick={onSave}
-                      className={`bg-black/20 backdrop-blur-md text-white p-3 rounded-full transition-all duration-200 border ${
-                        customBackground?.includes("kids")
-                          ? "border-blue-400/50 hover:border-blue-400 hover:bg-blue-500/20"
-                          : "border-brand-500/50 hover:border-brand-500 hover:bg-black/30"
-                      }`}
+                      className="bg-black/20 backdrop-blur-md text-white p-2 rounded-full transition-all duration-200 border border-brand-500/50 hover:border-brand-500 hover:bg-black/30"
                     >
                       <Heart
-                        className={`w-6 h-6 ${isSaved ? "fill-current text-red-500" : ""}`}
+                        className={`w-5 h-5 ${isSaved ? "fill-current text-red-500" : ""}`}
                       />
                     </button>
                     {seasonsData.length > 0 && (
@@ -261,8 +254,9 @@ const SeriesModal = ({
                             className={`
                               flex items-center justify-center gap-3 rounded-full font-medium will-change-transform transform-gpu transition-all whitespace-nowrap
                               px-4 py-2 text-base
-                              ${customBackground?.includes("kids")
-                                ? `
+                              ${
+                                customBackground?.includes("kids")
+                                  ? `
                                   data-[state=active]:bg-[linear-gradient(135deg,#1d4ed8,#2563eb,#3b82f6)]
                                   data-[state=active]:text-white
                                   data-[state=active]:border data-[state=active]:border-[rgba(37,99,235,0.3)]
@@ -279,7 +273,7 @@ const SeriesModal = ({
                                   text-white border border-transparent
                                   hover:bg-blue-500/10 hover:backdrop-blur
                                 `
-                                : `
+                                  : `
                                   data-[state=active]:bg-[linear-gradient(135deg,#7c3aed,#8b5cf6,#a855f7)]
                                   data-[state=active]:text-white
                                   data-[state=active]:border-2 data-[state=active]:border-[rgba(139,92,246,0.3)]
@@ -317,16 +311,20 @@ const SeriesModal = ({
                               >
                                 <div
                                   className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white will-change-transform transform-gpu ${
-                                    customBackground?.includes("kids") 
-                                      ? "bg-yellow-500 shadow-[2px_19px_31px_rgba(234,179,8,0.35)]" 
+                                    customBackground?.includes("kids")
+                                      ? "bg-yellow-500 shadow-[2px_19px_31px_rgba(234,179,8,0.35)]"
                                       : "bg-brand-500 shadow-[2px_19px_31px_rgba(30,27,95,0.35)]"
                                   }`}
-                                  style={!customBackground?.includes("kids") ? {
-                                    backgroundImage: `
+                                  style={
+                                    !customBackground?.includes("kids")
+                                      ? {
+                                          backgroundImage: `
                                     radial-gradient(93% 87% at 87% 89%, rgba(0, 0, 0, 0.23) 0%, transparent 86.18%),
                                     radial-gradient(66% 87% at 26% 20%, rgba(255, 255, 255, 0.41) 0%, rgba(255, 255, 255, 0) 70%)
                                   `,
-                                  } : {}}
+                                        }
+                                      : {}
+                                  }
                                 >
                                   {episode.episode_number}
                                 </div>

@@ -183,7 +183,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
               <div className="relative w-full h-full">
                 {/* Background Image */}
                 <div
-                  className="absolute inset-0 w-full h-full bg-no-repeat hero-bg-mobile md:hero-bg-desktop hero-slide"
+                  className="absolute inset-0 w-full h-full bg-no-repeat bg-cover hero-bg-mobile md:bg-cover hero-slide"
                   style={{
                     backgroundImage: `url(${slide.posterUrl || "/placeholder.svg"})`,
                   }}
@@ -372,15 +372,14 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
 
         .hero-bg-mobile {
           background-position: center 20%;
-        }
-
-        .hero-bg-desktop {
-          background-position: center center;
+          background-size: cover;
         }
 
         @media (max-width: 768px) {
           .hero-bg-mobile {
             background-position: center 20%;
+            background-size: contain;
+            background-repeat: no-repeat;
           }
         }
       `}</style>

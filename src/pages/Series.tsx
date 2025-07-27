@@ -143,14 +143,6 @@ const Series = () => {
                           : seriesContent.all.slice(0, 3)
                       }
                     />
-                    {/* Bottom gradient transition */}
-                    <div
-                      className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none"
-                      style={{
-                        background:
-                          "linear-gradient(to bottom right, black 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.4) 70%, transparent 100%)",
-                      }}
-                    />
                   </div>
 
                   <div>
@@ -440,7 +432,7 @@ const Series = () => {
 
                     {/* Grid Layout for all filtered series */}
                     <div className="mt-8 mb-8 pl-4">
-                      <h2 className="text-xl font-semibold mb-4">All Series</h2>
+                      <h2 className="text-2xl font-bold mb-4">All Series</h2>
 
                       {filteredSeries.length > 0 ? (
                         <ContentGrid
