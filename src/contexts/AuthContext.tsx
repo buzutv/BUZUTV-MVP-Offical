@@ -6,6 +6,7 @@ interface AuthUser extends User {
   isAdmin?: boolean;
   name?: string;
   role?: string;
+  phone?: string | null;
 }
 
 interface AuthContextType {
@@ -16,10 +17,6 @@ interface AuthContextType {
   setShowLoginModal: (show: boolean) => void;
   login: (
     email: string,
-    password: string,
-  ) => Promise<{ success: boolean; error?: string }>;
-  loginWithPhone: (
-    phone: string,
     password: string,
   ) => Promise<{ success: boolean; error?: string }>;
   signup: (
@@ -78,7 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           session.user.email?.split("@")[0] ||
           "User";
 
-        // Fetch user profile to get actual role
+        // Fetch user profile to get actual role and phone
         setTimeout(async () => {
           const profile = await fetchUserProfile(session.user.id);
           const actualRole = profile?.role || "user";
@@ -89,6 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             isAdmin: isActualAdmin,
             name: userName,
             role: actualRole,
+            phone: profile?.phone || null,
           });
         }, 0);
 
@@ -115,7 +113,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           session.user.email?.split("@")[0] ||
           "User";
 
-        // Fetch user profile to get actual role
+        // Fetch user profile to get actual role and phone
         const profile = await fetchUserProfile(session.user.id);
         const actualRole = profile?.role || "user";
         const isActualAdmin = actualRole === "admin" || isDemoAdmin;
@@ -125,6 +123,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           isAdmin: isActualAdmin,
           name: userName,
           role: actualRole,
+          phone: profile?.phone || null,
         });
       }
       setIsLoading(false);
@@ -150,22 +149,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     return { success: true };
   };
 
-  const loginWithPhone = async (phone: string, password: string) => {
-    setIsLoading(true);
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-      phone,
-      password,
-    });
-
-    setIsLoading(false);
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
-    return { success: true };
-  };
 
   const signup = async (
     email: string,
@@ -227,7 +210,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     showLoginModal,
     setShowLoginModal,
     login,
-    loginWithPhone,
     signup,
     signInWithGoogle,
     logout,

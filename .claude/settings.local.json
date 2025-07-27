@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__jetbrains__replace_specific_text",
+      "mcp__jetbrains__find_files_by_name_substring",
+      "mcp__jetbrains__get_file_text_by_path",
+      "mcp__jetbrains__search_in_files_content",
+      "mcp__jetbrains__create_new_file_with_text",
+      "mcp__jetbrains__list_files_in_folder",
+      "Bash(rm:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm run lint:*)",
+      "mcp__jetbrains__get_open_in_editor_file_text",
+      "mcp__jetbrains__list_directory_tree_in_folder",
+      "mcp__jetbrains__replace_selected_text"
+    ],
+    "deny": []
+  }
+}

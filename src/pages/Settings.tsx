@@ -215,16 +215,26 @@ const Settings = () => {
           return;
         }
 
-        const { error: phoneError } = await supabase.auth.updateUser({
-          phone: form.phone,
-          data: {
-            phone: form.phone,
-          },
-        });
+        // Update phone number directly in profiles table (no OTP required)
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .update({ phone: form.phone })
+          .eq("id", user?.id);
 
-        if (phoneError) {
-          setError(phoneError.message);
+        if (profileError) {
+          setError(profileError.message);
         } else {
+          // Also update the user metadata for consistency
+          const { error: metadataError } = await supabase.auth.updateUser({
+            data: {
+              phone: form.phone,
+            },
+          });
+
+          if (metadataError) {
+            console.warn("Failed to update user metadata:", metadataError.message);
+          }
+
           toast.success("Phone number updated successfully!");
           setFieldStates((prev) => ({ ...prev, phone: false }));
         }

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 
 import { ArrowLeft } from "lucide-react";
 import BrandButton from "@/components/ui/BrandButton";
@@ -9,11 +8,10 @@ import { toast } from "sonner";
 import ForgotPassword from "@/components/auth/ForgotPassword";
 
 const Auth = () => {
-  const { login, loginWithPhone, signup, signInWithGoogle } = useAuth();
+  const { login, signup, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [isSignUp, setIsSignUp] = useState(false);
-  const [loginWithPhoneMode, setLoginWithPhoneMode] = useState(false);
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -23,8 +21,6 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
 
-  const [showOtpForm, setShowOtpForm] = useState(false);
-  const [otpCode, setOtpCode] = useState("");
 
   useEffect(() => {
     const mode = searchParams.get("mode");
@@ -34,13 +30,11 @@ const Auth = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Shared validations
-    const isPhoneOnly = phone && !email;
     const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
 
     if (isSignUp) {
-      if (!email && !phone)
-        return toast.error("Email or phone number is required");
+      if (!email)
+        return toast.error("Email is required");
       if (!password || !confirmPassword || !firstName || !lastName)
         return toast.error("Please fill in all fields");
       if (password !== confirmPassword)
@@ -49,26 +43,13 @@ const Auth = () => {
         return toast.error("Password must be at least 6 characters long");
     }
 
-    if (!isSignUp && loginWithPhoneMode && (!phone || !password))
-      return toast.error("Please fill in all fields");
-
-    if (!isSignUp && !loginWithPhoneMode && (!email || !password))
+    if (!isSignUp && (!email || !password))
       return toast.error("Please fill in all fields");
 
     setIsLoading(true);
 
     try {
       if (isSignUp) {
-        if (isPhoneOnly) {
-          // Phone OTP sign-up (step 1)
-          const { error } = await supabase.auth.signInWithOtp({ phone });
-          if (error) return toast.error(error.message);
-
-          toast.success("OTP sent to your phone");
-          setShowOtpForm(true); // you must implement this input
-          return;
-        }
-
         // Email sign-up
         const result = await signup(email, password, fullName, phone);
         if (result.success) {
@@ -82,19 +63,7 @@ const Auth = () => {
       }
 
       // Login
-      let result;
-      if (loginWithPhoneMode) {
-        const { error } = await supabase.auth.signInWithOtp({ phone });
-        if (error) {
-          toast.error(error.message);
-          return;
-        }
-        toast.success("Verification code sent to your phone");
-        setShowOtpForm(true);
-        return;
-      } else {
-        result = await login(email, password);
-      }
+      const result = await login(email, password);
 
       if (result.success) {
         toast.success("Logged in successfully!");
@@ -136,7 +105,6 @@ const Auth = () => {
     setFirstName("");
     setLastName("");
     setIsSignUp(false);
-    setLoginWithPhoneMode(false);
   };
 
   return (
@@ -194,10 +162,7 @@ const Auth = () => {
                 {isSignUp ? (
                   "Create your account"
                 ) : (
-                  <>
-                    <span className="block">Welcome back</span>
-                    <span className="block">Choose your login method</span>
-                  </>
+                  "Welcome back"
                 )}
               </p>
             </div>
@@ -261,76 +226,40 @@ const Auth = () => {
                 </>
               )}
 
-              {!isSignUp && (
-                <div className="flex space-x-3 mb-6">
-                  <BrandButton
-                    type="button"
-                    onClick={() => setLoginWithPhoneMode(false)}
-                    className="flex-1"
-                    variant={!loginWithPhoneMode ? "primary" : "secondary"}
-                    size="sm"
-                  >
-                    Email
-                  </BrandButton>
-                  <BrandButton
-                    type="button"
-                    onClick={() => setLoginWithPhoneMode(true)}
-                    className="flex-1"
-                    variant={loginWithPhoneMode ? "primary" : "secondary"}
-                    size="sm"
-                  >
-                    Phone
-                  </BrandButton>
-                </div>
-              )}
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-300 mb-2"
+                >
+                  Email
+                </label>
+
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-3 py-2 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
+                  placeholder="Enter your email"
+                />
+              </div>
 
               <div>
                 <label
-                  htmlFor={loginWithPhoneMode && !isSignUp ? "phone" : "email"}
+                  htmlFor="password"
                   className="block text-sm font-medium text-gray-300 mb-2"
                 >
-                  {loginWithPhoneMode && !isSignUp ? "Phone Number" : "Email"}
+                  Password
                 </label>
-
-                {loginWithPhoneMode && !isSignUp ? (
-                  <input
-                    id="phone"
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full px-3 py-2 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
-                    placeholder="Enter your phone number"
-                  />
-                ) : (
-                  <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3 py-2 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
-                    placeholder="Enter your email"
-                  />
-                )}
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-3 py-2 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
+                  placeholder="Enter your password"
+                />
               </div>
-
-              {!(loginWithPhoneMode && !isSignUp) && (
-                <div>
-                  <label
-                    htmlFor="password"
-                    className="block text-sm font-medium text-gray-300 mb-2"
-                  >
-                    Password
-                  </label>
-                  <input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-3 py-2 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
-                    placeholder="Enter your password"
-                  />
-                </div>
-              )}
 
               {isSignUp && (
                 <div>
@@ -360,43 +289,6 @@ const Auth = () => {
               </button>
             </form>
 
-            {showOtpForm && (
-              <div className="mt-6">
-                <label
-                  htmlFor="otp"
-                  className="block text-sm font-medium text-gray-300 mb-2"
-                >
-                  Enter OTP
-                </label>
-                <input
-                  id="otp"
-                  type="text"
-                  value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value)}
-                  className="w-full px-3 py-2 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
-                  placeholder="123456"
-                />
-                <button
-                  onClick={async () => {
-                    const { data, error } = await supabase.auth.verifyOtp({
-                      phone,
-                      token: otpCode,
-                      type: "sms",
-                    });
-                    if (error) {
-                      toast.error(error.message);
-                    } else {
-                      toast.success("Phone number verified!");
-                      navigate("/");
-                      resetForm();
-                    }
-                  }}
-                  className="mt-4 w-full flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm bg-brand-500 hover:bg-brand-600 whitespace-nowrap"
-                >
-                  Verify OTP
-                </button>
-              </div>
-            )}
 
             {/* Toggle between log in and sign up */}
             <div className="text-center mt-6 space-y-4">
