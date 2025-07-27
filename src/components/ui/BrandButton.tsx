@@ -51,7 +51,7 @@ const BrandButton: React.FC<BrandButtonProps> = ({
       hover:before:left-full
     `,
     "no-border": `
-      bg-black/20 backdrop-blur-md border-2 border-transparent
+      bg-black/20 backdrop-blur-md border-2 border-transparent text-white
       hover:-translate-y-0.5
       transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]
       relative overflow-hidden

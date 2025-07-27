@@ -361,7 +361,7 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
 
       {/* More Info Modal - Consistent with MovieModal */}
       <Dialog open={showModal && !isPlaying} onOpenChange={setShowModal}>
-        <DialogContent className="max-w-[75vw] max-h-[90vh] bg-gray-900 text-white border-none p-0 overflow-hidden transition-all duration-1000 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100">
+        <DialogContent className={`max-w-[75vw] max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-1000 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 ${variant === "kids" ? "bg-gradient-to-tl from-yellow-300 via-blue-300 to-sky-400" : "bg-gradient-to-br from-black via-slate-900 to-violet-900"}`}>
           <DialogTitle className="sr-only">{modalMovie?.title}</DialogTitle>
           <ScrollArea className="h-[90vh] scroll-smooth">
             <div className="relative min-h-full bg-gradient-to-t from-black/50 via-transparent to-transparent">
@@ -489,6 +489,7 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
             channel={channel}
             recommendedContent={recommendedContent}
             seasons={modalSeasonsData}
+            customBackground={variant === "kids" ? "bg-gradient-to-tl from-yellow-300 via-blue-300 to-sky-400" : "bg-gradient-to-br from-black via-slate-900 to-violet-900"}
           />
         )}
       </Dialog>

@@ -92,7 +92,17 @@ const MovieModal = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className={`max-w-[75vw] max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-1000 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 ${customBackground || "bg-gradient-to-tl from-black via-slate-900 to-violet-900"}`}
+        className={`max-w-[75vw] max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-1000 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 ${customBackground ? customBackground : ""}`}
+        style={!customBackground ? {
+          background: `
+            linear-gradient(
+              200deg,
+              #311066 0%,   /* very dark violet */
+              #1D0833 20%,  /* deep blackish purple */
+              #120222 45%,  /* near-black violet */
+              black 100%    /* pure black */
+            )`,
+        } : {}}
       >
         <DialogTitle className="sr-only">{movie.title}</DialogTitle>
         <ScrollArea className="h-[90vh] scroll-smooth">

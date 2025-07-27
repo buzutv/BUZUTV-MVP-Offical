@@ -128,16 +128,37 @@ const HomeRow = React.memo(
               {items.map((item) => (
                 <div key={item.id} className="flex-shrink-0 w-64">
                   {isMoreLikeThis ? (
-                    <MoreLikeThisCard
-                      item={item}
-                      onClick={() => {
-                        if (item.type === "series") {
-                          onOpenRelatedSeries?.(item);
-                        } else {
-                          onOpenRelatedMovie?.(item);
-                        }
-                      }}
-                    />
+                    onItemClick ? (
+                      // Use regular cards that will trigger onItemClick for kids modals
+                      item.type === "series" ? (
+                        <SeriesCard 
+                          series={item} 
+                          onOpen={() => {
+                            onItemClick(item);
+                            return true; // Prevent default modal
+                          }} 
+                        />
+                      ) : (
+                        <OptimizedMovieCard 
+                          movie={item} 
+                          onOpen={() => {
+                            onItemClick(item);
+                            return true; // Prevent default modal
+                          }} 
+                        />
+                      )
+                    ) : (
+                      <MoreLikeThisCard
+                        item={item}
+                        onClick={() => {
+                          if (item.type === "series") {
+                            onOpenRelatedSeries?.(item);
+                          } else {
+                            onOpenRelatedMovie?.(item);
+                          }
+                        }}
+                      />
+                    )
                   ) : item.type === "series" ? (
                     <SeriesCard series={item} onOpen={onCardClick} />
                   ) : (

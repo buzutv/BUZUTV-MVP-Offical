@@ -6,7 +6,7 @@ import React, {
   useState,
 } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, User, X } from "lucide-react";
+import { Menu, Search, User, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   DropdownMenu,
@@ -101,8 +101,8 @@ const Navbar = React.memo(
     return (
       <nav
         className={`fixed top-3 left-0 right-0 z-50 px-4 md:px-6 h-14 transition-all duration-500 ${
-          shouldShowNav ? "flex" : "hidden"
-        } md:flex items-center`}
+          shouldShowNav ? "flex md:flex" : "hidden"
+        } items-center`}
       >
         <div
           className="max-w-full px-4 md:px-8 w-full flex items-center justify-between h-14 relative bg-black/20 backdrop-blur-lg border border-white/10"
@@ -125,26 +125,65 @@ const Navbar = React.memo(
 
           {isLoggedIn && (
             <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
-              <div className="hidden md:flex items-center">
-                <div className=" rounded-full p-1 inline-flex gap-2">
-                  {navItems.map(({ to, label }) => (
-                    <BrandButton
-                      key={to}
-                      onClick={(e) => handleNavClick(e, to)}
-                      variant={
+              <div className="hidden md:flex items-center gap-4 whitespace-nowrap">
+                {navItems.map(({ to, label }) => (
+                  <Link
+                    key={to}
+                    to={to}
+                    className={`
+                      flex items-center justify-center gap-3 rounded-full font-medium will-change-transform transform-gpu transition-all whitespace-nowrap
+                      px-4 py-2 text-base
+                      ${
                         isActivePath(to)
                           ? to === "/kids"
-                            ? "kids"
-                            : "primary"
-                          : "ghost"
+                            ? `
+                              bg-[linear-gradient(135deg,#1d4ed8,#2563eb,#3b82f6)]
+                              text-white
+                              border border-[rgba(37,99,235,0.3)]
+                              shadow-[0_10px_30px_rgba(37,99,235,0.4)]
+                              hover:shadow-[0_20px_50px_rgba(37,99,235,0.6)]
+                              hover:brightness-110
+                              hover:-translate-y-0.5
+                              transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]
+                              relative overflow-hidden
+                              before:content-[''] before:absolute before:top-0 before:-left-full before:w-full before:h-full
+                              before:bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)]
+                              before:transition-[left] before:duration-500
+                              hover:before:left-full
+                            `
+                            : `
+                              bg-[linear-gradient(135deg,#7c3aed,#8b5cf6,#a855f7)]
+                              text-white
+                              border-2 border-[rgba(139,92,246,0.3)]
+                              shadow-[0_10px_30px_rgba(139,92,246,0.4)]
+                              hover:shadow-[0_20px_50px_rgba(139,92,246,0.6)]
+                              hover:brightness-110
+                              hover:-translate-y-0.5
+                              transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]
+                              relative overflow-hidden
+                              before:content-[''] before:absolute before:top-0 before:-left-full before:w-full before:h-full
+                              before:bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)]
+                              before:transition-[left] before:duration-500
+                              hover:before:left-full
+                            `
+                          : `
+                            text-white border border-transparent
+                            hover:bg-brand-500/10 hover:backdrop-blur
+                            hover:-translate-y-0.5
+                            transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]
+                            relative overflow-hidden
+                            before:content-[''] before:absolute before:top-0 before:-left-full before:w-full before:h-full
+                            before:bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.1),transparent)]
+                            before:transition-[left] before:duration-500
+                            hover:before:left-full
+                          `
                       }
-                      size="sm"
-                      className="text-sm"
-                    >
-                      {label}
-                    </BrandButton>
-                  ))}
-                </div>
+                    `}
+                    onClick={(e) => handleNavClick(e, to)}
+                  >
+                    {label}
+                  </Link>
+                ))}
               </div>
             </div>
           )}
@@ -152,6 +191,38 @@ const Navbar = React.memo(
           <div className="flex items-center gap-2">
             {isLoggedIn ? (
               <>
+                <div
+                  className={`relative rounded-full px-2 py-1 ${
+                    isSearchOpen || searchQuery
+                      ? "border border-white/10 bg-black/10"
+                      : ""
+                  }`}
+                >
+                  {isSearchOpen || searchQuery ? (
+                    <div className="flex items-center px-3 py-1 rounded-full transition-all">
+                      <input
+                        ref={searchInputRef}
+                        type="text"
+                        placeholder="Search"
+                        value={searchQuery}
+                        onChange={onSearchChange}
+                        onBlur={handleSearchBlur}
+                        onKeyDown={handleSearchKeyDown}
+                        className="bg-transparent text-white placeholder-gray-300 w-32 focus:outline-none"
+                      />
+                      <Search className="text-gray-300 w-4 h-4 ml-2" />
+                    </div>
+                  ) : (
+                    <button
+                      className="flex items-center px-3 py-2 rounded-full transition-all"
+                      onClick={() => setIsSearchOpen(true)}
+                      aria-label="Open search"
+                    >
+                      <Search className="text-white w-6 h-6" />
+                    </button>
+                  )}
+                </div>
+
                 <DropdownMenu modal={false}>
                   <DropdownMenuTrigger className="flex items-center text-white hover:text-gray-300 transition-colors px-2 py-2">
                     <User className="w-6 h-6" />
@@ -214,7 +285,7 @@ const Navbar = React.memo(
                   variant="no-border"
                   size="sm"
                   onClick={handleLoginClick}
-                  className="text-white"
+                  className="text-xs sm:text-sm font-medium px-3 sm:px-4"
                 >
                   Log In
                 </BrandButton>
@@ -222,6 +293,7 @@ const Navbar = React.memo(
                   variant="primary"
                   size="sm"
                   onClick={handleSignUpClick}
+                  className="text-xs sm:text-sm font-medium px-3 sm:px-4"
                 >
                   Sign Up
                 </BrandButton>
@@ -229,14 +301,52 @@ const Navbar = React.memo(
             )}
           </div>
         </div>
+
+        {/* Mobile dropdown */}
+        <div
+          className={`absolute top-14 left-4 right-4 z-40 bg-black/20 backdrop-blur-lg border border-white/10 border-t-transparent rounded-b-[30px] px-6 py-4 space-y-3 md:hidden transition-all duration-300 ease-in-out transform ${
+            isMenuOpen
+              ? "opacity-100 translate-y-0 pointer-events-auto"
+              : "opacity-0 -translate-y-4 pointer-events-none"
+          }`}
+        >
+          {navItems.map(({ to, label }) => (
+            <Link
+              key={to}
+              to={to}
+              className="block text-white text-base font-medium hover:text-brand-400 transition"
+              onClick={(e) => handleNavClick(e, to)}
+            >
+              {label}
+            </Link>
+          ))}
+
+          {!isLoggedIn && (
+            <div className="pt-4 border-t border-white/10 space-y-3">
+              <button
+                onClick={() => {
+                  handleLoginClick();
+                  setIsMenuOpen(false);
+                }}
+                className="block w-full text-left text-white text-base font-medium hover:text-brand-400 transition"
+              >
+                Log In
+              </button>
+              <button
+                onClick={() => {
+                  handleSignUpClick();
+                  setIsMenuOpen(false);
+                }}
+                className="block w-full text-left text-white text-base font-medium hover:text-brand-400 transition"
+              >
+                Sign Up
+              </button>
+            </div>
+          )}
+        </div>
       </nav>
     );
   },
-  (prevProps, nextProps) => {
-    return prevProps.searchQuery === nextProps.searchQuery;
-  },
 );
-
-Navbar.displayName = "Navbar";
 
 export default Navbar;

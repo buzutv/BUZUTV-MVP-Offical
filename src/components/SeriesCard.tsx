@@ -1,10 +1,12 @@
 import { Play } from "lucide-react";
 import { Movie } from "@/data/mockMovies";
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
 import SeriesModal from "@/components/SeriesModal";
+import KidsSeriesModal from "@/components/KidsSeriesModal";
 import FullscreenPlayer from "@/components/FullscreenPlayer";
 
 interface SeriesCardProps {
@@ -26,6 +28,7 @@ const SeriesCard = ({
   onPlayFullscreen,
   onOpen,
 }: SeriesCardProps) => {
+  const location = useLocation();
   const { favoriteIds, addToFavorites, removeFromFavorites } =
     useUserFavorites();
   const { content } = useContent();
@@ -157,19 +160,35 @@ const SeriesCard = ({
         </div>
       </div>
 
-      <SeriesModal
-        isOpen={!!currentSeries && !isFullscreen}
-        onClose={() => setCurrentSeries(null)}
-        series={actualSeries}
-        isSaved={isSaved}
-        onSave={handleSaveModal}
-        onPlayEpisode={handlePlayEpisode}
-        videoUrl={videoUrl}
-        contentItem={contentItem}
-        channel={channel}
-        recommendedContent={recommendedContent}
-        onOpenRelatedSeries={(item) => setCurrentSeries(item)}
-      />
+      {location.pathname === "/kids" ? (
+        <KidsSeriesModal
+          isOpen={!!currentSeries && !isFullscreen}
+          onClose={() => setCurrentSeries(null)}
+          series={actualSeries}
+          isSaved={isSaved}
+          onSave={handleSaveModal}
+          onPlayEpisode={handlePlayEpisode}
+          videoUrl={videoUrl}
+          contentItem={contentItem}
+          channel={channel}
+          recommendedContent={recommendedContent}
+          onOpenRelatedSeries={(item) => setCurrentSeries(item)}
+        />
+      ) : (
+        <SeriesModal
+          isOpen={!!currentSeries && !isFullscreen}
+          onClose={() => setCurrentSeries(null)}
+          series={actualSeries}
+          isSaved={isSaved}
+          onSave={handleSaveModal}
+          onPlayEpisode={handlePlayEpisode}
+          videoUrl={videoUrl}
+          contentItem={contentItem}
+          channel={channel}
+          recommendedContent={recommendedContent}
+          onOpenRelatedSeries={(item) => setCurrentSeries(item)}
+        />
+      )}
     </>
   );
 };

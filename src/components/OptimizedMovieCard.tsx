@@ -1,11 +1,13 @@
 
 import React, { useState, useCallback, useMemo } from "react";
 import { Play } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import { Movie } from "@/data/mockMovies";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
 import MovieModal from "@/components/MovieModal";
+import KidsMovieModal from "@/components/KidsMovieModal";
 import FullscreenPlayer from "@/components/FullscreenPlayer";
 
 interface OptimizedMovieCardProps {
@@ -27,6 +29,7 @@ const OptimizedMovieCard = React.memo(({
   onPlayFullscreen,
   onOpen
 }: OptimizedMovieCardProps) => {
+  const location = useLocation();
   const { favoriteIds, addToFavorites, removeFromFavorites } = useUserFavorites();
   const { content } = useContent();
   const { channels } = useChannels();
@@ -155,19 +158,35 @@ const OptimizedMovieCard = React.memo(({
         </div>
       </div>
 
-      <MovieModal
-        isOpen={!!currentModalMovie && !isFullscreen}
-        onClose={() => setCurrentModalMovie(null)}
-        movie={actualMovie}
-        isSaved={isSaved}
-        onSave={handleSaveModal}
-        onPlay={handleModalPlayClick}
-        videoUrl={videoUrl}
-        contentItem={contentItem}
-        channel={channel}
-        recommendedContent={recommendedContent}
-        onOpenRelatedMovie={setCurrentModalMovie}
-      />
+      {location.pathname === "/kids" ? (
+        <KidsMovieModal
+          isOpen={!!currentModalMovie && !isFullscreen}
+          onClose={() => setCurrentModalMovie(null)}
+          movie={actualMovie}
+          isSaved={isSaved}
+          onSave={handleSaveModal}
+          onPlay={handleModalPlayClick}
+          videoUrl={videoUrl}
+          contentItem={contentItem}
+          channel={channel}
+          recommendedContent={recommendedContent}
+          onOpenRelatedMovie={setCurrentModalMovie}
+        />
+      ) : (
+        <MovieModal
+          isOpen={!!currentModalMovie && !isFullscreen}
+          onClose={() => setCurrentModalMovie(null)}
+          movie={actualMovie}
+          isSaved={isSaved}
+          onSave={handleSaveModal}
+          onPlay={handleModalPlayClick}
+          videoUrl={videoUrl}
+          contentItem={contentItem}
+          channel={channel}
+          recommendedContent={recommendedContent}
+          onOpenRelatedMovie={setCurrentModalMovie}
+        />
+      )}
     </>
   );
 }, (prevProps, nextProps) => {

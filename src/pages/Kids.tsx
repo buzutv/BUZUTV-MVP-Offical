@@ -5,8 +5,8 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import FilterBar from "@/components/FilterBar";
 import ContentGrid from "@/components/ContentGrid";
 import { useAppContent } from "@/hooks/useAppContent";
-import MovieModal from "@/components/MovieModal";
-import SeriesModal from "@/components/SeriesModal";
+import KidsMovieModal from "@/components/KidsMovieModal";
+import KidsSeriesModal from "@/components/KidsSeriesModal";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
@@ -249,7 +249,7 @@ const Kids = () => {
                               />
                             )}
                             {selectedMovie.type === "series" ? (
-                              <SeriesModal
+                              <KidsSeriesModal
                                 isOpen={!!selectedMovie && !isFullscreen}
                                 onClose={() => setSelectedMovie(null)}
                                 series={selectedMovie}
@@ -262,10 +262,9 @@ const Kids = () => {
                                 contentItem={contentItem}
                                 channel={channel}
                                 recommendedContent={recommendedContent}
-                                customBackground="bg-gradient-to-tl from-yellow-300 via-blue-300 to-sky-400 kids"
                               />
                             ) : (
-                              <MovieModal
+                              <KidsMovieModal
                                 isOpen={!!selectedMovie && !isFullscreen}
                                 onClose={() => setSelectedMovie(null)}
                                 movie={selectedMovie}
@@ -276,8 +275,6 @@ const Kids = () => {
                                 contentItem={contentItem}
                                 channel={channel}
                                 recommendedContent={recommendedContent}
-                                skipContentFiltering={true}
-                                customBackground="bg-gradient-to-tl from-yellow-300 via-blue-300 to-sky-400"
                               />
                             )}
                           </>
@@ -392,7 +389,7 @@ const Kids = () => {
                     )}
 
                     {/* Grid Layout for all filtered kids content */}
-                    <div className="mt-8 mb-4 pl-4">
+                    <div className="mt-8 pb-4 pl-4">
                       <h2 className="text-2xl font-bold mb-4 text-white">
                         All {activeGenre} Kids Content
                       </h2>

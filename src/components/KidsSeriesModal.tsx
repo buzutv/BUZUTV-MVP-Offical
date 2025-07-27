@@ -7,6 +7,11 @@ import { Movie } from "@/data/mockMovies";
 import HomeRow from "@/components/HomeRow";
 import BrandButton from "@/components/ui/BrandButton";
 import SeriesPlayer from "@/components/SeriesPlayer";
+import KidsMovieModal from "@/components/KidsMovieModal";
+import FullscreenPlayer from "@/components/FullscreenPlayer";
+import { useUserFavorites } from "@/hooks/useUserFavorites";
+import { useContent } from "@/hooks/useContent";
+import { useChannels } from "@/hooks/useChannels";
 
 interface Episode {
   id: string;
@@ -22,7 +27,7 @@ interface Season {
   episodes: Episode[];
 }
 
-interface SeriesModalProps {
+interface KidsSeriesModalProps {
   isOpen: boolean;
   onClose: (open: boolean) => void;
   series: Movie;
@@ -35,10 +40,9 @@ interface SeriesModalProps {
   recommendedContent: any[];
   seasons?: Season[];
   onOpenRelatedSeries?: (item: Movie) => void;
-  customBackground?: string;
 }
 
-const SeriesModal = ({
+const KidsSeriesModal = ({
   isOpen,
   onClose,
   series,
@@ -51,13 +55,20 @@ const SeriesModal = ({
   recommendedContent,
   seasons = [],
   onOpenRelatedSeries,
-  customBackground,
-}: SeriesModalProps) => {
-
+}: KidsSeriesModalProps) => {
   const [isSeriesPlayerOpen, setIsSeriesPlayerOpen] = useState(false);
   const [currentPlayingEpisode, setCurrentPlayingEpisode] =
     useState<Episode | null>(null);
   const [currentPlayingSeason, setCurrentPlayingSeason] = useState<number>(1);
+  const [nestedMovie, setNestedMovie] = useState<Movie | null>(null);
+  const [isNestedFullscreen, setIsNestedFullscreen] = useState(false);
+  const [nestedVideoUrl, setNestedVideoUrl] = useState<string>("");
+  const [nestedVideoTitle, setNestedVideoTitle] = useState<string>("");
+  const { favoriteIds, addToFavorites, removeFromFavorites } =
+    useUserFavorites();
+  const { content } = useContent();
+  const { channels } = useChannels();
+
   const formatDuration = (minutes: number | undefined) => {
     if (!minutes) return "N/A";
     const hours = Math.floor(minutes / 60);
@@ -128,20 +139,9 @@ const SeriesModal = ({
   const showPlayButton =
     seasonsData.length > 0 && seasonsData[0]?.episodes?.length > 0;
 
+  // Filter recommended content for kids content only
   const filteredRecommendedContent = recommendedContent.filter((item) => {
-    const passesId = item.id !== series.id;
-    // If current series is kids content, show only kids content in recommendations
-    // If current series is not kids content, exclude kids content from recommendations
-    const passesKids =
-      series.isKids || contentItem?.is_kids
-        ? item.is_kids === true // Show only kids content
-        : !item.is_kids; // Exclude kids content
-    const passesGenre =
-      item.genre === series.genre ||
-      item.channel_id === series.channelId ||
-      item.channel_id === contentItem?.channel_id;
-
-    return passesId && passesKids && passesGenre;
+    return item.id !== series.id && item.is_kids === true;
   });
 
   const normalizedRecommendedContent = filteredRecommendedContent.map(
@@ -151,26 +151,10 @@ const SeriesModal = ({
     }),
   );
 
-  const finalClassName = `max-w-[75vw] max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-700 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 ${customBackground ? customBackground : ""}`;
-  const finalStyle = !customBackground ? {
-    background: `
-      linear-gradient(
-        200deg,
-        #311066 0%,   /* very dark violet */
-        #1D0833 20%,  /* deep blackish purple */
-        #120222 45%,  /* near-black violet */
-        black 100%    /* pure black */
-      )`,
-  } : {};
-
-
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent 
-          className={finalClassName}
-          style={finalStyle}
-        >
+        <DialogContent className="max-w-[75vw] max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-700 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 bg-gradient-to-tl from-yellow-300 via-blue-300 to-sky-400">
           <DialogTitle className="sr-only">{series.title}</DialogTitle>
           <ScrollArea className="h-[90vh]">
             <div className="relative min-h-full bg-gradient-to-t from-black/50 via-transparent to-transparent">
@@ -182,20 +166,21 @@ const SeriesModal = ({
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black via-black/60 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-blue-400 via-blue-400/30 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
-                  <h1 className="text-5xl font-bold text-white mb-6">
+                  <h1
+                    className="text-5xl font-bold text-white mb-6 drop-shadow-lg text-shadow-lg"
+                    style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.8)" }}
+                  >
+                    {" "}
                     {series.title}
                   </h1>
+
                   <div className="flex items-center space-x-4 mb-4">
                     {showPlayButton && (
                       <BrandButton
                         onClick={handlePlayFirstEpisode}
-                        variant={
-                          customBackground?.includes("kids")
-                            ? "kids"
-                            : "primary"
-                        }
+                        variant="kids"
                         size="md"
                       >
                         <Play className="w-6 h-6 fill-current" />
@@ -204,21 +189,21 @@ const SeriesModal = ({
                     )}
                     <button
                       onClick={onSave}
-                      className={`bg-black/20 backdrop-blur-md text-white p-3 rounded-full transition-all duration-200 border ${
-                        customBackground?.includes("kids")
-                          ? "border-blue-400/50 hover:border-blue-400 hover:bg-blue-500/20"
-                          : "border-brand-500/50 hover:border-brand-500 hover:bg-black/30"
-                      }`}
+                      className="bg-black/20 backdrop-blur-md text-white p-3 rounded-full transition-all duration-200 border border-blue-400/50 hover:border-blue-400 hover:bg-blue-500/60"
                     >
                       <Heart
                         className={`w-6 h-6 ${isSaved ? "fill-current text-red-500" : ""}`}
                       />
                     </button>
                     {seasonsData.length > 0 && (
-                      <span className="text-white text-xl font-medium">
+                      <BrandButton
+                        variant="kids"
+                        size="sm"
+                        className="pointer-events-none"
+                      >
                         {seasonsData.length} Season
                         {seasonsData.length !== 1 ? "s" : ""}
-                      </span>
+                      </BrandButton>
                     )}
                   </div>
                   <div className="flex items-center space-x-4 text-sm">
@@ -231,10 +216,12 @@ const SeriesModal = ({
                     <span className="text-white font-medium">
                       {series.year}
                     </span>
-                    <span className="border border-brand-500 px-2 py-0.5 text-xs text-gray-300 font-medium">
-                      TV-MA
+                    <span className="border border-blue-400 px-2 py-0.5 text-xs text-white font-medium bg-blue-500/90">
+                      KIDS
                     </span>
-                    <span className="text-white">{series.genre}</span>
+                    <span className="bg-yellow-500 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                      {series.genre}
+                    </span>{" "}
                     {channel?.logo_url && (
                       <div className="flex items-center">
                         <img
@@ -249,26 +236,16 @@ const SeriesModal = ({
               </div>
 
               <div className="p-8 pt-6 relative">
-                <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-black to-transparent pointer-events-none" />
+                <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-blue-400 to-transparent pointer-events-none" />
                 {seasonsData.length > 0 && (
                   <div className="mb-8">
                     <Tabs defaultValue="season-1" className="w-full">
-                      <TabsList className="grid w-full grid-cols-auto bg-transparent  transition-all duration-300 group">
+                      <TabsList className="grid w-full grid-cols-auto bg-transparent transition-all duration-300 group">
                         {seasonsData.map((season) => (
                           <TabsTrigger
                             key={season.season_number}
                             value={`season-${season.season_number}`}
-                            className={`transition-all duration-300 hover:scale-105 will-change-transform transform-gpu leading-5 hover:text-white ${
-                              customBackground?.includes("kids")
-                                ? "data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-[2px_19px_31px_rgba(59,130,246,0.35)] data-[state=active]:hover:bg-blue-600 hover:bg-blue-500/20"
-                                : "data-[state=active]:bg-brand-500 data-[state=active]:text-white data-[state=active]:shadow-[2px_19px_31px_rgba(30,27,95,0.35)] data-[state=active]:hover:bg-brand-600 hover:bg-brand-500/20"
-                            }`}
-                            style={!customBackground?.includes("kids") ? {
-                              backgroundImage: `
-                              radial-gradient(93% 87% at 87% 89%, rgba(0, 0, 0, 0.23) 0%, transparent 86.18%),
-                              radial-gradient(66% 87% at 26% 20%, rgba(255, 255, 255, 0.41) 0%, rgba(255, 255, 255, 0) 70%)
-                            `,
-                            } : {}}
+                            className="transition-all duration-300 hover:scale-105 will-change-transform transform-gpu leading-5 hover:text-white data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-[2px_19px_31px_rgba(59,130,246,0.35)] data-[state=active]:hover:bg-blue-600 hover:bg-blue-500/20"
                           >
                             Season {season.season_number}
                           </TabsTrigger>
@@ -284,33 +261,18 @@ const SeriesModal = ({
                             {season.episodes.map((episode) => (
                               <div
                                 key={episode.id}
-                                className="border border-brand-500/20 flex items-center space-x-3 bg-black  rounded-lg p-3 hover:border-brand-500/40 transition-all duration-300 group h-12"
+                                className="border border-blue-400/20 flex items-center space-x-3 bg-blue-500/60 rounded-lg p-3 hover:border-blue-400/40 hover:bg-blue-500/80 transition-all duration-300 group h-12"
                               >
-                                <div
-                                  className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white will-change-transform transform-gpu ${
-                                    customBackground?.includes("kids") 
-                                      ? "bg-yellow-500 shadow-[2px_19px_31px_rgba(234,179,8,0.35)]" 
-                                      : "bg-brand-500 shadow-[2px_19px_31px_rgba(30,27,95,0.35)]"
-                                  }`}
-                                  style={!customBackground?.includes("kids") ? {
-                                    backgroundImage: `
-                                    radial-gradient(93% 87% at 87% 89%, rgba(0, 0, 0, 0.23) 0%, transparent 86.18%),
-                                    radial-gradient(66% 87% at 26% 20%, rgba(255, 255, 255, 0.41) 0%, rgba(255, 255, 255, 0) 70%)
-                                  `,
-                                  } : {}}
-                                >
+                                <div className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white will-change-transform transform-gpu bg-yellow-500 shadow-[2px_19px_31px_rgba(234,179,8,0.35)]">
                                   {episode.episode_number}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  {/*<h4 className="font-medium text-white truncate text-sm">*/}
-                                  {/*  {episode.title}*/}
-                                  {/*</h4>*/}
                                   <div className="flex items-center space-x-2">
                                     <p className="font-medium text-white truncate text-sm max-w-96">
                                       {episode.description ||
                                         `Episode ${episode.episode_number} of ${series.title}`}
                                     </p>
-                                    <span className="text-xs text-gray-500 whitespace-nowrap">
+                                    <span className="text-xs text-white whitespace-nowrap">
                                       {formatDuration(episode.duration_minutes)}
                                     </span>
                                   </div>
@@ -318,7 +280,7 @@ const SeriesModal = ({
                                 <button
                                   onClick={() => handlePlayEpisode(episode)}
                                   disabled={!episode.video_url}
-                                  className={`p-2 rounded-full transition-colors ${episode.video_url ? "bg-white/10 hover:bg-white/20 text-white" : "bg-gray-600 text-gray-400 cursor-not-allowed"}`}
+                                  className={`p-2 rounded-full transition-colors ${episode.video_url ? "bg-blue-500/90 hover:bg-blue-500 text-white" : "bg-gray-600 text-gray-400 cursor-not-allowed"}`}
                                 >
                                   <Play className="w-4 h-4 fill-current" />
                                 </button>
@@ -336,7 +298,9 @@ const SeriesModal = ({
                     title="More Like This"
                     items={normalizedRecommendedContent}
                     isMoreLikeThis
-                    onOpenRelatedSeries={onOpenRelatedSeries}
+                    onItemClick={(movie) => {
+                      setNestedMovie(movie); // Open nested kids modal
+                    }}
                   />
                 )}
               </div>
@@ -355,8 +319,97 @@ const SeriesModal = ({
           currentSeason={currentPlayingSeason}
         />
       )}
+
+      {/* Nested modals for "More Like This" items */}
+      {nestedMovie &&
+        (() => {
+          const nestedIsSaved = favoriteIds.includes(nestedMovie.id);
+          const nestedContentItem = content.find(
+            (item) => item.id === nestedMovie.id,
+          );
+          const nestedVideoUrl = nestedContentItem?.video_url;
+          const nestedChannel = channels.find(
+            (ch) => ch.id === nestedMovie.channelId,
+          );
+          const nestedRecommendedContent = content
+            .filter(
+              (item) => item.id !== nestedMovie.id && item.is_kids === true,
+            )
+            .slice(0, 6);
+
+          const handleNestedSave = () => {
+            if (nestedIsSaved) {
+              removeFromFavorites(nestedMovie.id);
+            } else {
+              addToFavorites(nestedMovie.id);
+            }
+          };
+
+          const handleNestedPlay = () => {
+            if (nestedVideoUrl) {
+              // Close the nested modal and start fullscreen player
+              setNestedMovie(null);
+              setNestedVideoUrl(nestedVideoUrl);
+              setNestedVideoTitle(nestedMovie.title);
+              setIsNestedFullscreen(true);
+            }
+          };
+
+          const handleNestedPlayEpisode = (
+            url: string,
+            episodeTitle: string,
+          ) => {
+            // Close the nested modal and start fullscreen player for episodes
+            setNestedMovie(null);
+            setNestedVideoUrl(url);
+            setNestedVideoTitle(episodeTitle);
+            setIsNestedFullscreen(true);
+          };
+
+          return nestedMovie.type === "series" ? (
+            <KidsSeriesModal
+              isOpen={!!nestedMovie}
+              onClose={() => setNestedMovie(null)}
+              series={nestedMovie}
+              isSaved={nestedIsSaved}
+              onSave={handleNestedSave}
+              onPlayEpisode={handleNestedPlayEpisode}
+              videoUrl={nestedVideoUrl}
+              contentItem={nestedContentItem}
+              channel={nestedChannel}
+              recommendedContent={nestedRecommendedContent}
+            />
+          ) : (
+            <KidsMovieModal
+              isOpen={!!nestedMovie}
+              onClose={() => setNestedMovie(null)}
+              movie={nestedMovie}
+              isSaved={nestedIsSaved}
+              onSave={handleNestedSave}
+              onPlay={handleNestedPlay}
+              videoUrl={nestedVideoUrl}
+              contentItem={nestedContentItem}
+              channel={nestedChannel}
+              recommendedContent={nestedRecommendedContent}
+            />
+          );
+        })()}
+
+      {/* Nested Fullscreen Player */}
+      {isNestedFullscreen && nestedVideoUrl && (
+        <FullscreenPlayer
+          isOpen={isNestedFullscreen}
+          onClose={() => {
+            setIsNestedFullscreen(false);
+            setNestedVideoUrl("");
+            setNestedVideoTitle("");
+          }}
+          videoUrl={nestedVideoUrl}
+          title={nestedVideoTitle}
+        />
+      )}
     </>
   );
 };
 
-export default SeriesModal;
+export default KidsSeriesModal;
