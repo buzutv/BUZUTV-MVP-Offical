@@ -90,8 +90,24 @@ const MyList = React.memo(() => {
   if (isLoading) {
     return (
       <ProtectedRoute>
-        <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-          <div className="text-2xl">Loading...</div>
+        <div className="min-h-screen text-white">
+          {/* Fixed background gradient */}
+          <div
+            className="fixed inset-0"
+            style={{
+              background: `
+                linear-gradient(
+                  200deg,
+                  #311066 0%,   /* very dark violet */
+                  #1D0833 20%,  /* deep blackish purple */
+                  #120222 45%,  /* near-black violet */
+                  black 100%    /* pure black */
+                )`,
+            }}
+          ></div>
+          <div className="relative flex items-center justify-center min-h-screen">
+            <div className="text-2xl font-bold text-white">Loading...</div>
+          </div>
         </div>
       </ProtectedRoute>
     );

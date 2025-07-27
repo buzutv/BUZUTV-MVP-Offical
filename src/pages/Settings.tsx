@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import BrandButton from "@/components/ui/BrandButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -340,24 +340,22 @@ const Settings = () => {
             {/* Desktop Layout */}
             <div className="hidden sm:flex items-center justify-between h-20">
               <div className="flex items-center space-x-4">
-                <Button
+                <BrandButton
                   onClick={() => navigate("/")}
-                  className="flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm bg-black/20 backdrop-blur-md border border-brand-500 hover:bg-white/20"
+                  variant="secondary"
+                  size="sm"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   Back to Home
-                </Button>
+                </BrandButton>
               </div>
 
               <span className="text-2xl font-bold text-white">Settings</span>
 
-              <Button
-                onClick={handleLogout}
-                className="flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm bg-black/20 backdrop-blur-md border border-brand-500 hover:bg-white/20"
-              >
+              <BrandButton onClick={handleLogout} variant="secondary" size="sm">
                 <LogOut className="w-4 h-4" />
                 Sign Out
-              </Button>
+              </BrandButton>
             </div>
 
             {/* Mobile Layout - Stacked Vertically */}
@@ -368,21 +366,23 @@ const Settings = () => {
 
                 {/* Buttons Row */}
                 <div className="flex items-center space-x-3 w-full justify-center">
-                  <Button
+                  <BrandButton
                     onClick={() => navigate("/")}
-                    className="flex items-center justify-center gap-2 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-4 py-2 text-xs bg-black/20 backdrop-blur-md border border-brand-500 hover:bg-white/20"
+                    variant="secondary"
+                    size="sm"
                   >
                     <ArrowLeft className="w-3 h-3" />
                     Back to Home
-                  </Button>
+                  </BrandButton>
 
-                  <Button
+                  <BrandButton
                     onClick={handleLogout}
-                    className="flex items-center justify-center gap-2 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-4 py-2 text-xs bg-black/20 backdrop-blur-md border border-brand-500 hover:bg-white/20"
+                    variant="secondary"
+                    size="sm"
                   >
                     <LogOut className="w-3 h-3" />
                     Sign Out
-                  </Button>
+                  </BrandButton>
                 </div>
               </div>
             </div>
@@ -441,26 +441,30 @@ const Settings = () => {
                     placeholder="Enter your first name"
                   />
                 </div>
-                <div className="flex gap-2">
-                  <Button
+                <div className="flex gap-2 transition-all duration-300 ease-in-out">
+                  <BrandButton
                     onClick={() => handleFieldToggle("firstName")}
-                    className={`flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm w-[170px] ${
-                      fieldStates.firstName
-                        ? "bg-black/20 backdrop-blur-md border border-brand-500 hover:bg-white/20"
-                        : "bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 hover:from-brand-700 hover:via-brand-800 hover:to-brand-900"
-                    }`}
+                    variant={fieldStates.firstName ? "secondary" : "primary"}
+                    size="sm"
+                    className="w-[170px] transition-all duration-300 ease-in-out"
                   >
                     {fieldStates.firstName ? "Cancel" : "Change First Name"}
-                  </Button>
-                  {fieldStates.firstName && (
-                    <Button
+                  </BrandButton>
+                  <div className={`transition-all duration-500 ease-in-out ${
+                    fieldStates.firstName 
+                      ? "opacity-100 scale-100 translate-x-0" 
+                      : "opacity-0 scale-95 translate-x-2 pointer-events-none"
+                  }`}>
+                    <BrandButton
                       onClick={handleUpdateFirstName}
                       disabled={savingStates.firstName}
-                      className="flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm bg-brand-500 hover:bg-brand-600 whitespace-nowrap"
+                      variant="primary"
+                      size="sm"
+                      className="whitespace-nowrap"
                     >
                       {savingStates.firstName ? "Saving..." : "Save changes"}
-                    </Button>
-                  )}
+                    </BrandButton>
+                  </div>
                 </div>
               </div>
 
@@ -484,26 +488,30 @@ const Settings = () => {
                     placeholder="Enter your last name"
                   />
                 </div>
-                <div className="flex gap-2">
-                  <Button
+                <div className="flex gap-2 transition-all duration-300 ease-in-out">
+                  <BrandButton
                     onClick={() => handleFieldToggle("lastName")}
-                    className={`flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm w-[170px] ${
-                      fieldStates.lastName
-                        ? "bg-black/20 backdrop-blur-md border border-brand-500 hover:bg-white/20"
-                        : "bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 hover:from-brand-700 hover:via-brand-800 hover:to-brand-900"
-                    }`}
+                    variant={fieldStates.lastName ? "secondary" : "primary"}
+                    size="sm"
+                    className="w-[170px] transition-all duration-300 ease-in-out"
                   >
                     {fieldStates.lastName ? "Cancel" : "Change Last Name"}
-                  </Button>
-                  {fieldStates.lastName && (
-                    <Button
+                  </BrandButton>
+                  <div className={`transition-all duration-500 ease-in-out ${
+                    fieldStates.lastName 
+                      ? "opacity-100 scale-100 translate-x-0" 
+                      : "opacity-0 scale-95 translate-x-2 pointer-events-none"
+                  }`}>
+                    <BrandButton
                       onClick={handleUpdateLastName}
                       disabled={savingStates.lastName}
-                      className="flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm bg-brand-500 hover:bg-brand-600 whitespace-nowrap"
+                      variant="primary"
+                      size="sm"
+                      className="whitespace-nowrap"
                     >
                       {savingStates.lastName ? "Saving..." : "Save changes"}
-                    </Button>
-                  )}
+                    </BrandButton>
+                  </div>
                 </div>
               </div>
 
@@ -528,26 +536,30 @@ const Settings = () => {
                     placeholder="Enter your email"
                   />
                 </div>
-                <div className="flex gap-2">
-                  <Button
+                <div className="flex gap-2 transition-all duration-300 ease-in-out">
+                  <BrandButton
                     onClick={() => handleFieldToggle("email")}
-                    className={`flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm w-[190px] ${
-                      fieldStates.email
-                        ? "bg-black/20 backdrop-blur-md border border-brand-500 hover:bg-white/20"
-                        : "bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 hover:from-brand-700 hover:via-brand-800 hover:to-brand-900"
-                    }`}
+                    variant={fieldStates.email ? "secondary" : "primary"}
+                    size="sm"
+                    className="w-[190px] transition-all duration-300 ease-in-out"
                   >
                     {fieldStates.email ? "Cancel" : "Change Email Address"}
-                  </Button>
-                  {fieldStates.email && (
-                    <Button
+                  </BrandButton>
+                  <div className={`transition-all duration-500 ease-in-out ${
+                    fieldStates.email 
+                      ? "opacity-100 scale-100 translate-x-0" 
+                      : "opacity-0 scale-95 translate-x-2 pointer-events-none"
+                  }`}>
+                    <BrandButton
                       onClick={handleUpdateEmail}
                       disabled={savingStates.email}
-                      className="flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm bg-brand-500 hover:bg-brand-600 whitespace-nowrap"
+                      variant="primary"
+                      size="sm"
+                      className="whitespace-nowrap"
                     >
                       {savingStates.email ? "Saving..." : "Save changes"}
-                    </Button>
-                  )}
+                    </BrandButton>
+                  </div>
                 </div>
               </div>
 
@@ -572,26 +584,30 @@ const Settings = () => {
                     placeholder="Enter your phone number"
                   />
                 </div>
-                <div className="flex gap-2">
-                  <Button
+                <div className="flex gap-2 transition-all duration-300 ease-in-out">
+                  <BrandButton
                     onClick={() => handleFieldToggle("phone")}
-                    className={`flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm w-[195px] ${
-                      fieldStates.phone
-                        ? "bg-black/20 backdrop-blur-md border border-brand-500 hover:bg-white/20"
-                        : "bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 hover:from-brand-700 hover:via-brand-800 hover:to-brand-900"
-                    }`}
+                    variant={fieldStates.phone ? "secondary" : "primary"}
+                    size="sm"
+                    className="w-[195px] transition-all duration-300 ease-in-out"
                   >
                     {fieldStates.phone ? "Cancel" : "Change Phone Number"}
-                  </Button>
-                  {fieldStates.phone && (
-                    <Button
+                  </BrandButton>
+                  <div className={`transition-all duration-500 ease-in-out ${
+                    fieldStates.phone 
+                      ? "opacity-100 scale-100 translate-x-0" 
+                      : "opacity-0 scale-95 translate-x-2 pointer-events-none"
+                  }`}>
+                    <BrandButton
                       onClick={handleUpdatePhone}
                       disabled={savingStates.phone}
-                      className="flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm bg-brand-500 hover:bg-brand-600 whitespace-nowrap"
+                      variant="primary"
+                      size="sm"
+                      className="whitespace-nowrap"
                     >
                       {savingStates.phone ? "Saving..." : "Save changes"}
-                    </Button>
-                  )}
+                    </BrandButton>
+                  </div>
                 </div>
               </div>
 
@@ -610,12 +626,14 @@ const Settings = () => {
                     placeholder="Current password"
                   />
                 </div>
-                <Button
+                <BrandButton
                   onClick={handlePasswordChangeClick}
-                  className="flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm w-[150px] bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 hover:from-brand-700 hover:via-brand-800 hover:to-brand-900"
+                  variant="primary"
+                  size="sm"
+                  className="w-[150px]"
                 >
                   Change Password
-                </Button>
+                </BrandButton>
               </div>
             </CardContent>
           </Card>
@@ -749,7 +767,7 @@ const Settings = () => {
               )}
 
               <div className="flex space-x-2">
-                <Button
+                <BrandButton
                   type="button"
                   onClick={() => {
                     setShowPasswordChangeModal(false);
@@ -761,17 +779,21 @@ const Settings = () => {
                     }));
                     setError("");
                   }}
-                  className="flex-1 flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm bg-black/20 backdrop-blur-md border border-brand-500 hover:bg-white/20"
+                  variant="secondary"
+                  size="sm"
+                  className="flex-1"
                 >
                   Cancel
-                </Button>
-                <Button
+                </BrandButton>
+                <BrandButton
                   type="submit"
                   disabled={isSaving}
-                  className="flex-1 flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm bg-brand-500 hover:bg-brand-600"
+                  variant="primary"
+                  size="sm"
+                  className="flex-1"
                 >
                   {isSaving ? "Updating..." : "Update Password"}
-                </Button>
+                </BrandButton>
               </div>
             </form>
           </DialogContent>

@@ -9,8 +9,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import HomeRow from "@/components/HomeRow";
 import { featuredContentIds } from "@/data/featuredContentIds";
 
+interface Channel {
+  id: string;
+  name: string;
+  description?: string;
+  logoUrl?: string;
+  bannerUrl?: string;
+  logo_url?: string;
+  banner_url?: string;
+}
+
 const Index = React.memo(() => {
-  const [selectedChannel, setSelectedChannel] = useState<any>(null);
+  const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const [showChannelModal, setShowChannelModal] = useState(false);
   const [activeGenre, setActiveGenre] = useState("all");
 
@@ -18,19 +28,19 @@ const Index = React.memo(() => {
   const { homeContent, channels, isLoading, content, kidsContent } =
     useAppContent();
 
-  const availableGenresWithContent = useMemo(() => {
+  const availableGenresWithContent = useMemo((): string[] => {
     if (!content.allContent || content.allContent.length === 0) {
       return ["All"];
     }
 
-    const contentGenres = [
-      ...new Set(
+    const contentGenres: string[] = Array.from(
+      new Set(
         content.allContent
           .filter((item) => !item.isKids)
           .map((item) => item.genre)
-          .filter(Boolean),
+          .filter((genre): genre is string => Boolean(genre)),
       ),
-    ];
+    );
 
     return ["All", ...contentGenres.sort()];
   }, [content.allContent]);
@@ -47,7 +57,7 @@ const Index = React.memo(() => {
   );
 
   const handleChannelClick = useCallback(
-    (channel: any) => {
+    (channel: Channel) => {
       if (!isLoggedIn) {
         setShowLoginModal(true);
         return;
@@ -86,10 +96,25 @@ const Index = React.memo(() => {
   }, [content.allContent, activeGenre]);
 
   if (isLoading) {
-    console.log("🏠 [Index] Still loading...");
     return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-        <div className="text-2xl">Loading...</div>
+      <div className="min-h-screen text-white">
+        {/* Fixed background gradient */}
+        <div
+          className="fixed inset-0"
+          style={{
+            background: `
+              linear-gradient(
+                200deg,
+                #311066 0%,   /* very dark violet */
+                #1D0833 20%,  /* deep blackish purple */
+                #120222 45%,  /* near-black violet */
+                black 100%    /* pure black */
+              )`,
+          }}
+        ></div>
+        <div className="relative flex items-center justify-center min-h-screen">
+          <div className="text-2xl font-bold text-white">Loading...</div>
+        </div>
       </div>
     );
   }

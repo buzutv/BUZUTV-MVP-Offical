@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 interface Episode {
@@ -55,6 +56,19 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
     setPlayingEpisode(currentEpisode);
     setPlayingSeason(currentSeason);
   }, [currentEpisode, currentSeason]);
+
+  // Handle body scroll prevention when player is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
 
   // Find current season data
   const currentSeasonData = seasons.find(
@@ -138,12 +152,12 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-[9999] bg-black flex flex-col">
+  const playerContent = (
+    <div className="fixed inset-0 z-[99999] bg-black flex flex-col">
       {/* Close Button */}
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 z-[10000] bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
+        className="absolute top-4 right-4 z-[100000] bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
       >
         <X className="w-6 h-6" />
       </button>
@@ -241,6 +255,9 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
       </div>
     </div>
   );
+
+  // Render in a portal to ensure it's always at the root level, above any modals
+  return createPortal(playerContent, document.body);
 };
 
 export default SeriesPlayer;

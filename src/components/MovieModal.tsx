@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Movie } from "@/data/mockMovies";
 import HomeRow from "@/components/HomeRow";
+import BrandButton from "@/components/ui/BrandButton";
 import { useRef } from "react";
 
 interface MovieModalProps {
@@ -66,10 +67,8 @@ const MovieModal = ({
           item.channel_id === movie.channelId ||
           item.channel_id === contentItem?.channel_id;
 
-
         return passesId && passesKids && passesGenre;
       });
-
 
   const normalizedRecommendedContent = filteredRecommendedContent.map(
     (item) => ({
@@ -93,7 +92,7 @@ const MovieModal = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className={`max-w-[75vw] max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-1000 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 ${customBackground || "bg-gray-900"}`}
+        className={`max-w-[75vw] max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-1000 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 ${customBackground || "bg-gradient-to-tl from-black via-slate-900 to-violet-900"}`}
       >
         <DialogTitle className="sr-only">{movie.title}</DialogTitle>
         <ScrollArea className="h-[90vh] scroll-smooth">
@@ -120,28 +119,22 @@ const MovieModal = ({
 
                 {/* Action Buttons Row */}
                 <div className="flex items-center space-x-4 mb-4">
-                  <button
+                  <BrandButton
                     onClick={onPlay}
                     disabled={!videoUrl}
-                    className={`px-8 py-3 rounded-full font-bold flex items-center space-x-3 transition-all duration-300 hover:scale-105 justify-center ${
-                      videoUrl
-                        ? "bg-brand-500 text-white hover:bg-brand-600 shadow-[2px_19px_31px_rgba(30,27,95,0.35)]"
-                        : "bg-gray-600 text-gray-400 cursor-not-allowed"
-                    }`}
-                    style={
-                      videoUrl
-                        ? {
-                            backgroundImage: `
-                        radial-gradient(93% 87% at 87% 89%, rgba(0, 0, 0, 0.23) 0%, transparent 86.18%),
-                        radial-gradient(66% 87% at 26% 20%, rgba(255, 255, 255, 0.41) 0%, rgba(255, 255, 255, 0) 70%)
-                      `,
-                          }
-                        : {}
+                    variant={
+                      customBackground?.includes("kids") ? "kids" : "primary"
+                    }
+                    size="md"
+                    className={
+                      !videoUrl
+                        ? "!bg-gray-600 !text-gray-400 !cursor-not-allowed !hover:bg-gray-600 !hover:-translate-y-0"
+                        : ""
                     }
                   >
                     <Play className="w-6 h-6 fill-current" />
                     <span>Play</span>
-                  </button>
+                  </BrandButton>
 
                   <button
                     onClick={onSave}

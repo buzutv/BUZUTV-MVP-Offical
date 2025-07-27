@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Movie } from "@/data/mockMovies";
 import HomeRow from "@/components/HomeRow";
+import BrandButton from "@/components/ui/BrandButton";
 import SeriesPlayer from "@/components/SeriesPlayer";
 
 interface Episode {
@@ -34,6 +35,7 @@ interface SeriesModalProps {
   recommendedContent: any[];
   seasons?: Season[];
   onOpenRelatedSeries?: (item: Movie) => void;
+  customBackground?: string;
 }
 
 const SeriesModal = ({
@@ -49,9 +51,11 @@ const SeriesModal = ({
   recommendedContent,
   seasons = [],
   onOpenRelatedSeries,
+  customBackground,
 }: SeriesModalProps) => {
   const [isSeriesPlayerOpen, setIsSeriesPlayerOpen] = useState(false);
-  const [currentPlayingEpisode, setCurrentPlayingEpisode] = useState<Episode | null>(null);
+  const [currentPlayingEpisode, setCurrentPlayingEpisode] =
+    useState<Episode | null>(null);
   const [currentPlayingSeason, setCurrentPlayingSeason] = useState<number>(1);
   const formatDuration = (minutes: number | undefined) => {
     if (!minutes) return "N/A";
@@ -105,8 +109,8 @@ const SeriesModal = ({
     if (episode.video_url) {
       setCurrentPlayingEpisode(episode);
       // Find which season this episode belongs to
-      const episodeSeason = seasonsData.find(season => 
-        season.episodes.some(ep => ep.id === episode.id)
+      const episodeSeason = seasonsData.find((season) =>
+        season.episodes.some((ep) => ep.id === episode.id),
       );
       if (episodeSeason) {
         setCurrentPlayingSeason(episodeSeason.season_number);
@@ -123,19 +127,18 @@ const SeriesModal = ({
   const showPlayButton =
     seasonsData.length > 0 && seasonsData[0]?.episodes?.length > 0;
 
-
   const filteredRecommendedContent = recommendedContent.filter((item) => {
     const passesId = item.id !== series.id;
     // If current series is kids content, show only kids content in recommendations
     // If current series is not kids content, exclude kids content from recommendations
-    const passesKids = series.isKids || contentItem?.is_kids 
-      ? item.is_kids === true  // Show only kids content
-      : !item.is_kids;         // Exclude kids content
+    const passesKids =
+      series.isKids || contentItem?.is_kids
+        ? item.is_kids === true // Show only kids content
+        : !item.is_kids; // Exclude kids content
     const passesGenre =
       item.genre === series.genre ||
       item.channel_id === series.channelId ||
       item.channel_id === contentItem?.channel_id;
-
 
     return passesId && passesKids && passesGenre;
   });
@@ -149,193 +152,181 @@ const SeriesModal = ({
 
   return (
     <>
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[75vw] max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-700 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100">
-        <DialogTitle className="sr-only">{series.title}</DialogTitle>
-        <ScrollArea className="h-[90vh]">
-          <div
-            className="relative min-h-full"
-            style={{
-              background: `
-      linear-gradient(
-        200deg,
-        rgb(249 115 22) 0%,
-        rgb(194 65 12) 30%,
-        black 65%,
-        black 100%    
-      )
-    `,
-            }}
-          >
-            <div className="relative h-[60vh] overflow-hidden">
-              <div className="absolute inset-0">
-                <img
-                  src={series.posterUrl}
-                  alt={series.title}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black via-black/60 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
-                <h1 className="text-5xl font-bold text-white mb-6">
-                  {series.title}
-                </h1>
-                <div className="flex items-center space-x-4 mb-4">
-                  {showPlayButton && (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className={`max-w-[75vw] max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-700 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 ${customBackground || "bg-gradient-to-tl from-black via-slate-900 to-violet-900"}`}>
+          <DialogTitle className="sr-only">{series.title}</DialogTitle>
+          <ScrollArea className="h-[90vh]">
+            <div className="relative min-h-full bg-gradient-to-t from-black/50 via-transparent to-transparent">
+              <div className="relative h-[60vh] overflow-hidden">
+                <div className="absolute inset-0">
+                  <img
+                    src={series.posterUrl}
+                    alt={series.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black via-black/60 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
+                  <h1 className="text-5xl font-bold text-white mb-6">
+                    {series.title}
+                  </h1>
+                  <div className="flex items-center space-x-4 mb-4">
+                    {showPlayButton && (
+                      <BrandButton
+                        onClick={handlePlayFirstEpisode}
+                        variant={
+                          customBackground?.includes("kids")
+                            ? "kids"
+                            : "primary"
+                        }
+                        size="md"
+                      >
+                        <Play className="w-6 h-6 fill-current" />
+                        <span>Play</span>
+                      </BrandButton>
+                    )}
                     <button
-                      onClick={handlePlayFirstEpisode}
-                      className="px-8 py-3 rounded-full font-bold flex items-center space-x-3 transition-all duration-300 hover:scale-105 bg-brand-500 text-white hover:bg-brand-600 shadow-[2px_19px_31px_rgba(30,27,95,0.35)] justify-center"
-                      style={{
-                        backgroundImage: `
-                          radial-gradient(93% 87% at 87% 89%, rgba(0, 0, 0, 0.23) 0%, transparent 86.18%),
-                          radial-gradient(66% 87% at 26% 20%, rgba(255, 255, 255, 0.41) 0%, rgba(255, 255, 255, 0) 70%)
-                        `,
-                      }}
+                      onClick={onSave}
+                      className="bg-black/20 backdrop-blur-md text-white p-3 rounded-full transition-all duration-200 border border-brand-500/50 hover:border-brand-500 hover:bg-black/30"
                     >
-                      <Play className="w-6 h-6 fill-current" />
-                      <span>Play</span>
-                    </button>
-                  )}
-                  <button
-                    onClick={onSave}
-                    className="bg-black/20 backdrop-blur-md text-white p-3 rounded-full transition-all duration-200 border border-brand-500/50 hover:border-brand-500 hover:bg-black/30"
-                  >
-                    <Heart
-                      className={`w-6 h-6 ${isSaved ? "fill-current text-red-500" : ""}`}
-                    />
-                  </button>
-                  {seasonsData.length > 0 && (
-                    <span className="text-white text-xl font-medium">
-                      {seasonsData.length} Season
-                      {seasonsData.length !== 1 ? "s" : ""}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center space-x-4 text-sm">
-                  <div className="flex items-center space-x-1">
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <span className="text-green-400 font-semibold">
-                      {series.rating}
-                    </span>
-                  </div>
-                  <span className="text-white font-medium">{series.year}</span>
-                  <span className="border border-brand-500 px-2 py-0.5 text-xs text-gray-300 font-medium">
-                    TV-MA
-                  </span>
-                  <span className="text-white">{series.genre}</span>
-                  {channel?.logo_url && (
-                    <div className="flex items-center">
-                      <img
-                        src={channel.logo_url}
-                        alt={channel.name}
-                        className="w-8 h-8 object-contain rounded"
+                      <Heart
+                        className={`w-6 h-6 ${isSaved ? "fill-current text-red-500" : ""}`}
                       />
+                    </button>
+                    {seasonsData.length > 0 && (
+                      <span className="text-white text-xl font-medium">
+                        {seasonsData.length} Season
+                        {seasonsData.length !== 1 ? "s" : ""}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center space-x-4 text-sm">
+                    <div className="flex items-center space-x-1">
+                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                      <span className="text-green-400 font-semibold">
+                        {series.rating}
+                      </span>
                     </div>
-                  )}
+                    <span className="text-white font-medium">
+                      {series.year}
+                    </span>
+                    <span className="border border-brand-500 px-2 py-0.5 text-xs text-gray-300 font-medium">
+                      TV-MA
+                    </span>
+                    <span className="text-white">{series.genre}</span>
+                    {channel?.logo_url && (
+                      <div className="flex items-center">
+                        <img
+                          src={channel.logo_url}
+                          alt={channel.name}
+                          className="w-8 h-8 object-contain rounded"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="p-8 pt-6 relative">
-              <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-black to-transparent pointer-events-none" />
-              {seasonsData.length > 0 && (
-                <div className="mb-8">
-                  <Tabs defaultValue="season-1" className="w-full">
-                    <TabsList className="grid w-full grid-cols-auto bg-transparent  transition-all duration-300 group">
-                      {seasonsData.map((season) => (
-                        <TabsTrigger
-                          key={season.season_number}
-                          value={`season-${season.season_number}`}
-                          className="data-[state=active]:bg-brand-500 data-[state=active]:text-white data-[state=active]:shadow-[2px_19px_31px_rgba(30,27,95,0.35)] data-[state=active]:hover:bg-brand-600 hover:text-white hover:bg-brand-500/20 transition-all duration-300 hover:scale-105 will-change-transform transform-gpu leading-5"
-                          style={{
-                            backgroundImage: `
+              <div className="p-8 pt-6 relative">
+                <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-black to-transparent pointer-events-none" />
+                {seasonsData.length > 0 && (
+                  <div className="mb-8">
+                    <Tabs defaultValue="season-1" className="w-full">
+                      <TabsList className="grid w-full grid-cols-auto bg-transparent  transition-all duration-300 group">
+                        {seasonsData.map((season) => (
+                          <TabsTrigger
+                            key={season.season_number}
+                            value={`season-${season.season_number}`}
+                            className="data-[state=active]:bg-brand-500 data-[state=active]:text-white data-[state=active]:shadow-[2px_19px_31px_rgba(30,27,95,0.35)] data-[state=active]:hover:bg-brand-600 hover:text-white hover:bg-brand-500/20 transition-all duration-300 hover:scale-105 will-change-transform transform-gpu leading-5"
+                            style={{
+                              backgroundImage: `
                               radial-gradient(93% 87% at 87% 89%, rgba(0, 0, 0, 0.23) 0%, transparent 86.18%),
                               radial-gradient(66% 87% at 26% 20%, rgba(255, 255, 255, 0.41) 0%, rgba(255, 255, 255, 0) 70%)
                             `,
-                          }}
+                            }}
+                          >
+                            Season {season.season_number}
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+                      {seasonsData.map((season) => (
+                        <TabsContent
+                          key={season.season_number}
+                          value={`season-${season.season_number}`}
+                          className="mt-4"
                         >
-                          Season {season.season_number}
-                        </TabsTrigger>
-                      ))}
-                    </TabsList>
-                    {seasonsData.map((season) => (
-                      <TabsContent
-                        key={season.season_number}
-                        value={`season-${season.season_number}`}
-                        className="mt-4"
-                      >
-                        <div className="space-y-1">
-                          {season.episodes.map((episode) => (
-                            <div
-                              key={episode.id}
-                              className="border border-brand-500/20 flex items-center space-x-3 bg-black  rounded-lg p-3 hover:border-brand-500/40 transition-all duration-300 group h-12"
-                            >
+                          <div className="space-y-1">
+                            {season.episodes.map((episode) => (
                               <div
-                                className="flex-shrink-0 w-6 h-6 bg-brand-500 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-[2px_19px_31px_rgba(30,27,95,0.35)] will-change-transform transform-gpu"
-                                style={{
-                                  backgroundImage: `
+                                key={episode.id}
+                                className="border border-brand-500/20 flex items-center space-x-3 bg-black  rounded-lg p-3 hover:border-brand-500/40 transition-all duration-300 group h-12"
+                              >
+                                <div
+                                  className="flex-shrink-0 w-6 h-6 bg-brand-500 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-[2px_19px_31px_rgba(30,27,95,0.35)] will-change-transform transform-gpu"
+                                  style={{
+                                    backgroundImage: `
                                     radial-gradient(93% 87% at 87% 89%, rgba(0, 0, 0, 0.23) 0%, transparent 86.18%),
                                     radial-gradient(66% 87% at 26% 20%, rgba(255, 255, 255, 0.41) 0%, rgba(255, 255, 255, 0) 70%)
                                   `,
-                                }}
-                              >
-                                {episode.episode_number}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                {/*<h4 className="font-medium text-white truncate text-sm">*/}
-                                {/*  {episode.title}*/}
-                                {/*</h4>*/}
-                                <div className="flex items-center space-x-2">
-                                  <p className="font-medium text-white truncate text-sm max-w-96">
-                                    {episode.description ||
-                                      `Episode ${episode.episode_number} of ${series.title}`}
-                                  </p>
-                                  <span className="text-xs text-gray-500 whitespace-nowrap">
-                                    {formatDuration(episode.duration_minutes)}
-                                  </span>
+                                  }}
+                                >
+                                  {episode.episode_number}
                                 </div>
+                                <div className="flex-1 min-w-0">
+                                  {/*<h4 className="font-medium text-white truncate text-sm">*/}
+                                  {/*  {episode.title}*/}
+                                  {/*</h4>*/}
+                                  <div className="flex items-center space-x-2">
+                                    <p className="font-medium text-white truncate text-sm max-w-96">
+                                      {episode.description ||
+                                        `Episode ${episode.episode_number} of ${series.title}`}
+                                    </p>
+                                    <span className="text-xs text-gray-500 whitespace-nowrap">
+                                      {formatDuration(episode.duration_minutes)}
+                                    </span>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => handlePlayEpisode(episode)}
+                                  disabled={!episode.video_url}
+                                  className={`p-2 rounded-full transition-colors ${episode.video_url ? "bg-white/10 hover:bg-white/20 text-white" : "bg-gray-600 text-gray-400 cursor-not-allowed"}`}
+                                >
+                                  <Play className="w-4 h-4 fill-current" />
+                                </button>
                               </div>
-                              <button
-                                onClick={() => handlePlayEpisode(episode)}
-                                disabled={!episode.video_url}
-                                className={`p-2 rounded-full transition-colors ${episode.video_url ? "bg-white/10 hover:bg-white/20 text-white" : "bg-gray-600 text-gray-400 cursor-not-allowed"}`}
-                              >
-                                <Play className="w-4 h-4 fill-current" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </TabsContent>
-                    ))}
-                  </Tabs>
-                </div>
-              )}
+                            ))}
+                          </div>
+                        </TabsContent>
+                      ))}
+                    </Tabs>
+                  </div>
+                )}
 
-              {normalizedRecommendedContent.length > 0 && (
-                <HomeRow
-                  title="More Like This"
-                  items={normalizedRecommendedContent}
-                  isMoreLikeThis
-                  onOpenRelatedSeries={onOpenRelatedSeries}
-                />
-              )}
+                {normalizedRecommendedContent.length > 0 && (
+                  <HomeRow
+                    title="More Like This"
+                    items={normalizedRecommendedContent}
+                    isMoreLikeThis
+                    onOpenRelatedSeries={onOpenRelatedSeries}
+                  />
+                )}
+              </div>
             </div>
-          </div>
-        </ScrollArea>
-      </DialogContent>
-    </Dialog>
-    {/* Series Player */}
-    {isSeriesPlayerOpen && currentPlayingEpisode && (
-      <SeriesPlayer
-        isOpen={isSeriesPlayerOpen}
-        onClose={handleCloseSeriesPlayer}
-        seriesTitle={series.title}
-        seasons={seasonsData}
-        currentEpisode={currentPlayingEpisode}
-        currentSeason={currentPlayingSeason}
-      />
-    )}
-  </>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+      {/* Series Player */}
+      {isSeriesPlayerOpen && currentPlayingEpisode && (
+        <SeriesPlayer
+          isOpen={isSeriesPlayerOpen}
+          onClose={handleCloseSeriesPlayer}
+          seriesTitle={series.title}
+          seasons={seasonsData}
+          currentEpisode={currentPlayingEpisode}
+          currentSeason={currentPlayingSeason}
+        />
+      )}
+    </>
   );
 };
 

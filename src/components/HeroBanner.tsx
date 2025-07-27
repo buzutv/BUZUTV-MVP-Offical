@@ -19,7 +19,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
+import BrandButton from "@/components/ui/BrandButton";
 import SeriesModal from "./SeriesModal";
+import HomeRow from "./HomeRow";
 
 interface HeroBannerProps {
   movies: Movie[];
@@ -154,7 +156,6 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
   // Get recommended content from backend (same channel or genre)
   const recommendedContent = modalMovie
     ? (() => {
-
         const filtered = content.filter((item) => {
           const passesId = item.id !== modalMovie.id;
           // If current movie is kids content, show only kids content in recommendations
@@ -167,10 +168,8 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
             item.genre === modalMovie.genre ||
             item.channel_id === modalMovie.channelId;
 
-
           return passesId && passesKids && passesGenre;
         });
-
 
         return filtered.slice(0, 6);
       })()
@@ -266,28 +265,26 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                       <div className="flex items-center space-x-3">
                         {/* Only show Play button if not a series */}
                         {movie.type !== "series" && (
-                          <button
+                          <BrandButton
                             onClick={handleWatchNow}
                             disabled={!watchNowEnabled}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all duration-300 hover:scale-105 text-sm ${
+                            variant={
                               watchNowEnabled
-                                ? playButtonClass
-                                : "bg-gray-600 text-gray-400 cursor-not-allowed"
-                            }`}
-                            style={
-                              watchNowEnabled
-                                ? {
-                                    backgroundImage: `
-                                radial-gradient(93% 87% at 87% 89%, rgba(0, 0, 0, 0.23) 0%, transparent 86.18%),
-                                radial-gradient(66% 87% at 26% 20%, rgba(255, 255, 255, 0.41) 0%, rgba(255, 255, 255, 0) 70%)
-                              `,
-                                  }
-                                : {}
+                                ? variant === "kids"
+                                  ? "kids"
+                                  : "primary"
+                                : "ghost"
+                            }
+                            size="sm"
+                            className={
+                              !watchNowEnabled
+                                ? "!bg-gray-600 !text-gray-400 !cursor-not-allowed !hover:bg-gray-600 !hover:-translate-y-0"
+                                : ""
                             }
                           >
                             <Play className="w-4 h-4 fill-current" />
                             <span>Play</span>
-                          </button>
+                          </BrandButton>
                         )}
                         {/* For series, show a non-clickable pill instead of More Info */}
                         {movie.type === "series" ? (
@@ -390,28 +387,26 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
 
                   {/* Action Buttons Row */}
                   <div className="flex items-center space-x-4 mb-4">
-                    <button
+                    <BrandButton
                       onClick={handleModalPlayClick}
                       disabled={!modalVideoUrl}
-                      className={`px-8 py-3 rounded-full font-bold flex items-center space-x-3 transition-all duration-300 hover:scale-105 justify-center ${
+                      variant={
                         modalVideoUrl
-                          ? "bg-brand-500 text-white hover:bg-brand-600 shadow-[2px_19px_31px_rgba(30,27,95,0.35)]"
-                          : "bg-gray-600 text-gray-400 cursor-not-allowed"
-                      }`}
-                      style={
-                        modalVideoUrl
-                          ? {
-                              backgroundImage: `
-                          radial-gradient(93% 87% at 87% 89%, rgba(0, 0, 0, 0.23) 0%, transparent 86.18%),
-                          radial-gradient(66% 87% at 26% 20%, rgba(255, 255, 255, 0.41) 0%, rgba(255, 255, 255, 0) 70%)
-                        `,
-                            }
-                          : {}
+                          ? variant === "kids"
+                            ? "kids"
+                            : "primary"
+                          : "ghost"
+                      }
+                      size="md"
+                      className={
+                        !modalVideoUrl
+                          ? "!bg-gray-600 !text-gray-400 !cursor-not-allowed !hover:bg-gray-600 !hover:-translate-y-0"
+                          : ""
                       }
                     >
                       <Play className="w-6 h-6 fill-current" />
                       <span>Play</span>
-                    </button>
+                    </BrandButton>
 
                     <button
                       onClick={handleSave}
@@ -435,7 +430,9 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                         {modalMovie?.rating}
                       </span>
                     </div>
-                    <span className="text-white font-medium">{modalMovie?.year}</span>
+                    <span className="text-white font-medium">
+                      {modalMovie?.year}
+                    </span>
                     <span className="border border-brand-500 px-2 py-0.5 text-xs text-gray-300 font-medium">
                       TV-MA
                     </span>
@@ -461,7 +458,7 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                     title="More Like This"
                     items={recommendedContent.map((item) => ({
                       ...item,
-                      posterUrl: item.poster_url || item.posterUrl,
+                      posterUrl: item.poster_url || "/placeholder.svg",
                     }))}
                     isMoreLikeThis={true}
                     onItemClick={(movie) => {

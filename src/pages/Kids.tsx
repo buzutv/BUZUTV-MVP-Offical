@@ -6,6 +6,7 @@ import FilterBar from "@/components/FilterBar";
 import ContentGrid from "@/components/ContentGrid";
 import { useAppContent } from "@/hooks/useAppContent";
 import MovieModal from "@/components/MovieModal";
+import SeriesModal from "@/components/SeriesModal";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
@@ -110,9 +111,25 @@ const Kids = () => {
   if (isLoading) {
     return (
       <ProtectedRoute>
-        <div className="min-h-screen bg-gradient-to-br from-sky-400 via-blue-300 to-yellow-300 text-white flex items-center justify-center">
-          <div className="text-2xl font-bold text-blue-800">
-            Loading Kids Content...
+        <div className="min-h-screen text-white">
+          {/* Fixed background gradient */}
+          <div
+            className="fixed inset-0"
+            style={{
+              background: `
+                linear-gradient(
+                  200deg,
+                  #311066 0%,   /* very dark violet */
+                  #1D0833 20%,  /* deep blackish purple */
+                  #120222 45%,  /* near-black violet */
+                  black 100%    /* pure black */
+                )`,
+            }}
+          ></div>
+          <div className="relative flex items-center justify-center min-h-screen">
+            <div className="text-2xl font-bold text-white">
+              Loading Kids Content...
+            </div>
           </div>
         </div>
       </ProtectedRoute>
@@ -121,7 +138,7 @@ const Kids = () => {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gradient-to-br from-sky-400 via-blue-300 to-yellow-300 text-white">
+      <div className="min-h-screen bg-gradient-to-tl from-yellow-300 via-blue-300 to-sky-400 text-white">
         {/* Navigation is now global, do not render Navbar here */}
         <div className="pt-16">
           {/* Main Layout */}
@@ -231,20 +248,38 @@ const Kids = () => {
                                 title={selectedMovie.title}
                               />
                             )}
-                            <MovieModal
-                              isOpen={!!selectedMovie && !isFullscreen}
-                              onClose={() => setSelectedMovie(null)}
-                              movie={selectedMovie}
-                              isSaved={isSaved}
-                              onSave={handleSaveModal}
-                              onPlay={handleModalPlayClick}
-                              videoUrl={videoUrl}
-                              contentItem={contentItem}
-                              channel={channel}
-                              recommendedContent={recommendedContent}
-                              skipContentFiltering={true}
-                              customBackground="bg-gradient-to-br from-sky-400 via-blue-300 to-yellow-300"
-                            />
+                            {selectedMovie.type === "series" ? (
+                              <SeriesModal
+                                isOpen={!!selectedMovie && !isFullscreen}
+                                onClose={() => setSelectedMovie(null)}
+                                series={selectedMovie}
+                                isSaved={isSaved}
+                                onSave={handleSaveModal}
+                                onPlayEpisode={(url, episodeTitle) => {
+                                  setIsFullscreen(true);
+                                }}
+                                videoUrl={videoUrl}
+                                contentItem={contentItem}
+                                channel={channel}
+                                recommendedContent={recommendedContent}
+                                customBackground="bg-gradient-to-tl from-yellow-300 via-blue-300 to-sky-400 kids"
+                              />
+                            ) : (
+                              <MovieModal
+                                isOpen={!!selectedMovie && !isFullscreen}
+                                onClose={() => setSelectedMovie(null)}
+                                movie={selectedMovie}
+                                isSaved={isSaved}
+                                onSave={handleSaveModal}
+                                onPlay={handleModalPlayClick}
+                                videoUrl={videoUrl}
+                                contentItem={contentItem}
+                                channel={channel}
+                                recommendedContent={recommendedContent}
+                                skipContentFiltering={true}
+                                customBackground="bg-gradient-to-tl from-yellow-300 via-blue-300 to-sky-400"
+                              />
+                            )}
                           </>
                         );
                       })()}
