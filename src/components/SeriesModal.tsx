@@ -258,17 +258,46 @@ const SeriesModal = ({
                           <TabsTrigger
                             key={season.season_number}
                             value={`season-${season.season_number}`}
-                            className={`transition-all duration-300 hover:scale-105 will-change-transform transform-gpu leading-5 hover:text-white ${
-                              customBackground?.includes("kids")
-                                ? "data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-[2px_19px_31px_rgba(59,130,246,0.35)] data-[state=active]:hover:bg-blue-600 hover:bg-blue-500/20"
-                                : "data-[state=active]:bg-brand-500 data-[state=active]:text-white data-[state=active]:shadow-[2px_19px_31px_rgba(30,27,95,0.35)] data-[state=active]:hover:bg-brand-600 hover:bg-brand-500/20"
-                            }`}
-                            style={!customBackground?.includes("kids") ? {
-                              backgroundImage: `
-                              radial-gradient(93% 87% at 87% 89%, rgba(0, 0, 0, 0.23) 0%, transparent 86.18%),
-                              radial-gradient(66% 87% at 26% 20%, rgba(255, 255, 255, 0.41) 0%, rgba(255, 255, 255, 0) 70%)
-                            `,
-                            } : {}}
+                            className={`
+                              flex items-center justify-center gap-3 rounded-full font-medium will-change-transform transform-gpu transition-all whitespace-nowrap
+                              px-4 py-2 text-base
+                              ${customBackground?.includes("kids")
+                                ? `
+                                  data-[state=active]:bg-[linear-gradient(135deg,#1d4ed8,#2563eb,#3b82f6)]
+                                  data-[state=active]:text-white
+                                  data-[state=active]:border data-[state=active]:border-[rgba(37,99,235,0.3)]
+                                  data-[state=active]:shadow-[0_10px_30px_rgba(37,99,235,0.4)]
+                                  hover:shadow-[0_20px_50px_rgba(37,99,235,0.6)]
+                                  data-[state=active]:hover:brightness-110
+                                  hover:-translate-y-0.5
+                                  transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]
+                                  relative overflow-hidden
+                                  before:content-[''] before:absolute before:top-0 before:-left-full before:w-full before:h-full
+                                  before:bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)]
+                                  before:transition-[left] before:duration-500
+                                  hover:before:left-full
+                                  text-white border border-transparent
+                                  hover:bg-blue-500/10 hover:backdrop-blur
+                                `
+                                : `
+                                  data-[state=active]:bg-[linear-gradient(135deg,#7c3aed,#8b5cf6,#a855f7)]
+                                  data-[state=active]:text-white
+                                  data-[state=active]:border-2 data-[state=active]:border-[rgba(139,92,246,0.3)]
+                                  data-[state=active]:shadow-[0_10px_30px_rgba(139,92,246,0.4)]
+                                  hover:shadow-[0_20px_50px_rgba(139,92,246,0.6)]
+                                  data-[state=active]:hover:brightness-110
+                                  hover:-translate-y-0.5
+                                  transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]
+                                  relative overflow-hidden
+                                  before:content-[''] before:absolute before:top-0 before:-left-full before:w-full before:h-full
+                                  before:bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)]
+                                  before:transition-[left] before:duration-500
+                                  hover:before:left-full
+                                  text-white border border-transparent
+                                  hover:bg-brand-500/10 hover:backdrop-blur
+                                `
+                              }
+                            `}
                           >
                             Season {season.season_number}
                           </TabsTrigger>

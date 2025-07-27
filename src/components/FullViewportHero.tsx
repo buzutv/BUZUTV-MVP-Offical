@@ -4,6 +4,7 @@ import { Autoplay, Navigation, Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
+import "./HeroCarousel.css";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { ArrowLeft, ArrowRight, Info, Play } from "lucide-react";
@@ -113,7 +114,6 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
         const passesGenre =
           c.genre === item.genre || c.channelId === item.channelId;
 
-
         return passesId && passesKids && passesGenre;
       })
       .slice(0, 6);
@@ -183,7 +183,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
               <div className="relative w-full h-full">
                 {/* Background Image */}
                 <div
-                  className="absolute inset-0 w-full h-full bg-cover bg-no-repeat hero-bg-mobile md:hero-bg-desktop"
+                  className="absolute inset-0 w-full h-full bg-no-repeat hero-bg-mobile md:hero-bg-desktop hero-slide"
                   style={{
                     backgroundImage: `url(${slide.posterUrl || "/placeholder.svg"})`,
                   }}

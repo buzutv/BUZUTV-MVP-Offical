@@ -136,8 +136,8 @@ const OptimizedMovieCard = React.memo(({
             )}
 
             <div className="absolute inset-0 z-0 rounded-lg overflow-hidden pointer-events-none">
-              <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/90 via-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className={`absolute bottom-0 left-0 right-0 h-1/2 ${location.pathname === "/kids" ? "bg-gradient-to-t from-blue-400 via-blue-400/30 to-transparent" : "bg-gradient-to-t from-black/90 via-black/50 to-transparent"}`} />
+              <div className={`absolute bottom-0 left-0 right-0 h-1/2 ${location.pathname === "/kids" ? "bg-gradient-to-t from-blue-400 via-blue-400/50 to-transparent" : "bg-gradient-to-t from-black/90 via-black/70 to-transparent"} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
             </div>
 
             <div className="absolute bottom-0 left-0 right-0 z-10 p-3 pt-6 pointer-events-none">

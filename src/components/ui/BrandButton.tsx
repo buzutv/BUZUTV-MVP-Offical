@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 interface BrandButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
-  variant?: "primary" | "secondary" | "no-border" | "kids" | "ghost";
+  variant?: "primary" | "secondary" | "no-border" | "kids" | "kidsSecondary" | "ghost";
   size?: "sm" | "md" | "lg";
 }
 
@@ -16,12 +16,12 @@ const BrandButton: React.FC<BrandButtonProps> = ({
   ...props
 }) => {
   const baseClasses =
-    "flex items-center justify-center gap-3 rounded-full font-medium will-change-transform transform-gpu transition-all whitespace-nowrap";
+    "flex items-center justify-center gap-3 rounded-full font-medium will-change-transform transform-gpu transition-all whitespace-nowrap min-h-[40px]";
 
   const sizeClasses = {
-    sm: "px-3 py-2 text-sm",
+    sm: "px-3 py-1 text-sm",
     md: "px-4 py-2 text-base",
-    lg: "px-8 py-4 text-lg",
+    lg: "px-8 py-3 text-lg",
   };
 
   const variantClasses = {
@@ -75,8 +75,18 @@ const BrandButton: React.FC<BrandButtonProps> = ({
       before:transition-[left] before:duration-500
       hover:before:left-full
     `,
+    kidsSecondary: `
+      bg-black/20 backdrop-blur-md border-2 border-blue-400 text-white
+      hover:-translate-y-0.5 hover:bg-blue-500/20
+      transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]
+      relative overflow-hidden
+      before:content-[''] before:absolute before:top-0 before:-left-full before:w-full before:h-full
+      before:bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.1),transparent)]
+      before:transition-[left] before:duration-500
+      hover:before:left-full
+    `,
     ghost: `
-      text-white border border-transparent
+      text-white border-2 border-transparent
       hover:bg-brand-500/10 hover:backdrop-blur
       hover:-translate-y-0.5
       transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]
