@@ -60,13 +60,13 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
   // Handle body scroll prevention when player is open
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
 
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [isOpen]);
 
@@ -191,66 +191,46 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
       </div>
 
       {/* Episode Navigation Bar */}
-      <div className="bg-black/90 backdrop-blur-sm border-t border-black px-6 py-4">
-        <div className="flex items-center justify-between max-w-6xl mx-auto">
-          {/* Episode Info */}
-          <div className="flex-1">
-            <h2 className="text-white text-lg font-semibold mb-1">
-              {seriesTitle}
-            </h2>
-            <p className="text-gray-300 text-sm">
-              Season {playingSeason} • Episode {playingEpisode.episode_number}
-              {playingEpisode.title && ` • ${playingEpisode.title}`}
-            </p>
-          </div>
-
-          {/* Navigation Controls */}
-          <div className="flex items-center space-x-4">
-            {/* Previous Episode */}
+      <div className="bg-black/90 backdrop-blur-sm border-t border-black px-6 py-1">
+        <div className="flex items-center max-w-6xl">
+          {/* Previous Episode */}
+          {previousEpisode && (
             <button
               onClick={handlePreviousEpisode}
-              disabled={!previousEpisode}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${
-                previousEpisode
-                  ? "bg-white/10 hover:bg-white/20 text-white"
-                  : "bg-gray-600 text-gray-400 cursor-not-allowed"
-              }`}
+              className="flex items-center space-x-2 px-4 py-2 rounded-lg transition-all bg-white/10 hover:bg-white/20 text-white"
             >
               <ChevronLeft className="w-4 h-4" />
               <span className="text-sm">
-                {previousEpisode ? (
-                  <>
-                    S{previousEpisode.season}E
-                    {previousEpisode.episode.episode_number}
-                  </>
-                ) : (
-                  "Previous"
-                )}
+                {`Previous: Season ${previousEpisode.season} Episode ${previousEpisode.episode.episode_number}`}
               </span>
             </button>
+          )}
 
-            {/* Next Episode */}
-            <button
-              onClick={handleNextEpisode}
-              disabled={!nextEpisode}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${
-                nextEpisode
-                  ? "bg-white/10 hover:bg-white/20 text-white"
-                  : "bg-gray-600 text-gray-400 cursor-not-allowed"
-              }`}
-            >
-              <span className="text-sm">
-                {nextEpisode ? (
-                  <>
-                    S{nextEpisode.season}E{nextEpisode.episode.episode_number}
-                  </>
-                ) : (
-                  "Next"
-                )}
-              </span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
+          {/* Episode Info */}
+          <div className="flex items-center space-x-2 ml-16">
+            <h2 className="text-white text-lg font-semibold">{seriesTitle}</h2>
+            <p className="text-gray-300 text-sm">
+              Season {playingSeason} • Episode {playingEpisode.episode_number}
+            </p>
           </div>
+
+          {/* Next Episode */}
+          <button
+            onClick={handleNextEpisode}
+            disabled={!nextEpisode}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ml-16 ${
+              nextEpisode
+                ? "bg-white/10 hover:bg-white/20 text-white"
+                : "bg-gray-600 text-gray-400 cursor-not-allowed"
+            }`}
+          >
+            <span className="text-sm">
+              {nextEpisode
+                ? `Next: Season ${nextEpisode.season} Episode ${nextEpisode.episode.episode_number}`
+                : "Next"}
+            </span>
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </div>
