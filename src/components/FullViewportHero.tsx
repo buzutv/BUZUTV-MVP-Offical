@@ -35,8 +35,6 @@ interface FullViewportHeroProps {
   allContent: HeroCarouselItem[];
   channels: Channel[];
   onChannelClick: (channel: any) => void;
-  subscriptionIds: string[];
-  onSubscribe: (channelId: string) => void;
 }
 
 const FullViewportHero: React.FC<FullViewportHeroProps> = ({
@@ -44,8 +42,6 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
   allContent,
   channels,
   onChannelClick,
-  subscriptionIds,
-  onSubscribe,
 }) => {
   const { isLoggedIn, setShowLoginModal } = useAuth();
   const { favoriteIds, addToFavorites, removeFromFavorites } =
@@ -192,6 +188,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
                 {/* Gradient Overlays */}
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/70 to-transparent h-[70%]" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent md:hidden" />
 
                 {/* Content */}
                 <div className="relative z-10 flex flex-col h-full px-4 md:px-16 lg:px-24 max-w-4xl pb-48">
@@ -293,11 +290,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
                   className="flex-shrink-0 w-48 md:w-48 lg:w-52"
                 >
                   <div onClick={() => onChannelClick(channel)}>
-                    <ChannelCard
-                      channel={channel}
-                      isSubscribed={subscriptionIds.includes(channel.id)}
-                      onSubscribe={onSubscribe}
-                    />
+                    <ChannelCard channel={channel} />
                   </div>
                 </div>
               ))}
