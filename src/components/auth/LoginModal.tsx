@@ -19,14 +19,12 @@ const LoginModal = () => {
     showLoginModal,
     setShowLoginModal,
     login,
-    loginWithPhone,
     signup,
     signInWithGoogle,
   } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isSignUp, setIsSignUp] = useState(false);
-  const [loginWithPhoneMode, setLoginWithPhoneMode] = useState(false);
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -42,12 +40,11 @@ const LoginModal = () => {
     e.preventDefault();
 
     // Shared validations
-    const isPhoneOnly = phone && !email;
     const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
 
     if (isSignUp) {
-      if (!email && !phone)
-        return toast.error("Email or phone number is required");
+      if (!email)
+        return toast.error("Email is required");
       if (!password || !confirmPassword || !firstName || !lastName)
         return toast.error("Please fill in all fields");
       if (password !== confirmPassword)
@@ -56,28 +53,15 @@ const LoginModal = () => {
         return toast.error("Password must be at least 6 characters long");
     }
 
-    if (!isSignUp && loginWithPhoneMode && (!phone || !password))
-      return toast.error("Please fill in all fields");
-
-    if (!isSignUp && !loginWithPhoneMode && (!email || !password))
+    if (!isSignUp && (!email || !password))
       return toast.error("Please fill in all fields");
 
     setIsLoading(true);
 
     try {
       if (isSignUp) {
-        if (isPhoneOnly) {
-          // Phone OTP sign-up (step 1)
-          const { error } = await supabase.auth.signInWithOtp({ phone });
-          if (error) return toast.error(error.message);
-
-          toast.success("OTP sent to your phone");
-          setShowOtpForm(true);
-          return;
-        }
-
         // Email sign-up
-        const result = await signup(email, password, fullName, { phone });
+        const result = await signup(email, password, fullName, phone);
         if (result.success) {
           toast.success("Account created successfully!");
           setShowLoginModal(false);
@@ -89,19 +73,7 @@ const LoginModal = () => {
       }
 
       // Login
-      let result;
-      if (loginWithPhoneMode) {
-        const { error } = await supabase.auth.signInWithOtp({ phone });
-        if (error) {
-          toast.error(error.message);
-          return;
-        }
-        toast.success("Verification code sent to your phone");
-        setShowOtpForm(true);
-        return;
-      } else {
-        result = await login(email, password);
-      }
+      const result = await login(email, password);
 
       if (result.success) {
         toast.success("Logged in successfully!");
@@ -143,7 +115,6 @@ const LoginModal = () => {
     setFirstName("");
     setLastName("");
     setIsSignUp(false);
-    setLoginWithPhoneMode(false);
     setShowOtpForm(false);
     setOtpCode("");
   };
@@ -261,75 +232,40 @@ const LoginModal = () => {
                 </>
               )}
 
-              {!isSignUp && (
-                <div className="flex space-x-3 mb-6">
-                  <BrandButton
-                    type="button"
-                    onClick={() => setLoginWithPhoneMode(false)}
-                    className="flex-1"
-                    variant={!loginWithPhoneMode ? "primary" : "secondary"}
-                    size="sm"
-                  >
-                    Email
-                  </BrandButton>
-                  <BrandButton
-                    type="button"
-                    onClick={() => setLoginWithPhoneMode(true)}
-                    className="flex-1"
-                    variant={loginWithPhoneMode ? "primary" : "secondary"}
-                    size="sm"
-                  >
-                    Phone
-                  </BrandButton>
-                </div>
-              )}
 
               <div>
                 <label
-                  htmlFor={loginWithPhoneMode && !isSignUp ? "phone" : "email"}
+                  htmlFor="email"
                   className="block text-sm font-medium text-gray-300 mb-2"
                 >
-                  {loginWithPhoneMode && !isSignUp ? "Phone Number" : "Email"}
+                  Email
                 </label>
-                {loginWithPhoneMode && !isSignUp ? (
-                  <input
-                    id="phone"
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full px-3 py-2 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
-                    placeholder="Enter your phone number"
-                  />
-                ) : (
-                  <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3 py-2 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
-                    placeholder="Enter your email"
-                  />
-                )}
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-3 py-2 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
+                  placeholder="Enter your email"
+                />
               </div>
 
-              {!(loginWithPhoneMode && !isSignUp) && (
-                <div>
-                  <label
-                    htmlFor="password"
-                    className="block text-sm font-medium text-gray-300 mb-2"
-                  >
-                    Password
-                  </label>
-                  <input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-3 py-2 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
-                    placeholder="Enter your password"
-                  />
-                </div>
-              )}
+              <div>
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-300 mb-2"
+                >
+                  Password
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-3 py-2 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
+                  placeholder="Enter your password"
+                />
+              </div>
 
               {isSignUp && (
                 <div>

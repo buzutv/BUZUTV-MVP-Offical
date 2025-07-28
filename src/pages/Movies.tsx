@@ -92,7 +92,6 @@ const Movies = React.memo(() => {
     );
   }
 
-
   const MovieRow = ({
     title,
     movies,
@@ -155,9 +154,17 @@ const Movies = React.memo(() => {
                   {/* Left - Hero Banner */}
                   <div className="lg:col-span-2 relative">
                     <HeroBanner movies={movieContent.featured} />
+                    {/* Bottom gradient transition */}
+                    <div
+                      className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none"
+                      style={{
+                        background:
+                          "linear-gradient(to bottom right, black 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.4) 70%, transparent 100%)",
+                      }}
+                    />
                   </div>
                   {/* Right - Top Ranked */}
-                  <div>
+                  <div className="flex flex-col h-full">
                     <h2 className="text-2xl font-bold mb-3">
                       Top Ranked Movies
                     </h2>
@@ -170,7 +177,7 @@ const Movies = React.memo(() => {
                         .map((movie, index) => (
                           <div
                             key={movie.id}
-                            className="relative flex items-center bg-black/40 backdrop-blur-md rounded-lg shadow-lg p-2 group border-2 border-white/10 hover:border-brand-500/50 min-h-[60px] h-[calc((60vh-2rem)/5-0.5rem)] cursor-pointer transition-all duration-300"
+                            className="relative flex items-center bg-black/40 backdrop-blur-md rounded-lg shadow-lg p-2 group border-2 border-white/10 hover:border-brand-500/50 min-h-[60px] flex-1 cursor-pointer transition-all duration-300"
                             onClick={() => handleCardClick(movie)}
                           >
                             {/* Ranking Badge */}
@@ -197,8 +204,6 @@ const Movies = React.memo(() => {
                                   <span className="text-yellow-400">★</span>{" "}
                                   {movie.rating}
                                 </span>
-                              </div>
-                              <div className="flex justify-end">
                                 <span className="inline-block bg-black/60 text-xs text-white px-2 py-0.5 rounded">
                                   {movie.genre}
                                 </span>
@@ -436,7 +441,7 @@ const Movies = React.memo(() => {
 
                     {/* Grid Layout for all filtered movies */}
                     <div className="mt-8 mb-8 pl-4">
-                      <h2 className="text-2xl font-bold mb-4">All Movies</h2>
+                      <h2 className="text-xl font-semibold mb-4">All Movies</h2>
 
                       {filteredMovies.length > 0 ? (
                         <ContentGrid

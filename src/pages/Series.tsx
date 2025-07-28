@@ -70,8 +70,24 @@ const Series = () => {
   if (isLoading) {
     return (
       <ProtectedRoute>
-        <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-          <div className="text-2xl">Loading...</div>
+        <div className="min-h-screen text-white">
+          {/* Fixed background gradient */}
+          <div
+            className="fixed inset-0"
+            style={{
+              background: `
+                linear-gradient(
+                  200deg,
+                  #311066 0%,   /* very dark violet */
+                  #1D0833 20%,  /* deep blackish purple */
+                  #120222 45%,  /* near-black violet */
+                  black 100%    /* pure black */
+                )`,
+            }}
+          ></div>
+          <div className="relative flex items-center justify-center min-h-screen">
+            <div className="text-2xl font-bold text-white">Loading...</div>
+          </div>
         </div>
       </ProtectedRoute>
     );
@@ -143,9 +159,17 @@ const Series = () => {
                           : seriesContent.all.slice(0, 3)
                       }
                     />
+                    {/* Bottom gradient transition */}
+                    <div
+                      className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none"
+                      style={{
+                        background:
+                          "linear-gradient(to bottom right, black 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.4) 70%, transparent 100%)",
+                      }}
+                    />
                   </div>
 
-                  <div>
+                  <div className="flex flex-col h-full">
                     <h2 className="text-2xl font-bold mb-3">
                       Top Ranked Series
                     </h2>
@@ -158,7 +182,7 @@ const Series = () => {
                         .map((show, index) => (
                           <div
                             key={show.id}
-                            className="relative flex items-center bg-black/40 backdrop-blur-md rounded-lg shadow-lg p-2 group border-2 border-white/10 hover:border-brand-500/50 min-h-[60px] h-[calc((60vh-2rem)/5-0.5rem)] cursor-pointer transition-all duration-300"
+                            className="relative flex items-center bg-black/40 backdrop-blur-md rounded-lg shadow-lg p-2 group border-2 border-white/10 hover:border-brand-500/50 min-h-[60px] flex-1 cursor-pointer transition-all duration-300"
                             onClick={() => setSelectedSeries(show)}
                           >
                             {/* Ranking Badge */}
@@ -185,8 +209,6 @@ const Series = () => {
                                   <span className="text-yellow-400">★</span>{" "}
                                   {show.rating}
                                 </span>
-                              </div>
-                              <div className="flex justify-end">
                                 <span className="inline-block bg-black/60 text-xs text-white px-2 py-0.5 rounded">
                                   {show.genre}
                                 </span>
@@ -432,7 +454,7 @@ const Series = () => {
 
                     {/* Grid Layout for all filtered series */}
                     <div className="mt-8 mb-8 pl-4">
-                      <h2 className="text-2xl font-bold mb-4">All Series</h2>
+                      <h2 className="text-xl font-semibold mb-4">All Series</h2>
 
                       {filteredSeries.length > 0 ? (
                         <ContentGrid

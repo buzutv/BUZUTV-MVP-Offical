@@ -171,12 +171,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       },
     });
 
-    setIsLoading(false);
-
     if (error) {
+      setIsLoading(false);
       return { success: false, error: error.message };
     }
 
+    // If signup successful and phone is provided, update the profile with phone
+    if (data.user && phone) {
+      try {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .update({ phone })
+          .eq("id", data.user.id);
+
+        if (profileError) {
+          console.error("Error updating profile with phone:", profileError);
+        }
+      } catch (error) {
+        console.error("Error updating profile with phone:", error);
+      }
+    }
+
+    setIsLoading(false);
     return { success: true };
   };
 

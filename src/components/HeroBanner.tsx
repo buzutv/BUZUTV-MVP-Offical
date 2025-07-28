@@ -203,10 +203,7 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
 
   return (
     <>
-      <div
-        className="relative w-full overflow-hidden"
-        style={{ aspectRatio: "16/9" }}
-      >
+      <div className="relative w-full h-[60vh] overflow-hidden">
         <Swiper
           modules={[Navigation, Autoplay, Pagination]}
           slidesPerView={1}
@@ -240,8 +237,22 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                     backgroundImage: `url(${movie.posterUrl})`,
                   }}
                 >
+                  {/* Left-to-right overlay */}
                   <div
-                    className={`absolute bottom-0 left-0 right-0 h-[40%] ${isKidsVariant ? "bg-gradient-to-t from-blue-400/80 via-blue-400/70 to-transparent" : "bg-gradient-to-t from-black/80 via-black/70 to-transparent"}`}
+                    className={`absolute inset-0 ${
+                      isKidsVariant
+                        ? ""
+                        : "bg-gradient-to-r from-black/50 via-black/30 to-transparent"
+                    }`}
+                  />
+
+                  {/* Bottom-to-top overlay – make bottom darker */}
+                  <div
+                    className={`absolute inset-0 ${
+                      isKidsVariant
+                        ? "bg-gradient-to-t from-blue-400/80 via-blue-400/10 to-transparent"
+                        : "bg-gradient-to-t from-black via-black/30 to-transparent"
+                    }`}
                   />
                 </div>
 
@@ -390,7 +401,9 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                 </div>
 
                 {/* Only bottom gradient for fade effect */}
-                <div className={`absolute bottom-0 left-0 right-0 h-48 ${variant === "kids" ? "bg-gradient-to-t from-blue-400 via-blue-400/30 to-transparent" : "bg-gradient-to-t from-black via-black/60 to-transparent"}`} />
+                <div
+                  className={`absolute bottom-0 left-0 right-0 h-48 ${variant === "kids" ? "bg-gradient-to-t from-blue-400 via-blue-400/30 to-transparent" : "bg-gradient-to-t from-black via-black/60 to-transparent"}`}
+                />
 
                 {/* Title and Info Container */}
                 <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
@@ -446,7 +459,9 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                     <span className="text-white font-medium">
                       {modalMovie?.year}
                     </span>
-                    <span className={`border ${variant === "kids" ? "border-blue-400 px-2 py-0.5 text-xs text-white font-medium bg-blue-500/90" : "border-brand-500 px-2 py-0.5 text-xs text-gray-300 font-medium"}`}>
+                    <span
+                      className={`border ${variant === "kids" ? "border-blue-400 px-2 py-0.5 text-xs text-white font-medium bg-blue-500/90" : "border-brand-500 px-2 py-0.5 text-xs text-gray-300 font-medium"}`}
+                    >
                       {variant === "kids" ? "KIDS" : "TV-MA"}
                     </span>
                     <span className="text-white">{modalMovie?.genre}</span>
@@ -463,7 +478,9 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
 
               {/* Content Section - Minimized gap */}
               <div className="p-8 pt-6 pb-0 relative">
-                <div className={`absolute top-0 left-0 right-0 h-4 ${variant === "kids" ? "bg-gradient-to-b from-blue-400 to-transparent" : "bg-gradient-to-b from-black to-transparent"} pointer-events-none`} />
+                <div
+                  className={`absolute top-0 left-0 right-0 h-4 ${variant === "kids" ? "bg-gradient-to-b from-blue-400 to-transparent" : "bg-gradient-to-b from-black to-transparent"} pointer-events-none`}
+                />
 
                 {/* More Like This Section */}
                 {recommendedContent.length > 0 && (
@@ -486,8 +503,10 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
           </ScrollArea>
         </DialogContent>
         {/* Pass seasons_data to the modal if this is a series */}
-        {modalMovie && modalMovie.type === "series" && modalContentItem && (
-          variant === "kids" ? (
+        {modalMovie &&
+          modalMovie.type === "series" &&
+          modalContentItem &&
+          (variant === "kids" ? (
             <KidsSeriesModal
               isOpen={showModal && !isPlaying}
               onClose={setShowModal}
@@ -522,8 +541,7 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
               seasons={modalSeasonsData}
               customBackground="bg-gradient-to-br from-black via-slate-900 to-violet-900"
             />
-          )
-        )}
+          ))}
       </Dialog>
 
       {/* Custom Pagination Styles */}

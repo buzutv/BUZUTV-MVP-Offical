@@ -12,7 +12,12 @@
       "Bash(npm run lint:*)",
       "mcp__jetbrains__get_open_in_editor_file_text",
       "mcp__jetbrains__list_directory_tree_in_folder",
-      "mcp__jetbrains__replace_selected_text"
+      "mcp__jetbrains__replace_selected_text",
+      "mcp__jetbrains__get_project_vcs_status",
+      "Bash(grep:*)",
+      "mcp__jetbrains__get_current_file_errors",
+      "mcp__jetbrains__open_file_in_editor",
+      "mcp__jetbrains__replace_current_file_text"
     ],
     "deny": []
   }

@@ -29,6 +29,7 @@ const Navbar = React.memo(
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [hasNavigated, setHasNavigated] = useState(false);
     const searchInputRef = useRef<HTMLInputElement>(null);
+    const navRef = useRef<HTMLElement>(null);
     const { isLoggedIn, user, logout, setShowLoginModal } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
@@ -69,6 +70,27 @@ const Navbar = React.memo(
       }
     }, [isSearchOpen]);
 
+    // Close mobile menu on backdrop click
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (
+          isMenuOpen &&
+          navRef.current &&
+          !navRef.current.contains(event.target as Node)
+        ) {
+          setIsMenuOpen(false);
+        }
+      };
+
+      if (isMenuOpen) {
+        document.addEventListener("mousedown", handleClickOutside);
+      }
+
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }, [isMenuOpen]);
+
     const handleSearchBlur = useCallback(() => {
       if (!searchQuery) setIsSearchOpen(false);
     }, [searchQuery]);
@@ -100,6 +122,7 @@ const Navbar = React.memo(
 
     return (
       <nav
+        ref={navRef}
         className={`fixed top-3 left-0 right-0 z-50 px-4 md:px-6 h-14 transition-all duration-500 ${
           shouldShowNav ? "flex md:flex" : "hidden"
         } items-center`}
@@ -189,8 +212,9 @@ const Navbar = React.memo(
           <div className="flex items-center gap-2">
             {isLoggedIn ? (
               <>
+                {/* Desktop search - hidden on mobile */}
                 <div
-                  className={`relative rounded-full px-2 py-1 ${
+                  className={`relative rounded-full px-2 py-1 hidden md:block ${
                     isSearchOpen || searchQuery
                       ? "border border-white/10 bg-black/10"
                       : ""
@@ -308,6 +332,22 @@ const Navbar = React.memo(
               : "opacity-0 -translate-y-4 pointer-events-none"
           }`}
         >
+          {/* Mobile search */}
+          {isLoggedIn && (
+            <div className="pb-3 border-b border-white/10">
+              <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-black/20 border border-white/10">
+                <Search className="text-gray-300 w-5 h-5 flex-shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Search"
+                  value={searchQuery}
+                  onChange={onSearchChange}
+                  className="bg-transparent text-white placeholder-gray-300 w-full focus:outline-none text-base"
+                />
+              </div>
+            </div>
+          )}
+
           {navItems.map(({ to, label }) => (
             <Link
               key={to}

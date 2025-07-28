@@ -1,5 +1,6 @@
 import React from "react";
-import MovieCard from "@/components/MovieCard";
+import OptimizedMovieCard from "@/components/OptimizedMovieCard";
+
 import SeriesCard from "@/components/SeriesCard";
 import MoreLikeThisCard from "./MoreLikeThisCard";
 
@@ -24,7 +25,10 @@ const ContentGrid: React.FC<ContentGridProps> = ({
             ) : item.type === "series" ? (
               <SeriesCard series={item} onOpen={() => onCardClick?.(item)} />
             ) : (
-              <MovieCard movie={item} onOpen={() => onCardClick?.(item)} />
+              <OptimizedMovieCard
+                movie={item}
+                onOpen={() => onCardClick?.(item)}
+              />
             )}
           </div>
         </div>

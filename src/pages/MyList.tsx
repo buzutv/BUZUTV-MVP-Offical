@@ -7,7 +7,6 @@ import ChannelModal from "@/components/ChannelModal";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import MovieHoverRow from "@/components/MovieHoverRow";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
-import { useUserSubscriptions } from "@/hooks/useUserSubscriptions";
 import { useUserChannelFavorites } from "@/hooks/useUserChannelFavorites";
 import { useAppContent } from "@/hooks/useAppContent";
 import SeriesCard from "@/components/SeriesCard";
@@ -19,12 +18,6 @@ const MyList = React.memo(() => {
   const startTime = performance.now();
   const { favoriteIds, isLoading: favoritesLoading } = useUserFavorites();
 
-  const subsStart = performance.now();
-  const {
-    subscriptionIds,
-    toggleSubscription,
-    isLoading: subscriptionsLoading,
-  } = useUserSubscriptions();
 
   const channelFavStart = performance.now();
   const { favoriteChannelIds, isLoading: channelFavoritesLoading } =
@@ -42,14 +35,6 @@ const MyList = React.memo(() => {
     return result;
   }, [favoriteIds, movies]);
 
-  const subscribedChannels = useMemo(() => {
-    const filterStart = performance.now();
-    const result =
-      subscriptionIds.length > 0
-        ? channels.filter((channel) => subscriptionIds.includes(channel.id))
-        : [];
-    return result;
-  }, [subscriptionIds, channels]);
 
   const favoriteChannels = useMemo(() => {
     const filterStart = performance.now();
@@ -81,11 +66,10 @@ const MyList = React.memo(() => {
   }, []);
 
   const isLoading = useMemo(() => {
-    const loading =
-      favoritesLoading || subscriptionsLoading || channelFavoritesLoading;
+    const loading = favoritesLoading || channelFavoritesLoading;
 
     return loading;
-  }, [favoritesLoading, subscriptionsLoading, channelFavoritesLoading]);
+  }, [favoritesLoading, channelFavoritesLoading]);
 
   if (isLoading) {
     return (
@@ -143,31 +127,10 @@ const MyList = React.memo(() => {
             <div className="px-4 mb-8">
               <h1 className="text-4xl font-bold text-white mb-2">My List</h1>
               <p className="text-white">
-                Your saved movies, shows, and subscriptions
+                Your saved movies, shows, and favorite channels
               </p>
             </div>
 
-            {/* My Subscriptions */}
-            {subscribedChannels.length > 0 && (
-              <section className="mb-8">
-                <h2 className="text-2xl font-bold mb-4 px-4">
-                  My Subscriptions
-                </h2>
-                <div className="flex space-x-4 overflow-x-auto scrollbar-hide px-4">
-                  {subscribedChannels.map((channel) => (
-                    <div key={channel.id} className="flex-shrink-0 w-48">
-                      <div onClick={() => handleChannelClick(channel)}>
-                        <ChannelCard
-                          channel={channel}
-                          isSubscribed={true}
-                          onSubscribe={toggleSubscription}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
 
             {/* Favorite Channels */}
             {favoriteChannels.length > 0 && (
@@ -182,8 +145,6 @@ const MyList = React.memo(() => {
                       <div onClick={() => handleChannelClick(channel)}>
                         <ChannelCard
                           channel={channel}
-                          isSubscribed={subscriptionIds.includes(channel.id)}
-                          onSubscribe={toggleSubscription}
                         />
                       </div>
                     </div>
@@ -229,7 +190,6 @@ const MyList = React.memo(() => {
 
             {/* Empty State */}
             {savedContent.length === 0 &&
-              subscribedChannels.length === 0 &&
               favoriteChannels.length === 0 && (
                 <div className="text-center py-16">
                   <h2 className="text-2xl font-bold mb-4">

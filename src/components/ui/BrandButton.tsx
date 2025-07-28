@@ -4,7 +4,13 @@ import { cn } from "@/lib/utils";
 interface BrandButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
-  variant?: "primary" | "secondary" | "no-border" | "kids" | "kidsSecondary" | "ghost";
+  variant?:
+    | "primary"
+    | "secondary"
+    | "no-border"
+    | "kids"
+    | "kidsSecondary"
+    | "ghost";
   size?: "sm" | "md" | "lg";
 }
 
@@ -16,7 +22,7 @@ const BrandButton: React.FC<BrandButtonProps> = ({
   ...props
 }) => {
   const baseClasses =
-    "flex items-center justify-center gap-3 rounded-full font-medium will-change-transform transform-gpu transition-all whitespace-nowrap min-h-[40px]";
+    "flex items-center justify-center gap-1.5 rounded-full font-medium will-change-transform transform-gpu transition-all whitespace-nowrap min-h-[40px]";
 
   const sizeClasses = {
     sm: "px-3 py-1 text-sm",

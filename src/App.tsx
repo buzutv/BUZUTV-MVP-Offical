@@ -80,28 +80,6 @@ const App = () => {
     setSearchQuery("");
   };
   const showSearchOverlay = searchQuery.trim().length > 0;
-  const lowerQuery = searchQuery.trim().toLowerCase();
-  const movieResults = lowerQuery
-    ? content.movies.all.filter(
-        (item) =>
-          item.title.toLowerCase().includes(lowerQuery) ||
-          (item.genre && item.genre.toLowerCase().includes(lowerQuery))
-      )
-    : [];
-  const seriesResults = lowerQuery
-    ? content.series.all.filter(
-        (item) =>
-          item.title.toLowerCase().includes(lowerQuery) ||
-          (item.genre && item.genre.toLowerCase().includes(lowerQuery))
-      )
-    : [];
-  const channelResults = lowerQuery
-    ? channels.filter(
-        (ch) =>
-          ch.name.toLowerCase().includes(lowerQuery) ||
-          (ch.description && ch.description.toLowerCase().includes(lowerQuery))
-      )
-    : [];
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -113,16 +91,11 @@ const App = () => {
             <RouteChangeMonitor />
             <LoginModal />
             {/* Global Search Overlay */}
-            {showSearchOverlay && (
-              <SearchOverlay
-                isOpen={true}
-                onClose={handleClearSearch}
-                searchQuery={searchQuery}
-                movieResults={movieResults}
-                seriesResults={seriesResults}
-                channelResults={channelResults}
-              />
-            )}
+            <SearchOverlay
+              searchQuery={searchQuery}
+              isVisible={showSearchOverlay}
+              onClose={handleClearSearch}
+            />
             <Navbar
               searchQuery={searchQuery}
               onSearchChange={handleSearchChange}

@@ -150,8 +150,6 @@ const Index = React.memo(() => {
           allContent={content.allContent}
           channels={channels}
           onChannelClick={handleChannelClick}
-          subscriptionIds={subscriptionIds}
-          onSubscribe={toggleSubscription}
         />
 
         {/* Content Sections Below Hero */}
