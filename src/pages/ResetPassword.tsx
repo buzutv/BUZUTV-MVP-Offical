@@ -47,10 +47,8 @@ const ResetPassword = () => {
       });
 
       if (error) {
-        console.error('❌ OTP verification failed:', error);
         setError(error.message || 'Invalid or expired reset link.');
       } else {
-        console.log('✅ OTP verified');
         setVerified(true);
       }
       setVerifying(false);

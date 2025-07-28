@@ -1,13 +1,13 @@
-
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { useContentCache } from '@/hooks/useContentCache';
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useContentCache } from "@/hooks/useContentCache";
 
 export interface Content {
   id: string;
   title: string;
   description: string | null;
-  type: 'movie' | 'series';
+  type: "movie" | "series";
+  is_kids: boolean | null;
   genre: string | null;
   year: number | null;
   rating: number | null;
@@ -26,35 +26,41 @@ export interface Content {
 }
 
 const fetchContentData = async (): Promise<Content[]> => {
+  const start = performance.now();
+
   const { data, error } = await supabase
-    .from('content')
-    .select('*')
-    .order('created_at', { ascending: false });
+    .from("content")
+    .select("*")
+    .order("created_at", { ascending: false });
 
   if (error) {
-    console.error('Error fetching content:', error);
-    toast.error('Failed to load content');
+    console.error("❌ [useContent] Error fetching content:", error);
+    toast.error("Failed to load content");
     throw error;
   }
 
-  // Transform the data to ensure type compatibility
-  return (data || []).map(item => ({
+  const transformStart = performance.now();
+  const transformedData = (data || []).map((item) => ({
     ...item,
-    type: item.type as 'movie' | 'series' // Type assertion for database data
+    type: item.type as "movie" | "series",
+    is_kids: (item as any).is_kids ?? false,
   }));
+
+  return transformedData;
 };
 
 export const useContent = () => {
-  const { data: content, isLoading, error, refetch } = useContentCache(
-    'content',
-    fetchContentData,
-    []
-  );
+  const {
+    data: content,
+    isLoading,
+    error,
+    refetch,
+  } = useContentCache("content", fetchContentData, []);
 
   return {
     content: content || [],
     isLoading,
     error,
-    refetch
+    refetch,
   };
 };

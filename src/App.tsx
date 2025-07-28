@@ -3,12 +3,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Movies from "./pages/Movies";
 import Series from "./pages/Series";
+import Kids from "./pages/Kids";
 import MyList from "./pages/MyList";
 import Settings from "./pages/Settings";
 import MovieDetail from "./pages/MovieDetail";
@@ -49,6 +51,24 @@ function RequireAdmin({ children }: { children: JSX.Element }) {
   return children;
 }
 
+// Route change monitor component
+const RouteChangeMonitor = () => {
+  const location = useLocation();
+  
+  useEffect(() => {
+    const start = performance.now();
+    
+    // Monitor when the route change completes
+    const timer = setTimeout(() => {
+      // Navigation completed
+    }, 0);
+    
+    return () => clearTimeout(timer);
+  }, [location]);
+  
+  return null;
+};
+
 const App = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { content, channels, isLoading } = useAppContent();
@@ -60,28 +80,6 @@ const App = () => {
     setSearchQuery("");
   };
   const showSearchOverlay = searchQuery.trim().length > 0;
-  const lowerQuery = searchQuery.trim().toLowerCase();
-  const movieResults = lowerQuery
-    ? content.movies.all.filter(
-        (item) =>
-          item.title.toLowerCase().includes(lowerQuery) ||
-          (item.genre && item.genre.toLowerCase().includes(lowerQuery))
-      )
-    : [];
-  const seriesResults = lowerQuery
-    ? content.series.all.filter(
-        (item) =>
-          item.title.toLowerCase().includes(lowerQuery) ||
-          (item.genre && item.genre.toLowerCase().includes(lowerQuery))
-      )
-    : [];
-  const channelResults = lowerQuery
-    ? channels.filter(
-        (ch) =>
-          ch.name.toLowerCase().includes(lowerQuery) ||
-          (ch.description && ch.description.toLowerCase().includes(lowerQuery))
-      )
-    : [];
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -90,18 +88,14 @@ const App = () => {
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <RouteChangeMonitor />
             <LoginModal />
             {/* Global Search Overlay */}
-            {showSearchOverlay && (
-              <SearchOverlay
-                isOpen={true}
-                onClose={handleClearSearch}
-                searchQuery={searchQuery}
-                movieResults={movieResults}
-                seriesResults={seriesResults}
-                channelResults={channelResults}
-              />
-            )}
+            <SearchOverlay
+              searchQuery={searchQuery}
+              isVisible={showSearchOverlay}
+              onClose={handleClearSearch}
+            />
             <Navbar
               searchQuery={searchQuery}
               onSearchChange={handleSearchChange}
@@ -113,6 +107,7 @@ const App = () => {
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/movies" element={<RequireAuth><Movies /></RequireAuth>} />
               <Route path="/series" element={<RequireAuth><Series /></RequireAuth>} />
+              <Route path="/kids" element={<RequireAuth><Kids /></RequireAuth>} />
               <Route path="/my-list" element={<RequireAuth><MyList /></RequireAuth>} />
               <Route path="/settings" element={<RequireAuth><Settings /></RequireAuth>} />
               <Route path="/movie/:id" element={<RequireAuth><MovieDetail /></RequireAuth>} />

@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React from "react";
 
 interface MovieHoverRowProps {
   children: React.ReactNode;
@@ -8,9 +7,7 @@ interface MovieHoverRowProps {
 
 const MovieHoverRow = ({ children, className = "" }: MovieHoverRowProps) => {
   return (
-    <div className={`movie-hover-container ${className}`}>
-      {children}
-    </div>
+    <div className={`movie-hover-container py-2 ${className}`}>{children}</div>
   );
 };
 

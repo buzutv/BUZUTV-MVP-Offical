@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import BrandButton from '@/components/ui/BrandButton';
 import { ArrowLeft, Mail } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -47,7 +49,6 @@ const ForgotPassword = ({ isOpen, onClose, onBackToLogin }: ForgotPasswordProps)
       } else {
         setEmailSent(true);
         toast.success('Password reset email sent!');
-        console.log('Reset email sent to:', email, 'with redirect:', redirectUrl);
       }
     } catch (error) {
       console.error('Reset password error:', error);
@@ -71,12 +72,12 @@ const ForgotPassword = ({ isOpen, onClose, onBackToLogin }: ForgotPasswordProps)
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md bg-gray-800 text-white border-gray-700">
+      <DialogContent className="sm:max-w-md bg-black/40 text-white border-white/20 backdrop-blur-md">
         <DialogHeader>
           <div className="flex items-center space-x-3 mb-2">
             <button
               onClick={handleBackToLogin}
-              className="text-gray-400 hover:text-white transition-colors"
+              className="text-white/60 hover:text-white transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
@@ -88,34 +89,36 @@ const ForgotPassword = ({ isOpen, onClose, onBackToLogin }: ForgotPasswordProps)
 
         {!emailSent ? (
           <div className="space-y-4">
-            <p className="text-gray-300 text-sm">
+            <p className="text-white/70 text-sm">
               Enter your email address and we'll send you a link to reset your password.
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label htmlFor="reset-email" className="block text-sm font-medium text-gray-300 mb-1">
-                  Email Address
-                </label>
-                <input
+                <Label htmlFor="reset-email" className="text-white mb-2 flex items-center space-x-2">
+                  <Mail className="w-4 h-4" />
+                  <span>Email Address</span>
+                </Label>
+                <Input
                   id="reset-email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-colors"
+                  className="bg-black/30 border-white/30 text-white backdrop-blur-sm placeholder:text-white/50"
                   placeholder="Enter your email"
                   autoFocus
                 />
               </div>
 
-              <Button
+              <BrandButton
                 type="submit"
                 disabled={isLoading}
-                className="w-full disabled:opacity-50"
-                style={{ backgroundColor: '#601EF9' }}
+                variant="primary"
+                size="md"
+                className="w-full"
               >
                 {isLoading ? 'Sending...' : 'Send Reset Link'}
-              </Button>
+              </BrandButton>
             </form>
           </div>
         ) : (
@@ -128,23 +131,24 @@ const ForgotPassword = ({ isOpen, onClose, onBackToLogin }: ForgotPasswordProps)
             
             <div>
               <h3 className="text-lg font-semibold text-white mb-2">Check your email</h3>
-              <p className="text-gray-300 text-sm">
+              <p className="text-white/70 text-sm">
                 We've sent a password reset link to <span className="font-medium">{email}</span>
               </p>
             </div>
 
             <div className="space-y-2">
-              <Button
+              <BrandButton
                 onClick={handleBackToLogin}
-                variant="outline"
-                className="w-full border-gray-600 text-gray-300 hover:bg-gray-700"
+                variant="secondary"
+                size="md"
+                className="w-full"
               >
                 Back to Sign In
-              </Button>
+              </BrandButton>
               
               <button
                 onClick={() => setEmailSent(false)}
-                className="text-blue-400 hover:text-blue-300 transition-colors text-sm"
+                className="text-brand-400 hover:text-brand-300 transition-colors text-sm"
               >
                 Try a different email
               </button>

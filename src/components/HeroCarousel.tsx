@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Autoplay } from 'swiper/modules';
 import 'swiper/css';
@@ -6,10 +6,9 @@ import 'swiper/css/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserFavorites } from '@/hooks/useUserFavorites';
 import { Play, Info } from 'lucide-react';
-import './HeroCarousel.css'; // For custom arrow styles
+import './HeroCarousel.css';
 import MovieModal from './MovieModal';
 import SeriesModal from './SeriesModal';
-import { useState } from 'react';
 import FullscreenPlayer from './FullscreenPlayer';
 
 export interface HeroCarouselItem {
@@ -32,7 +31,7 @@ interface HeroCarouselProps {
   allContent: HeroCarouselItem[];
 }
 
-const HeroCarousel: React.FC<HeroCarouselProps> = ({ items, allContent }) => {
+const HeroCarousel: React.FC<HeroCarouselProps> = React.memo(({ items, allContent }) => {
   const { isLoggedIn, setShowLoginModal } = useAuth();
   const { favoriteIds, addToFavorites, removeFromFavorites } = useUserFavorites();
   const [modalOpen, setModalOpen] = useState(false);
@@ -43,10 +42,8 @@ const HeroCarousel: React.FC<HeroCarouselProps> = ({ items, allContent }) => {
   const [fullscreenUrl, setFullscreenUrl] = useState<string | null>(null);
   const [fullscreenTitle, setFullscreenTitle] = useState<string | null>(null);
 
-  // Play video in fullscreen using FullscreenPlayer
-  const handlePlay = (item: HeroCarouselItem) => {
+  const handlePlay = useCallback((item: HeroCarouselItem) => {
     if (item.type === 'series') {
-      // Always play the first episode of the first season
       let videoUrl = '';
       let title = item.title;
       let seasonsData = item.seasons_data;
@@ -72,57 +69,58 @@ const HeroCarousel: React.FC<HeroCarouselProps> = ({ items, allContent }) => {
     setFullscreenUrl(item.videoUrl);
     setFullscreenTitle(item.title);
     setFullscreenOpen(true);
-  };
+  }, []);
 
-  // Open modal for more info
-  const handleMoreInfo = (item: HeroCarouselItem) => {
+  const handleMoreInfo = useCallback((item: HeroCarouselItem) => {
     setModalType(item.type || 'movie');
     setModalItem(item);
-    // Compute recommended content (more like this)
     const recs = allContent.filter(
       c => c.id !== item.id && (c.genre === item.genre || c.channelId === item.channelId)
     ).slice(0, 6);
     setRecommendedContent(recs);
     setModalOpen(true);
-  };
+  }, [allContent]);
 
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
     setModalOpen(false);
     setModalItem(null);
     setModalType(null);
     setRecommendedContent([]);
-  };
+  }, []);
 
-  const handleCloseFullscreen = () => {
+  const handleCloseFullscreen = useCallback(() => {
     setFullscreenOpen(false);
     setFullscreenUrl(null);
     setFullscreenTitle(null);
-  };
+  }, []);
 
-  // Handle save/unsave for favorites
-  const handleSaveItem = (itemId: string) => {
+  const handleSaveItem = useCallback((itemId: string) => {
     if (favoriteIds.includes(itemId)) {
       removeFromFavorites(itemId);
     } else {
       addToFavorites(itemId);
     }
-  };
+  }, [favoriteIds, addToFavorites, removeFromFavorites]);
+
+  const swiperConfig = useMemo(() => ({
+    modules: [Navigation, Autoplay],
+    slidesPerView: 1.3 as const,
+    centeredSlides: true,
+    spaceBetween: 30,
+    navigation: true,
+    autoplay: { delay: 5000, disableOnInteraction: false },
+    loop: true,
+    breakpoints: {
+      640: { slidesPerView: 1.1, spaceBetween: 10 },
+      1024: { slidesPerView: 1.3, spaceBetween: 30 },
+    },
+  }), []);
 
   return (
     <div className="w-full relative" style={{ minHeight: '51vh', maxHeight: '69vh', height: '63vh', marginTop: 0, paddingTop: 0 }}>
       <Swiper
-        modules={[Navigation, Autoplay]}
-        slidesPerView={1.3}
-        centeredSlides={true}
-        spaceBetween={30}
-        navigation
-        autoplay={{ delay: 5000, disableOnInteraction: false }}
-        loop={true}
+        {...swiperConfig}
         className="h-full hero-swiper"
-        breakpoints={{
-          640: { slidesPerView: 1.1, spaceBetween: 10 },
-          1024: { slidesPerView: 1.3, spaceBetween: 30 },
-        }}
         key={items.length}
       >
         {items.map((slide, idx) => (
@@ -229,6 +227,13 @@ const HeroCarousel: React.FC<HeroCarouselProps> = ({ items, allContent }) => {
       )}
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.items.length === nextProps.items.length &&
+    prevProps.allContent.length === nextProps.allContent.length
+  );
+});
+
+HeroCarousel.displayName = "HeroCarousel";
 
 export default HeroCarousel; 

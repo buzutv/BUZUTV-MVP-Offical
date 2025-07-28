@@ -18,8 +18,11 @@ export default {
 			}
 		},
 		extend: {
-			colors: {
-				border: 'hsl(var(--border))',
+      fontFamily: {
+      montserrat: ['Montserrat', 'sans-serif'],
+      },
+    colors: {
+        border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
 				background: 'hsl(var(--background))',
@@ -59,9 +62,23 @@ export default {
 					'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
 					accent: 'hsl(var(--sidebar-accent))',
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-					border: 'hsl(var(--sidebar-border))',
+					border: 'hslchnge (var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Brand colors (purple)
+				brand: {
+          DEFAULT: '#712AFF',   // Main purple
+          50:  '#F4F0FF',       // Very light purple
+          100: '#E6DEFF',       // Light purple tint
+          200: '#C8B5FF',       // Lighter purple
+          300: '#AB8DFF',       // Light purple
+          400: '#8D64FF',       // Medium purple
+          500: '#712AFF',       // Main purple (DEFAULT)
+          600: '#5A20CC',       // Slightly darker purple
+          700: '#451899',       // Dark purple
+          800: '#311066',       // Very dark purple
+          900: '#1D0833',       // Darkest purple
+        }
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

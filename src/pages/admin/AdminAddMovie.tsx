@@ -23,6 +23,7 @@ const AdminAddMovie = () => {
         title: data.title,
         description: data.description || null,
         type: data.type,
+        is_kids: data.isKids || false,
         genre: data.genre || null,
         year: data.year ? parseInt(data.year) : null,
         rating: data.rating ? parseFloat(data.rating) : null,

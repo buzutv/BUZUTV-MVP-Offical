@@ -9,6 +9,7 @@ export interface Movie {
   genre: string;
   isTrending: boolean;
   isFeatured: boolean;
+  isKids: boolean;
   type: 'movie' | 'series';
   channelId?: string;
   // Series-specific fields
@@ -35,10 +36,13 @@ export const channels: Channel[] = [
 
 export const genres = [
   "All",
-  "Action",
-  "Drama", 
-  "Romance",
   "Comedy",
+  "Drama",
+  "Sports",
+  "Romance",
+  "Action",
+  "Lifestyle",
   "Documentary",
-  "Informational"
+  "Informational",
+  "Educational"
 ];

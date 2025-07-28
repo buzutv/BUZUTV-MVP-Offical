@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useCallback, useMemo, useState } from "react";
 import ChannelModal from "@/components/ChannelModal";
 import FullViewportHero from "@/components/FullViewportHero";
 import FilterBar from "@/components/FilterBar";
@@ -7,190 +7,326 @@ import { useAppContent } from "@/hooks/useAppContent";
 import { useUserSubscriptions } from "@/hooks/useUserSubscriptions";
 import { useAuth } from "@/contexts/AuthContext";
 import HomeRow from "@/components/HomeRow";
-import { featuredContentIds } from '@/data/featuredContentIds';
-import { genres } from '@/data/mockMovies';
+import { featuredContentIds } from "@/data/featuredContentIds";
 
-const Index = () => {
-  const [selectedChannel, setSelectedChannel] = useState<any>(null);
+interface Channel {
+  id: string;
+  name: string;
+  description?: string;
+  logoUrl?: string;
+  bannerUrl?: string;
+  logo_url?: string;
+  banner_url?: string;
+}
+
+const Index = React.memo(() => {
+  const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const [showChannelModal, setShowChannelModal] = useState(false);
-  const [activeGenre, setActiveGenre] = useState('all');
-  
-  const { homeContent, channels, isLoading, content, kidsContent } = useAppContent();
+  const [activeGenre, setActiveGenre] = useState("all");
+
+  const startTime = performance.now();
+  const { homeContent, channels, isLoading, content, kidsContent } =
+    useAppContent();
+
+  const availableGenresWithContent = useMemo((): string[] => {
+    if (!content.allContent || content.allContent.length === 0) {
+      return ["All"];
+    }
+
+    const contentGenres: string[] = Array.from(
+      new Set(
+        content.allContent
+          .filter((item) => !item.isKids)
+          .map((item) => item.genre)
+          .filter((genre): genre is string => Boolean(genre)),
+      ),
+    );
+
+    return ["All", ...contentGenres.sort()];
+  }, [content.allContent]);
+
   const { subscriptionIds, toggleSubscription } = useUserSubscriptions();
   const { isLoggedIn, setShowLoginModal } = useAuth();
 
-  // Build featured array from full content objects
-  const featured = featuredContentIds
-    .map(id => content.allContent.find(item => item.id === id))
-    .filter(Boolean);
+  const featured = useMemo(
+    () =>
+      featuredContentIds
+        .map((id) => content.allContent.find((item) => item.id === id))
+        .filter(Boolean),
+    [content.allContent],
+  );
 
-  const handleChannelClick = (channel: any) => {
-    if (!isLoggedIn) {
-      setShowLoginModal(true);
-      return;
-    }
-    setSelectedChannel(channel);
-    setShowChannelModal(true);
-  };
+  const handleChannelClick = useCallback(
+    (channel: Channel) => {
+      if (!isLoggedIn) {
+        setShowLoginModal(true);
+        return;
+      }
+      setSelectedChannel(channel);
+      setShowChannelModal(true);
+    },
+    [isLoggedIn, setShowLoginModal],
+  );
 
-  const handleCloseChannelModal = () => {
+  const handleCloseChannelModal = useCallback(() => {
     setShowChannelModal(false);
     setSelectedChannel(null);
-  };
+  }, []);
 
-  const handleHomeRowCardClick = () => {
+  const handleHomeRowCardClick = useCallback(() => {
     if (!isLoggedIn) {
       setShowLoginModal(true);
       return true;
     }
     return false;
-  };
+  }, [isLoggedIn, setShowLoginModal]);
 
-  const handleGenreChange = (genre: string) => {
+  const handleGenreChange = useCallback((genre: string) => {
     setActiveGenre(genre);
-  };
+  }, []);
 
-  // Get filtered content based on active genre
-  const getFilteredContent = () => {
-    if (activeGenre === 'all') {
-      return content.allContent;
+  const filteredContent = useMemo(() => {
+    if (activeGenre === "all") {
+      return content.allContent.filter((item) => !item.isKids);
     }
-    
-    // Filter by genre
-    return content.allContent.filter(item => 
-      item.genre.toLowerCase() === activeGenre.toLowerCase()
+    return content.allContent.filter(
+      (item) =>
+        item.genre.toLowerCase() === activeGenre.toLowerCase() && !item.isKids,
     );
-  };
-
-  const filteredContent = getFilteredContent();
+  }, [content.allContent, activeGenre]);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-        <div className="text-2xl">Loading...</div>
+      <div className="min-h-screen text-white">
+        {/* Fixed background gradient */}
+        <div
+          className="fixed inset-0"
+          style={{
+            background: `
+              linear-gradient(
+                200deg,
+                #311066 0%,   /* very dark violet */
+                #1D0833 20%,  /* deep blackish purple */
+                #120222 45%,  /* near-black violet */
+                black 100%    /* pure black */
+              )`,
+          }}
+        ></div>
+        <div className="relative flex items-center justify-center min-h-screen">
+          <div className="text-2xl font-bold text-white">Loading...</div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      {/* Channel Modal */}
-      <ChannelModal 
-        isOpen={showChannelModal}
-        onClose={handleCloseChannelModal}
-        channel={selectedChannel}
-      />
+    <div className="min-h-screen text-white">
+      {/* Fixed background gradient */}
+      <div
+        className="fixed inset-0"
+        style={{
+          background: `
+  linear-gradient(
+    200deg,
+    #311066 0%,   /* very dark violet */
+    #1D0833 20%,  /* deep blackish purple */
+    #120222 45%,  /* near-black violet */
+    black 100%    /* pure black */
+`,
+        }}
+      ></div>
 
-      {/* Full Viewport Hero Section with Channels at Bottom */}
-      <FullViewportHero
-        items={featured}
-        allContent={content.allContent}
-        channels={channels}
-        onChannelClick={handleChannelClick}
-        subscriptionIds={subscriptionIds}
-        onSubscribe={toggleSubscription}
-      />
+      <div className="relative">
+        {/* Channel Modal */}
+        <ChannelModal
+          isOpen={showChannelModal}
+          onClose={handleCloseChannelModal}
+          channel={selectedChannel}
+        />
 
-      {/* Content Sections Below Hero */}
-      <div className="bg-gray-900 pt-8 relative">
-        <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-black to-gray-900 pointer-events-none" />
+        {/* Full Viewport Hero Section with Channels at Bottom */}
+        <FullViewportHero
+          items={featured}
+          allContent={content.allContent}
+          channels={channels}
+          onChannelClick={handleChannelClick}
+        />
 
-        {/* Filter Bar */}
-        <div className="mb-4">
-          <FilterBar 
-            activeGenre={activeGenre}
-            onGenreChange={handleGenreChange}
-            availableGenres={genres}
-          />
-        </div>
+        {/* Content Sections Below Hero */}
+        <div className=" pt-8 relative px-6">
+          <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-black to-transparent pointer-events-none" />
 
-        <div className="max-w-full px-4 sm:px-6 lg:px-8 py-8">
-          {activeGenre === 'all' ? (
-            // Show original layout with content rows when "All" is selected
-            <>
-
-              {/* Show content only if we have any */}
-              {Object.values(homeContent).some(arr => arr.length > 0) ? (
-                <>
-                  {/* Content Rows - using pre-computed categories */}
-                  {homeContent.trending.length > 0 && (
-                    <HomeRow title="Trending Now" items={homeContent.trending} onCardClick={handleHomeRowCardClick} />
-                  )}
-                  {homeContent.action.length > 0 && (
-                    <HomeRow title="Action" items={homeContent.action} onCardClick={handleHomeRowCardClick} />
-                  )}
-                  {homeContent.drama.length > 0 && (
-                    <HomeRow title="Drama" items={homeContent.drama} onCardClick={handleHomeRowCardClick} />
-                  )}
-                  {homeContent.romance.length > 0 && (
-                    <HomeRow title="Romance" items={homeContent.romance} onCardClick={handleHomeRowCardClick} />
-                  )}
-                  {homeContent.comedy.length > 0 && (
-                    <HomeRow title="Comedy" items={homeContent.comedy} onCardClick={handleHomeRowCardClick} />
-                  )}
-                  {homeContent.documentary.length > 0 && (
-                    <HomeRow title="Documentary" items={homeContent.documentary} onCardClick={handleHomeRowCardClick} />
-                  )}
-                  {homeContent.informational.length > 0 && (
-                      <HomeRow title="Informational" items={homeContent.informational} onCardClick={handleHomeRowCardClick} />
-                  )}
-                </>
-              ) : (
-                <div className="text-center py-16">
-                  <h2 className="text-2xl font-bold mb-4">No content available</h2>
-                  <p className="text-gray-400">Content will appear here once it's added to the platform</p>
-                </div>
-              )}
-            </>
-          ) : (
-            // Show filtered content for specific genre
-            <>
-              {filteredContent.length > 0 && (
-                <>
-                  {/* New content row */}
-                  <HomeRow 
-                    title="New Content" 
-                    items={filteredContent.slice(0, 8)} 
-                    onCardClick={handleHomeRowCardClick} 
-                  />
-                  
-                  {/* Recommended row */}
-                  <HomeRow 
-                    title={`Recommended`}
-                    items={filteredContent.slice(2, 10)} 
-                    onCardClick={handleHomeRowCardClick} 
-                  />
-                </>
-              )}
-              
-              {/* Grid Layout for all filtered content */}
-              <div className="mt-8  px-4">
-                <h2 className="text-xl font-semibold mb-4">
-                  All Content
-                </h2>
-                
-                {filteredContent.length > 0 ? (
-                  <ContentGrid items={filteredContent} onCardClick={handleHomeRowCardClick} />
-                ) : (
-                  <div className="text-center py-16">
-                    <h3 className="text-xl font-bold mb-2">No content found</h3>
-                    <p className="text-gray-400">No {activeGenre} content available at the moment</p>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Footer */}
-        <footer className="bg-gray-800 border-t border-gray-700 py-8">
-          <div className="max-w-7xl mx-auto px-4 text-center text-gray-400">
-            <p>&copy; 2024 BUZUTV. All rights reserved.</p>
+          {/* Filter Bar */}
+          <div className="mb-4">
+            <FilterBar
+              activeGenre={activeGenre}
+              onGenreChange={handleGenreChange}
+              availableGenres={availableGenresWithContent}
+            />
           </div>
-        </footer>
+
+          <div className="max-w-full pr-3">
+            {activeGenre === "all" ? (
+              // Show original layout with content rows when "All" is selected
+              <>
+                {/*/!* Continue Watching - Show trending content as placeholder *!/*/}
+                {/*{homeContent.trending.length > 0 && (*/}
+                {/*  <HomeRow*/}
+                {/*    title="Continue Watching"*/}
+                {/*    items={homeContent.trending.slice(0, 8)}*/}
+                {/*    onCardClick={handleHomeRowCardClick}*/}
+                {/*  />*/}
+                {/*)}*/}
+
+                {/* New Movies and Shows - Sort by created_at (newest first) */}
+                {(() => {
+                  const newContent = content.allContent
+                    .filter((item) => item.created_at && !item.isKids) // Only items with created_at date and not kids content
+                    .sort(
+                      (a, b) =>
+                        new Date(b.created_at).getTime() -
+                        new Date(a.created_at).getTime(),
+                    )
+                    .slice(0, 8);
+
+                  return (
+                    newContent.length > 0 && (
+                      <HomeRow
+                        title="New Movies and Shows"
+                        items={newContent}
+                        onCardClick={handleHomeRowCardClick}
+                      />
+                    )
+                  );
+                })()}
+
+                {/* Recommended - Show trending content */}
+                {homeContent.trending.length > 0 && (
+                  <HomeRow
+                    title="Recommended"
+                    items={homeContent.trending}
+                    onCardClick={handleHomeRowCardClick}
+                  />
+                )}
+
+                {/* Kids - Show kids content */}
+                {(() => {
+                  const kidsOnlyContent = content.allContent
+                    .filter((item) => item.isKids === true)
+                    .slice(0, 8);
+
+                  return (
+                    kidsOnlyContent.length > 0 && (
+                      <HomeRow
+                        title="Kids"
+                        items={kidsOnlyContent}
+                        onCardClick={handleHomeRowCardClick}
+                      />
+                    )
+                  );
+                })()}
+
+                {/* Featured Movies - Use isFeatured flag only */}
+                {(() => {
+                  const featuredMovies = content.allContent
+                    .filter(
+                      (item) =>
+                        item.type === "movie" &&
+                        item.isFeatured === true &&
+                        !item.isKids,
+                    )
+                    .slice(0, 8);
+
+                  return (
+                    featuredMovies.length > 0 && (
+                      <HomeRow
+                        title="Featured Movies"
+                        items={featuredMovies}
+                        onCardClick={handleHomeRowCardClick}
+                      />
+                    )
+                  );
+                })()}
+
+                {/* Featured Shows - Use isFeatured flag only */}
+                {(() => {
+                  const featuredShows = content.allContent
+                    .filter(
+                      (item) =>
+                        item.type === "series" &&
+                        item.isFeatured === true &&
+                        !item.isKids,
+                    )
+                    .slice(0, 8);
+
+                  return (
+                    featuredShows.length > 0 && (
+                      <HomeRow
+                        title="Featured Shows"
+                        items={featuredShows}
+                        onCardClick={handleHomeRowCardClick}
+                      />
+                    )
+                  );
+                })()}
+              </>
+            ) : (
+              // Show filtered content for specific genre
+              <>
+                {filteredContent.length > 0 && (
+                  <>
+                    {/* New content row */}
+                    <HomeRow
+                      title="New Content"
+                      items={filteredContent.slice(0, 8)}
+                      onCardClick={handleHomeRowCardClick}
+                    />
+
+                    {/* Recommended row */}
+                    <HomeRow
+                      title={`Recommended`}
+                      items={filteredContent.slice(2, 10)}
+                      onCardClick={handleHomeRowCardClick}
+                    />
+                  </>
+                )}
+
+                {/* Grid Layout for all filtered content */}
+                <div className="mt-8 mb-8 pl-4">
+                  <h2 className="text-xl font-semibold mb-4">All Content</h2>
+
+                  {filteredContent.length > 0 ? (
+                    <ContentGrid
+                      items={filteredContent}
+                      onCardClick={handleHomeRowCardClick}
+                    />
+                  ) : (
+                    <div className="text-center py-16">
+                      <h3 className="text-xl font-bold mb-2">
+                        No content found
+                      </h3>
+                      <p className="text-gray-400">
+                        No {activeGenre} content available at the moment
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Footer */}
+          <footer className=" border-t border-white/10 py-8">
+            <div className="max-w-7xl mx-auto px-4 text-center text-gray-400">
+              <p>&copy; 2024 BUZUTV. All rights reserved.</p>
+            </div>
+          </footer>
+        </div>
       </div>
     </div>
   );
-};
+});
+
+Index.displayName = "Index";
 
 export default Index;
