@@ -169,14 +169,14 @@ const Index = React.memo(() => {
             {activeGenre === "all" ? (
               // Show original layout with content rows when "All" is selected
               <>
-                {/* Continue Watching - Show trending content as placeholder */}
-                {homeContent.trending.length > 0 && (
-                  <HomeRow
-                    title="Continue Watching"
-                    items={homeContent.trending.slice(0, 8)}
-                    onCardClick={handleHomeRowCardClick}
-                  />
-                )}
+                {/*/!* Continue Watching - Show trending content as placeholder *!/*/}
+                {/*{homeContent.trending.length > 0 && (*/}
+                {/*  <HomeRow*/}
+                {/*    title="Continue Watching"*/}
+                {/*    items={homeContent.trending.slice(0, 8)}*/}
+                {/*    onCardClick={handleHomeRowCardClick}*/}
+                {/*  />*/}
+                {/*)}*/}
 
                 {/* New Movies and Shows - Sort by created_at (newest first) */}
                 {(() => {

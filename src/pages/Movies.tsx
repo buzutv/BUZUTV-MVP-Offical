@@ -320,14 +320,14 @@ const Movies = React.memo(() => {
                       );
                     })()}
 
-                    {/* Continue Watching - Show trending movies */}
-                    {movieContent.trending.length > 0 && (
-                      <HomeRow
-                        title="Continue Watching"
-                        items={movieContent.trending.slice(0, 8)}
-                        onCardClick={handleHomeRowCardClick}
-                      />
-                    )}
+                    {/*/!* Continue Watching - Show trending movies *!/*/}
+                    {/*{movieContent.trending.length > 0 && (*/}
+                    {/*  <HomeRow*/}
+                    {/*    title="Continue Watching"*/}
+                    {/*    items={movieContent.trending.slice(0, 8)}*/}
+                    {/*    onCardClick={handleHomeRowCardClick}*/}
+                    {/*  />*/}
+                    {/*)}*/}
 
                     {/* Recommended */}
                     {movieContent.recommended.length > 0 && (

@@ -308,14 +308,14 @@ const Kids = () => {
                       />
                     )}
 
-                    {/* Continue Watching */}
-                    {enhancedKidsContent.trending.length > 0 && (
-                      <HomeRow
-                        title="Continue Watching"
-                        items={enhancedKidsContent.trending}
-                        onCardClick={handleHomeRowCardClick}
-                      />
-                    )}
+                    {/*/!* Continue Watching *!/*/}
+                    {/*{enhancedKidsContent.trending.length > 0 && (*/}
+                    {/*  <HomeRow*/}
+                    {/*    title="Continue Watching"*/}
+                    {/*    items={enhancedKidsContent.trending}*/}
+                    {/*    onCardClick={handleHomeRowCardClick}*/}
+                    {/*  />*/}
+                    {/*)}*/}
 
                     {/* Recommended */}
                     {enhancedKidsContent.recommended.length > 0 && (

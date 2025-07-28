@@ -330,14 +330,14 @@ const Series = () => {
                       );
                     })()}
 
-                    {/* Continue Watching - Show trending series */}
-                    {seriesContent.trending.length > 0 && (
-                      <HomeRow
-                        title="Continue Watching"
-                        items={seriesContent.trending.slice(0, 8)}
-                        onCardClick={handleHomeRowCardClick}
-                      />
-                    )}
+                    {/*/!* Continue Watching - Show trending series *!/*/}
+                    {/*{seriesContent.trending.length > 0 && (*/}
+                    {/*  <HomeRow*/}
+                    {/*    title="Continue Watching"*/}
+                    {/*    items={seriesContent.trending.slice(0, 8)}*/}
+                    {/*    onCardClick={handleHomeRowCardClick}*/}
+                    {/*  />*/}
+                    {/*)}*/}
 
                     {/* Recommended */}
                     {seriesContent.recommended.length > 0 && (
