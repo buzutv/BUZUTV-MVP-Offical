@@ -182,7 +182,7 @@ const Movies = React.memo(() => {
                           >
                             {/* Ranking Badge */}
                             <div className="absolute -left-6 top-1/2 -translate-y-1/2 z-10">
-                              <span className="bg-[#131313] text-white text-base font-bold px-3 py-1 rounded-full border-2 border-brand-500/50 shadow-lg backdrop-blur-sm">
+                              <span className="bg-[#131313] text-brand-200 text-base font-bold px-3 py-1 rounded-full border-2 border-brand-500/50 shadow-lg backdrop-blur-sm">
                                 #{index + 1}
                               </span>
                             </div>

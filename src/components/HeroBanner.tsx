@@ -260,6 +260,24 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                 <div className="relative z-10 flex items-end h-full pb-2 md:pb-8">
                   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
                     <div className="max-w-xl">
+                      <h1 className="text-3xl md:text-4xl font-bold mb-3 text-white">
+                        {movie.title}
+                      </h1>
+
+                      <div className="flex items-center space-x-3 mb-6">
+                        <span
+                          className={`${genreBgClass} text-white px-2 py-1 rounded text-sm`}
+                        >
+                          {movie.genre}
+                        </span>
+                        <span className="text-white text-sm">{movie.year}</span>
+                        <div className="flex items-center space-x-1">
+                          <span className="text-yellow-400">★</span>
+                          <span className="text-white text-sm">
+                            {movie.rating}
+                          </span>
+                        </div>
+                      </div>
                       <div className="flex items-center space-x-3 mb-6">
                         {/* Only show Play button if not a series */}
                         {movie.type !== "series" && (
@@ -281,7 +299,7 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                             }
                           >
                             <Play className="w-4 h-4 fill-current" />
-                            <span>Play</span>
+                            <span>Watch Now</span>
                           </BrandButton>
                         )}
                         {/* For series, show a non-clickable pill instead of More Info */}
@@ -304,27 +322,10 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                             size="sm"
                           >
                             <Info className="w-4 h-4" />
-                            <span>Info</span>
+                            <span>More Info</span>
                           </BrandButton>
                         )}
                       </div>
-                      <div className="flex items-center space-x-3 mb-6">
-                        <span
-                          className={`${genreBgClass} text-white px-2 py-1 rounded text-sm`}
-                        >
-                          {movie.genre}
-                        </span>
-                        <span className="text-white text-sm">{movie.year}</span>
-                        <div className="flex items-center space-x-1">
-                          <span className="text-yellow-400">★</span>
-                          <span className="text-white text-sm">
-                            {movie.rating}
-                          </span>
-                        </div>
-                      </div>
-                      <h1 className="text-3xl md:text-4xl font-bold mb-3 text-white">
-                        {movie.title}
-                      </h1>
                     </div>
                   </div>
                 </div>
