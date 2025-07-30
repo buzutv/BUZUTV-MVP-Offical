@@ -307,7 +307,7 @@ const SeriesModal = ({
                             {season.episodes.map((episode) => (
                               <div
                                 key={episode.id}
-                                className="border border-brand-500/20 flex items-center space-x-3 bg-black  rounded-lg p-3 hover:border-brand-500/40 transition-all duration-300 group h-12"
+                                className="border border-white flex items-center space-x-3 bg-black  rounded-lg p-3 hover:shadow-[0_0_8px_rgba(255,255,255,0.6)] transition-all duration-300 group h-12"
                               >
                                 <div
                                   className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white will-change-transform transform-gpu ${
