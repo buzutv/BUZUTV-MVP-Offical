@@ -96,25 +96,36 @@ export const useUserChannelFavorites = () => {
       return;
     }
 
+    const cacheKey = user.id || user.email || "anonymous";
+    const newFavorites = [...favoriteChannelIds, channelId];
+
     // Check if this is a demo user
     const isDemoUser = user.email && demoUserChannelFavorites[user.email];
 
     if (isDemoUser) {
-      // Demo user - just update local state
-      const newFavorites = [...favoriteChannelIds, channelId];
+      // Demo user - just update local state and cache
       setFavoriteChannelIds(newFavorites);
+      // Update cache immediately
+      channelFavoritesCache.set(cacheKey, {
+        data: newFavorites,
+        timestamp: Date.now(),
+      });
       toast.success("Channel added to favorites");
       return;
     }
 
     try {
       // Real user - save to localStorage for now
-      const newFavorites = [...favoriteChannelIds, channelId];
       setFavoriteChannelIds(newFavorites);
       localStorage.setItem(
         `channel_favorites_${user.id}`,
         JSON.stringify(newFavorites),
       );
+      // Update cache immediately
+      channelFavoritesCache.set(cacheKey, {
+        data: newFavorites,
+        timestamp: Date.now(),
+      });
       toast.success("Channel added to favorites");
     } catch (error) {
       console.error("Error adding channel to favorites:", error);
@@ -125,25 +136,36 @@ export const useUserChannelFavorites = () => {
   const removeChannelFromFavorites = async (channelId: string) => {
     if (!user) return;
 
+    const cacheKey = user.id || user.email || "anonymous";
+    const newFavorites = favoriteChannelIds.filter((id) => id !== channelId);
+
     // Check if this is a demo user
     const isDemoUser = user.email && demoUserChannelFavorites[user.email];
 
     if (isDemoUser) {
-      // Demo user - just update local state
-      const newFavorites = favoriteChannelIds.filter((id) => id !== channelId);
+      // Demo user - just update local state and cache
       setFavoriteChannelIds(newFavorites);
+      // Update cache immediately
+      channelFavoritesCache.set(cacheKey, {
+        data: newFavorites,
+        timestamp: Date.now(),
+      });
       toast.success("Channel removed from favorites");
       return;
     }
 
     try {
       // Real user - update localStorage
-      const newFavorites = favoriteChannelIds.filter((id) => id !== channelId);
       setFavoriteChannelIds(newFavorites);
       localStorage.setItem(
         `channel_favorites_${user.id}`,
         JSON.stringify(newFavorites),
       );
+      // Update cache immediately
+      channelFavoritesCache.set(cacheKey, {
+        data: newFavorites,
+        timestamp: Date.now(),
+      });
       toast.success("Channel removed from favorites");
     } catch (error) {
       console.error("Error removing channel from favorites:", error);

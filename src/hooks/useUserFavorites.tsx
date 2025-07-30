@@ -103,13 +103,20 @@ export const useUserFavorites = () => {
       return;
     }
 
+    const cacheKey = user.id || user.email || "anonymous";
+    const newFavorites = [...favoriteIds, contentId];
+
     // Check if this is a demo user
     const isDemoUser = user.email && demoUserFavorites[user.email];
 
     if (isDemoUser) {
-      // Demo user - just update local state
-      const newFavorites = [...favoriteIds, contentId];
+      // Demo user - just update local state and cache
       setFavoriteIds(newFavorites);
+      // Update cache immediately
+      favoritesCache.set(cacheKey, {
+        data: newFavorites,
+        timestamp: Date.now(),
+      });
       toast.success("Added to favorites");
       return;
     }
@@ -126,7 +133,6 @@ export const useUserFavorites = () => {
       if (error) {
         console.error("Error adding to favorites:", error);
         // Fallback to localStorage
-        const newFavorites = [...favoriteIds, contentId];
         setFavoriteIds(newFavorites);
         localStorage.setItem(
           `favorites_${user.id}`,
@@ -134,9 +140,15 @@ export const useUserFavorites = () => {
         );
         toast.success("Added to favorites");
       } else {
-        setFavoriteIds([...favoriteIds, contentId]);
+        setFavoriteIds(newFavorites);
         toast.success("Added to favorites");
       }
+      
+      // Update cache immediately regardless of success/error
+      favoritesCache.set(cacheKey, {
+        data: newFavorites,
+        timestamp: Date.now(),
+      });
     } catch (error) {
       console.error("Error adding to favorites:", error);
       toast.error("Failed to add to favorites");
@@ -146,13 +158,20 @@ export const useUserFavorites = () => {
   const removeFromFavorites = async (contentId: string) => {
     if (!user) return;
 
+    const cacheKey = user.id || user.email || "anonymous";
+    const newFavorites = favoriteIds.filter((id) => id !== contentId);
+
     // Check if this is a demo user
     const isDemoUser = user.email && demoUserFavorites[user.email];
 
     if (isDemoUser) {
-      // Demo user - just update local state
-      const newFavorites = favoriteIds.filter((id) => id !== contentId);
+      // Demo user - just update local state and cache
       setFavoriteIds(newFavorites);
+      // Update cache immediately
+      favoritesCache.set(cacheKey, {
+        data: newFavorites,
+        timestamp: Date.now(),
+      });
       toast.success("Removed from favorites");
       return;
     }
@@ -168,7 +187,6 @@ export const useUserFavorites = () => {
       if (error) {
         console.error("Error removing from favorites:", error);
         // Fallback to localStorage
-        const newFavorites = favoriteIds.filter((id) => id !== contentId);
         setFavoriteIds(newFavorites);
         localStorage.setItem(
           `favorites_${user.id}`,
@@ -176,9 +194,15 @@ export const useUserFavorites = () => {
         );
         toast.success("Removed from favorites");
       } else {
-        setFavoriteIds(favoriteIds.filter((id) => id !== contentId));
+        setFavoriteIds(newFavorites);
         toast.success("Removed from favorites");
       }
+      
+      // Update cache immediately regardless of success/error
+      favoritesCache.set(cacheKey, {
+        data: newFavorites,
+        timestamp: Date.now(),
+      });
     } catch (error) {
       console.error("Error removing from favorites:", error);
       toast.error("Failed to remove from favorites");
