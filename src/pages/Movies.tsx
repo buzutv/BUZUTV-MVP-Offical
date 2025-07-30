@@ -53,9 +53,12 @@ const Movies = React.memo(() => {
     if (activeGenre === "all") {
       return movieContent.all;
     }
-    return movieContent.all.filter(
+
+    const filtered = movieContent.all.filter(
       (movie) => movie.genre.toLowerCase() === activeGenre.toLowerCase(),
     );
+
+    return filtered;
   }, [movieContent.all, activeGenre]);
 
   const handleHomeRowCardClick = useCallback(() => {
@@ -423,15 +426,58 @@ const Movies = React.memo(() => {
                   <>
                     {filteredMovies.length > 0 && (
                       <>
-                        {/* New content row */}
-                        <HomeRow
-                          title="New Movies"
-                          items={filteredMovies.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
-                        />
+                        {/* New content row - Sort filtered movies by date */}
+                        {(() => {
+                          console.log("🆕 NEW MOVIES ROW DEBUG:");
+                          console.log(
+                            "Filtered movies count:",
+                            filteredMovies.length,
+                          );
+                          console.log(
+                            "Active genre for new movies:",
+                            activeGenre,
+                          );
+
+                          const withDates = filteredMovies.filter(
+                            (movie) => movie.created_at,
+                          );
+                          console.log(
+                            "Movies with created_at:",
+                            withDates.length,
+                          );
+
+                          const newMoviesFiltered = withDates
+                            .sort(
+                              (a, b) =>
+                                new Date(b.created_at).getTime() -
+                                new Date(a.created_at).getTime(),
+                            )
+                            .slice(0, 8);
+
+                          console.log(
+                            "Final new movies for display:",
+                            newMoviesFiltered.map((m) => ({
+                              title: m.title,
+                              genre: m.genre,
+                              created_at: m.created_at,
+                            })),
+                          );
+
+                          return (
+                            newMoviesFiltered.length > 0 && (
+                              <HomeRow
+                                key={`new-movies-${activeGenre}`}
+                                title="New Movies"
+                                items={newMoviesFiltered}
+                                onCardClick={handleHomeRowCardClick}
+                              />
+                            )
+                          );
+                        })()}
 
                         {/* Recommended row */}
                         <HomeRow
+                          key={`recommended-movies-${activeGenre}`}
                           title="Recommended"
                           items={filteredMovies.slice(2, 10)}
                           onCardClick={handleHomeRowCardClick}

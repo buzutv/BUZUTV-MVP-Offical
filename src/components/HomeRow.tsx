@@ -176,7 +176,9 @@ const HomeRow = React.memo(
     return (
       prevProps.title === nextProps.title &&
       prevProps.items.length === nextProps.items.length &&
-      prevProps.isMoreLikeThis === nextProps.isMoreLikeThis
+      prevProps.isMoreLikeThis === nextProps.isMoreLikeThis &&
+      // Compare actual item IDs to detect content changes
+      JSON.stringify(prevProps.items.map(item => item.id)) === JSON.stringify(nextProps.items.map(item => item.id))
     );
   },
 );

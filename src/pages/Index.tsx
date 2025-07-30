@@ -275,15 +275,32 @@ const Index = React.memo(() => {
               <>
                 {filteredContent.length > 0 && (
                   <>
-                    {/* New content row */}
-                    <HomeRow
-                      title="New Content"
-                      items={filteredContent.slice(0, 8)}
-                      onCardClick={handleHomeRowCardClick}
-                    />
+                    {/* New content row - Sort filtered content by date */}
+                    {(() => {
+                      const newContentFiltered = filteredContent
+                        .filter((item) => item.created_at)
+                        .sort(
+                          (a, b) =>
+                            new Date(b.created_at).getTime() -
+                            new Date(a.created_at).getTime(),
+                        )
+                        .slice(0, 8);
+
+                      return (
+                        newContentFiltered.length > 0 && (
+                          <HomeRow
+                            key={`new-content-${activeGenre}`}
+                            title="New Content"
+                            items={newContentFiltered}
+                            onCardClick={handleHomeRowCardClick}
+                          />
+                        )
+                      );
+                    })()}
 
                     {/* Recommended row */}
                     <HomeRow
+                      key={`recommended-content-${activeGenre}`}
                       title={`Recommended`}
                       items={filteredContent.slice(2, 10)}
                       onCardClick={handleHomeRowCardClick}

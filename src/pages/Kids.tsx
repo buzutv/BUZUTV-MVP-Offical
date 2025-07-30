@@ -380,15 +380,32 @@ const Kids = () => {
                   <>
                     {filteredKidsContent.length > 0 && (
                       <>
-                        {/* New content row */}
-                        <HomeRow
-                          title="New Kids Content"
-                          items={filteredKidsContent.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
-                        />
+                        {/* New content row - Sort filtered kids content by date */}
+                        {(() => {
+                          const newKidsContentFiltered = filteredKidsContent
+                            .filter((item) => item.created_at)
+                            .sort(
+                              (a, b) =>
+                                new Date(b.created_at).getTime() -
+                                new Date(a.created_at).getTime(),
+                            )
+                            .slice(0, 8);
+
+                          return (
+                            newKidsContentFiltered.length > 0 && (
+                              <HomeRow
+                                key={`new-kids-content-${activeGenre}`}
+                                title="New Kids Content"
+                                items={newKidsContentFiltered}
+                                onCardClick={handleHomeRowCardClick}
+                              />
+                            )
+                          );
+                        })()}
 
                         {/* Recommended row */}
                         <HomeRow
+                          key={`recommended-kids-content-${activeGenre}`}
                           title="Recommended"
                           items={filteredKidsContent.slice(2, 10)}
                           onCardClick={handleHomeRowCardClick}

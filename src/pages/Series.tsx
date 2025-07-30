@@ -56,9 +56,12 @@ const Series = () => {
     if (activeGenre === "all") {
       return seriesContent.all;
     }
-    return seriesContent.all.filter(
+
+    const filtered = seriesContent.all.filter(
       (series) => series.genre.toLowerCase() === activeGenre.toLowerCase(),
     );
+
+    return filtered;
   };
 
   const filteredSeries = getFilteredSeries();
@@ -436,15 +439,58 @@ const Series = () => {
                   <>
                     {filteredSeries.length > 0 && (
                       <>
-                        {/* New content row */}
-                        <HomeRow
-                          title="New TV Shows"
-                          items={filteredSeries.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
-                        />
+                        {/* New content row - Sort filtered series by date */}
+                        {(() => {
+                          console.log("🆕 NEW SERIES ROW DEBUG:");
+                          console.log(
+                            "Filtered series count:",
+                            filteredSeries.length,
+                          );
+                          console.log(
+                            "Active genre for new series:",
+                            activeGenre,
+                          );
+
+                          const withDates = filteredSeries.filter(
+                            (series) => series.created_at,
+                          );
+                          console.log(
+                            "Series with created_at:",
+                            withDates.length,
+                          );
+
+                          const newSeriesFiltered = withDates
+                            .sort(
+                              (a, b) =>
+                                new Date(b.created_at).getTime() -
+                                new Date(a.created_at).getTime(),
+                            )
+                            .slice(0, 8);
+
+                          console.log(
+                            "Final new series for display:",
+                            newSeriesFiltered.map((s) => ({
+                              title: s.title,
+                              genre: s.genre,
+                              created_at: s.created_at,
+                            })),
+                          );
+
+                          return (
+                            newSeriesFiltered.length > 0 && (
+                              <HomeRow
+                                key={`new-series-${activeGenre}`}
+                                title="New TV Shows"
+                                items={newSeriesFiltered}
+                                onCardClick={handleHomeRowCardClick}
+                              />
+                            )
+                          );
+                        })()}
 
                         {/* Recommended row */}
                         <HomeRow
+                          key={`recommended-series-${activeGenre}`}
                           title="Recommended"
                           items={filteredSeries.slice(2, 10)}
                           onCardClick={handleHomeRowCardClick}
