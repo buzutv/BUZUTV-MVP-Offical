@@ -146,9 +146,7 @@ const Navbar = React.memo(
           shouldShowNav ? "flex md:flex" : "hidden"
         } items-center bg-black/20 backdrop-blur-lg border-b border-white/10`}
       >
-        <div
-          className="max-w-full px-4 md:px-8 w-full flex items-center justify-between h-14 relative"
-        >
+        <div className="max-w-full px-4 md:px-8 w-full flex items-center justify-between h-14 relative">
           <div className="flex-shrink-0">
             <Link to="/" className="flex items-center">
               <img src="/logo.png" alt="BUZUTV" className="h-10 w-auto" />
@@ -163,7 +161,7 @@ const Navbar = React.memo(
                   to={to}
                   className={`
                     flex items-center justify-center gap-3 rounded-full font-medium will-change-transform transform-gpu transition-all whitespace-nowrap
-                    px-4 py-2 text-base
+                    px-4 py-1 text-base
                     ${
                       isActivePath(to)
                         ? to === "/kids"
