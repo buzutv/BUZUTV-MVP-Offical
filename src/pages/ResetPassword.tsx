@@ -13,7 +13,7 @@ const ResetPassword = () => {
   const navigate = useNavigate();
   const query = useQuery();
 
-  const email = query.get('email');
+  const email = query.get('email') ? decodeURIComponent(query.get('email')!) : null;
   const otp = query.get('otp');
 
   const [verifying, setVerifying] = useState(true);
