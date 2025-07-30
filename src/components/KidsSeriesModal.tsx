@@ -166,7 +166,7 @@ const KidsSeriesModal = ({
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-blue-400 via-blue-400/30 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 h-48 bg-[linear-gradient(to_top,_rgba(37,99,235,1)_0%,_rgba(37,99,235,0.7)_30%,_rgba(37,99,235,0.4)_60%,_transparent_90%)]" />
                 <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
                   <h1
                     className="text-5xl font-bold text-white mb-6"
@@ -238,7 +238,7 @@ const KidsSeriesModal = ({
               </div>
 
               <div className="p-8 pt-6 relative">
-                <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-blue-400 to-transparent pointer-events-none" />
+                <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-blue-600 to-transparent pointer-events-none" />
                 {seasonsData.length > 0 && (
                   <div className="mb-8">
                     <Tabs defaultValue="season-1" className="w-full">

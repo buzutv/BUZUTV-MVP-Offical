@@ -101,7 +101,7 @@ const KidsMovieModal = ({
                 </div>
 
                 {/* Only bottom gradient for fade effect */}
-                <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-blue-400 via-blue-400/30 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 h-48 bg-[linear-gradient(to_top,_rgba(37,99,235,1)_0%,_rgba(37,99,235,0.7)_30%,_rgba(37,99,235,0.4)_60%,_transparent_90%)]" />
 
                 {/* Title and Info Container */}
                 <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
@@ -177,7 +177,7 @@ const KidsMovieModal = ({
 
               {/* Content Section - Minimized gap */}
               <div className="p-8 pt-6 pb-0 relative">
-                <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-blue-400 to-transparent pointer-events-none" />
+                <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-blue-600 to-transparent pointer-events-none" />
 
                 {/* More Like This Section */}
                 {filteredRecommendedContent.length > 0 && (

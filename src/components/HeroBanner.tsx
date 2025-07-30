@@ -250,7 +250,7 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                   <div
                     className={`absolute inset-0 ${
                       isKidsVariant
-                        ? "bg-gradient-to-t from-blue-400/80 via-blue-400/10 to-transparent"
+                        ? "bg-[linear-gradient(to_top,_rgba(37,99,235,0.9)_0%,_rgba(37,99,235,0.5)_20%,_transparent_70%)]"
                         : "bg-gradient-to-t from-black via-black/30 to-transparent"
                     }`}
                   />

@@ -82,20 +82,32 @@ const MoreLikeThisCard = ({ item }: { item: any }) => {
         />
       )}
 
-      <div className="relative flex-shrink-0 w-64 group rounded-lg group-hover:shadow-[0_0_4px_rgba(255,255,255,0.6)] transition-all duration-300">
+      <div className="relative flex-shrink-0 w-64 group border-2 border-transparent hover:scale-105 hover:border-white hover:shadow-[0_0_4px_rgba(255,255,255,0.6)] rounded-lg transition-all duration-300 overflow-hidden">
         <div
-          className="relative overflow-hidden rounded-lg shadow-lg border-2 border-transparent group-hover:scale-105 group-hover:border-white group-hover:shadow-[0_0_4px_rgba(255,255,255,0.6)] transition-all duration-300"
+          className="relative overflow-hidden transition-all duration-300"
           style={{ aspectRatio: "16/9" }}
         >
           <img
             src={item.posterUrl}
             alt={item.title}
-            className="w-full h-full object-cover rounded-lg transform transition-transform duration-300 group-hover:scale-[1.1]"
+            className="w-full h-full object-cover rounded-lg transform transition-transform duration-300 hover:scale-[1.1]"
           />
 
           <div className="absolute inset-0 z-0 rounded-lg overflow-hidden pointer-events-none">
-            <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/90 via-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div
+              className={`absolute bottom-[-1px] left-0 right-0 h-1/2 ${
+                location.pathname === "/kids"
+                  ? "bg-[linear-gradient(to_top,_rgba(37,99,235,0.95)_0%,_rgba(37,99,235,0.7)_30%,_rgba(37,99,235,0.4)_60%,_rgba(37,99,235,0.2)_80%,_rgba(37,99,235,0.1)_90%,_transparent_100%)]"
+                  : "bg-[linear-gradient(to_top,_rgba(0,0,0,0.95)_0%,_rgba(0,0,0,0.7)_30%,_rgba(0,0,0,0.4)_60%,_rgba(0,0,0,0.2)_80%,_rgba(0,0,0,0.1)_90%,_transparent_100%)]"
+              }`}
+            />
+            <div
+              className={`absolute bottom-[-1px] left-0 right-0 h-1/2 ${
+                location.pathname === "/kids"
+                  ? "bg-[linear-gradient(to_top,_rgba(37,99,235,0.95)_0%,_rgba(37,99,235,0.7)_30%,_rgba(37,99,235,0.4)_60%,_transparent_90%)]"
+                  : "bg-[linear-gradient(to_top,_rgba(0,0,0,0.95)_0%,_rgba(0,0,0,0.7)_30%,_rgba(0,0,0,0.4)_60%,_transparent_90%)]"
+              } opacity-0 group-hover:opacity-50 transition-opacity duration-300`}
+            />
           </div>
 
           <div className="absolute bottom-0 left-0 right-0 z-10 p-3 pt-6 pointer-events-none">

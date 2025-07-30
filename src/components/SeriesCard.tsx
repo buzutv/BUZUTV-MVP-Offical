@@ -111,20 +111,17 @@ const SeriesCard = ({
         />
       )}
 
-      <div className="series-card movie-card group rounded-lg transition-all duration-300">
-        <div
-          className="block cursor-pointer rounded-lg"
-          onClick={handleCardClick}
-        >
+      <div className="series-card movie-card group border-2 border-transparent hover:scale-105 hover:border-white hover:shadow-[0_0_4px_rgba(255,255,255,0.6)] rounded-lg transition-all duration-300 overflow-hidden">
+        <div className="block cursor-pointer" onClick={handleCardClick}>
           <div
-            className="relative overflow-hidden rounded-lg border-2 border-transparent group-hover:scale-105 group-hover:border-white group-hover:shadow-[0_0_4px_rgba(255,255,255,0.6)] transition-all duration-300"
+            className="relative overflow-hidden transition-all duration-300"
             style={{ aspectRatio: "16/9" }}
           >
-            <div className="w-full h-full rounded-lg overflow-hidden">
+            <div className="w-full h-full ">
               <img
                 src={actualSeries.posterUrl}
                 alt={actualSeries.title}
-                className="w-full h-full rounded-lg object-cover transform transition-transform duration-300 group-hover:scale-[1.1]"
+                className="w-full h-full rounded-lg object-cover transform transition-transform duration-300 hover:scale-[1.1]"
               />
             </div>
 
@@ -139,10 +136,18 @@ const SeriesCard = ({
 
             <div className="absolute inset-0 z-0 rounded-lg  pointer-events-none">
               <div
-                className={`absolute bottom-[-1px] left-0 right-0 h-1/2 ${location.pathname === "/kids" ? "bg-gradient-to-t from-blue-400 via-blue-400/30 to-transparent" : "bg-gradient-to-t from-black/95 via-black/70 to-transparent"}`}
+                className={`absolute bottom-[-1px] left-0 right-0 h-1/2 ${
+                  location.pathname === "/kids"
+                    ? "bg-[linear-gradient(to_top,_rgba(37,99,235,0.95)_0%,_rgba(37,99,235,0.7)_30%,_rgba(37,99,235,0.4)_60%,_rgba(37,99,235,0.2)_80%,_rgba(37,99,235,0.1)_90%,_transparent_100%)]"
+                    : "bg-[linear-gradient(to_top,_rgba(0,0,0,0.95)_0%,_rgba(0,0,0,0.7)_30%,_rgba(0,0,0,0.4)_60%,_rgba(0,0,0,0.2)_80%,_rgba(0,0,0,0.1)_90%,_transparent_100%)]"
+                }`}
               />
               <div
-                className={`absolute bottom-[-1px] left-0 right-0 h-1/2 ${location.pathname === "/kids" ? "bg-gradient-to-t from-blue-400 via-blue-400/50 to-transparent" : "bg-gradient-to-t from-black/90 via-black/70 to-transparent"} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+                className={`absolute bottom-[-1px] left-0 right-0 h-1/2 ${
+                  location.pathname === "/kids"
+                    ? "bg-[linear-gradient(to_top,_rgba(37,99,235,0.95)_0%,_rgba(37,99,235,0.7)_30%,_rgba(37,99,235,0.4)_60%,_transparent_90%)]"
+                    : "bg-[linear-gradient(to_top,_rgba(0,0,0,0.95)_0%,_rgba(0,0,0,0.7)_30%,_rgba(0,0,0,0.4)_60%,_transparent_90%)]"
+                } opacity-0 group-hover:opacity-50 transition-opacity duration-300`}
               />
             </div>
 
