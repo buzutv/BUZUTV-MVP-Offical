@@ -22,7 +22,7 @@ const BrandButton: React.FC<BrandButtonProps> = ({
   ...props
 }) => {
   const baseClasses =
-    "flex items-center justify-center gap-1.5 rounded-full font-medium will-change-transform transform-gpu transition-all whitespace-nowrap ";
+    "flex items-center justify-center gap-1.5 rounded-full font-medium will-change-transform transform-gpu transition-all whitespace-nowrap min-h-[40px]";
 
   const sizeClasses = {
     sm: "px-3 py-1 text-sm",

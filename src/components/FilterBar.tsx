@@ -38,7 +38,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                     isActive ? (isKidsVariant ? "kids" : "primary") : "ghost"
                   }
                   size="sm"
-                  className="text-sm"
+                  className="text-sm min-h-0"
                 >
                   {genre}
                 </BrandButton>
