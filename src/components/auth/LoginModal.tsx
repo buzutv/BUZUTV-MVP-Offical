@@ -175,6 +175,19 @@ const LoginModal = () => {
               </div>
             </DialogHeader>
 
+            {/* Toggle to Sign Up (above login form) */}
+            {!isSignUp && (
+              <div className="text-center mb-6 space-y-3">
+                <p className="text-gray-400">Don't have an account?</p>
+                <button
+                  onClick={() => setIsSignUp(true)}
+                  className="flex items-center justify-center gap-2 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-4 py-2 text-xs bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 hover:from-brand-700 hover:via-brand-800 hover:to-brand-900 mx-auto"
+                >
+                  Sign Up
+                </button>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6">
               {isSignUp && (
                 <>
@@ -265,6 +278,17 @@ const LoginModal = () => {
                   className="w-full px-3 py-2 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
                   placeholder="Enter your password"
                 />
+                {!isSignUp && (
+                  <div className="mt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotPassword(true)}
+                      className="text-gray-400 hover:text-brand-500 transition-colors text-sm"
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
+                )}
               </div>
 
               {isSignUp && (
@@ -334,30 +358,14 @@ const LoginModal = () => {
             )}
 
             <div className="text-center mt-6 space-y-4">
-              {isSignUp ? (
+              {isSignUp && (
                 <div className="space-y-3">
                   <p className="text-gray-400">Already have an account?</p>
                   <button
                     onClick={() => setIsSignUp(false)}
-                    className="flex items-center justify-center w-full gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 hover:from-brand-700 hover:via-brand-800 hover:to-brand-900"
+                    className="flex items-center justify-center gap-2 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-4 py-2 text-xs bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 hover:from-brand-700 hover:via-brand-800 hover:to-brand-900 mx-auto"
                   >
                     Log In
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <p className="text-gray-400">Don't have an account?</p>
-                  <button
-                    onClick={() => setIsSignUp(true)}
-                    className="w-full flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 hover:from-brand-700 hover:via-brand-800 hover:to-brand-900"
-                  >
-                    Sign Up
-                  </button>
-                  <button
-                    onClick={() => setShowForgotPassword(true)}
-                    className="text-gray-400 hover:text-brand-500 transition-colors text-sm"
-                  >
-                    Forgot Password?
                   </button>
                 </div>
               )}
