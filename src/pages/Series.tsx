@@ -480,7 +480,7 @@ const Series = () => {
                             newSeriesFiltered.length > 0 && (
                               <HomeRow
                                 key={`new-series-${activeGenre}`}
-                                title="New TV Shows"
+                                title={activeGenre === "all" ? "New Content" : `New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} TV Shows`}
                                 items={newSeriesFiltered}
                                 onCardClick={handleHomeRowCardClick}
                               />
@@ -491,7 +491,7 @@ const Series = () => {
                         {/* Recommended row */}
                         <HomeRow
                           key={`recommended-series-${activeGenre}`}
-                          title="Recommended"
+                          title={activeGenre === "all" ? "Recommended TV Shows" : `Recommended ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} TV Shows`}
                           items={filteredSeries.slice(2, 10)}
                           onCardClick={handleHomeRowCardClick}
                         />
@@ -500,7 +500,9 @@ const Series = () => {
 
                     {/* Grid Layout for all filtered series */}
                     <div className="mt-8 mb-8 pl-4">
-                      <h2 className="text-xl font-semibold mb-4">All Series</h2>
+                      <h2 className="text-xl font-semibold mb-4">
+                        {activeGenre === "all" ? "All Series" : `All ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} TV Shows`}
+                      </h2>
 
                       {filteredSeries.length > 0 ? (
                         <ContentGrid

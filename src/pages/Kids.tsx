@@ -302,7 +302,7 @@ const Kids = () => {
                     {/* New Kids */}
                     {enhancedKidsContent.new.length > 0 && (
                       <HomeRow
-                        title="New Kids"
+                        title="New Kids Content"
                         items={enhancedKidsContent.new}
                         onCardClick={handleHomeRowCardClick}
                       />
@@ -395,7 +395,7 @@ const Kids = () => {
                             newKidsContentFiltered.length > 0 && (
                               <HomeRow
                                 key={`new-kids-content-${activeGenre}`}
-                                title="New Kids Content"
+                                title={activeGenre === "all" ? "New Kids Content" : `New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Kids Content`}
                                 items={newKidsContentFiltered}
                                 onCardClick={handleHomeRowCardClick}
                               />
@@ -406,7 +406,7 @@ const Kids = () => {
                         {/* Recommended row */}
                         <HomeRow
                           key={`recommended-kids-content-${activeGenre}`}
-                          title="Recommended"
+                          title={activeGenre === "all" ? "Recommended" : `Recommended ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Kids Content`}
                           items={filteredKidsContent.slice(2, 10)}
                           onCardClick={handleHomeRowCardClick}
                         />
@@ -416,7 +416,7 @@ const Kids = () => {
                     {/* Grid Layout for all filtered kids content */}
                     <div className="mt-8 pb-4 pl-4">
                       <h2 className="text-2xl font-bold mb-4 text-white">
-                        All {activeGenre} Kids Content
+                        {activeGenre === "all" ? "All Kids Content" : `All ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Kids Content`}
                       </h2>
 
                       {filteredKidsContent.length > 0 ? (
@@ -430,8 +430,7 @@ const Kids = () => {
                             No kids content found
                           </h3>
                           <p className="text-blue-700">
-                            No {activeGenre} kids content available at the
-                            moment
+                            No {activeGenre === "all" ? "" : activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1) + " "}kids content available at the moment
                           </p>
                         </div>
                       )}

@@ -467,7 +467,7 @@ const Movies = React.memo(() => {
                             newMoviesFiltered.length > 0 && (
                               <HomeRow
                                 key={`new-movies-${activeGenre}`}
-                                title="New Movies"
+                                title={activeGenre === "all" ? "New Content" : `New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies`}
                                 items={newMoviesFiltered}
                                 onCardClick={handleHomeRowCardClick}
                               />
@@ -478,7 +478,7 @@ const Movies = React.memo(() => {
                         {/* Recommended row */}
                         <HomeRow
                           key={`recommended-movies-${activeGenre}`}
-                          title="Recommended"
+                          title={activeGenre === "all" ? "Recommended Movies" : `Recommended ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies`}
                           items={filteredMovies.slice(2, 10)}
                           onCardClick={handleHomeRowCardClick}
                         />
@@ -487,7 +487,9 @@ const Movies = React.memo(() => {
 
                     {/* Grid Layout for all filtered movies */}
                     <div className="mt-8 mb-8 pl-4">
-                      <h2 className="text-xl font-semibold mb-4">All Movies</h2>
+                      <h2 className="text-xl font-semibold mb-4">
+                        {activeGenre === "all" ? "All Movies" : `All ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies`}
+                      </h2>
 
                       {filteredMovies.length > 0 ? (
                         <ContentGrid
