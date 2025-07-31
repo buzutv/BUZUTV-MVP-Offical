@@ -91,6 +91,22 @@ const Navbar = React.memo(
       };
     }, [isMenuOpen]);
 
+    useEffect(() => {
+      const handleScroll = () => {
+        if (isMenuOpen) {
+          setIsMenuOpen(false);
+        }
+      };
+
+      if (isMenuOpen) {
+        window.addEventListener("scroll", handleScroll, { passive: true });
+      }
+
+      return () => {
+        window.removeEventListener("scroll", handleScroll);
+      };
+    }, [isMenuOpen]);
+
     const handleSearchBlur = useCallback(() => {
       if (!searchQuery) setIsSearchOpen(false);
     }, [searchQuery]);
@@ -142,11 +158,21 @@ const Navbar = React.memo(
     return (
       <nav
         ref={navRef}
-        className={`fixed top-0 left-0 right-0 z-50 h-14 transition-all duration-500 ${
+        className={`fixed top-3 left-0 right-0 z-50 px-4 md:px-6 h-14 transition-all duration-500 ${
           shouldShowNav ? "flex md:flex" : "hidden"
-        } items-center bg-black/20 backdrop-blur-lg border-b border-white/10`}
+        } items-center`}
       >
-        <div className="max-w-full px-4 md:px-8 w-full flex items-center justify-between h-14 relative">
+        <div
+          className="max-w-full px-4 md:px-8 w-full flex items-center justify-between h-14 relative bg-black/20 backdrop-blur-lg border border-white/10"
+          style={{
+            borderRadius: isMenuOpen ? "30px 30px 0 0" : "30px",
+            borderBottom: isMenuOpen
+              ? "none"
+              : "1px solid rgba(255,255,255,0.1)",
+            transition:
+              "border-radius 300ms ease, border-bottom-color 300ms ease",
+          }}
+        >
           <div className="flex-shrink-0">
             <Link to="/" className="flex items-center">
               <img src="/logo.png" alt="BUZUTV" className="h-10 w-auto" />
@@ -333,7 +359,7 @@ const Navbar = React.memo(
 
         {/* Mobile dropdown */}
         <div
-          className={`absolute top-14 left-0 right-0 z-40 bg-black/20 backdrop-blur-lg border-b border-white/10 px-6 py-4 space-y-3 md:hidden transition-all duration-300 ease-in-out transform ${
+          className={`absolute top-14 left-4 right-4 z-40 bg-black/20 backdrop-blur-lg border border-white/10 border-t-transparent rounded-b-[30px] px-6 py-4 space-y-3 md:hidden transition-all duration-300 ease-in-out transform ${
             isMenuOpen
               ? "opacity-100 translate-y-0 pointer-events-auto"
               : "opacity-0 -translate-y-4 pointer-events-none"
