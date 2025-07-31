@@ -127,7 +127,7 @@ const Kids = () => {
             }}
           ></div>
           <div className="relative flex items-center justify-center min-h-screen">
-            <div className="text-2xl font-bold text-white">
+            <div className="text-2xlold text-white">
               Loading Kids Content...
             </div>
           </div>
@@ -156,7 +156,7 @@ const Kids = () => {
                   </div>
                   {/* Right - Top Ranked */}
                   <div>
-                    <h2 className="text-2xl font-bold mb-3 text-blue-800">
+                    <h2 className="text-2xlold mb-3 text-blue-800">
                       Top Kids Shows
                     </h2>
                     <div
@@ -395,7 +395,11 @@ const Kids = () => {
                             newKidsContentFiltered.length > 0 && (
                               <HomeRow
                                 key={`new-kids-content-${activeGenre}`}
-                                title={activeGenre === "all" ? "New Kids Content" : `New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Kids Content`}
+                                title={
+                                  activeGenre === "all"
+                                    ? "New Kids Content"
+                                    : `New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Kids Content`
+                                }
                                 items={newKidsContentFiltered}
                                 onCardClick={handleHomeRowCardClick}
                               />
@@ -406,7 +410,11 @@ const Kids = () => {
                         {/* Recommended row */}
                         <HomeRow
                           key={`recommended-kids-content-${activeGenre}`}
-                          title={activeGenre === "all" ? "Recommended" : `Recommended ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Kids Content`}
+                          title={
+                            activeGenre === "all"
+                              ? "Recommended"
+                              : `Recommended ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Kids Content`
+                          }
                           items={filteredKidsContent.slice(2, 10)}
                           onCardClick={handleHomeRowCardClick}
                         />
@@ -415,8 +423,10 @@ const Kids = () => {
 
                     {/* Grid Layout for all filtered kids content */}
                     <div className="mt-8 pb-4 pl-4">
-                      <h2 className="text-2xl font-bold mb-4 text-white">
-                        {activeGenre === "all" ? "All Kids Content" : `All ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Kids Content`}
+                      <h2 className="text-2xl mb-4 text-white">
+                        {activeGenre === "all"
+                          ? "All Kids Content"
+                          : `All ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Kids Content`}
                       </h2>
 
                       {filteredKidsContent.length > 0 ? (
@@ -430,7 +440,13 @@ const Kids = () => {
                             No kids content found
                           </h3>
                           <p className="text-blue-700">
-                            No {activeGenre === "all" ? "" : activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1) + " "}kids content available at the moment
+                            No{" "}
+                            {activeGenre === "all"
+                              ? ""
+                              : activeGenre.charAt(0).toUpperCase() +
+                                activeGenre.slice(1) +
+                                " "}
+                            kids content available at the moment
                           </p>
                         </div>
                       )}
@@ -441,7 +457,7 @@ const Kids = () => {
             </>
           ) : (
             <div className="text-center py-16">
-              <h2 className="text-2xl font-bold mb-4 text-blue-800">
+              <h2 className="text-2xlold mb-4 text-blue-800">
                 No Kids Content Available
               </h2>
               <div className="text-6xl mb-4">🎈</div>

@@ -290,7 +290,11 @@ const Index = React.memo(() => {
                         newContentFiltered.length > 0 && (
                           <HomeRow
                             key={`new-content-${activeGenre}`}
-                            title={activeGenre === "all" ? "New Content" : `New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies and TV Shows`}
+                            title={
+                              activeGenre === "all"
+                                ? "New Content"
+                                : `New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies and TV Shows`
+                            }
                             items={newContentFiltered}
                             onCardClick={handleHomeRowCardClick}
                           />
@@ -301,7 +305,11 @@ const Index = React.memo(() => {
                     {/* Recommended row */}
                     <HomeRow
                       key={`recommended-content-${activeGenre}`}
-                      title={activeGenre === "all" ? "Recommended" : `Recommended ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies and TV Shows`}
+                      title={
+                        activeGenre === "all"
+                          ? "Recommended"
+                          : `Recommended ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies and TV Shows`
+                      }
                       items={filteredContent.slice(2, 10)}
                       onCardClick={handleHomeRowCardClick}
                     />
@@ -310,8 +318,10 @@ const Index = React.memo(() => {
 
                 {/* Grid Layout for all filtered content */}
                 <div className="mt-8 mb-8 pl-4">
-                  <h2 className="text-xl font-semibold mb-4">
-                    {activeGenre === "all" ? "All Content" : `All ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies and TV Shows`}
+                  <h2 className="text-2xl mb-4">
+                    {activeGenre === "all"
+                      ? "All Content"
+                      : `All ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies and TV Shows`}
                   </h2>
 
                   {filteredContent.length > 0 ? (
@@ -325,7 +335,10 @@ const Index = React.memo(() => {
                         No content found
                       </h3>
                       <p className="text-gray-400">
-                        No {activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} movies and TV shows available at the moment
+                        No{" "}
+                        {activeGenre.charAt(0).toUpperCase() +
+                          activeGenre.slice(1)}{" "}
+                        movies and TV shows available at the moment
                       </p>
                     </div>
                   )}

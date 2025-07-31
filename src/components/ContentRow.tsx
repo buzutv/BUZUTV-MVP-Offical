@@ -74,7 +74,7 @@ const ContentRow = React.memo(({ title, movies }: ContentRowProps) => {
   return (
     <section className="pb-12">
       <div className="px-4 mb-2">
-        <h2 className="text-2xl font-bold">{title}</h2>
+        <h2 className="text-2xl">{title}</h2>
       </div>
 
       <div className="relative">

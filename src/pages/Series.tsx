@@ -89,7 +89,7 @@ const Series = () => {
             }}
           ></div>
           <div className="relative flex items-center justify-center min-h-screen">
-            <div className="text-2xl font-bold text-white">Loading...</div>
+            <div className="text-2xl text-white">Loading...</div>
           </div>
         </div>
       </ProtectedRoute>
@@ -104,7 +104,7 @@ const Series = () => {
     series: typeof seriesContent.all;
   }) => (
     <section className="mb-8 px-4">
-      <h2 className="text-2xl font-bold mb-4">{title}</h2>
+      <h2 className="text-2xl mb-4">{title}</h2>
       <Carousel
         opts={{
           align: "start",
@@ -173,9 +173,7 @@ const Series = () => {
                   </div>
 
                   <div className="flex flex-col h-full">
-                    <h2 className="text-2xl font-bold mb-3">
-                      Top Ranked Series
-                    </h2>
+                    <h2 className="text-2xl mb-3">Top Ranked Series</h2>
                     <div
                       className="flex flex-col space-y-3 w-full"
                       style={{ height: "calc(60vh - 2rem)" }}
@@ -480,7 +478,11 @@ const Series = () => {
                             newSeriesFiltered.length > 0 && (
                               <HomeRow
                                 key={`new-series-${activeGenre}`}
-                                title={activeGenre === "all" ? "New Content" : `New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} TV Shows`}
+                                title={
+                                  activeGenre === "all"
+                                    ? "New Content"
+                                    : `New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} TV Shows`
+                                }
                                 items={newSeriesFiltered}
                                 onCardClick={handleHomeRowCardClick}
                               />
@@ -491,7 +493,11 @@ const Series = () => {
                         {/* Recommended row */}
                         <HomeRow
                           key={`recommended-series-${activeGenre}`}
-                          title={activeGenre === "all" ? "Recommended TV Shows" : `Recommended ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} TV Shows`}
+                          title={
+                            activeGenre === "all"
+                              ? "Recommended TV Shows"
+                              : `Recommended ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} TV Shows`
+                          }
                           items={filteredSeries.slice(2, 10)}
                           onCardClick={handleHomeRowCardClick}
                         />
@@ -499,9 +505,12 @@ const Series = () => {
                     )}
 
                     {/* Grid Layout for all filtered series */}
+                    {/* Grid Layout for all filtered series */}
                     <div className="mt-8 mb-8 pl-4">
-                      <h2 className="text-xl font-semibold mb-4">
-                        {activeGenre === "all" ? "All Series" : `All ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} TV Shows`}
+                      <h2 className="text-2xl mb-4">
+                        {activeGenre === "all"
+                          ? "All Series"
+                          : `All ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} TV Shows`}
                       </h2>
 
                       {filteredSeries.length > 0 ? (
@@ -526,7 +535,7 @@ const Series = () => {
             </>
           ) : (
             <div className="text-center py-16">
-              <h2 className="text-2xl font-bold mb-4">No series available</h2>
+              <h2 className="text-2xl mb-4">No series available</h2>
               <p className="text-gray-400">
                 Series will appear here once they're added to the platform
               </p>

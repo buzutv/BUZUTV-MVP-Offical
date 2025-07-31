@@ -467,7 +467,11 @@ const Movies = React.memo(() => {
                             newMoviesFiltered.length > 0 && (
                               <HomeRow
                                 key={`new-movies-${activeGenre}`}
-                                title={activeGenre === "all" ? "New Content" : `New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies`}
+                                title={
+                                  activeGenre === "all"
+                                    ? "New Content"
+                                    : `New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies`
+                                }
                                 items={newMoviesFiltered}
                                 onCardClick={handleHomeRowCardClick}
                               />
@@ -478,7 +482,11 @@ const Movies = React.memo(() => {
                         {/* Recommended row */}
                         <HomeRow
                           key={`recommended-movies-${activeGenre}`}
-                          title={activeGenre === "all" ? "Recommended Movies" : `Recommended ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies`}
+                          title={
+                            activeGenre === "all"
+                              ? "Recommended Movies"
+                              : `Recommended ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies`
+                          }
                           items={filteredMovies.slice(2, 10)}
                           onCardClick={handleHomeRowCardClick}
                         />
@@ -487,8 +495,10 @@ const Movies = React.memo(() => {
 
                     {/* Grid Layout for all filtered movies */}
                     <div className="mt-8 mb-8 pl-4">
-                      <h2 className="text-xl font-semibold mb-4">
-                        {activeGenre === "all" ? "All Movies" : `All ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies`}
+                      <h2 className="text-2xl mb-4">
+                        {activeGenre === "all"
+                          ? "All Movies"
+                          : `All ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies`}
                       </h2>
 
                       {filteredMovies.length > 0 ? (
@@ -513,7 +523,7 @@ const Movies = React.memo(() => {
             </>
           ) : (
             <div className="text-center py-16">
-              <h2 className="text-2xl font-bold mb-4">No movies available</h2>
+              <h2 className="text-2xl mb-4">No movies available</h2>
               <p className="text-gray-400">
                 Movies will appear here once they're added to the platform
               </p>

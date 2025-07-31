@@ -16,7 +16,6 @@ const MyList = React.memo(() => {
   const startTime = performance.now();
   const { favoriteIds, isLoading: favoritesLoading } = useUserFavorites();
 
-
   const channelFavStart = performance.now();
   const { favoriteChannelIds, isLoading: channelFavoritesLoading } =
     useUserChannelFavorites();
@@ -32,7 +31,6 @@ const MyList = React.memo(() => {
         : [];
     return result;
   }, [favoriteIds, movies]);
-
 
   const favoriteChannels = useMemo(() => {
     const filterStart = performance.now();
@@ -133,17 +131,18 @@ const MyList = React.memo(() => {
               {/* Favorite Channels */}
               {favoriteChannels.length > 0 && (
                 <section className="mb-8">
-                  <h2 className="text-2xl font-bold mb-4 px-4 flex items-center gap-2">
-                    <Heart className="w-6 h-6 text-red-500" fill="currentColor" />
+                  <h2 className="text-2xl mb-4 px-4 flex items-center gap-2">
+                    <Heart
+                      className="w-6 h-6 text-red-500"
+                      fill="currentColor"
+                    />
                     Favorite Channels
                   </h2>
                   <div className="flex space-x-4 overflow-x-auto scrollbar-hide px-4">
                     {favoriteChannels.map((channel) => (
                       <div key={channel.id} className="flex-shrink-0 w-48">
                         <div onClick={() => handleChannelClick(channel)}>
-                          <ChannelCard
-                            channel={channel}
-                          />
+                          <ChannelCard channel={channel} />
                         </div>
                       </div>
                     ))}
@@ -153,38 +152,31 @@ const MyList = React.memo(() => {
 
               {/* Movies */}
               {savedMovies.length > 0 && (
-                <HomeRow
-                  title="Movies"
-                  items={savedMovies}
-                />
+                <HomeRow title="Movies" items={savedMovies} />
               )}
 
               {/* TV Shows */}
               {savedTVShows.length > 0 && (
-                <HomeRow
-                  title="TV Shows"
-                  items={savedTVShows}
-                />
+                <HomeRow title="TV Shows" items={savedTVShows} />
               )}
 
               {/* Empty State */}
-              {savedContent.length === 0 &&
-                favoriteChannels.length === 0 && (
-                  <div className="text-center py-16">
-                    <h2 className="text-2xl font-bold mb-4">
-                      Your favorites list is empty
-                    </h2>
-                    <p className="text-white mb-8">
-                      Start adding movies, series, and channels to your favorites
-                    </p>
-                    <Link
-                      to="/"
-                      className="inline-flex items-center justify-center gap-3 rounded-full font-medium text-white transition-all duration-300 hover:scale-105 px-6 py-3 text-sm bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 hover:from-brand-700 hover:via-brand-800 hover:to-brand-900"
-                    >
-                      Browse Content
-                    </Link>
-                  </div>
-                )}
+              {savedContent.length === 0 && favoriteChannels.length === 0 && (
+                <div className="text-center py-16">
+                  <h2 className="text-2xl mb-4">
+                    Your favorites list is empty
+                  </h2>
+                  <p className="text-white mb-8">
+                    Start adding movies, series, and channels to your favorites
+                  </p>
+                  <Link
+                    to="/"
+                    className="inline-flex items-center justify-center gap-3 rounded-full font-medium text-white transition-all duration-300 hover:scale-105 px-6 py-3 text-sm bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 hover:from-brand-700 hover:via-brand-800 hover:to-brand-900"
+                  >
+                    Browse Content
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </div>

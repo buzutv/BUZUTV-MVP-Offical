@@ -228,14 +228,14 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
         )}
         {formattedResults?.channels?.length > 0 && (
           <div className="mb-8">
-            <h3 className="text-2xl font-semibold text-white mb-3">Channels</h3>
+            <h3 className="text-2xl text-white mb-3">Channels</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {formattedResults.channels.map((channel) => (
                 <div
                   key={channel.id}
                   onClick={(e) => {
                     // Only handle click if it's not on the favorite button
-                    if (!(e.target as HTMLElement).closest('button')) {
+                    if (!(e.target as HTMLElement).closest("button")) {
                       handleChannelClick(channel);
                     }
                   }}
@@ -249,7 +249,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
         )}
         {formattedResults?.movies?.length > 0 && (
           <div className="mb-8">
-            <h3 className="text-2xl font-semibold text-white mb-3">Movies</h3>
+            <h3 className="text-2xl text-white mb-3">Movies</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {formattedResults.movies.map((movie) => (
                 <div
@@ -264,7 +264,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
         )}
         {formattedResults?.series?.length > 0 && (
           <div className="mb-8">
-            <h3 className="text-2xl font-semibold text-white mb-3">TV Shows</h3>
+            <h3 className="text-2xl text-white mb-3">TV Shows</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {formattedResults.series.map((series) => (
                 <div
@@ -285,7 +285,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
         onClose={handleCloseChannelModal}
         channel={selectedChannel}
       />
-      
+
       {selectedItem &&
         (() => {
           const isSaved = favoriteIds.includes(selectedItem.id);

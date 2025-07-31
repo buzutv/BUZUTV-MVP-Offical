@@ -143,11 +143,11 @@ const Auth = () => {
         </div>
       </nav>
 
-      <div className="pt-24 min-h-screen flex items-center justify-center px-4 relative z-10">
+      <div className="pt-20 min-h-screen flex items-center justify-center px-4 relative z-10">
         <div className="max-w-md w-full">
-          <div className="bg-black/40 border-white/20 backdrop-blur-md rounded-lg shadow-xl p-8">
+          <div className="bg-black/40 border-white/20 backdrop-blur-md rounded-lg shadow-xl p-4 ">
             {/* Header */}
-            <div className="text-center mb-8">
+            <div className="text-center mb-6">
               <h1 className="text-3xl font-bold flex items-center justify-center gap-3">
                 {isSignUp ? "Sign Up" : "Log In"} to{" "}
                 <img src="/logo.png" alt="BUZUTV" className="h-8 w-auto" />
@@ -159,11 +159,11 @@ const Auth = () => {
 
             {/* Toggle to Sign Up (above login form) */}
             {!isSignUp && (
-              <div className="text-center mb-6 space-y-3">
+              <div className="text-center mb-6 flex items-center">
                 <p className="text-gray-400">Don't have an account?</p>
                 <button
                   onClick={() => setIsSignUp(true)}
-                  className="flex items-center justify-center gap-2 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-4 py-2 text-xs bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 hover:from-brand-700 hover:via-brand-800 hover:to-brand-900 mx-auto"
+                  className="flex items-center justify-center gap-2 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-4 py-1 text-xs bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 hover:from-brand-700 hover:via-brand-800 hover:to-brand-900 ml-2 mt-1"
                 >
                   Sign Up
                 </button>
@@ -172,7 +172,7 @@ const Auth = () => {
 
             {/* Form */}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
               {isSignUp && (
                 <>
                   <div className="grid grid-cols-2 gap-4">
@@ -188,7 +188,7 @@ const Auth = () => {
                         type="text"
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
-                        className="w-full px-3 py-2 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
+                        className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
                         placeholder="First name"
                       />
                     </div>
@@ -204,7 +204,7 @@ const Auth = () => {
                         type="text"
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
-                        className="w-full px-3 py-2 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
+                        className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
                         placeholder="Last name"
                       />
                     </div>
@@ -222,7 +222,7 @@ const Auth = () => {
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="w-full px-3 py-2 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
+                      className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
                       placeholder="Enter your phone number"
                     />
                   </div>
@@ -242,7 +242,7 @@ const Auth = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
+                  className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
                   placeholder="Enter your email"
                 />
               </div>
@@ -259,7 +259,7 @@ const Auth = () => {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-3 py-2 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
+                  className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
                   placeholder="Enter your password"
                 />
                 {!isSignUp && (
@@ -288,7 +288,7 @@ const Auth = () => {
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full px-3 py-2 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
+                    className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
                     placeholder="Confirm your password"
                   />
                 </div>
@@ -297,20 +297,22 @@ const Auth = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex items-center justify-center gap-2 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm bg-brand-500 hover:bg-brand-600 whitespace-nowrap"
+                className="w-full flex items-center justify-center gap-2 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-2 text-sm bg-brand-500 hover:bg-brand-600 whitespace-nowrap"
               >
                 {isLoading ? "Please wait..." : isSignUp ? "Sign Up" : "Log In"}
               </button>
             </form>
 
             {/* Toggle between log in and sign up */}
-            <div className="text-center mt-6 space-y-4">
+            <div className="text-center mt-4 space-y-3">
               {isSignUp && (
-                <div className="space-y-3">
-                  <p className="text-gray-400">Already have an account?</p>
+                <div className="flex items-center">
+                  <p className="text-gray-400 text-sm">
+                    Already have an account?
+                  </p>
                   <button
                     onClick={() => setIsSignUp(false)}
-                    className="flex items-center justify-center gap-2 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-4 py-2 text-xs bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 hover:from-brand-700 hover:via-brand-800 hover:to-brand-900 mx-auto"
+                    className="flex items-center justify-center gap-2 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-4 py-1 text-xs bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 hover:from-brand-700 hover:via-brand-800 hover:to-brand-900 ml-2 mt-1"
                   >
                     Log In
                   </button>
@@ -319,7 +321,7 @@ const Auth = () => {
             </div>
 
             {/* Divider */}
-            <div className="flex items-center my-6">
+            <div className="flex items-center my-3">
               <div className="flex-1 border-t border-gray-600"></div>
               <span className="px-3 text-gray-400 text-sm">or</span>
               <div className="flex-1 border-t border-gray-600"></div>
@@ -329,7 +331,7 @@ const Auth = () => {
             <BrandButton
               onClick={handleGoogleSignIn}
               disabled={isLoading}
-              className="w-full disabled:opacity-50 bg-white hover:bg-gray-50 text-gray-900 border border-gray-300"
+              className="text-sm w-full disabled:opacity-50 bg-white hover:bg-gray-50 text-gray-900 border border-gray-300"
               variant="no-border"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -352,20 +354,6 @@ const Auth = () => {
               </svg>
               Continue with Google
             </BrandButton>
-
-            {/* Demo Credentials */}
-            {!isSignUp && (
-              <div className="mt-6 p-4 bg-black rounded-lg">
-                <p className="text-sm text-gray-300 text-center mb-2">
-                  Demo Credentials:
-                </p>
-                <p className="text-xs text-gray-400 text-center">
-                  User: user@example.com / password123
-                  <br />
-                  Admin: admin@example.com / admin123
-                </p>
-              </div>
-            )}
           </div>
         </div>
       </div>
