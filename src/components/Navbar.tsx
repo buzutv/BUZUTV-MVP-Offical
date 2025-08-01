@@ -176,7 +176,7 @@ const Navbar = React.memo(
         >
           <div className="flex-shrink-0">
             <Link to="/" className="flex items-center">
-              <img src="/logo.png" alt="BUZUTV" className="h-10 w-auto" />
+              <img src="/logo.png" alt="BUZUTV" className="h-6" />
             </Link>
           </div>
 
@@ -318,7 +318,7 @@ const Navbar = React.memo(
                   variant="no-border"
                   size="sm"
                   onClick={handleLoginClick}
-                  className="text-xs sm:text-sm font-medium px-3 sm:px-4"
+                  className="text-xs sm:text-sm font-medium px-3 sm:px-4 min-h-0"
                 >
                   Log In
                 </BrandButton>
@@ -326,7 +326,7 @@ const Navbar = React.memo(
                   variant="primary"
                   size="sm"
                   onClick={handleSignUpClick}
-                  className="text-xs sm:text-sm font-medium px-3 sm:px-4"
+                  className="text-xs sm:text-sm font-medium px-3 sm:px-4 min-h-0"
                 >
                   Sign Up
                 </BrandButton>
@@ -393,13 +393,13 @@ const Navbar = React.memo(
           ))}
 
           {!isLoggedIn && (
-            <div className="pt-4 border-t border-white/10 space-y-3">
+            <div className="pt-4 border-t border-white/10 space-y-3 max-h-6">
               <button
                 onClick={() => {
                   handleLoginClick();
                   setIsMenuOpen(false);
                 }}
-                className="block w-full text-left text-white text-base font-medium hover:text-brand-400 transition"
+                className="block w-full text-left text-white text-base font-medium hover:text-brand-400 transition min-h-0 "
               >
                 Log In
               </button>
@@ -408,7 +408,7 @@ const Navbar = React.memo(
                   handleSignUpClick();
                   setIsMenuOpen(false);
                 }}
-                className="block w-full text-left text-white text-base font-medium hover:text-brand-400 transition"
+                className="block w-full  text-left text-white text-base font-medium hover:text-brand-400 transition min-h-0"
               >
                 Sign Up
               </button>

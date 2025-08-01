@@ -118,7 +118,7 @@ const MyList = React.memo(() => {
         />
 
         <div className="pt-16">
-          <div className="px-6 py-8">
+          <div className="pr-6 pl-0 md:pr-8 md:pl-6 py-8">
             <div className="max-w-full pr-3">
               {/* Page Title */}
               <div className="px-4 mb-8">

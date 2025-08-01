@@ -152,8 +152,8 @@ const Movies = React.memo(() => {
           {movieContent.all.length > 0 ? (
             <>
               {/* Top Section */}
-              <div className="max-w-full px-2 pt-4 relative">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 px-4">
+              <div className="max-w-full  sm:px-0 md:px-2 pt-4 relative">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 sm:px-0 md:px-4">
                   {/* Left - Hero Banner */}
                   <div className="lg:col-span-2 relative">
                     <HeroBanner movies={movieContent.featured} />
@@ -167,7 +167,7 @@ const Movies = React.memo(() => {
                     />
                   </div>
                   {/* Right - Top Ranked */}
-                  <div className="flex flex-col h-full">
+                  <div className="flex flex-col h-full px-4 pl-6 md:px-0 md:pl-0">
                     <h2 className="text-2xl font-bold mb-3">
                       Top Ranked Movies
                     </h2>
@@ -297,7 +297,7 @@ const Movies = React.memo(() => {
               </div>
 
               {/* Content Sections */}
-              <div className="max-w-full px-6">
+              <div className="max-w-full relative pr-6 pl-0 md:pr-8 md:pl-6">
                 {activeGenre === "all" ? (
                   // Show all movie rows when "All" is selected
                   <>
@@ -494,7 +494,7 @@ const Movies = React.memo(() => {
                     )}
 
                     {/* Grid Layout for all filtered movies */}
-                    <div className="mt-8 mb-8 pl-4">
+                    <div className="sm:mt-0 md:mt-8 mb-8 pl-4">
                       <h2 className="text-2xl mb-4">
                         {activeGenre === "all"
                           ? "All Movies"

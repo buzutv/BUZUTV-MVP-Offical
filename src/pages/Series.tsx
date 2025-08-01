@@ -152,8 +152,8 @@ const Series = () => {
         <div className="pt-16">
           {seriesContent.all.length > 0 ? (
             <>
-              <div className="max-w-full px-2 pt-4 relative">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 px-4">
+              <div className="max-w-full  sm:px-0 md:px-2 pt-4 relative">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 sm:px-0 md:px-4">
                   <div className="lg:col-span-2 relative">
                     <HeroBanner
                       movies={
@@ -172,7 +172,7 @@ const Series = () => {
                     />
                   </div>
 
-                  <div className="flex flex-col h-full">
+                  <div className="flex flex-col h-full px-4 pl-6 md:px-0 md:pl-0">
                     <h2 className="text-2xl mb-3">Top Ranked Series</h2>
                     <div
                       className="flex flex-col space-y-3 w-full"
@@ -305,7 +305,7 @@ const Series = () => {
               </div>
 
               {/* Content Sections */}
-              <div className="max-w-full px-6">
+              <div className="max-w-full sm:pr-6 sm:pl-4 pr-6 md:pl-6">
                 {activeGenre === "all" ? (
                   // Show all series rows when "All" is selected
                   <>
@@ -505,8 +505,7 @@ const Series = () => {
                     )}
 
                     {/* Grid Layout for all filtered series */}
-                    {/* Grid Layout for all filtered series */}
-                    <div className="mt-8 mb-8 pl-4">
+                    <div className="sm:mt-0 md:mt-8 mb-8 pl-4">
                       <h2 className="text-2xl mb-4">
                         {activeGenre === "all"
                           ? "All Series"

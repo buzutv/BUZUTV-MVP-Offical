@@ -153,7 +153,7 @@ const Index = React.memo(() => {
         />
 
         {/* Content Sections Below Hero */}
-        <div className=" pt-8 relative px-6">
+        <div className=" pt-8 relative pr-6 pl-0 md:pr-8 md:pl-6">
           <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-black to-transparent pointer-events-none" />
 
           {/* Filter Bar */}
@@ -165,7 +165,7 @@ const Index = React.memo(() => {
             />
           </div>
 
-          <div className="max-w-full pr-3">
+          <div className="max-w-full">
             {activeGenre === "all" ? (
               // Show original layout with content rows when "All" is selected
               <>
@@ -317,7 +317,7 @@ const Index = React.memo(() => {
                 )}
 
                 {/* Grid Layout for all filtered content */}
-                <div className="mt-8 mb-8 pl-4">
+                <div className="sm:mt-0 md:mt-8 mb-8 pl-4">
                   <h2 className="text-2xl mb-4">
                     {activeGenre === "all"
                       ? "All Content"

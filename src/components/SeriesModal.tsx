@@ -150,7 +150,7 @@ const SeriesModal = ({
     }),
   );
 
-  const finalClassName = `max-w-[75vw] max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-700 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 ${customBackground ? customBackground : ""}`;
+  const finalClassName = `max-w-full md:max-w-[75vw] max-h-full md:max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-700 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 ${customBackground ? customBackground : ""}`;
   const finalStyle = !customBackground
     ? {
         background: `
@@ -241,7 +241,7 @@ const SeriesModal = ({
                 </div>
               </div>
 
-              <div className="p-8 pt-6 relative">
+              <div className="p-4 md:p-8 pt-6 relative">
                 <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-black to-transparent pointer-events-none" />
                 {seasonsData.length > 0 && (
                   <div className="mb-8">

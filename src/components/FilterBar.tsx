@@ -62,7 +62,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                       isActive ? (isKidsVariant ? "kids" : "primary") : "ghost"
                     }
                     size="sm"
-                    className="text-xs whitespace-nowrap"
+                    className="text-xs whitespace-nowrap min-h-0"
                   >
                     {genre}
                   </BrandButton>

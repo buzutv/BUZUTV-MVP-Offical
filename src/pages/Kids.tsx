@@ -145,8 +145,8 @@ const Kids = () => {
           {enhancedKidsContent.all.length > 0 ? (
             <>
               {/* Top Section */}
-              <div className="max-w-full px-2 pt-4 relative">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 px-4">
+              <div className="max-w-full  sm:px-0 md:px-2 pt-4 relative">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 sm:px-0 md:px-4">
                   {/* Left - Hero Banner */}
                   <div className="lg:col-span-2 relative">
                     <HeroBanner
@@ -155,7 +155,7 @@ const Kids = () => {
                     />
                   </div>
                   {/* Right - Top Ranked */}
-                  <div>
+                  <div className="px-4 pl-6 md:px-0 md:pl-0">
                     <h2 className="text-2xlold mb-3 text-blue-800">
                       Top Kids Shows
                     </h2>
@@ -295,7 +295,7 @@ const Kids = () => {
               </div>
 
               {/* Content Sections */}
-              <div className="max-w-full px-6">
+              <div className="max-w-full sm:pr-6 sm:pl-4 pr-6 md:pl-6">
                 {activeGenre === "all" ? (
                   // Show all kids content rows when "All" is selected
                   <>
@@ -422,7 +422,7 @@ const Kids = () => {
                     )}
 
                     {/* Grid Layout for all filtered kids content */}
-                    <div className="mt-8 pb-4 pl-4">
+                    <div className="sm:mt-0 md:mt-8 pb-4 pl-4">
                       <h2 className="text-2xl mb-4 text-white">
                         {activeGenre === "all"
                           ? "All Kids Content"
