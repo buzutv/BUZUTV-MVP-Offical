@@ -160,7 +160,9 @@ const MovieModal = ({
                   </button>
 
                   <span className="text-white text-xl font-medium">
-                    {formatDuration(contentItem?.duration_minutes)}
+                    {formatDuration(
+                      contentItem?.duration_minutes ?? movie.duration,
+                    )}
                   </span>
                 </div>
 
