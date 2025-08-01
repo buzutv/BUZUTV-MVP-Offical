@@ -151,7 +151,8 @@ const Navbar = React.memo(
     const shouldShowNav = useMemo(
       () =>
         !location.pathname.startsWith("/auth") &&
-        location.pathname !== "/settings",
+        location.pathname !== "/settings" &&
+        !location.pathname.startsWith("/admin"),
       [location.pathname],
     );
 
