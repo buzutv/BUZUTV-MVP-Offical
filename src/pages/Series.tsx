@@ -56,9 +56,12 @@ const Series = () => {
     if (activeGenre === "all") {
       return seriesContent.all;
     }
-    return seriesContent.all.filter(
+
+    const filtered = seriesContent.all.filter(
       (series) => series.genre.toLowerCase() === activeGenre.toLowerCase(),
     );
+
+    return filtered;
   };
 
   const filteredSeries = getFilteredSeries();
@@ -86,7 +89,7 @@ const Series = () => {
             }}
           ></div>
           <div className="relative flex items-center justify-center min-h-screen">
-            <div className="text-2xl font-bold text-white">Loading...</div>
+            <div className="text-2xl text-white">Loading...</div>
           </div>
         </div>
       </ProtectedRoute>
@@ -101,7 +104,7 @@ const Series = () => {
     series: typeof seriesContent.all;
   }) => (
     <section className="mb-8 px-4">
-      <h2 className="text-2xl font-bold mb-4">{title}</h2>
+      <h2 className="text-2xl mb-4">{title}</h2>
       <Carousel
         opts={{
           align: "start",
@@ -149,8 +152,8 @@ const Series = () => {
         <div className="pt-16">
           {seriesContent.all.length > 0 ? (
             <>
-              <div className="max-w-full px-2 pt-4 relative">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 px-4">
+              <div className="max-w-full  sm:px-0 md:px-2 pt-4 relative">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 sm:px-0 md:px-4">
                   <div className="lg:col-span-2 relative">
                     <HeroBanner
                       movies={
@@ -169,10 +172,8 @@ const Series = () => {
                     />
                   </div>
 
-                  <div className="flex flex-col h-full">
-                    <h2 className="text-2xl font-bold mb-3">
-                      Top Ranked Series
-                    </h2>
+                  <div className="flex flex-col h-full px-4 pl-6 md:px-0 md:pl-0">
+                    <h2 className="text-2xl mb-3">Top Ranked Series</h2>
                     <div
                       className="flex flex-col space-y-3 w-full"
                       style={{ height: "calc(60vh - 2rem)" }}
@@ -304,7 +305,7 @@ const Series = () => {
               </div>
 
               {/* Content Sections */}
-              <div className="max-w-full px-6">
+              <div className="max-w-full sm:pr-6 sm:pl-4 pr-6 md:pl-6">
                 {activeGenre === "all" ? (
                   // Show all series rows when "All" is selected
                   <>
@@ -436,16 +437,67 @@ const Series = () => {
                   <>
                     {filteredSeries.length > 0 && (
                       <>
-                        {/* New content row */}
-                        <HomeRow
-                          title="New TV Shows"
-                          items={filteredSeries.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
-                        />
+                        {/* New content row - Sort filtered series by date */}
+                        {(() => {
+                          console.log("🆕 NEW SERIES ROW DEBUG:");
+                          console.log(
+                            "Filtered series count:",
+                            filteredSeries.length,
+                          );
+                          console.log(
+                            "Active genre for new series:",
+                            activeGenre,
+                          );
+
+                          const withDates = filteredSeries.filter(
+                            (series) => series.created_at,
+                          );
+                          console.log(
+                            "Series with created_at:",
+                            withDates.length,
+                          );
+
+                          const newSeriesFiltered = withDates
+                            .sort(
+                              (a, b) =>
+                                new Date(b.created_at).getTime() -
+                                new Date(a.created_at).getTime(),
+                            )
+                            .slice(0, 8);
+
+                          console.log(
+                            "Final new series for display:",
+                            newSeriesFiltered.map((s) => ({
+                              title: s.title,
+                              genre: s.genre,
+                              created_at: s.created_at,
+                            })),
+                          );
+
+                          return (
+                            newSeriesFiltered.length > 0 && (
+                              <HomeRow
+                                key={`new-series-${activeGenre}`}
+                                title={
+                                  activeGenre === "all"
+                                    ? "New Content"
+                                    : `New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} TV Shows`
+                                }
+                                items={newSeriesFiltered}
+                                onCardClick={handleHomeRowCardClick}
+                              />
+                            )
+                          );
+                        })()}
 
                         {/* Recommended row */}
                         <HomeRow
-                          title="Recommended"
+                          key={`recommended-series-${activeGenre}`}
+                          title={
+                            activeGenre === "all"
+                              ? "Recommended TV Shows"
+                              : `Recommended ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} TV Shows`
+                          }
                           items={filteredSeries.slice(2, 10)}
                           onCardClick={handleHomeRowCardClick}
                         />
@@ -453,8 +505,12 @@ const Series = () => {
                     )}
 
                     {/* Grid Layout for all filtered series */}
-                    <div className="mt-8 mb-8 pl-4">
-                      <h2 className="text-xl font-semibold mb-4">All Series</h2>
+                    <div className="sm:mt-0 md:mt-8 mb-8 pl-4">
+                      <h2 className="text-2xl mb-4">
+                        {activeGenre === "all"
+                          ? "All Series"
+                          : `All ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} TV Shows`}
+                      </h2>
 
                       {filteredSeries.length > 0 ? (
                         <ContentGrid
@@ -478,7 +534,7 @@ const Series = () => {
             </>
           ) : (
             <div className="text-center py-16">
-              <h2 className="text-2xl font-bold mb-4">No series available</h2>
+              <h2 className="text-2xl mb-4">No series available</h2>
               <p className="text-gray-400">
                 Series will appear here once they're added to the platform
               </p>

@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,7 +20,7 @@ const AdminLogin = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!username || !password) {
       toast.error("Please fill in all fields");
       return;
@@ -30,7 +29,7 @@ const AdminLogin = () => {
     setIsLoading(true);
 
     // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     if (username === "admin" && password === "admin123") {
       localStorage.setItem("isAdminLoggedIn", "true");
@@ -50,18 +49,25 @@ const AdminLogin = () => {
           {/* Logo */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold">
-              <span className="bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 bg-clip-text text-transparent">BUZUTV</span>
+              <span className="bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 bg-clip-text text-transparent">
+                BUZUTV
+              </span>
             </h1>
             <p className="text-gray-400 mt-2">Admin Portal</p>
             {user?.isAdmin && (
-              <p className="text-blue-400 mt-1 text-sm">Welcome back, {user.name}</p>
+              <p className="text-blue-400 mt-1 text-sm">
+                Welcome back, {user.name}
+              </p>
             )}
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
+              <label
+                htmlFor="username"
+                className="block text-sm font-medium text-gray-300 mb-2"
+              >
                 Username
               </label>
               <input
@@ -75,7 +81,10 @@ const AdminLogin = () => {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-300 mb-2"
+              >
                 Password
               </label>
               <input
@@ -92,25 +101,16 @@ const AdminLogin = () => {
               type="submit"
               disabled={isLoading}
               className="w-full text-white py-2 px-4 rounded-lg font-semibold transition-colors disabled:opacity-50"
-              style={{ backgroundColor: '#601EF9' }}
+              style={{ backgroundColor: "#601EF9" }}
             >
               {isLoading ? "Signing in..." : "Sign In"}
             </button>
           </form>
 
-          {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-gray-700 rounded-lg">
-            <p className="text-sm text-gray-300 text-center mb-2">Demo Credentials:</p>
-            <p className="text-xs text-gray-400 text-center">
-              Username: <span className="text-white">admin</span><br />
-              Password: <span className="text-white">admin123</span>
-            </p>
-          </div>
-
           {/* Back to site */}
           <div className="mt-6 text-center">
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate("/")}
               className="text-blue-400 hover:text-blue-300 transition-colors text-sm"
             >
               ← Back to BuzuTV

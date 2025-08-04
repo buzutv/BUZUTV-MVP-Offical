@@ -10,18 +10,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import ForgotPassword from "./ForgotPassword";
-import { supabase } from "@/integrations/supabase/client";
 import BrandButton from "@/components/ui/BrandButton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const LoginModal = () => {
-  const {
-    showLoginModal,
-    setShowLoginModal,
-    login,
-    signup,
-    signInWithGoogle,
-  } = useAuth();
+  const { showLoginModal, setShowLoginModal, login, signup, signInWithGoogle } =
+    useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isSignUp, setIsSignUp] = useState(false);
@@ -43,8 +37,7 @@ const LoginModal = () => {
     const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
 
     if (isSignUp) {
-      if (!email)
-        return toast.error("Email is required");
+      if (!email) return toast.error("Email is required");
       if (!password || !confirmPassword || !firstName || !lastName)
         return toast.error("Please fill in all fields");
       if (password !== confirmPassword)
@@ -145,16 +138,12 @@ const LoginModal = () => {
         hideCloseButton
       >
         <ScrollArea className="max-h-[90vh] overflow-visible p-0">
-          <div className="p-6 flex flex-col gap-4 pb-4">
+          <div className="p-4 flex flex-col gap-2 pb-2">
             <DialogHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-2">
                 <DialogTitle className="text-xl font-bold flex items-center gap-2">
                   {isSignUp ? "Sign Up" : "Log In"} to{" "}
-                  <img 
-                    src="/logo.png" 
-                    alt="BUZUTV" 
-                    className="h-6 w-auto"
-                  />
+                  <img src="/logo.png" alt="BUZUTV" className="h-6 w-auto" />
                 </DialogTitle>
                 <div className="flex items-center space-x-2">
                   <button
@@ -175,7 +164,20 @@ const LoginModal = () => {
               </div>
             </DialogHeader>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Toggle to Sign Up (above login form) */}
+            {!isSignUp && (
+              <div className="text-center mb-4 flex items-center">
+                <p className="text-gray-400">Don't have an account?</p>
+                <button
+                  onClick={() => setIsSignUp(true)}
+                  className="flex items-center justify-center gap-2 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-4 py-2 text-xs bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 hover:from-brand-700 hover:via-brand-800 hover:to-brand-900 ml-4"
+                >
+                  Sign Up
+                </button>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
               {isSignUp && (
                 <>
                   <div className="grid grid-cols-2 gap-4">
@@ -191,7 +193,7 @@ const LoginModal = () => {
                         type="text"
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
-                        className="w-full px-3 py-2 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
+                        className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
                         placeholder="First name"
                       />
                     </div>
@@ -207,7 +209,7 @@ const LoginModal = () => {
                         type="text"
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
-                        className="w-full px-3 py-2 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
+                        className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
                         placeholder="Last name"
                       />
                     </div>
@@ -225,13 +227,12 @@ const LoginModal = () => {
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="w-full px-3 py-2 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
+                      className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
                       placeholder="Enter your phone number"
                     />
                   </div>
                 </>
               )}
-
 
               <div>
                 <label
@@ -245,7 +246,7 @@ const LoginModal = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
+                  className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
                   placeholder="Enter your email"
                 />
               </div>
@@ -262,9 +263,20 @@ const LoginModal = () => {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-3 py-2 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
+                  className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
                   placeholder="Enter your password"
                 />
+                {!isSignUp && (
+                  <div className="mt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotPassword(true)}
+                      className="text-gray-400 hover:text-brand-500 transition-colors text-sm"
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
+                )}
               </div>
 
               {isSignUp && (
@@ -280,7 +292,7 @@ const LoginModal = () => {
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full px-3 py-2 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
+                    className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
                     placeholder="Confirm your password"
                   />
                 </div>
@@ -289,82 +301,30 @@ const LoginModal = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm bg-brand-500 hover:bg-brand-600 whitespace-nowrap"
+                className="w-full flex items-center justify-center gap-2 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-2 text-sm bg-brand-500 hover:bg-brand-600 whitespace-nowrap"
               >
                 {isLoading ? "Please wait..." : isSignUp ? "Sign Up" : "Log In"}
               </button>
             </form>
 
-            {showOtpForm && (
-              <div className="mt-6">
-                <label
-                  htmlFor="otp"
-                  className="block text-sm font-medium text-gray-300 mb-2"
-                >
-                  Enter OTP
-                </label>
-                <input
-                  id="otp"
-                  type="text"
-                  value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value)}
-                  className="w-full px-3 py-2 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
-                  placeholder="123456"
-                />
-                <button
-                  onClick={async () => {
-                    const { data, error } = await supabase.auth.verifyOtp({
-                      phone,
-                      token: otpCode,
-                      type: "sms",
-                    });
-                    if (error) {
-                      toast.error(error.message);
-                    } else {
-                      toast.success("Phone number verified!");
-                      setShowLoginModal(false);
-                      resetForm();
-                    }
-                  }}
-                  className="mt-4 w-full flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm bg-brand-500 hover:bg-brand-600 whitespace-nowrap"
-                >
-                  Verify OTP
-                </button>
-              </div>
-            )}
-
-            <div className="text-center mt-6 space-y-4">
-              {isSignUp ? (
-                <div className="space-y-3">
-                  <p className="text-gray-400">Already have an account?</p>
+            <div className="text-center mt-4 space-y-3">
+              {isSignUp && (
+                <div className="flex items-center">
+                  <p className="text-gray-400 text-sm">
+                    Already have an account?
+                  </p>
                   <button
                     onClick={() => setIsSignUp(false)}
-                    className="flex items-center justify-center w-full gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 hover:from-brand-700 hover:via-brand-800 hover:to-brand-900"
+                    className="flex items-center justify-center gap-2 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-4 py-1 text-xs bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 hover:from-brand-700 hover:via-brand-800 hover:to-brand-900 ml-2 mt-1"
                   >
                     Log In
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <p className="text-gray-400">Don't have an account?</p>
-                  <button
-                    onClick={() => setIsSignUp(true)}
-                    className="w-full flex items-center justify-center gap-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-3 text-sm bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 hover:from-brand-700 hover:via-brand-800 hover:to-brand-900"
-                  >
-                    Sign Up
-                  </button>
-                  <button
-                    onClick={() => setShowForgotPassword(true)}
-                    className="text-gray-400 hover:text-brand-500 transition-colors text-sm"
-                  >
-                    Forgot Password?
                   </button>
                 </div>
               )}
             </div>
 
             {/* Divider */}
-            <div className="flex items-center my-6">
+            <div className="flex items-center my-3">
               <div className="flex-1 border-t border-gray-600"></div>
               <span className="px-3 text-gray-400 text-sm">or</span>
               <div className="flex-1 border-t border-gray-600"></div>
@@ -374,7 +334,7 @@ const LoginModal = () => {
             <BrandButton
               onClick={handleGoogleSignIn}
               disabled={isLoading}
-              className="w-full disabled:opacity-50 bg-white hover:bg-gray-50 text-gray-900 border border-gray-300"
+              className="text-sm w-full disabled:opacity-50 bg-white hover:bg-gray-50 text-gray-900 border border-gray-300"
               variant="no-border"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">

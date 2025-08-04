@@ -153,7 +153,7 @@ const Index = React.memo(() => {
         />
 
         {/* Content Sections Below Hero */}
-        <div className=" pt-8 relative px-6">
+        <div className=" pt-8 relative pr-6 pl-0 md:pr-8 md:pl-6">
           <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-black to-transparent pointer-events-none" />
 
           {/* Filter Bar */}
@@ -165,7 +165,7 @@ const Index = React.memo(() => {
             />
           </div>
 
-          <div className="max-w-full pr-3">
+          <div className="max-w-full">
             {activeGenre === "all" ? (
               // Show original layout with content rows when "All" is selected
               <>
@@ -192,7 +192,7 @@ const Index = React.memo(() => {
                   return (
                     newContent.length > 0 && (
                       <HomeRow
-                        title="New Movies and Shows"
+                        title="New Content"
                         items={newContent}
                         onCardClick={handleHomeRowCardClick}
                       />
@@ -275,16 +275,41 @@ const Index = React.memo(() => {
               <>
                 {filteredContent.length > 0 && (
                   <>
-                    {/* New content row */}
-                    <HomeRow
-                      title="New Content"
-                      items={filteredContent.slice(0, 8)}
-                      onCardClick={handleHomeRowCardClick}
-                    />
+                    {/* New content row - Sort filtered content by date */}
+                    {(() => {
+                      const newContentFiltered = filteredContent
+                        .filter((item) => item.created_at)
+                        .sort(
+                          (a, b) =>
+                            new Date(b.created_at).getTime() -
+                            new Date(a.created_at).getTime(),
+                        )
+                        .slice(0, 8);
+
+                      return (
+                        newContentFiltered.length > 0 && (
+                          <HomeRow
+                            key={`new-content-${activeGenre}`}
+                            title={
+                              activeGenre === "all"
+                                ? "New Content"
+                                : `New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies and TV Shows`
+                            }
+                            items={newContentFiltered}
+                            onCardClick={handleHomeRowCardClick}
+                          />
+                        )
+                      );
+                    })()}
 
                     {/* Recommended row */}
                     <HomeRow
-                      title={`Recommended`}
+                      key={`recommended-content-${activeGenre}`}
+                      title={
+                        activeGenre === "all"
+                          ? "Recommended"
+                          : `Recommended ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies and TV Shows`
+                      }
                       items={filteredContent.slice(2, 10)}
                       onCardClick={handleHomeRowCardClick}
                     />
@@ -292,8 +317,12 @@ const Index = React.memo(() => {
                 )}
 
                 {/* Grid Layout for all filtered content */}
-                <div className="mt-8 mb-8 pl-4">
-                  <h2 className="text-xl font-semibold mb-4">All Content</h2>
+                <div className="sm:mt-0 md:mt-8 mb-8 pl-4">
+                  <h2 className="text-2xl mb-4">
+                    {activeGenre === "all"
+                      ? "All Content"
+                      : `All ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies and TV Shows`}
+                  </h2>
 
                   {filteredContent.length > 0 ? (
                     <ContentGrid
@@ -306,7 +335,10 @@ const Index = React.memo(() => {
                         No content found
                       </h3>
                       <p className="text-gray-400">
-                        No {activeGenre} content available at the moment
+                        No{" "}
+                        {activeGenre.charAt(0).toUpperCase() +
+                          activeGenre.slice(1)}{" "}
+                        movies and TV shows available at the moment
                       </p>
                     </div>
                   )}

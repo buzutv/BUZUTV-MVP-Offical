@@ -154,7 +154,7 @@ const KidsSeriesModal = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-[75vw] max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-700 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 bg-gradient-to-tl from-yellow-300 via-blue-300 to-sky-400">
+        <DialogContent className="max-w-full md:max-w-[75vw] max-h-full md:max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-700 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 bg-gradient-to-tl from-yellow-300 via-blue-300 to-sky-400">
           <DialogTitle className="sr-only">{series.title}</DialogTitle>
           <ScrollArea className="h-[90vh]">
             <div className="relative min-h-full ">
@@ -230,6 +230,7 @@ const KidsSeriesModal = ({
                           src={channel.logo_url}
                           alt={channel.name}
                           className="w-8 h-8 object-contain rounded"
+                          className="w-8 h-8 object-contain rounded"
                         />
                       </div>
                     )}
@@ -237,7 +238,7 @@ const KidsSeriesModal = ({
                 </div>
               </div>
 
-              <div className="p-8 pt-6 relative">
+              <div className="p-4 md:p-8 pt-6 relative">
                 <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-blue-400 to-transparent pointer-events-none" />
                 {seasonsData.length > 0 && (
                   <div className="mb-8">

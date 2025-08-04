@@ -91,6 +91,22 @@ const Navbar = React.memo(
       };
     }, [isMenuOpen]);
 
+    useEffect(() => {
+      const handleScroll = () => {
+        if (isMenuOpen) {
+          setIsMenuOpen(false);
+        }
+      };
+
+      if (isMenuOpen) {
+        window.addEventListener("scroll", handleScroll, { passive: true });
+      }
+
+      return () => {
+        window.removeEventListener("scroll", handleScroll);
+      };
+    }, [isMenuOpen]);
+
     const handleSearchBlur = useCallback(() => {
       if (!searchQuery) setIsSearchOpen(false);
     }, [searchQuery]);
@@ -100,6 +116,25 @@ const Navbar = React.memo(
         if (e.key === "Escape" && !searchQuery) setIsSearchOpen(false);
       },
       [searchQuery],
+    );
+
+    const handleSearchClick = useCallback(() => {
+      if (!isLoggedIn) {
+        setShowLoginModal(true);
+        return;
+      }
+      setIsSearchOpen(true);
+    }, [isLoggedIn, setShowLoginModal]);
+
+    const handleSearchChange = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!isLoggedIn) {
+          setShowLoginModal(true);
+          return;
+        }
+        onSearchChange(e);
+      },
+      [isLoggedIn, setShowLoginModal, onSearchChange],
     );
 
     const navItems = useMemo(
@@ -116,7 +151,8 @@ const Navbar = React.memo(
     const shouldShowNav = useMemo(
       () =>
         !location.pathname.startsWith("/auth") &&
-        location.pathname !== "/settings",
+        location.pathname !== "/settings" &&
+        !location.pathname.startsWith("/admin"),
       [location.pathname],
     );
 
@@ -140,111 +176,109 @@ const Navbar = React.memo(
         >
           <div className="flex-shrink-0">
             <Link to="/" className="flex items-center">
-              <img src="/logo.png" alt="BUZUTV" className="h-10 w-auto" />
+              <img src="/logo.png" alt="BUZUTV" className="h-6" />
             </Link>
           </div>
 
-          {isLoggedIn && (
-            <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
-              <div className="hidden md:flex items-center gap-4 whitespace-nowrap">
-                {navItems.map(({ to, label }) => (
-                  <Link
-                    key={to}
-                    to={to}
-                    className={`
-                      flex items-center justify-center gap-3 rounded-full font-medium will-change-transform transform-gpu transition-all whitespace-nowrap
-                      px-4 py-2 text-base
-                      ${
-                        isActivePath(to)
-                          ? to === "/kids"
-                            ? `
-                              bg-[linear-gradient(135deg,#1d4ed8,#2563eb,#3b82f6)]
-                              text-white
-                              border border-[rgba(37,99,235,0.3)]
-                              shadow-[0_10px_30px_rgba(37,99,235,0.4)]
-                              hover:shadow-[0_20px_50px_rgba(37,99,235,0.6)]
-                              hover:brightness-110
-                              hover:-translate-y-0.5
-                              transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]
-                              relative overflow-hidden
-                              before:content-[''] before:absolute before:top-0 before:-left-full before:w-full before:h-full
-                              before:bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)]
-                              before:transition-[left] before:duration-500
-                              hover:before:left-full
-                            `
-                            : `
-                              bg-[linear-gradient(135deg,#7c3aed,#8b5cf6,#a855f7)]
-                              text-white
-                              border-2 border-[rgba(139,92,246,0.3)]
-                              shadow-[0_10px_30px_rgba(139,92,246,0.4)]
-                              hover:shadow-[0_20px_50px_rgba(139,92,246,0.6)]
-                              hover:brightness-110
-                              hover:-translate-y-0.5
-                              transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]
-                              relative overflow-hidden
-                              before:content-[''] before:absolute before:top-0 before:-left-full before:w-full before:h-full
-                              before:bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)]
-                              before:transition-[left] before:duration-500
-                              hover:before:left-full
-                            `
-                          : `
-                            text-white border border-transparent
-                            hover:bg-brand-500/10 hover:backdrop-blur
+          <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
+            <div className="hidden md:flex items-center gap-4 whitespace-nowrap">
+              {navItems.map(({ to, label }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  className={`
+                    flex items-center justify-center gap-3 rounded-full font-medium will-change-transform transform-gpu transition-all whitespace-nowrap
+                    px-4 py-1 text-base
+                    ${
+                      isActivePath(to)
+                        ? to === "/kids"
+                          ? `
+                            bg-[linear-gradient(135deg,#1d4ed8,#2563eb,#3b82f6)]
+                            text-white
+                            border border-[rgba(37,99,235,0.3)]
+                            shadow-[0_10px_30px_rgba(37,99,235,0.4)]
+                            hover:shadow-[0_20px_50px_rgba(37,99,235,0.6)]
+                            hover:brightness-110
                             hover:-translate-y-0.5
                             transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]
                             relative overflow-hidden
                             before:content-[''] before:absolute before:top-0 before:-left-full before:w-full before:h-full
-                            before:bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.1),transparent)]
+                            before:bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)]
                             before:transition-[left] before:duration-500
                             hover:before:left-full
                           `
-                      }
-                    `}
-                    onClick={(e) => handleNavClick(e, to)}
-                  >
-                    {label}
-                  </Link>
-                ))}
-              </div>
+                          : `
+                            bg-[linear-gradient(135deg,#7c3aed,#8b5cf6,#a855f7)]
+                            text-white
+                            border-2 border-[rgba(139,92,246,0.3)]
+                            shadow-[0_10px_30px_rgba(139,92,246,0.4)]
+                            hover:shadow-[0_20px_50px_rgba(139,92,246,0.6)]
+                            hover:brightness-110
+                            hover:-translate-y-0.5
+                            transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]
+                            relative overflow-hidden
+                            before:content-[''] before:absolute before:top-0 before:-left-full before:w-full before:h-full
+                            before:bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)]
+                            before:transition-[left] before:duration-500
+                            hover:before:left-full
+                          `
+                        : `
+                          text-white border border-transparent
+                          hover:bg-brand-500/10 hover:backdrop-blur
+                          hover:-translate-y-0.5
+                          transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]
+                          relative overflow-hidden
+                          before:content-[''] before:absolute before:top-0 before:-left-full before:w-full before:h-full
+                          before:bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.1),transparent)]
+                          before:transition-[left] before:duration-500
+                          hover:before:left-full
+                        `
+                    }
+                  `}
+                  onClick={(e) => handleNavClick(e, to)}
+                >
+                  {label}
+                </Link>
+              ))}
             </div>
-          )}
+          </div>
 
           <div className="flex items-center gap-2">
+            {/* Desktop search - hidden on mobile */}
+            <div
+              className={`relative rounded-full px-2 py-1 hidden md:block ${
+                isSearchOpen || searchQuery
+                  ? "border border-white/10 bg-black/10"
+                  : ""
+              }`}
+            >
+              {(isSearchOpen || searchQuery) && isLoggedIn ? (
+                <div className="flex items-center px-3 py-1 rounded-full transition-all">
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    placeholder="Search"
+                    value={searchQuery}
+                    onChange={onSearchChange}
+                    onBlur={handleSearchBlur}
+                    onKeyDown={handleSearchKeyDown}
+                    className="bg-transparent text-white placeholder-gray-300 w-32 focus:outline-none"
+                  />
+                  <Search className="text-gray-300 w-4 h-4 ml-2" />
+                </div>
+              ) : (
+                <button
+                  className="flex items-center px-3 py-2 rounded-full transition-all"
+                  onClick={handleSearchClick}
+                  aria-label="Open search"
+                >
+                  <Search className="text-white w-6 h-6" />
+                </button>
+              )}
+            </div>
+
             {isLoggedIn ? (
               <>
-                {/* Desktop search - hidden on mobile */}
-                <div
-                  className={`relative rounded-full px-2 py-1 hidden md:block ${
-                    isSearchOpen || searchQuery
-                      ? "border border-white/10 bg-black/10"
-                      : ""
-                  }`}
-                >
-                  {isSearchOpen || searchQuery ? (
-                    <div className="flex items-center px-3 py-1 rounded-full transition-all">
-                      <input
-                        ref={searchInputRef}
-                        type="text"
-                        placeholder="Search"
-                        value={searchQuery}
-                        onChange={onSearchChange}
-                        onBlur={handleSearchBlur}
-                        onKeyDown={handleSearchKeyDown}
-                        className="bg-transparent text-white placeholder-gray-300 w-32 focus:outline-none"
-                      />
-                      <Search className="text-gray-300 w-4 h-4 ml-2" />
-                    </div>
-                  ) : (
-                    <button
-                      className="flex items-center px-3 py-2 rounded-full transition-all"
-                      onClick={() => setIsSearchOpen(true)}
-                      aria-label="Open search"
-                    >
-                      <Search className="text-white w-6 h-6" />
-                    </button>
-                  )}
-                </div>
-
                 <DropdownMenu modal={false}>
                   <DropdownMenuTrigger className="flex items-center text-white hover:text-gray-300 transition-colors px-2 py-2">
                     <User className="w-6 h-6" />
@@ -277,29 +311,6 @@ const Navbar = React.memo(
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-
-                <button
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="md:hidden text-white hover:text-gray-300 transition-colors"
-                  aria-label="Toggle Menu"
-                >
-                  <div className="relative w-6 h-6">
-                    <Menu
-                      className={`absolute inset-0 transition-all duration-300 ease-in-out transform ${
-                        isMenuOpen
-                          ? "opacity-0 scale-90 rotate-45"
-                          : "opacity-100 scale-100 rotate-0"
-                      }`}
-                    />
-                    <X
-                      className={`absolute inset-0 transition-all duration-300 ease-in-out transform ${
-                        isMenuOpen
-                          ? "opacity-100 scale-100 rotate-0"
-                          : "opacity-0 scale-90 -rotate-45"
-                      }`}
-                    />
-                  </div>
-                </button>
               </>
             ) : (
               <div className="flex items-center space-x-2">
@@ -307,7 +318,7 @@ const Navbar = React.memo(
                   variant="no-border"
                   size="sm"
                   onClick={handleLoginClick}
-                  className="text-xs sm:text-sm font-medium px-3 sm:px-4"
+                  className="text-xs sm:text-sm font-medium px-3 sm:px-4 min-h-0"
                 >
                   Log In
                 </BrandButton>
@@ -315,12 +326,35 @@ const Navbar = React.memo(
                   variant="primary"
                   size="sm"
                   onClick={handleSignUpClick}
-                  className="text-xs sm:text-sm font-medium px-3 sm:px-4"
+                  className="text-xs sm:text-sm font-medium px-3 sm:px-4 min-h-0"
                 >
                   Sign Up
                 </BrandButton>
               </div>
             )}
+
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="md:hidden text-white hover:text-gray-300 transition-colors"
+              aria-label="Toggle Menu"
+            >
+              <div className="relative w-6 h-6">
+                <Menu
+                  className={`absolute inset-0 transition-all duration-300 ease-in-out transform ${
+                    isMenuOpen
+                      ? "opacity-0 scale-90 rotate-45"
+                      : "opacity-100 scale-100 rotate-0"
+                  }`}
+                />
+                <X
+                  className={`absolute inset-0 transition-all duration-300 ease-in-out transform ${
+                    isMenuOpen
+                      ? "opacity-100 scale-100 rotate-0"
+                      : "opacity-0 scale-90 -rotate-45"
+                  }`}
+                />
+              </div>
+            </button>
           </div>
         </div>
 
@@ -333,20 +367,19 @@ const Navbar = React.memo(
           }`}
         >
           {/* Mobile search */}
-          {isLoggedIn && (
-            <div className="pb-3 border-b border-white/10">
-              <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-black/20 border border-white/10">
-                <Search className="text-gray-300 w-5 h-5 flex-shrink-0" />
-                <input
-                  type="text"
-                  placeholder="Search"
-                  value={searchQuery}
-                  onChange={onSearchChange}
-                  className="bg-transparent text-white placeholder-gray-300 w-full focus:outline-none text-base"
-                />
-              </div>
+          <div className="pb-3 border-b border-white/10">
+            <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-black/20 border border-white/10">
+              <Search className="text-gray-300 w-5 h-5 flex-shrink-0" />
+              <input
+                type="text"
+                placeholder="Search"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                onClick={handleSearchClick}
+                className="bg-transparent text-white placeholder-gray-300 w-full focus:outline-none text-base"
+              />
             </div>
-          )}
+          </div>
 
           {navItems.map(({ to, label }) => (
             <Link
@@ -360,13 +393,13 @@ const Navbar = React.memo(
           ))}
 
           {!isLoggedIn && (
-            <div className="pt-4 border-t border-white/10 space-y-3">
+            <div className="pt-4 border-t border-white/10 space-y-3 max-h-6">
               <button
                 onClick={() => {
                   handleLoginClick();
                   setIsMenuOpen(false);
                 }}
-                className="block w-full text-left text-white text-base font-medium hover:text-brand-400 transition"
+                className="block w-full text-left text-white text-base font-medium hover:text-brand-400 transition min-h-0 "
               >
                 Log In
               </button>
@@ -375,7 +408,7 @@ const Navbar = React.memo(
                   handleSignUpClick();
                   setIsMenuOpen(false);
                 }}
-                className="block w-full text-left text-white text-base font-medium hover:text-brand-400 transition"
+                className="block w-full  text-left text-white text-base font-medium hover:text-brand-400 transition min-h-0"
               >
                 Sign Up
               </button>

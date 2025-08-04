@@ -127,7 +127,7 @@ const Kids = () => {
             }}
           ></div>
           <div className="relative flex items-center justify-center min-h-screen">
-            <div className="text-2xl font-bold text-white">
+            <div className="text-2xlold text-white">
               Loading Kids Content...
             </div>
           </div>
@@ -145,8 +145,8 @@ const Kids = () => {
           {enhancedKidsContent.all.length > 0 ? (
             <>
               {/* Top Section */}
-              <div className="max-w-full px-2 pt-4 relative">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 px-4">
+              <div className="max-w-full  sm:px-0 md:px-2 pt-4 relative">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 sm:px-0 md:px-4">
                   {/* Left - Hero Banner */}
                   <div className="lg:col-span-2 relative">
                     <HeroBanner
@@ -155,8 +155,8 @@ const Kids = () => {
                     />
                   </div>
                   {/* Right - Top Ranked */}
-                  <div>
-                    <h2 className="text-2xl font-bold mb-3 text-blue-800">
+                  <div className="px-4 pl-6 md:px-0 md:pl-0">
+                    <h2 className="text-2xlold mb-3 text-blue-800">
                       Top Kids Shows
                     </h2>
                     <div
@@ -295,14 +295,14 @@ const Kids = () => {
               </div>
 
               {/* Content Sections */}
-              <div className="max-w-full px-6">
+              <div className="max-w-full sm:pr-6 sm:pl-4 pr-6 md:pl-6">
                 {activeGenre === "all" ? (
                   // Show all kids content rows when "All" is selected
                   <>
                     {/* New Kids */}
                     {enhancedKidsContent.new.length > 0 && (
                       <HomeRow
-                        title="New Kids"
+                        title="New Kids Content"
                         items={enhancedKidsContent.new}
                         onCardClick={handleHomeRowCardClick}
                       />
@@ -380,16 +380,41 @@ const Kids = () => {
                   <>
                     {filteredKidsContent.length > 0 && (
                       <>
-                        {/* New content row */}
-                        <HomeRow
-                          title="New Kids Content"
-                          items={filteredKidsContent.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
-                        />
+                        {/* New content row - Sort filtered kids content by date */}
+                        {(() => {
+                          const newKidsContentFiltered = filteredKidsContent
+                            .filter((item) => item.created_at)
+                            .sort(
+                              (a, b) =>
+                                new Date(b.created_at).getTime() -
+                                new Date(a.created_at).getTime(),
+                            )
+                            .slice(0, 8);
+
+                          return (
+                            newKidsContentFiltered.length > 0 && (
+                              <HomeRow
+                                key={`new-kids-content-${activeGenre}`}
+                                title={
+                                  activeGenre === "all"
+                                    ? "New Kids Content"
+                                    : `New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Kids Content`
+                                }
+                                items={newKidsContentFiltered}
+                                onCardClick={handleHomeRowCardClick}
+                              />
+                            )
+                          );
+                        })()}
 
                         {/* Recommended row */}
                         <HomeRow
-                          title="Recommended"
+                          key={`recommended-kids-content-${activeGenre}`}
+                          title={
+                            activeGenre === "all"
+                              ? "Recommended"
+                              : `Recommended ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Kids Content`
+                          }
                           items={filteredKidsContent.slice(2, 10)}
                           onCardClick={handleHomeRowCardClick}
                         />
@@ -397,9 +422,11 @@ const Kids = () => {
                     )}
 
                     {/* Grid Layout for all filtered kids content */}
-                    <div className="mt-8 pb-4 pl-4">
-                      <h2 className="text-2xl font-bold mb-4 text-white">
-                        All {activeGenre} Kids Content
+                    <div className="sm:mt-0 md:mt-8 pb-4 pl-4">
+                      <h2 className="text-2xl mb-4 text-white">
+                        {activeGenre === "all"
+                          ? "All Kids Content"
+                          : `All ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Kids Content`}
                       </h2>
 
                       {filteredKidsContent.length > 0 ? (
@@ -413,8 +440,13 @@ const Kids = () => {
                             No kids content found
                           </h3>
                           <p className="text-blue-700">
-                            No {activeGenre} kids content available at the
-                            moment
+                            No{" "}
+                            {activeGenre === "all"
+                              ? ""
+                              : activeGenre.charAt(0).toUpperCase() +
+                                activeGenre.slice(1) +
+                                " "}
+                            kids content available at the moment
                           </p>
                         </div>
                       )}
@@ -425,7 +457,7 @@ const Kids = () => {
             </>
           ) : (
             <div className="text-center py-16">
-              <h2 className="text-2xl font-bold mb-4 text-blue-800">
+              <h2 className="text-2xlold mb-4 text-blue-800">
                 No Kids Content Available
               </h2>
               <div className="text-6xl mb-4">🎈</div>

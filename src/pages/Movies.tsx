@@ -53,9 +53,12 @@ const Movies = React.memo(() => {
     if (activeGenre === "all") {
       return movieContent.all;
     }
-    return movieContent.all.filter(
+
+    const filtered = movieContent.all.filter(
       (movie) => movie.genre.toLowerCase() === activeGenre.toLowerCase(),
     );
+
+    return filtered;
   }, [movieContent.all, activeGenre]);
 
   const handleHomeRowCardClick = useCallback(() => {
@@ -149,8 +152,8 @@ const Movies = React.memo(() => {
           {movieContent.all.length > 0 ? (
             <>
               {/* Top Section */}
-              <div className="max-w-full px-2 pt-4 relative">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 px-4">
+              <div className="max-w-full  sm:px-0 md:px-2 pt-4 relative">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 sm:px-0 md:px-4">
                   {/* Left - Hero Banner */}
                   <div className="lg:col-span-2 relative">
                     <HeroBanner movies={movieContent.featured} />
@@ -164,7 +167,7 @@ const Movies = React.memo(() => {
                     />
                   </div>
                   {/* Right - Top Ranked */}
-                  <div className="flex flex-col h-full">
+                  <div className="flex flex-col h-full px-4 pl-6 md:px-0 md:pl-0">
                     <h2 className="text-2xl font-bold mb-3">
                       Top Ranked Movies
                     </h2>
@@ -294,7 +297,7 @@ const Movies = React.memo(() => {
               </div>
 
               {/* Content Sections */}
-              <div className="max-w-full px-6">
+              <div className="max-w-full relative pr-6 pl-0 md:pr-8 md:pl-6">
                 {activeGenre === "all" ? (
                   // Show all movie rows when "All" is selected
                   <>
@@ -423,16 +426,67 @@ const Movies = React.memo(() => {
                   <>
                     {filteredMovies.length > 0 && (
                       <>
-                        {/* New content row */}
-                        <HomeRow
-                          title="New Movies"
-                          items={filteredMovies.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
-                        />
+                        {/* New content row - Sort filtered movies by date */}
+                        {(() => {
+                          console.log("🆕 NEW MOVIES ROW DEBUG:");
+                          console.log(
+                            "Filtered movies count:",
+                            filteredMovies.length,
+                          );
+                          console.log(
+                            "Active genre for new movies:",
+                            activeGenre,
+                          );
+
+                          const withDates = filteredMovies.filter(
+                            (movie) => movie.created_at,
+                          );
+                          console.log(
+                            "Movies with created_at:",
+                            withDates.length,
+                          );
+
+                          const newMoviesFiltered = withDates
+                            .sort(
+                              (a, b) =>
+                                new Date(b.created_at).getTime() -
+                                new Date(a.created_at).getTime(),
+                            )
+                            .slice(0, 8);
+
+                          console.log(
+                            "Final new movies for display:",
+                            newMoviesFiltered.map((m) => ({
+                              title: m.title,
+                              genre: m.genre,
+                              created_at: m.created_at,
+                            })),
+                          );
+
+                          return (
+                            newMoviesFiltered.length > 0 && (
+                              <HomeRow
+                                key={`new-movies-${activeGenre}`}
+                                title={
+                                  activeGenre === "all"
+                                    ? "New Content"
+                                    : `New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies`
+                                }
+                                items={newMoviesFiltered}
+                                onCardClick={handleHomeRowCardClick}
+                              />
+                            )
+                          );
+                        })()}
 
                         {/* Recommended row */}
                         <HomeRow
-                          title="Recommended"
+                          key={`recommended-movies-${activeGenre}`}
+                          title={
+                            activeGenre === "all"
+                              ? "Recommended Movies"
+                              : `Recommended ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies`
+                          }
                           items={filteredMovies.slice(2, 10)}
                           onCardClick={handleHomeRowCardClick}
                         />
@@ -440,8 +494,12 @@ const Movies = React.memo(() => {
                     )}
 
                     {/* Grid Layout for all filtered movies */}
-                    <div className="mt-8 mb-8 pl-4">
-                      <h2 className="text-xl font-semibold mb-4">All Movies</h2>
+                    <div className="sm:mt-0 md:mt-8 mb-8 pl-4">
+                      <h2 className="text-2xl mb-4">
+                        {activeGenre === "all"
+                          ? "All Movies"
+                          : `All ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies`}
+                      </h2>
 
                       {filteredMovies.length > 0 ? (
                         <ContentGrid
@@ -465,7 +523,7 @@ const Movies = React.memo(() => {
             </>
           ) : (
             <div className="text-center py-16">
-              <h2 className="text-2xl font-bold mb-4">No movies available</h2>
+              <h2 className="text-2xl mb-4">No movies available</h2>
               <p className="text-gray-400">
                 Movies will appear here once they're added to the platform
               </p>

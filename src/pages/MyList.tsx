@@ -1,15 +1,13 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Heart } from "lucide-react";
-import OptimizedMovieCard from "@/components/OptimizedMovieCard";
 import ChannelCard from "@/components/ChannelCard";
 import ChannelModal from "@/components/ChannelModal";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import MovieHoverRow from "@/components/MovieHoverRow";
+import HomeRow from "@/components/HomeRow";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useUserChannelFavorites } from "@/hooks/useUserChannelFavorites";
 import { useAppContent } from "@/hooks/useAppContent";
-import SeriesCard from "@/components/SeriesCard";
 
 const MyList = React.memo(() => {
   const [selectedChannel, setSelectedChannel] = useState<any>(null);
@@ -17,7 +15,6 @@ const MyList = React.memo(() => {
 
   const startTime = performance.now();
   const { favoriteIds, isLoading: favoritesLoading } = useUserFavorites();
-
 
   const channelFavStart = performance.now();
   const { favoriteChannelIds, isLoading: channelFavoritesLoading } =
@@ -34,7 +31,6 @@ const MyList = React.memo(() => {
         : [];
     return result;
   }, [favoriteIds, movies]);
-
 
   const favoriteChannels = useMemo(() => {
     const filterStart = performance.now();
@@ -122,77 +118,52 @@ const MyList = React.memo(() => {
         />
 
         <div className="pt-16">
-          <div className="max-w-full px-2 py-8">
-            {/* Page Title */}
-            <div className="px-4 mb-8">
-              <h1 className="text-4xl font-bold text-white mb-2">My List</h1>
-              <p className="text-white">
-                Your saved movies, shows, and favorite channels
-              </p>
-            </div>
+          <div className="pr-6 pl-0 md:pr-8 md:pl-6 py-8">
+            <div className="max-w-full pr-3">
+              {/* Page Title */}
+              <div className="px-4 mb-8">
+                <h1 className="text-4xl font-bold text-white mb-2">My List</h1>
+                <p className="text-white">
+                  Your saved movies, shows, and favorite channels
+                </p>
+              </div>
 
-
-            {/* Favorite Channels */}
-            {favoriteChannels.length > 0 && (
-              <section className="mb-8">
-                <h2 className="text-2xl font-bold mb-4 px-4 flex items-center gap-2">
-                  <Heart className="w-6 h-6 text-red-500" fill="currentColor" />
-                  Favorite Channels
-                </h2>
-                <div className="flex space-x-4 overflow-x-auto scrollbar-hide px-4">
-                  {favoriteChannels.map((channel) => (
-                    <div key={channel.id} className="flex-shrink-0 w-48">
-                      <div onClick={() => handleChannelClick(channel)}>
-                        <ChannelCard
-                          channel={channel}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Movies */}
-            {savedMovies.length > 0 && (
-              <section className="mb-8">
-                <h2 className="text-2xl font-bold mb-4 px-4">Movies</h2>
-                <div className="flex space-x-2 overflow-x-auto scrollbar-hide px-4">
-                  <MovieHoverRow className="flex space-x-2">
-                    {savedMovies.map((movie) => (
-                      <div key={movie.id} className="flex-shrink-0 w-64">
-                        <OptimizedMovieCard
-                          movie={movie}
-                          showSaveButton={false}
-                        />
+              {/* Favorite Channels */}
+              {favoriteChannels.length > 0 && (
+                <section className="mb-8">
+                  <h2 className="text-2xl mb-4 px-4 flex items-center gap-2">
+                    <Heart
+                      className="w-6 h-6 text-red-500"
+                      fill="currentColor"
+                    />
+                    Favorite Channels
+                  </h2>
+                  <div className="flex space-x-4 overflow-x-auto scrollbar-hide px-4">
+                    {favoriteChannels.map((channel) => (
+                      <div key={channel.id} className="flex-shrink-0 w-48">
+                        <div onClick={() => handleChannelClick(channel)}>
+                          <ChannelCard channel={channel} />
+                        </div>
                       </div>
                     ))}
-                  </MovieHoverRow>
-                </div>
-              </section>
-            )}
+                  </div>
+                </section>
+              )}
 
-            {/* TV Shows */}
-            {savedTVShows.length > 0 && (
-              <section className="mb-8">
-                <h2 className="text-2xl font-bold mb-4 px-4">TV Shows</h2>
-                <div className="flex space-x-2 overflow-x-auto scrollbar-hide px-4">
-                  <MovieHoverRow className="flex space-x-2">
-                    {savedTVShows.map((show) => (
-                      <div key={show.id} className="flex-shrink-0 w-64">
-                        <SeriesCard series={show} />
-                      </div>
-                    ))}
-                  </MovieHoverRow>
-                </div>
-              </section>
-            )}
+              {/* Movies */}
+              {savedMovies.length > 0 && (
+                <HomeRow title="Movies" items={savedMovies} />
+              )}
 
-            {/* Empty State */}
-            {savedContent.length === 0 &&
-              favoriteChannels.length === 0 && (
+              {/* TV Shows */}
+              {savedTVShows.length > 0 && (
+                <HomeRow title="TV Shows" items={savedTVShows} />
+              )}
+
+              {/* Empty State */}
+              {savedContent.length === 0 && favoriteChannels.length === 0 && (
                 <div className="text-center py-16">
-                  <h2 className="text-2xl font-bold mb-4">
+                  <h2 className="text-2xl mb-4">
                     Your favorites list is empty
                   </h2>
                   <p className="text-white mb-8">
@@ -206,6 +177,7 @@ const MyList = React.memo(() => {
                   </Link>
                 </div>
               )}
+            </div>
           </div>
         </div>
       </div>

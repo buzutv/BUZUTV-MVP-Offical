@@ -253,9 +253,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
         <div className="px-8 pt-6">
           {/* Channels Header */}
           <div className="mb-4">
-            <h2 className="text-white text-xl md:text-2xl font-bold">
-              Top Channels
-            </h2>
+            <h2 className="text-white text-xl md:text-2xl">Top Channels</h2>
           </div>
 
           {/* Channels Scrollable Row with Side Navigation */}

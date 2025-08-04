@@ -150,7 +150,7 @@ const SeriesModal = ({
     }),
   );
 
-  const finalClassName = `max-w-[75vw] max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-700 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 ${customBackground ? customBackground : ""}`;
+  const finalClassName = `max-w-full md:max-w-[75vw] max-h-full md:max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-700 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 ${customBackground ? customBackground : ""}`;
   const finalStyle = !customBackground
     ? {
         background: `
@@ -241,7 +241,7 @@ const SeriesModal = ({
                 </div>
               </div>
 
-              <div className="p-8 pt-6 relative">
+              <div className="p-4 md:p-8 pt-6 relative">
                 <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-black to-transparent pointer-events-none" />
                 {seasonsData.length > 0 && (
                   <div className="mb-8">
@@ -307,7 +307,7 @@ const SeriesModal = ({
                             {season.episodes.map((episode) => (
                               <div
                                 key={episode.id}
-                                className="border border-brand-500/20 flex items-center space-x-3 bg-black  rounded-lg p-3 hover:border-brand-500/40 transition-all duration-300 group h-12"
+                                className="border border-white flex items-center space-x-3 bg-black  rounded-lg p-3 hover:shadow-[0_0_8px_rgba(255,255,255,0.6)] transition-all duration-300 group h-12"
                               >
                                 <div
                                   className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white will-change-transform transform-gpu ${

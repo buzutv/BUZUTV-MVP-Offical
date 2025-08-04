@@ -155,60 +155,67 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
   const playerContent = (
     <div className="fixed inset-0 z-[99999] bg-black flex flex-col">
       {/* Close Button */}
-      <button
-        onClick={onClose}
-        className="absolute top-4 right-4 z-[100000] bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
-      >
-        <X className="w-6 h-6" />
-      </button>
+      <div className="absolute top-6 right-4 z-20 pointer-events-auto">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
+          className="bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
+        >
+          <X className="w-6 h-6" />
+        </button>
+      </div>
 
       {/* Video Player */}
-      <div className="flex-1 flex items-center justify-center">
-        {embedUrl ? (
-          embedUrl.includes("youtube.com/embed") ? (
-            <iframe
-              key={playingEpisode.id} // Force re-render when episode changes
-              src={`${embedUrl}?autoplay=1&controls=1&rel=0&fs=1&playsinline=1`}
-              className="w-full h-full"
-              allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-              allowFullScreen
-              sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-            />
-          ) : (
-            <video
-              key={playingEpisode.id}
-              src={embedUrl}
-              controls
-              autoPlay
-              className="w-full h-full object-contain"
-            />
-          )
+      <div className="relative w-full h-full flex items-center justify-center">
+        {/* Close interaction passthrough */}
+        <div className="absolute inset-0 z-10 pointer-events-none" />
+
+        {embedUrl.includes("youtube.com/embed") ? (
+          <iframe
+            key={playingEpisode.id}
+            src={`${embedUrl}?autoplay=1&controls=1&rel=0&fs=1&playsinline=1`}
+            className="w-full h-full pointer-events-auto"
+            allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+            allowFullScreen
+            sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+          />
         ) : (
-          <div className="text-white text-xl">
-            No video available for this episode
-          </div>
+          <video
+            key={playingEpisode.id}
+            src={embedUrl}
+            controls
+            autoPlay
+            className="w-full h-full object-contain pointer-events-auto z-0"
+          />
         )}
       </div>
 
       {/* Episode Navigation Bar */}
-      <div className="bg-black/90 backdrop-blur-sm border-t border-black px-6 py-1">
-        <div className="flex items-center max-w-6xl">
+      <div className="bg-black/90 backdrop-blur-sm border-t border-black px-4 sm:px-6 py-2">
+        <div className="flex sm:flex-row items-center justify-center md:justify-start gap-2 sm:gap-6 max-w-6xl ">
           {/* Previous Episode */}
           {previousEpisode && (
             <button
               onClick={handlePreviousEpisode}
-              className="flex items-center space-x-2 px-4 py-2 rounded-lg transition-all bg-white/10 hover:bg-white/20 text-white"
+              className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all bg-white/10 hover:bg-white/20 text-white"
             >
               <ChevronLeft className="w-4 h-4" />
               <span className="text-sm">
-                {`Previous: Season ${previousEpisode.season} Episode ${previousEpisode.episode.episode_number}`}
+                <span className="inline sm:hidden">Previous</span>
+                <span className="hidden sm:inline">
+                  {`Previous: Season ${previousEpisode.season} Episode ${previousEpisode.episode.episode_number}`}
+                </span>
               </span>
             </button>
           )}
 
           {/* Episode Info */}
-          <div className="flex items-center space-x-2 ml-16">
-            <h2 className="text-white text-lg font-semibold">{seriesTitle}</h2>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 ">
+            <h2 className="text-white text-base sm:text-lg font-semibold">
+              {seriesTitle}
+            </h2>
             <p className="text-gray-300 text-sm">
               Season {playingSeason} • Episode {playingEpisode.episode_number}
             </p>
@@ -218,16 +225,19 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
           <button
             onClick={handleNextEpisode}
             disabled={!nextEpisode}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ml-16 ${
+            className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all ${
               nextEpisode
                 ? "bg-white/10 hover:bg-white/20 text-white"
                 : "bg-gray-600 text-gray-400 cursor-not-allowed"
             }`}
           >
             <span className="text-sm">
-              {nextEpisode
-                ? `Next: Season ${nextEpisode.season} Episode ${nextEpisode.episode.episode_number}`
-                : "Next"}
+              <span className="inline sm:hidden">Next</span>
+              <span className="hidden sm:inline">
+                {nextEpisode
+                  ? `Next: Season ${nextEpisode.season} Episode ${nextEpisode.episode.episode_number}`
+                  : "Next"}
+              </span>
             </span>
             <ChevronRight className="w-4 h-4" />
           </button>
