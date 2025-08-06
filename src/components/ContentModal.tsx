@@ -1,0 +1,627 @@
+import React, { useState } from "react";
+import { Heart, Play, Star } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Movie } from "@/data/mockMovies";
+import HomeRow from "@/components/HomeRow";
+import BrandButton from "@/components/ui/BrandButton";
+import SeriesPlayer from "@/components/SeriesPlayer";
+import FullscreenPlayer from "@/components/FullscreenPlayer";
+import { useUserFavorites } from "@/hooks/useUserFavorites";
+import { Content, useContent } from "@/hooks/useContent";
+import { Channel, useChannels } from "@/hooks/useChannels";
+
+// Type guards to safely access properties
+const isMovie = (item: Movie | Content): item is Movie => {
+  return "youtubeId" in item;
+};
+
+const isContent = (item: Movie | Content): item is Content => {
+  return "video_url" in item;
+};
+
+// Helper functions to safely access properties from union type
+const getIsKids = (item: Movie | Content): boolean => {
+  if (isMovie(item)) {
+    return item.isKids;
+  }
+  return item.is_kids ?? false;
+};
+
+const getPosterUrl = (item: Movie | Content): string => {
+  if (isMovie(item)) {
+    return item.posterUrl;
+  }
+  return item.poster_url || "/placeholder.svg";
+};
+
+const getChannelId = (item: Movie | Content): string | undefined => {
+  if (isMovie(item)) {
+    return item.channelId;
+  }
+  return item.channel_id || undefined;
+};
+
+const getDuration = (item: Movie | Content): number | undefined => {
+  if (isMovie(item)) {
+    return item.duration;
+  }
+  return item.duration_minutes || undefined;
+};
+
+interface Episode {
+  id: string;
+  title: string;
+  episode_number: number;
+  duration_minutes?: number;
+  description?: string;
+  video_url?: string;
+}
+
+interface Season {
+  season_number: number;
+  episodes: Episode[];
+}
+
+export interface ContentModalProps {
+  isOpen: boolean;
+  onClose: (open: boolean) => void;
+  item: Movie | Content; // Support both Movie interface and backend content items
+  variant?: "movie" | "series" | "auto"; // auto determines from item.type
+  isKidsMode?: boolean; // Force kids styling
+  autoDetectKids?: boolean; // Auto-detect kids mode from content
+  isSaved: boolean;
+  onSave: () => void;
+  onPlay?: () => void; // For movies
+  onPlayEpisode?: (videoUrl: string, episodeTitle: string) => void; // For series
+  videoUrl?: string;
+  contentItem?: Content;
+  channel?: Channel;
+  recommendedContent: Content[];
+  seasons?: Season[];
+  onOpenRelatedItem?: (item: Movie | Content) => void;
+  skipContentFiltering?: boolean;
+  customBackground?: string;
+  // Support for nested modals in kids mode
+  allowNestedModals?: boolean;
+}
+
+const ContentModal: React.FC<ContentModalProps> = ({
+  isOpen,
+  onClose,
+  item,
+  variant = "auto",
+  isKidsMode,
+  autoDetectKids = true,
+  isSaved,
+  onSave,
+  onPlay,
+  onPlayEpisode,
+  videoUrl,
+  contentItem,
+  channel,
+  recommendedContent,
+  seasons = [],
+  onOpenRelatedItem,
+  skipContentFiltering = false,
+  customBackground,
+  allowNestedModals = false,
+}) => {
+  // State for series functionality
+  const [isSeriesPlayerOpen, setIsSeriesPlayerOpen] = useState(false);
+  const [currentPlayingEpisode, setCurrentPlayingEpisode] =
+    useState<Episode | null>(null);
+  const [currentPlayingSeason, setCurrentPlayingSeason] = useState<number>(1);
+
+  // State for nested modals (kids mode)
+  const [nestedItem, setNestedItem] = useState<Movie | null>(null);
+  const [isNestedFullscreen, setIsNestedFullscreen] = useState(false);
+  const [nestedVideoUrl, setNestedVideoUrl] = useState<string>("");
+  const [nestedVideoTitle, setNestedVideoTitle] = useState<string>("");
+
+  const { favoriteIds, addToFavorites, removeFromFavorites } =
+    useUserFavorites();
+  const { content } = useContent();
+  const { channels } = useChannels();
+
+  // Determine if we're in kids mode
+  const effectiveKidsMode =
+    isKidsMode ??
+    (autoDetectKids ? getIsKids(item) || contentItem?.is_kids : false);
+
+  // Determine content type
+  const contentType = variant === "auto" ? item.type || "movie" : variant;
+
+  // Normalize item to work with both Movie interface and backend items
+  const normalizedItem = React.useMemo(
+    () => ({
+      id: item.id,
+      title: item.title,
+      posterUrl: getPosterUrl(item),
+      type: item.type || "movie",
+      genre: item.genre,
+      year: item.year,
+      rating: item.rating,
+      channelId: getChannelId(item),
+      isKids: getIsKids(item),
+      duration: getDuration(item),
+      ...item,
+    }),
+    [item],
+  );
+
+  // Format duration helper
+  const formatDuration = (minutes: number | undefined) => {
+    if (!minutes) return "N/A";
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0) {
+      return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+    }
+    return `${mins}m`;
+  };
+
+  // Get seasons data for series
+  const getSeasonsData = (): Season[] => {
+    if (contentItem?.seasons_data) {
+      try {
+        const seasonsData =
+          typeof contentItem.seasons_data === "string"
+            ? JSON.parse(contentItem.seasons_data)
+            : contentItem.seasons_data;
+
+        if (Array.isArray(seasonsData) && seasonsData.length > 0) {
+          return seasonsData.map((season) => ({
+            season_number: season.seasonNumber,
+            episodes: (season.episodes || []).map((episode) => ({
+              id:
+                episode.id ||
+                `ep-${season.seasonNumber}-${episode.episodeNumber}`,
+              title: episode.title,
+              episode_number: episode.episodeNumber,
+              duration_minutes: episode.duration_minutes || 45,
+              description: episode.description,
+              video_url: episode.videoUrl,
+            })),
+          }));
+        }
+      } catch (error) {
+        console.error("Error parsing seasons_data:", error);
+      }
+    }
+    return seasons;
+  };
+
+  const seasonsData = getSeasonsData();
+
+  // Handle play actions
+  const handlePlayMovie = () => {
+    if (onPlay) {
+      onPlay();
+    }
+  };
+
+  const handlePlayFirstEpisode = () => {
+    const firstEpisode = seasonsData[0]?.episodes[0];
+    if (firstEpisode && onPlayEpisode) {
+      onPlayEpisode(
+        firstEpisode.video_url || "",
+        `${normalizedItem.title} - ${firstEpisode.title}`,
+      );
+    }
+  };
+
+  const handlePlayEpisode = (episode: Episode, seasonNumber: number) => {
+    if (episode.video_url && onPlayEpisode) {
+      onPlayEpisode(
+        episode.video_url,
+        `${normalizedItem.title} - S${seasonNumber}E${episode.episode_number}: ${episode.title}`,
+      );
+    }
+  };
+
+  // Filter recommended content
+  const filteredRecommendedContent = skipContentFiltering
+    ? recommendedContent.filter((recItem) => recItem.id !== normalizedItem.id)
+    : recommendedContent.filter((recItem) => {
+        const passesId = recItem.id !== normalizedItem.id;
+
+        // Handle kids content filtering
+        const passesKids = effectiveKidsMode
+          ? recItem.is_kids === true // Show only kids content in kids mode
+          : !recItem.is_kids; // Exclude kids content in regular mode
+
+        const passesGenre =
+          recItem.genre === normalizedItem.genre ||
+          recItem.channel_id === normalizedItem.channelId ||
+          recItem.channel_id === contentItem?.channel_id;
+
+        return passesId && passesKids && passesGenre;
+      });
+
+  const normalizedRecommendedContent = filteredRecommendedContent.map(
+    (recItem) => ({
+      ...recItem,
+      posterUrl: getPosterUrl(recItem),
+    }),
+  );
+
+  // Handle nested modals for kids mode
+  const handleNestedItemClick = (clickedItem) => {
+    if (allowNestedModals && effectiveKidsMode) {
+      setNestedItem(clickedItem);
+    } else if (onOpenRelatedItem) {
+      onClose(false); // Close current modal
+      onOpenRelatedItem(clickedItem); // Open new modal with selected item
+    }
+  };
+
+  // Background styles
+  const getBackgroundStyles = () => {
+    if (customBackground) {
+      return customBackground;
+    }
+
+    if (effectiveKidsMode) {
+      return "bg-gradient-to-tl from-yellow-300 via-blue-300 to-sky-400";
+    }
+
+    return "";
+  };
+
+  const getDefaultBackgroundStyle = () => {
+    if (customBackground || effectiveKidsMode) {
+      return {};
+    }
+
+    return {
+      background: `
+        linear-gradient(
+          200deg,
+          #311066 0%,
+          #1D0833 20%,
+          #120222 45%,
+          black 100%
+        )`,
+    };
+  };
+
+  // Gradient styles
+  const gradientStyles = effectiveKidsMode
+    ? {
+        heroGradient:
+          "bg-gradient-to-t from-blue-400 via-blue-400/30 to-transparent",
+        contentGradient: "bg-gradient-to-b from-blue-400 to-transparent",
+        heartBorder: "border-blue-400/50 hover:border-blue-400",
+      }
+    : {
+        heroGradient: "bg-gradient-to-t from-black via-black/60 to-transparent",
+        contentGradient: "bg-gradient-to-b from-black to-transparent",
+        heartBorder: "border-brand-500/50 hover:border-brand-500",
+      };
+
+  return (
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent
+          className={`max-w-full md:max-w-[75vw] max-h-full md:max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-1000 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 ${getBackgroundStyles()}`}
+          style={getDefaultBackgroundStyle()}
+        >
+          <DialogTitle className="sr-only">{normalizedItem.title}</DialogTitle>
+          <ScrollArea className="h-[90vh] scroll-smooth">
+            <div className="relative min-h-full">
+              {/* Hero Section */}
+              <div className="relative w-full h-[60vh] overflow-hidden">
+                {/* Background Image */}
+                <div className="absolute inset-0">
+                  <img
+                    src={normalizedItem.posterUrl}
+                    alt={normalizedItem.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                {/* Bottom gradient for fade effect */}
+                <div
+                  className={`absolute bottom-0 left-0 right-0 h-48 ${gradientStyles.heroGradient}`}
+                />
+
+                {/* Title and Info Container */}
+                <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
+                  <h1
+                    className={`text-5xl font-bold text-white mb-6 ${effectiveKidsMode ? "drop-shadow-[2px_2px_4px_rgba(59,130,246,0.8)]" : ""}`}
+                  >
+                    {normalizedItem.title}
+                  </h1>
+
+                  {/* Action Buttons Row */}
+                  <div className="flex items-center space-x-4 mb-4">
+                    <BrandButton
+                      onClick={
+                        contentType === "series"
+                          ? handlePlayFirstEpisode
+                          : handlePlayMovie
+                      }
+                      disabled={
+                        !videoUrl &&
+                        (!seasonsData.length ||
+                          !seasonsData[0]?.episodes[0]?.video_url)
+                      }
+                      variant={effectiveKidsMode ? "kids" : "primary"}
+                      size="md"
+                      className={
+                        !videoUrl &&
+                        (!seasonsData.length ||
+                          !seasonsData[0]?.episodes[0]?.video_url)
+                          ? "!bg-gray-600 !text-gray-400 !cursor-not-allowed !hover:bg-gray-600 !hover:-translate-y-0"
+                          : ""
+                      }
+                    >
+                      <Play className="w-6 h-6 fill-current" />
+                      <span>Play</span>
+                    </BrandButton>
+
+                    <button
+                      onClick={onSave}
+                      className={`bg-black/20 backdrop-blur-md text-white p-2 rounded-full transition-all duration-200 border ${gradientStyles.heartBorder} hover:bg-black/30`}
+                    >
+                      <Heart
+                        className={`w-5 h-5 ${isSaved ? "fill-current text-red-500" : ""}`}
+                      />
+                    </button>
+
+                    {/* Duration display */}
+                    {effectiveKidsMode ? (
+                      <BrandButton
+                        variant="kids"
+                        size="sm"
+                        className="pointer-events-none"
+                      >
+                        {formatDuration(
+                          contentItem?.duration_minutes ??
+                            normalizedItem.duration,
+                        )}
+                      </BrandButton>
+                    ) : (
+                      <span className="text-white text-xl font-medium">
+                        {formatDuration(
+                          contentItem?.duration_minutes ??
+                            normalizedItem.duration,
+                        )}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Info Row */}
+                  <div className="flex items-center space-x-4 text-sm">
+                    <div className="flex items-center space-x-1">
+                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                      <span className="text-green-400 font-semibold">
+                        {normalizedItem.rating}
+                      </span>
+                    </div>
+                    <span className="text-white font-medium">
+                      {normalizedItem.year}
+                    </span>
+
+                    {effectiveKidsMode ? (
+                      <>
+                        <span className="border border-blue-400 px-2 py-0.5 text-xs text-white font-medium bg-blue-500/90">
+                          KIDS
+                        </span>
+                        <span className="bg-yellow-500 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                          {normalizedItem.genre}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="border border-brand-500 px-2 py-0.5 text-xs text-gray-300 font-medium">
+                          TV-MA
+                        </span>
+                        <span className="text-white">
+                          {normalizedItem.genre}
+                        </span>
+                      </>
+                    )}
+
+                    {channel?.logo_url && (
+                      <img
+                        src={channel.logo_url}
+                        alt={channel.name}
+                        className="w-8 h-8 object-contain rounded"
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Content Section */}
+              <div className="p-4 md:p-8 pt-6 pb-0 relative">
+                <div
+                  className={`absolute top-0 left-0 right-0 h-4 ${gradientStyles.contentGradient} pointer-events-none`}
+                />
+
+                {/* Series Episodes Section */}
+                {contentType === "series" && seasonsData.length > 0 && (
+                  <div className="mb-8">
+                    <Tabs defaultValue="season-1" className="w-full">
+                      <TabsList
+                        className={`grid w-full grid-cols-auto bg-transparent transition-all duration-300 group ${effectiveKidsMode ? "" : ""}`}
+                      >
+                        {seasonsData.map((season) => (
+                          <TabsTrigger
+                            key={`season-${season.season_number}`}
+                            value={`season-${season.season_number}`}
+                            className={
+                              effectiveKidsMode
+                                ? "transition-all duration-300 hover:scale-105 will-change-transform transform-gpu leading-5 hover:text-white data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-[2px_19px_31px_rgba(59,130,246,0.35)] data-[state=active]:hover:bg-blue-600 hover:bg-blue-500/20"
+                                : "transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:scale-105 will-change-transform transform-gpu leading-5 hover:text-white data-[state=active]:bg-[linear-gradient(135deg,#7c3aed,#8b5cf6,#a855f7)] data-[state=active]:text-white data-[state=active]:border-2 data-[state=active]:border-[rgba(139,92,246,0.3)] data-[state=active]:shadow-[0_10px_30px_rgba(139,92,246,0.4)] data-[state=active]:hover:shadow-[0_20px_50px_rgba(139,92,246,0.6)] data-[state=active]:hover:brightness-110 data-[state=active]:hover:-translate-y-0.5 data-[state=active]:relative data-[state=active]:overflow-hidden before:content-[''] before:absolute before:top-0 before:-left-full before:w-full before:h-full before:bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] before:transition-[left] before:duration-500 data-[state=active]:hover:before:left-full"
+                            }
+                          >
+                            Season {season.season_number}
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+
+                      {seasonsData.map((season) => (
+                        <TabsContent
+                          key={`season-${season.season_number}`}
+                          value={`season-${season.season_number}`}
+                          className="space-y-2"
+                        >
+                          {season.episodes.map((episode) => (
+                            <div
+                              key={episode.id}
+                              onClick={() =>
+                                handlePlayEpisode(episode, season.season_number)
+                              }
+                              className={`border flex items-center space-x-3 rounded-lg p-3 transition-all duration-300 group h-12 cursor-pointer ${
+                                effectiveKidsMode
+                                  ? "border-blue-400/20 bg-blue-500/60 hover:border-blue-400/40 hover:bg-blue-500/80"
+                                  : "border-brand-500/20 bg-black hover:border-white hover:shadow-[0_0_8px_rgba(255,255,255,0.6)]"
+                              }`}
+                            >
+                              <div className="flex items-center space-x-3 flex-1 min-w-0">
+                                <span className="text-white font-medium text-sm">
+                                  {episode.episode_number}
+                                </span>
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="text-white font-medium text-sm line-clamp-1">
+                                    {episode.title}
+                                  </h3>
+                                </div>
+                                <span className="text-gray-300 text-xs flex-shrink-0">
+                                  {formatDuration(episode.duration_minutes)}
+                                </span>
+                              </div>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePlayEpisode(episode, season.season_number);
+                                }}
+                                className="ml-3 p-2 rounded-full transition-colors bg-white/10 hover:bg-white/20 text-white flex-shrink-0"
+                                aria-label={`Play ${episode.title}`}
+                              >
+                                <Play className="w-4 h-4 fill-current" />
+                              </button>
+                            </div>
+                          ))}
+                        </TabsContent>
+                      ))}
+                    </Tabs>
+                  </div>
+                )}
+
+                {/* More Like This Section */}
+                {normalizedRecommendedContent.length > 0 && (
+                  <HomeRow
+                    title="More Like This"
+                    items={normalizedRecommendedContent}
+                    isMoreLikeThis={true}
+                    onItemClick={handleNestedItemClick}
+                  />
+                )}
+              </div>
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      {/* Nested modals for kids mode */}
+      {allowNestedModals &&
+        effectiveKidsMode &&
+        nestedItem &&
+        (() => {
+          const nestedIsSaved = favoriteIds.includes(nestedItem.id);
+          const nestedContentItem = content.find(
+            (contentItem) => contentItem.id === nestedItem.id,
+          );
+          const nestedVideoUrl = nestedContentItem?.video_url;
+          const nestedChannel = channels.find(
+            (ch) => ch.id === getChannelId(nestedItem),
+          );
+          const nestedRecommendedContent = content
+            .filter(
+              (contentItem) =>
+                contentItem.id !== nestedItem.id &&
+                contentItem.is_kids === true,
+            )
+            .slice(0, 6);
+
+          const handleNestedSave = () => {
+            if (nestedIsSaved) {
+              removeFromFavorites(nestedItem.id);
+            } else {
+              addToFavorites(nestedItem.id);
+            }
+          };
+
+          const handleNestedPlay = () => {
+            if (nestedVideoUrl) {
+              setNestedItem(null);
+              setNestedVideoUrl(nestedVideoUrl);
+              setNestedVideoTitle(nestedItem.title);
+              setIsNestedFullscreen(true);
+            }
+          };
+
+          const handleNestedPlayEpisode = (
+            url: string,
+            episodeTitle: string,
+          ) => {
+            setNestedItem(null);
+            setNestedVideoUrl(url);
+            setNestedVideoTitle(episodeTitle);
+            setIsNestedFullscreen(true);
+          };
+
+          return (
+            <ContentModal
+              isOpen={!!nestedItem}
+              onClose={(open) => !open && setNestedItem(null)}
+              item={nestedItem}
+              variant="auto"
+              isKidsMode={true}
+              isSaved={nestedIsSaved}
+              onSave={handleNestedSave}
+              onPlay={handleNestedPlay}
+              onPlayEpisode={handleNestedPlayEpisode}
+              videoUrl={nestedVideoUrl}
+              contentItem={nestedContentItem}
+              channel={nestedChannel}
+              recommendedContent={nestedRecommendedContent}
+              allowNestedModals={false} // Prevent infinite nesting
+            />
+          );
+        })()}
+
+      {/* Nested Fullscreen Player for kids mode */}
+      {isNestedFullscreen && nestedVideoUrl && (
+        <FullscreenPlayer
+          isOpen={isNestedFullscreen}
+          onClose={() => {
+            setIsNestedFullscreen(false);
+            setNestedVideoUrl("");
+            setNestedVideoTitle("");
+          }}
+          videoUrl={nestedVideoUrl}
+          title={nestedVideoTitle}
+        />
+      )}
+
+      {/* Series Player */}
+      {isSeriesPlayerOpen && currentPlayingEpisode && (
+        <SeriesPlayer
+          isOpen={isSeriesPlayerOpen}
+          onClose={() => setIsSeriesPlayerOpen(false)}
+          episode={currentPlayingEpisode}
+          seasonNumber={currentPlayingSeason}
+          seriesTitle={normalizedItem.title}
+        />
+      )}
+    </>
+  );
+};
+
+export default ContentModal;
