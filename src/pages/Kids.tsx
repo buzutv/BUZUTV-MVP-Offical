@@ -5,8 +5,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import FilterBar from "@/components/FilterBar";
 import ContentGrid from "@/components/ContentGrid";
 import { useAppContent } from "@/hooks/useAppContent";
-import KidsMovieModal from "@/components/KidsMovieModal";
-import KidsSeriesModal from "@/components/KidsSeriesModal";
+import ContentModal from "@/components/ContentModal";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
@@ -248,35 +247,24 @@ const Kids = () => {
                                 title={selectedMovie.title}
                               />
                             )}
-                            {selectedMovie.type === "series" ? (
-                              <KidsSeriesModal
-                                isOpen={!!selectedMovie && !isFullscreen}
-                                onClose={() => setSelectedMovie(null)}
-                                series={selectedMovie}
-                                isSaved={isSaved}
-                                onSave={handleSaveModal}
-                                onPlayEpisode={(url, episodeTitle) => {
-                                  setIsFullscreen(true);
-                                }}
-                                videoUrl={videoUrl}
-                                contentItem={contentItem}
-                                channel={channel}
-                                recommendedContent={recommendedContent}
-                              />
-                            ) : (
-                              <KidsMovieModal
-                                isOpen={!!selectedMovie && !isFullscreen}
-                                onClose={() => setSelectedMovie(null)}
-                                movie={selectedMovie}
-                                isSaved={isSaved}
-                                onSave={handleSaveModal}
-                                onPlay={handleModalPlayClick}
-                                videoUrl={videoUrl}
-                                contentItem={contentItem}
-                                channel={channel}
-                                recommendedContent={recommendedContent}
-                              />
-                            )}
+                            <ContentModal
+                              isOpen={!!selectedMovie && !isFullscreen}
+                              onClose={(open) => !open && setSelectedMovie(null)}
+                              item={selectedMovie}
+                              variant="auto"
+                              isKidsMode={true}
+                              isSaved={isSaved}
+                              onSave={handleSaveModal}
+                              onPlay={selectedMovie.type === "movie" ? handleModalPlayClick : undefined}
+                              onPlayEpisode={selectedMovie.type === "series" ? (url, episodeTitle) => {
+                                setIsFullscreen(true);
+                              } : undefined}
+                              videoUrl={videoUrl}
+                              contentItem={contentItem}
+                              channel={channel}
+                              recommendedContent={recommendedContent}
+                              allowNestedModals={true}
+                            />
                           </>
                         );
                       })()}

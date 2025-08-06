@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Movie } from "@/data/mockMovies";
-import OptimizedMovieCard from "@/components/OptimizedMovieCard";
-import SeriesCard from "@/components/SeriesCard";
+import ContentCard from "@/components/ContentCard";
 
 interface ContentRowProps {
   title: string;
@@ -114,11 +113,12 @@ const ContentRow = React.memo(({ title, movies }: ContentRowProps) => {
           <div className="flex space-x-2 py-2">
             {movies.map((movie) => (
               <div key={movie.id} className="flex-shrink-0 w-64">
-                {movie.type === "series" ? (
-                  <SeriesCard series={movie} />
-                ) : (
-                  <OptimizedMovieCard movie={movie} />
-                )}
+                <ContentCard
+                  item={movie}
+                  variant="auto"
+                  autoDetectKids={true}
+                  width="w-64"
+                />
               </div>
             ))}
           </div>

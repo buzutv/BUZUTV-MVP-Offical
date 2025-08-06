@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Filter, UserCheck, UserPlus, X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import OptimizedMovieCard from "@/components/OptimizedMovieCard";
+import ContentCard from "@/components/ContentCard";
 
 import MovieHoverRow from "@/components/MovieHoverRow";
 import { useContent } from "@/hooks/useContent";
@@ -405,8 +405,11 @@ const ChannelModal = ({ isOpen, onClose, channel }: ChannelModalProps) => {
                       <MovieHoverRow className="flex flex-wrap gap-4 w-full">
                         {filteredAndSortedContent.map((movie) => (
                           <div key={movie.id} className="flex-shrink-0 w-64">
-                            <OptimizedMovieCard
-                              movie={movie}
+                            <ContentCard
+                              item={movie}
+                              variant="auto"
+                              autoDetectKids={true}
+                              width="w-64"
                               onPlayFullscreen={(videoUrl) => {
                                 const embedUrl =
                                   getYouTubeEmbedUrl(videoUrl) || videoUrl;

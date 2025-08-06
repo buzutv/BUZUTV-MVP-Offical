@@ -456,7 +456,7 @@ const Settings = () => {
                     onClick={() => handleFieldToggle("firstName")}
                     variant={fieldStates.firstName ? "secondary" : "primary"}
                     size="sm"
-                    className="w-[170px] transition-all duration-300 ease-in-out"
+                    className="w-[170px] transition-all duration-300 ease-in-out text-xs sm:text-sm"
                   >
                     {fieldStates.firstName ? "Cancel" : "Change First Name"}
                   </BrandButton>
@@ -503,7 +503,7 @@ const Settings = () => {
                     onClick={() => handleFieldToggle("lastName")}
                     variant={fieldStates.lastName ? "secondary" : "primary"}
                     size="sm"
-                    className="w-[170px] transition-all duration-300 ease-in-out"
+                    className="w-[170px] transition-all duration-300 ease-in-out text-xs sm:text-sm"
                   >
                     {fieldStates.lastName ? "Cancel" : "Change Last Name"}
                   </BrandButton>
@@ -551,7 +551,7 @@ const Settings = () => {
                     onClick={() => handleFieldToggle("email")}
                     variant={fieldStates.email ? "secondary" : "primary"}
                     size="sm"
-                    className="w-[190px] transition-all duration-300 ease-in-out"
+                    className="w-[190px] transition-all duration-300 ease-in-out text-xs sm:text-sm"
                   >
                     {fieldStates.email ? "Cancel" : "Change Email Address"}
                   </BrandButton>
@@ -599,7 +599,7 @@ const Settings = () => {
                     onClick={() => handleFieldToggle("phone")}
                     variant={fieldStates.phone ? "secondary" : "primary"}
                     size="sm"
-                    className="w-[195px] transition-all duration-300 ease-in-out"
+                    className="w-[195px] transition-all duration-300 ease-in-out text-xs sm:text-sm"
                   >
                     {fieldStates.phone ? "Cancel" : "Change Phone Number"}
                   </BrandButton>
@@ -640,7 +640,7 @@ const Settings = () => {
                   onClick={handlePasswordChangeClick}
                   variant="primary"
                   size="sm"
-                  className="w-[150px]"
+                  className="w-[150px] text-xs sm:text-sm"
                 >
                   Change Password
                 </BrandButton>

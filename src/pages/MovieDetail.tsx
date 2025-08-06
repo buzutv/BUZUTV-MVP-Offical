@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Heart, Play, Plus, Star } from "lucide-react";
 import { mockMovies } from "@/data/mockMovies";
-import MovieCard from "@/components/MovieCard";
+import ContentCard from "@/components/ContentCard";
 import FullscreenPlayer from "@/components/FullscreenPlayer";
 import React, { useState } from "react";
 import { useContent } from "@/hooks/useContent";
@@ -220,7 +220,7 @@ const MovieDetail = () => {
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                   {recommendedItems.map((item) => (
                     <div key={item.id} className="w-full">
-                      <MovieCard movie={item} />
+                      <ContentCard item={item} variant="auto" autoDetectKids={true} />
                     </div>
                   ))}
                 </div>

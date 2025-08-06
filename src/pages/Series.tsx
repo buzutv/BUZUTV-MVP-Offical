@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import SeriesCard from "@/components/SeriesCard";
+import ContentCard from "@/components/ContentCard";
 import MovieHoverRow from "@/components/MovieHoverRow";
 import HeroBanner from "@/components/HeroBanner";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
@@ -14,7 +14,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import SeriesModal from "@/components/SeriesModal";
+import ContentModal from "@/components/ContentModal";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
@@ -117,7 +117,12 @@ const Series = () => {
             {series.map((show) => (
               <CarouselItem key={show.id} className="pl-1 basis-auto">
                 <div className="w-64">
-                  <SeriesCard series={show} />
+                  <ContentCard 
+                    item={show}
+                    variant="series"
+                    autoDetectKids={true}
+                    width="w-64"
+                  />
                 </div>
               </CarouselItem>
             ))}
@@ -276,10 +281,12 @@ const Series = () => {
                                 title={fullscreenVideoTitle}
                               />
                             )}
-                            <SeriesModal
+                            <ContentModal
                               isOpen={!!selectedSeries && !isFullscreen}
-                              onClose={() => setSelectedSeries(null)}
-                              series={selectedSeries}
+                              onClose={(open) => !open && setSelectedSeries(null)}
+                              item={selectedSeries}
+                              variant="series"
+                              autoDetectKids={true}
                               isSaved={isSaved}
                               onSave={handleSaveModal}
                               onPlayEpisode={handlePlayEpisode}

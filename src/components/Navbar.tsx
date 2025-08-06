@@ -318,7 +318,7 @@ const Navbar = React.memo(
                   variant="no-border"
                   size="sm"
                   onClick={handleLoginClick}
-                  className="text-xs sm:text-sm font-medium px-3 sm:px-4 min-h-0"
+                  className="text-xs sm:text-sm font-medium py-2 px-3 sm:px-4 min-h-0"
                 >
                   Log In
                 </BrandButton>
@@ -326,7 +326,7 @@ const Navbar = React.memo(
                   variant="primary"
                   size="sm"
                   onClick={handleSignUpClick}
-                  className="text-xs sm:text-sm font-medium px-3 sm:px-4 min-h-0"
+                  className="text-xs sm:text-sm font-medium py-2 px-3 sm:px-4 min-h-0"
                 >
                   Sign Up
                 </BrandButton>
@@ -392,28 +392,6 @@ const Navbar = React.memo(
             </Link>
           ))}
 
-          {!isLoggedIn && (
-            <div className="pt-4 border-t border-white/10 space-y-3 max-h-6">
-              <button
-                onClick={() => {
-                  handleLoginClick();
-                  setIsMenuOpen(false);
-                }}
-                className="block w-full text-left text-white text-base font-medium hover:text-brand-400 transition min-h-0 "
-              >
-                Log In
-              </button>
-              <button
-                onClick={() => {
-                  handleSignUpClick();
-                  setIsMenuOpen(false);
-                }}
-                className="block w-full  text-left text-white text-base font-medium hover:text-brand-400 transition min-h-0"
-              >
-                Sign Up
-              </button>
-            </div>
-          )}
         </div>
       </nav>
     );

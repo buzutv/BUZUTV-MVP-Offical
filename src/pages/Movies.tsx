@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from "react";
-import OptimizedMovieCard from "@/components/OptimizedMovieCard";
+import ContentCard from "@/components/ContentCard";
 import MovieHoverRow from "@/components/MovieHoverRow";
 import HeroBanner from "@/components/HeroBanner";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
@@ -14,7 +14,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import MovieModal from "@/components/MovieModal";
+import ContentModal from "@/components/ContentModal";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
@@ -116,7 +116,12 @@ const Movies = React.memo(() => {
             {movies.map((movie) => (
               <CarouselItem key={movie.id} className="pl-1 basis-auto">
                 <div className="w-64">
-                  <OptimizedMovieCard movie={movie} />
+                  <ContentCard 
+                    item={movie}
+                    variant="movie"
+                    autoDetectKids={true}
+                    width="w-64"
+                  />
                 </div>
               </CarouselItem>
             ))}
@@ -268,10 +273,12 @@ const Movies = React.memo(() => {
                                 title={selectedMovie.title}
                               />
                             )}
-                            <MovieModal
+                            <ContentModal
                               isOpen={!!selectedMovie && !isFullscreen}
-                              onClose={() => setSelectedMovie(null)}
-                              movie={selectedMovie}
+                              onClose={(open) => !open && setSelectedMovie(null)}
+                              item={selectedMovie}
+                              variant="movie"
+                              autoDetectKids={true}
                               isSaved={isSaved}
                               onSave={handleSaveModal}
                               onPlay={handleModalPlayClick}

@@ -1,8 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import OptimizedMovieCard from "@/components/OptimizedMovieCard";
-import SeriesCard from "@/components/SeriesCard";
-import MoreLikeThisCard from "./MoreLikeThisCard";
+import ContentCard from "@/components/ContentCard";
 
 interface HomeRowProps {
   title: string;
@@ -127,43 +125,15 @@ const HomeRow = React.memo(
             <div className="flex space-x-2 py-2">
               {items.map((item) => (
                 <div key={item.id} className="flex-shrink-0 w-64">
-                  {isMoreLikeThis ? (
-                    onItemClick ? (
-                      // Use regular cards that will trigger onItemClick for kids modals
-                      item.type === "series" ? (
-                        <SeriesCard
-                          series={item}
-                          onOpen={() => {
-                            onItemClick(item);
-                            return true; // Prevent default modal
-                          }}
-                        />
-                      ) : (
-                        <OptimizedMovieCard
-                          movie={item}
-                          onOpen={() => {
-                            onItemClick(item);
-                            return true; // Prevent default modal
-                          }}
-                        />
-                      )
-                    ) : (
-                      <MoreLikeThisCard
-                        item={item}
-                        onClick={() => {
-                          if (item.type === "series") {
-                            onOpenRelatedSeries?.(item);
-                          } else {
-                            onOpenRelatedMovie?.(item);
-                          }
-                        }}
-                      />
-                    )
-                  ) : item.type === "series" ? (
-                    <SeriesCard series={item} onOpen={onCardClick} />
-                  ) : (
-                    <OptimizedMovieCard movie={item} onOpen={onCardClick} />
-                  )}
+                  <ContentCard
+                    item={item}
+                    variant="auto"
+                    autoDetectKids={true}
+                    isMoreLikeThis={isMoreLikeThis}
+                    width="w-64"
+                    onOpen={onCardClick}
+                    onItemClick={onItemClick}
+                  />
                 </div>
               ))}
             </div>

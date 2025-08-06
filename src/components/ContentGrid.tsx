@@ -1,8 +1,5 @@
 import React from "react";
-import OptimizedMovieCard from "@/components/OptimizedMovieCard";
-
-import SeriesCard from "@/components/SeriesCard";
-import MoreLikeThisCard from "./MoreLikeThisCard";
+import ContentCard from "@/components/ContentCard";
 
 interface ContentGridProps {
   items: any[];
@@ -20,16 +17,13 @@ const ContentGrid: React.FC<ContentGridProps> = ({
       {items.map((item) => (
         <div key={item.id} className="w-full relative aspect-[16/9]">
           <div className="absolute inset-0">
-            {isMoreLikeThis ? (
-              <MoreLikeThisCard item={item} />
-            ) : item.type === "series" ? (
-              <SeriesCard series={item} onOpen={() => onCardClick?.(item)} />
-            ) : (
-              <OptimizedMovieCard
-                movie={item}
-                onOpen={() => onCardClick?.(item)}
-              />
-            )}
+            <ContentCard
+              item={item}
+              variant="auto"
+              autoDetectKids={true}
+              isMoreLikeThis={isMoreLikeThis}
+              onOpen={() => onCardClick?.(item)}
+            />
           </div>
         </div>
       ))}

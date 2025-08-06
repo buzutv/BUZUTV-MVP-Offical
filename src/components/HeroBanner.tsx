@@ -21,8 +21,7 @@ import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import BrandButton from "@/components/ui/BrandButton";
-import SeriesModal from "./SeriesModal";
-import KidsSeriesModal from "./KidsSeriesModal";
+import ContentModal from "./ContentModal";
 import HomeRow from "./HomeRow";
 
 interface HeroBannerProps {
@@ -507,11 +506,13 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
         {modalMovie &&
           modalMovie.type === "series" &&
           modalContentItem &&
-          (variant === "kids" ? (
-            <KidsSeriesModal
+          (
+            <ContentModal
               isOpen={showModal && !isPlaying}
-              onClose={setShowModal}
-              series={modalMovie}
+              onClose={(open) => setShowModal(open)}
+              item={modalMovie}
+              variant="series"
+              isKidsMode={variant === "kids"}
               isSaved={isSaved}
               onSave={handleSave}
               onPlayEpisode={() => {}}
@@ -523,26 +524,10 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
               channel={channel}
               recommendedContent={recommendedContent}
               seasons={modalSeasonsData}
+              customBackground={variant === "kids" ? undefined : "bg-gradient-to-br from-black via-slate-900 to-violet-900"}
+              allowNestedModals={variant === "kids"}
             />
-          ) : (
-            <SeriesModal
-              isOpen={showModal && !isPlaying}
-              onClose={setShowModal}
-              series={modalMovie}
-              isSaved={isSaved}
-              onSave={handleSave}
-              onPlayEpisode={() => {}}
-              videoUrl={modalVideoUrl}
-              contentItem={{
-                ...modalContentItem,
-                seasons_data: modalSeasonsData,
-              }}
-              channel={channel}
-              recommendedContent={recommendedContent}
-              seasons={modalSeasonsData}
-              customBackground="bg-gradient-to-br from-black via-slate-900 to-violet-900"
-            />
-          ))}
+          )}
       </Dialog>
 
       {/* Custom Pagination Styles */}

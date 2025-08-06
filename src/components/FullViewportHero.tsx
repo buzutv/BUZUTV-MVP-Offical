@@ -8,8 +8,7 @@ import "./HeroCarousel.css";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { ArrowLeft, ArrowRight, Info, Play } from "lucide-react";
-import MovieModal from "./MovieModal";
-import SeriesModal from "./SeriesModal";
+import ContentModal from "./ContentModal";
 import FullscreenPlayer from "./FullscreenPlayer";
 import ChannelCard from "./ChannelCard";
 import BrandButton from "./ui/BrandButton";
@@ -308,32 +307,21 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
       )}
 
       {/* Modals */}
-      {modalOpen && modalType === "movie" && modalItem && (
-        <MovieModal
+      {modalOpen && modalItem && (
+        <ContentModal
           isOpen={modalOpen}
-          onClose={handleCloseModal}
-          movie={modalItem as any}
+          onClose={(open) => !open && handleCloseModal()}
+          item={modalItem as any}
+          variant={modalType || "auto"}
+          autoDetectKids={true}
           isSaved={favoriteIds.includes(modalItem.id)}
           onSave={() => handleSaveItem(modalItem.id)}
-          onPlay={() => handlePlay(modalItem)}
-          videoUrl={modalItem.videoUrl}
-          contentItem={modalItem}
-          channel={null}
-          recommendedContent={recommendedContent}
-        />
-      )}
-      {modalOpen && modalType === "series" && modalItem && (
-        <SeriesModal
-          isOpen={modalOpen}
-          onClose={handleCloseModal}
-          series={modalItem as any}
-          isSaved={favoriteIds.includes(modalItem.id)}
-          onSave={() => handleSaveItem(modalItem.id)}
-          onPlayEpisode={(url, episodeTitle) => {
+          onPlay={modalType === "movie" ? () => handlePlay(modalItem) : undefined}
+          onPlayEpisode={modalType === "series" ? (url, episodeTitle) => {
             setFullscreenUrl(url);
             setFullscreenTitle(episodeTitle);
             setFullscreenOpen(true);
-          }}
+          } : undefined}
           videoUrl={modalItem.videoUrl}
           contentItem={modalItem}
           channel={null}
