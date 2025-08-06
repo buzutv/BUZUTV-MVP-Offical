@@ -159,12 +159,12 @@ const Navbar = React.memo(
     return (
       <nav
         ref={navRef}
-        className={`fixed top-3 left-0 right-0 z-50 px-4 md:px-6 h-14 transition-all duration-500 ${
-          shouldShowNav ? "flex md:flex" : "hidden"
+        className={`fixed top-3 left-0 right-0 z-50 px-4 min-[1100px]:px-6 h-14 transition-all duration-500 ${
+          shouldShowNav ? "flex min-[1100px]:flex" : "hidden"
         } items-center`}
       >
         <div
-          className="max-w-full px-4 md:px-8 w-full flex items-center justify-between h-14 relative bg-black/20 backdrop-blur-lg border border-white/10"
+          className="max-w-full px-4 min-[1100px]:px-8 w-full flex items-center justify-between h-14 relative bg-black/20 backdrop-blur-lg border border-white/10"
           style={{
             borderRadius: isMenuOpen ? "30px 30px 0 0" : "30px",
             borderBottom: isMenuOpen
@@ -176,12 +176,12 @@ const Navbar = React.memo(
         >
           <div className="flex-shrink-0">
             <Link to="/" className="flex items-center">
-              <img src="/logo.png" alt="BUZUTV" className="h-6" />
+              <img src="/logo.png" alt="BUZUTV" className="h-10 w-auto" />
             </Link>
           </div>
 
           <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
-            <div className="hidden md:flex items-center gap-4 whitespace-nowrap">
+            <div className="hidden min-[1100px]:flex items-center gap-4 whitespace-nowrap">
               {navItems.map(({ to, label }) => (
                 <Link
                   key={to}
@@ -246,7 +246,7 @@ const Navbar = React.memo(
           <div className="flex items-center gap-2">
             {/* Desktop search - hidden on mobile */}
             <div
-              className={`relative rounded-full px-2 py-1 hidden md:block ${
+              className={`relative rounded-full px-2 py-1 hidden min-[1100px]:block ${
                 isSearchOpen || searchQuery
                   ? "border border-white/10 bg-black/10"
                   : ""
@@ -335,7 +335,7 @@ const Navbar = React.memo(
 
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden text-white hover:text-gray-300 transition-colors"
+              className="min-[1100px]:hidden text-white hover:text-gray-300 transition-colors"
               aria-label="Toggle Menu"
             >
               <div className="relative w-6 h-6">
@@ -360,7 +360,7 @@ const Navbar = React.memo(
 
         {/* Mobile dropdown */}
         <div
-          className={`absolute top-14 left-4 right-4 z-40 bg-black/20 backdrop-blur-lg border border-white/10 border-t-transparent rounded-b-[30px] px-6 py-4 space-y-3 md:hidden transition-all duration-300 ease-in-out transform ${
+          className={`absolute top-14 left-4 right-4 z-40 bg-black/20 backdrop-blur-lg border border-white/10 border-t-transparent rounded-b-[30px] px-6 py-4 space-y-3 min-[1100px]:hidden transition-all duration-300 ease-in-out transform ${
             isMenuOpen
               ? "opacity-100 translate-y-0 pointer-events-auto"
               : "opacity-0 -translate-y-4 pointer-events-none"

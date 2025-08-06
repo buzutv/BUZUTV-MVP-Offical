@@ -178,7 +178,7 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
     : [];
 
   // Format duration from minutes to "Xh Ym" format
-  const formatDuration = (minutes: number | undefined) => {
+  const formatDuration = (minutes: number | undefined | null) => {
     if (!minutes) return "N/A";
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
@@ -445,7 +445,7 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                     </button>
 
                     <span className="text-white text-xl font-medium">
-                      {formatDuration(modalContentItem?.duration_minutes)}
+                      {formatDuration(modalContentItem?.duration_minutes ?? modalMovie?.duration)}
                     </span>
                   </div>
 
