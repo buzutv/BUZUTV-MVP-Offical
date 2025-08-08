@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import ContentCard from "@/components/ContentCard";
-import MovieHoverRow from "@/components/MovieHoverRow";
 import HeroBanner from "@/components/HeroBanner";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import FilterBar from "@/components/FilterBar";
@@ -113,7 +112,7 @@ const Series = () => {
         className="w-full"
       >
         <CarouselContent className="-ml-1">
-          <MovieHoverRow className="flex">
+          <div className="flex py-2">
             {series.map((show) => (
               <CarouselItem key={show.id} className="pl-1 basis-auto">
                 <div className="w-64">
@@ -126,7 +125,7 @@ const Series = () => {
                 </div>
               </CarouselItem>
             ))}
-          </MovieHoverRow>
+          </div>
         </CarouselContent>
         <CarouselPrevious />
         <CarouselNext />

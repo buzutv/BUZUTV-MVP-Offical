@@ -9,7 +9,6 @@ import { Filter, UserCheck, UserPlus, X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ContentCard from "@/components/ContentCard";
 
-import MovieHoverRow from "@/components/MovieHoverRow";
 import { useContent } from "@/hooks/useContent";
 import { useUserChannelFavorites } from "@/hooks/useUserChannelFavorites";
 import { Movie } from "@/data/mockMovies";
@@ -396,13 +395,13 @@ const ChannelModal = ({ isOpen, onClose, channel }: ChannelModalProps) => {
               </div>
             </div>
 
-            {/* Content Grid - Updated to match ContentRow spacing and sizing */}
+            {/* Content Grid */}
             <div className="flex-1 overflow-hidden">
               <ScrollArea className="h-full">
                 <div className="px-4 py-6">
                   {filteredAndSortedContent.length > 0 ? (
                     <div className="flex flex-wrap gap-4">
-                      <MovieHoverRow className="flex flex-wrap gap-4 w-full">
+                      <div className="flex flex-wrap gap-4 w-full py-2">
                         {filteredAndSortedContent.map((movie) => (
                           <div key={movie.id} className="flex-shrink-0 w-64">
                             <ContentCard
@@ -419,7 +418,7 @@ const ChannelModal = ({ isOpen, onClose, channel }: ChannelModalProps) => {
                             />
                           </div>
                         ))}
-                      </MovieHoverRow>
+                      </div>
                     </div>
                   ) : (
                     <div className="text-center py-20">

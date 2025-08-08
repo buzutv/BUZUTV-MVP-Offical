@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useState } from "react";
 import ContentCard from "@/components/ContentCard";
-import MovieHoverRow from "@/components/MovieHoverRow";
 import HeroBanner from "@/components/HeroBanner";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import FilterBar from "@/components/FilterBar";
@@ -114,7 +113,7 @@ const Movies = React.memo(() => {
         className="w-full"
       >
         <CarouselContent className="-ml-1">
-          <MovieHoverRow className="flex">
+          <div className="flex py-2">
             {movies.map((movie) => (
               <CarouselItem key={movie.id} className="pl-1 basis-auto">
                 <div className="w-64">
@@ -127,7 +126,7 @@ const Movies = React.memo(() => {
                 </div>
               </CarouselItem>
             ))}
-          </MovieHoverRow>
+          </div>
         </CarouselContent>
         <CarouselPrevious />
         <CarouselNext />
