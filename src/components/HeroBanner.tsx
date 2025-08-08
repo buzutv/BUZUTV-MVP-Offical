@@ -1,13 +1,5 @@
 import { useState } from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Heart,
-  Info,
-  Play,
-  Star,
-  X,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Info, Play, X } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Navigation, Pagination } from "swiper/modules";
 import "swiper/css";
@@ -100,6 +92,8 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
   );
   const handleCloseVideo = () => {
     setIsPlaying(false);
+    setCurrentVideoUrl(null);
+    setCurrentVideoTitle(null);
   };
 
   const handleModalPlayClick = () => {
@@ -194,13 +188,26 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
             bulletActiveClass: "swiper-pagination-bullet-movies-active",
           }}
           autoplay={
-            isPlaying ? false : { delay: 5000, disableOnInteraction: false }
+            isPlaying || showModal
+              ? false
+              : { delay: 5000, disableOnInteraction: false }
           }
           loop={movies.length > 1}
           className="h-full w-full"
           onSlideChange={(swiper) => {
             if (!isPlaying) {
-              setCurrentMovie(movies[swiper.realIndex] || movies[0]);
+              const newMovie = movies[swiper.realIndex] || movies[0];
+              setCurrentMovie(newMovie);
+            }
+          }}
+          onSliderFirstMove={(swiper) => {
+            // Ensure currentMovie is set on first interaction
+            const newMovie = movies[swiper.realIndex] || movies[0];
+            if (
+              newMovie &&
+              (!currentMovie || currentMovie.id !== newMovie.id)
+            ) {
+              setCurrentMovie(newMovie);
             }
           }}
         >
@@ -238,26 +245,40 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
                     <div className="max-w-xl">
                       <h1 className="text-3xl md:text-4xl font-bold mb-3 text-white">
-                        {movie.title}
+                        {currentMovie?.title}
                       </h1>
 
                       <div className="flex items-center space-x-3 mb-6">
                         <span
                           className={`${genreBgClass} text-white px-2 py-1 rounded text-sm`}
                         >
-                          {movie.genre}
+                          {currentMovie?.genre}
                         </span>
-                        <span className="text-white text-sm">{movie.year}</span>
+                        <span className="text-white text-sm">
+                          {currentMovie?.year}
+                        </span>
+                        {/* Duration after year - only show if duration exists */}
+                        {(() => {
+                          const movieDuration =
+                            contentItem?.duration_minutes ||
+                            currentMovie?.duration;
+
+                          return movieDuration ? (
+                            <span className="text-white text-sm">
+                              {formatDuration(movieDuration)}
+                            </span>
+                          ) : null;
+                        })()}
                         <div className="flex items-center space-x-1">
                           <span className="text-yellow-400">★</span>
                           <span className="text-white text-sm">
-                            {movie.rating}
+                            {currentMovie?.rating}
                           </span>
                         </div>
                       </div>
                       <div className="flex items-center space-x-3 mb-6">
                         {/* Only show Play button if not a series */}
-                        {movie.type !== "series" && (
+                        {currentMovie?.type !== "series" && (
                           <BrandButton
                             onClick={handleWatchNow}
                             disabled={!watchNowEnabled}
@@ -280,7 +301,7 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                           </BrandButton>
                         )}
                         {/* For series, show a non-clickable pill instead of More Info */}
-                        {movie.type === "series" ? (
+                        {currentMovie?.type === "series" ? (
                           <BrandButton
                             variant={
                               variant === "kids" ? "kidsSecondary" : "secondary"
@@ -325,7 +346,7 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
       </div>
 
       {/* Full Screen Video Player - Fixed positioning */}
-      {isPlaying && embedUrl && (
+      {isPlaying && (
         <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center">
           {/* Close Button */}
           <button
@@ -336,25 +357,50 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
           </button>
           {/* Video Player */}
           <div className="w-full h-full flex items-center justify-center">
-            {embedUrl.includes("youtube.com/embed") ? (
-              <iframe
-                src={`${embedUrl}?autoplay=1&controls=1&rel=0&fs=1&playsinline=1`}
-                className="w-full h-full"
-                allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-                allowFullScreen
-                sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-              />
-            ) : (
-              <video
-                src={embedUrl}
-                controls
-                autoPlay
-                className="w-full h-full object-contain"
-                onError={() => {
-                  setIsPlaying(false);
-                }}
-              />
-            )}
+            {(() => {
+              // Use currentVideoUrl if available (from modal), otherwise use hero's embedUrl
+              const videoToPlay = currentVideoUrl || embedUrl;
+              const videoTitle = currentVideoTitle || currentMovie?.title;
+
+
+              if (!videoToPlay) {
+                return (
+                  <div className="text-white text-center">
+                    <p>No video available</p>
+                    <button
+                      onClick={handleCloseVideo}
+                      className="mt-4 px-4 py-2 bg-gray-600 rounded text-white"
+                    >
+                      Close
+                    </button>
+                  </div>
+                );
+              }
+
+              const finalEmbedUrl = videoToPlay.includes("youtube.com/embed")
+                ? videoToPlay
+                : getYouTubeEmbedUrl(videoToPlay) || videoToPlay;
+
+              return finalEmbedUrl.includes("youtube.com/embed") ? (
+                <iframe
+                  src={`${finalEmbedUrl}?autoplay=1&controls=1&rel=0&fs=1&playsinline=1`}
+                  className="w-full h-full"
+                  allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+                  allowFullScreen
+                  sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                />
+              ) : (
+                <video
+                  src={finalEmbedUrl}
+                  controls
+                  autoPlay
+                  className="w-full h-full object-contain"
+                  onError={() => {
+                    setIsPlaying(false);
+                  }}
+                />
+              );
+            })()}
           </div>
         </div>
       )}
@@ -379,7 +425,11 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
           }}
           channel={channel}
           seasons={modalSeasonsData}
-          customBackground={variant === "kids" ? undefined : "bg-gradient-to-br from-black via-slate-900 to-violet-900"}
+          customBackground={
+            variant === "kids"
+              ? undefined
+              : "bg-gradient-to-br from-black via-slate-900 to-violet-900"
+          }
         />
       )}
 

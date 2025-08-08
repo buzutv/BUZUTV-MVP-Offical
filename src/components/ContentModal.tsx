@@ -226,16 +226,6 @@ const ContentModal: React.FC<ContentModalProps> = ({
       const finalDuration =
         backendDuration ?? frontendDuration ?? alternativeDuration;
 
-      console.log("Movie duration debug:", {
-        itemTitle: normalizedItem.title,
-        itemType: contentType,
-        backendDuration,
-        frontendDuration,
-        alternativeDuration,
-        finalDuration,
-        currentContentItem: !!currentContentItem,
-        currentItemKeys: Object.keys(currentItem),
-      });
 
       if (finalDuration) {
         return formatDuration(finalDuration);
@@ -545,7 +535,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
                               }
                               className={`border flex items-center space-x-3 rounded-lg p-3 transition-all duration-300 group h-12 cursor-pointer ${
                                 effectiveKidsMode
-                                  ? "border-blue-400/20 bg-blue-500/60 hover:border-blue-400/40 hover:bg-blue-500/80"
+                                  ? "border-blue-400/20 bg-blue-500/60 hover:border-white hover:shadow-[0_0_8px_rgba(255,255,255,0.6)]"
                                   : "border-brand-500/20 bg-black hover:border-white hover:shadow-[0_0_8px_rgba(255,255,255,0.6)]"
                               }`}
                             >

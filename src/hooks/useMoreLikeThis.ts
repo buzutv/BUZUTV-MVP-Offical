@@ -23,13 +23,6 @@ export const useMoreLikeThis = (options: UseMoreLikeThisOptions) => {
       return [];
     }
 
-    console.log('[useMoreLikeThis] Processing recommendations for:', {
-      title: currentItem.title,
-      type: currentItem.type,
-      genre: currentItem.genre,
-      totalAvailable: allContent.length,
-      effectiveKidsMode
-    });
 
     const filtered = getMoreLikeThisRecommendations({
       currentItem,
@@ -42,11 +35,6 @@ export const useMoreLikeThis = (options: UseMoreLikeThisOptions) => {
     // Limit results
     const limited = filtered.slice(0, limit);
 
-    console.log('[useMoreLikeThis] Final recommendations:', {
-      found: filtered.length,
-      returned: limited.length,
-      titles: limited.map(item => item.title)
-    });
 
     return limited;
   }, [currentItem, contentItem, effectiveKidsMode, allContent, isLoading, limit]);

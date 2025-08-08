@@ -13,14 +13,6 @@ export interface FilteredRecommendation extends Content {
   posterUrl: string;
 }
 
-/**
- * Debug logging for More Like This filtering
- */
-const debugLog = (message: string, data?: any) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`[MoreLikeThis] ${message}`, data);
-  }
-};
 
 /**
  * Safely gets poster URL from either Movie or Content item
@@ -71,21 +63,7 @@ export const getMoreLikeThisRecommendations = (
 
   const normalizedCurrentItem = normalizeItem(currentItem);
 
-  debugLog('Filtering recommendations for:', {
-    title: normalizedCurrentItem.title,
-    type: normalizedCurrentItem.type,
-    genre: normalizedCurrentItem.genre,
-    channelId: normalizedCurrentItem.channelId,
-    effectiveKidsMode,
-    totalContent: allContent.length
-  });
 
-  debugLog('All available content:', allContent.map(item => ({
-    title: item.title,
-    type: item.type,
-    genre: item.genre,
-    is_kids: item.is_kids
-  })));
 
   // If skipping filtering, just exclude current item
   if (skipContentFiltering) {
@@ -96,7 +74,6 @@ export const getMoreLikeThisRecommendations = (
         posterUrl: getPosterUrl(recItem),
       }));
     
-    debugLog('Skipped filtering, returning items:', result.length);
     return result;
   }
 
@@ -105,14 +82,12 @@ export const getMoreLikeThisRecommendations = (
     // 1. Must be different item
     const passesId = recItem.id !== normalizedCurrentItem.id;
     if (!passesId) {
-      debugLog(`Filtered out current item: ${recItem.title}`);
       return false;
     }
 
     // 2. Must match content type (movies show only movies, series show only series)
     const passesType = recItem.type === normalizedCurrentItem.type;
     if (!passesType) {
-      debugLog(`Filtered out wrong type: ${recItem.title} (${recItem.type} vs ${normalizedCurrentItem.type})`);
       return false;
     }
 
@@ -122,11 +97,9 @@ export const getMoreLikeThisRecommendations = (
       : !recItem.is_kids; // Exclude kids content in regular mode
     
     if (!passesKids) {
-      debugLog(`Filtered out kids content: ${recItem.title} (kids: ${recItem.is_kids}, kidsMode: ${effectiveKidsMode})`);
       return false;
     }
 
-    debugLog(`✅ Passed basic filters: ${recItem.title}`);
     return true;
   });
 
@@ -135,12 +108,6 @@ export const getMoreLikeThisRecommendations = (
     const currentGenre = normalizedCurrentItem.genre?.toLowerCase().trim();
     const itemGenre = recItem.genre?.toLowerCase().trim();
     
-    debugLog(`Genre comparison for ${recItem.title}:`, {
-      currentGenre: `"${normalizedCurrentItem.genre}" -> "${currentGenre}"`,
-      itemGenre: `"${recItem.genre}" -> "${itemGenre}"`,
-      bothExist: !!(currentGenre && itemGenre),
-      match: currentGenre === itemGenre
-    });
     
     const sameGenre = currentGenre && itemGenre && currentGenre === itemGenre;
     return sameGenre;
@@ -171,11 +138,6 @@ export const getMoreLikeThisRecommendations = (
     matchType = "same type (fallback)";
   }
   
-  debugLog(`Using ${matchType} matching: ${filteredContent.length} items`, {
-    sameGenre: sameGenreItems.length,
-    sameChannel: sameChannelItems.length,
-    totalFiltered: baseFilteredContent.length
-  });
 
   // Transform to include posterUrl
   const result = filteredContent.map((recItem) => ({
@@ -183,10 +145,6 @@ export const getMoreLikeThisRecommendations = (
     posterUrl: getPosterUrl(recItem),
   }));
 
-  debugLog('Final filtered recommendations:', {
-    count: result.length,
-    titles: result.map(r => r.title)
-  });
 
   return result;
 };
