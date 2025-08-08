@@ -153,7 +153,7 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
   if (!isOpen) return null;
 
   const playerContent = (
-    <div className="fixed inset-0 z-[99999] bg-black flex flex-col">
+    <div className="fixed inset-0 z-[99999] bg-black flex flex-col pointer-events-auto">
       {/* Close Button */}
       <div className="absolute top-6 right-4 z-20 pointer-events-auto">
         <button

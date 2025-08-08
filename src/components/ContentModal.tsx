@@ -10,6 +10,7 @@ import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { Content, useContent } from "@/hooks/useContent";
 import { Channel, useChannels } from "@/hooks/useChannels";
 import { useMoreLikeThis } from "@/hooks/useMoreLikeThis";
+import SeriesPlayer from "@/components/SeriesPlayer";
 
 // Type guards to safely access properties
 const isMovie = (item: Movie | Content): item is Movie => {
@@ -110,6 +111,11 @@ const ContentModal: React.FC<ContentModalProps> = ({
 }) => {
   // State for switching items within the modal
   const [currentItem, setCurrentItem] = useState<Movie | Content>(item);
+
+  // SeriesPlayer state
+  const [isSeriesPlayerOpen, setIsSeriesPlayerOpen] = useState(false);
+  const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
+  const [currentSeasonNumber, setCurrentSeasonNumber] = useState<number>(1);
 
   const { favoriteIds, addToFavorites, removeFromFavorites } =
     useUserFavorites();
@@ -226,7 +232,6 @@ const ContentModal: React.FC<ContentModalProps> = ({
       const finalDuration =
         backendDuration ?? frontendDuration ?? alternativeDuration;
 
-
       if (finalDuration) {
         return formatDuration(finalDuration);
       }
@@ -297,21 +302,24 @@ const ContentModal: React.FC<ContentModalProps> = ({
 
   const handlePlayFirstEpisode = () => {
     const firstEpisode = seasonsData[0]?.episodes[0];
-    if (firstEpisode && onPlayEpisode) {
-      onPlayEpisode(
-        firstEpisode.video_url || "",
-        `${normalizedItem.title} - ${firstEpisode.title}`,
-      );
+    if (firstEpisode && seasonsData.length > 0) {
+      setCurrentEpisode(firstEpisode);
+      setCurrentSeasonNumber(seasonsData[0].season_number);
+      setIsSeriesPlayerOpen(true);
     }
   };
 
   const handlePlayEpisode = (episode: Episode, seasonNumber: number) => {
-    if (episode.video_url && onPlayEpisode) {
-      onPlayEpisode(
-        episode.video_url,
-        `${normalizedItem.title} - S${seasonNumber}E${episode.episode_number}: ${episode.title}`,
-      );
+    if (episode.video_url && seasonsData.length > 0) {
+      setCurrentEpisode(episode);
+      setCurrentSeasonNumber(seasonNumber);
+      setIsSeriesPlayerOpen(true);
     }
+  };
+
+  const handleCloseSeriesPlayer = () => {
+    setIsSeriesPlayerOpen(false);
+    setCurrentEpisode(null);
   };
 
   // Use the unified More Like This content (already normalized with posterUrl)
@@ -370,6 +378,11 @@ const ContentModal: React.FC<ContentModalProps> = ({
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent
+          onInteractOutside={(e) => {
+            if (isSeriesPlayerOpen) {
+              e.preventDefault(); // Only block outside clicks when player is open
+            }
+          }}
           className={`max-w-full md:max-w-[75vw] max-h-full md:max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-1000 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 ${getBackgroundStyles()}`}
           style={getDefaultBackgroundStyle()}
         >
@@ -448,10 +461,10 @@ const ContentModal: React.FC<ContentModalProps> = ({
                     <span className="text-white font-medium">
                       {normalizedItem.year}
                     </span>
-                    
+
                     {/* Duration display after year - only show if duration exists */}
-                    {getDurationOrSeasonsText() && (
-                      effectiveKidsMode ? (
+                    {getDurationOrSeasonsText() &&
+                      (effectiveKidsMode ? (
                         <span className="bg-blue-500 text-white px-2 py-1 rounded text-xs font-medium">
                           {getDurationOrSeasonsText()}
                         </span>
@@ -459,8 +472,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
                         <span className="text-white font-medium">
                           {getDurationOrSeasonsText()}
                         </span>
-                      )
-                    )}
+                      ))}
 
                     {effectiveKidsMode ? (
                       <>
@@ -587,6 +599,18 @@ const ContentModal: React.FC<ContentModalProps> = ({
           </ScrollArea>
         </DialogContent>
       </Dialog>
+
+      {/* SeriesPlayer for series content */}
+      {isSeriesPlayerOpen && currentEpisode && (
+        <SeriesPlayer
+          isOpen={isSeriesPlayerOpen}
+          onClose={handleCloseSeriesPlayer}
+          seriesTitle={normalizedItem.title}
+          seasons={seasonsData}
+          currentEpisode={currentEpisode}
+          currentSeason={currentSeasonNumber}
+        />
+      )}
     </>
   );
 };
