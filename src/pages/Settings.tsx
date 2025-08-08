@@ -34,8 +34,7 @@ const Settings = () => {
   const [showRePassword, setShowRePassword] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
+    fullName: "",
     email: user?.email || "",
     phone: "",
     currentPassword: "",
@@ -43,15 +42,13 @@ const Settings = () => {
     rePassword: "",
   });
   const [fieldStates, setFieldStates] = useState({
-    firstName: false,
-    lastName: false,
+    fullName: false,
     email: false,
     phone: false,
   });
   const [isSaving, setIsSaving] = useState(false);
   const [savingStates, setSavingStates] = useState({
-    firstName: false,
-    lastName: false,
+    fullName: false,
     email: false,
     phone: false,
   });
@@ -60,15 +57,9 @@ const Settings = () => {
   // Sync form with user data when user changes
   useEffect(() => {
     if (user) {
-      const fullName = user.name || "";
-      const nameParts = fullName.split(" ");
-      const firstName = nameParts[0] || "";
-      const lastName = nameParts.slice(1).join(" ") || "";
-
       setForm((prev) => ({
         ...prev,
-        firstName,
-        lastName,
+        fullName: user.name || "",
         email: user.email || "",
         phone: user.phone || user.user_metadata?.phone || "",
       }));
@@ -93,69 +84,33 @@ const Settings = () => {
     setError("");
   };
 
-  const handleUpdateFirstName = async () => {
-    setSavingStates((prev) => ({ ...prev, firstName: true }));
+  const handleUpdateFullName = async () => {
+    setSavingStates((prev) => ({ ...prev, fullName: true }));
     setError("");
 
     try {
-      const currentFirstName = user?.name?.split(" ")[0] || "";
-      if (form.firstName !== currentFirstName) {
-        const currentLastName = user?.name?.split(" ").slice(1).join(" ") || "";
-        const newFullName = `${form.firstName} ${currentLastName}`.trim();
-
+      const currentFullName = user?.name || "";
+      if (form.fullName.trim() !== currentFullName) {
         const { error: nameError } = await supabase.auth.updateUser({
           data: {
-            full_name: newFullName,
-            name: newFullName,
+            full_name: form.fullName.trim(),
+            name: form.fullName.trim(),
           },
         });
 
         if (nameError) {
           setError(nameError.message);
         } else {
-          toast.success("First name updated successfully!");
-          setFieldStates((prev) => ({ ...prev, firstName: false }));
+          toast.success("Full name updated successfully!");
+          setFieldStates((prev) => ({ ...prev, fullName: false }));
         }
       } else {
-        toast.info("No changes were made to your first name.");
+        toast.info("No changes were made to your full name.");
       }
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred.");
     } finally {
-      setSavingStates((prev) => ({ ...prev, firstName: false }));
-    }
-  };
-
-  const handleUpdateLastName = async () => {
-    setSavingStates((prev) => ({ ...prev, lastName: true }));
-    setError("");
-
-    try {
-      const currentLastName = user?.name?.split(" ").slice(1).join(" ") || "";
-      if (form.lastName !== currentLastName) {
-        const currentFirstName = user?.name?.split(" ")[0] || "";
-        const newFullName = `${currentFirstName} ${form.lastName}`.trim();
-
-        const { error: nameError } = await supabase.auth.updateUser({
-          data: {
-            full_name: newFullName,
-            name: newFullName,
-          },
-        });
-
-        if (nameError) {
-          setError(nameError.message);
-        } else {
-          toast.success("Last name updated successfully!");
-          setFieldStates((prev) => ({ ...prev, lastName: false }));
-        }
-      } else {
-        toast.info("No changes were made to your last name.");
-      }
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
-    } finally {
-      setSavingStates((prev) => ({ ...prev, lastName: false }));
+      setSavingStates((prev) => ({ ...prev, fullName: false }));
     }
   };
 
@@ -431,95 +386,48 @@ const Settings = () => {
                 </div>
               )}
 
-              {/* First Name Field */}
+              {/* Full Name Field */}
               <div className="flex flex-col md:flex-row md:items-end gap-4">
                 <div className="w-full md:flex-[0_0_50%]">
                   <Label
-                    htmlFor="firstName"
+                    htmlFor="fullName"
                     className="flex items-center space-x-2 text-white mb-2"
                   >
                     <User className="w-4 h-4" />
-                    <span>First Name</span>
+                    <span>Full Name</span>
                   </Label>
                   <Input
-                    id="firstName"
-                    name="firstName"
-                    value={form.firstName}
+                    id="fullName"
+                    name="fullName"
+                    value={form.fullName}
                     onChange={handleInputChange}
-                    disabled={!fieldStates.firstName}
+                    disabled={!fieldStates.fullName}
                     className="bg-black/30 border-white/30 text-white disabled:opacity-50 backdrop-blur-sm placeholder:text-white/50"
-                    placeholder="Enter your first name"
+                    placeholder="Enter your full name"
                   />
                 </div>
                 <div className="flex gap-2 transition-all duration-300 ease-in-out">
                   <BrandButton
-                    onClick={() => handleFieldToggle("firstName")}
-                    variant={fieldStates.firstName ? "secondary" : "primary"}
+                    onClick={() => handleFieldToggle("fullName")}
+                    variant={fieldStates.fullName ? "secondary" : "primary"}
                     size="sm"
                     className="w-[170px] transition-all duration-300 ease-in-out text-xs sm:text-sm"
                   >
-                    {fieldStates.firstName ? "Cancel" : "Change First Name"}
+                    {fieldStates.fullName ? "Cancel" : "Change Full Name"}
                   </BrandButton>
                   <div className={`transition-all duration-500 ease-in-out ${
-                    fieldStates.firstName 
+                    fieldStates.fullName 
                       ? "opacity-100 scale-100 translate-x-0" 
                       : "opacity-0 scale-95 translate-x-2 pointer-events-none"
                   }`}>
                     <BrandButton
-                      onClick={handleUpdateFirstName}
-                      disabled={savingStates.firstName}
+                      onClick={handleUpdateFullName}
+                      disabled={savingStates.fullName}
                       variant="primary"
                       size="sm"
                       className="whitespace-nowrap"
                     >
-                      {savingStates.firstName ? "Saving..." : "Save changes"}
-                    </BrandButton>
-                  </div>
-                </div>
-              </div>
-
-              {/* Last Name Field */}
-              <div className="flex flex-col md:flex-row md:items-end gap-4">
-                <div className="w-full md:flex-[0_0_50%]">
-                  <Label
-                    htmlFor="lastName"
-                    className="flex items-center space-x-2 text-white mb-2"
-                  >
-                    <User className="w-4 h-4" />
-                    <span>Last Name</span>
-                  </Label>
-                  <Input
-                    id="lastName"
-                    name="lastName"
-                    value={form.lastName}
-                    onChange={handleInputChange}
-                    disabled={!fieldStates.lastName}
-                    className="bg-black/30 border-white/30 text-white disabled:opacity-50 backdrop-blur-sm placeholder:text-white/50"
-                    placeholder="Enter your last name"
-                  />
-                </div>
-                <div className="flex gap-2 transition-all duration-300 ease-in-out">
-                  <BrandButton
-                    onClick={() => handleFieldToggle("lastName")}
-                    variant={fieldStates.lastName ? "secondary" : "primary"}
-                    size="sm"
-                    className="w-[170px] transition-all duration-300 ease-in-out text-xs sm:text-sm"
-                  >
-                    {fieldStates.lastName ? "Cancel" : "Change Last Name"}
-                  </BrandButton>
-                  <div className={`transition-all duration-500 ease-in-out ${
-                    fieldStates.lastName 
-                      ? "opacity-100 scale-100 translate-x-0" 
-                      : "opacity-0 scale-95 translate-x-2 pointer-events-none"
-                  }`}>
-                    <BrandButton
-                      onClick={handleUpdateLastName}
-                      disabled={savingStates.lastName}
-                      variant="primary"
-                      size="sm"
-                      className="whitespace-nowrap"
-                    >
-                      {savingStates.lastName ? "Saving..." : "Save changes"}
+                      {savingStates.fullName ? "Saving..." : "Save changes"}
                     </BrandButton>
                   </div>
                 </div>
