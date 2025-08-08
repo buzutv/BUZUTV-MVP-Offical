@@ -235,22 +235,8 @@ const Series = () => {
                           (ch) => ch.id === selectedSeries.channelId,
                         );
 
-                        const recommendedContent = rawContent
-                          .filter((item) => {
-                            const passesId = item.id !== selectedSeries.id;
-                            // If current series is kids content, show only kids content in recommendations
-                            // If current series is not kids content, exclude kids content from recommendations
-                            const passesKids =
-                              selectedSeries.is_kids || contentItem?.is_kids
-                                ? item.is_kids === true // Show only kids content
-                                : !item.is_kids; // Exclude kids content
-                            const passesGenre =
-                              item.genre === selectedSeries.genre ||
-                              item.channel_id === selectedSeries.channelId;
-
-                            return passesId && passesKids && passesGenre;
-                          })
-                          .slice(0, 6);
+                        // This will be handled internally by ContentModal using useMoreLikeThis hook
+                        const recommendedContent = [];
                         const handleSaveModal = () => {
                           if (isSaved) {
                             removeFromFavorites(selectedSeries.id);
@@ -287,13 +273,14 @@ const Series = () => {
                               item={selectedSeries}
                               variant="series"
                               autoDetectKids={true}
-                              isSaved={isSaved}
-                              onSave={handleSaveModal}
-                              onPlayEpisode={handlePlayEpisode}
+                              onPlayEpisode={(videoUrl, episodeTitle) => {
+                                setFullscreenVideoUrl(videoUrl);
+                                setFullscreenVideoTitle(episodeTitle);
+                                setIsFullscreen(true);
+                              }}
                               videoUrl={videoUrl}
                               contentItem={contentItem}
                               channel={channel}
-                              recommendedContent={recommendedContent}
                             />
                           </>
                         );

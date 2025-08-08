@@ -32,6 +32,8 @@ const Movies = React.memo(() => {
   const { content: rawContent } = useContent();
   const { channels } = useChannels();
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [currentVideoUrl, setCurrentVideoUrl] = useState<string>("");
+  const [currentVideoTitle, setCurrentVideoTitle] = useState<string>("");
 
   const availableMovieGenres = useMemo(() => {
     if (!movieContent.all || movieContent.all.length === 0) {
@@ -232,22 +234,8 @@ const Movies = React.memo(() => {
                           (ch) => ch.id === selectedMovie.channelId,
                         );
 
-                        const recommendedContent = rawContent
-                          .filter((item) => {
-                            const passesId = item.id !== selectedMovie.id;
-                            // If current movie is kids content, show only kids content in recommendations
-                            // If current movie is not kids content, exclude kids content from recommendations
-                            const passesKids =
-                              selectedMovie.is_kids || contentItem?.is_kids
-                                ? item.is_kids === true // Show only kids content
-                                : !item.is_kids; // Exclude kids content
-                            const passesGenre =
-                              item.genre === selectedMovie.genre ||
-                              item.channel_id === selectedMovie.channelId;
-
-                            return passesId && passesKids && passesGenre;
-                          })
-                          .slice(0, 6);
+                        // This will be handled internally by ContentModal using useMoreLikeThis hook
+                        const recommendedContent = [];
                         const handleSaveModal = () => {
                           if (isSaved) {
                             removeFromFavorites(selectedMovie.id);
@@ -265,12 +253,16 @@ const Movies = React.memo(() => {
                         };
                         return (
                           <>
-                            {isFullscreen && videoUrl && (
+                            {isFullscreen && currentVideoUrl && (
                               <FullscreenPlayer
                                 isOpen={isFullscreen}
-                                onClose={handleExitFullscreen}
-                                videoUrl={videoUrl}
-                                title={selectedMovie.title}
+                                onClose={() => {
+                                  setIsFullscreen(false);
+                                  setCurrentVideoUrl("");
+                                  setCurrentVideoTitle("");
+                                }}
+                                videoUrl={currentVideoUrl}
+                                title={currentVideoTitle}
                               />
                             )}
                             <ContentModal
@@ -279,13 +271,16 @@ const Movies = React.memo(() => {
                               item={selectedMovie}
                               variant="movie"
                               autoDetectKids={true}
-                              isSaved={isSaved}
-                              onSave={handleSaveModal}
-                              onPlay={handleModalPlayClick}
+                              onPlayEpisode={(url, title) => {
+                                if (url) {
+                                  setCurrentVideoUrl(url);
+                                  setCurrentVideoTitle(title);
+                                  setIsFullscreen(true);
+                                }
+                              }}
                               videoUrl={videoUrl}
                               contentItem={contentItem}
                               channel={channel}
-                              recommendedContent={recommendedContent}
                             />
                           </>
                         );

@@ -5,6 +5,8 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserFavorites } from '@/hooks/useUserFavorites';
+import { useContent } from '@/hooks/useContent';
+import { useChannels } from '@/hooks/useChannels';
 import { Play, Info } from 'lucide-react';
 import './HeroCarousel.css';
 import ContentModal from './ContentModal';
@@ -33,6 +35,8 @@ interface HeroCarouselProps {
 const HeroCarousel: React.FC<HeroCarouselProps> = React.memo(({ items, allContent }) => {
   const { isLoggedIn, setShowLoginModal } = useAuth();
   const { favoriteIds, addToFavorites, removeFromFavorites } = useUserFavorites();
+  const { content } = useContent();
+  const { channels } = useChannels();
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'movie' | 'series' | null>(null);
   const [modalItem, setModalItem] = useState<HeroCarouselItem | null>(null);
@@ -73,12 +77,10 @@ const HeroCarousel: React.FC<HeroCarouselProps> = React.memo(({ items, allConten
   const handleMoreInfo = useCallback((item: HeroCarouselItem) => {
     setModalType(item.type || 'movie');
     setModalItem(item);
-    const recs = allContent.filter(
-      c => c.id !== item.id && (c.genre === item.genre || c.channelId === item.channelId)
-    ).slice(0, 6);
-    setRecommendedContent(recs);
+    // Recommendations will be handled internally by ContentModal using useMoreLikeThis hook
+    setRecommendedContent([]);
     setModalOpen(true);
-  }, [allContent]);
+  }, []);
 
   const handleCloseModal = useCallback(() => {
     setModalOpen(false);
@@ -192,27 +194,29 @@ const HeroCarousel: React.FC<HeroCarouselProps> = React.memo(({ items, allConten
         />
       )}
       {/* Modals for More Info */}
-      {modalOpen && modalItem && (
-        <ContentModal 
-          isOpen={modalOpen} 
-          onClose={(open) => !open && handleCloseModal()} 
-          item={modalItem as any}
-          variant={modalType || "auto"}
-          autoDetectKids={true}
-          isSaved={favoriteIds.includes(modalItem.id)} 
-          onSave={() => handleSaveItem(modalItem.id)} 
-          onPlay={modalType === 'movie' ? () => handlePlay(modalItem) : undefined} 
-          onPlayEpisode={modalType === 'series' ? (url, episodeTitle) => {
-            setFullscreenUrl(url);
-            setFullscreenTitle(episodeTitle);
-            setFullscreenOpen(true);
-          } : undefined} 
-          videoUrl={modalItem.videoUrl} 
-          contentItem={modalItem} 
-          channel={null} 
-          recommendedContent={recommendedContent} 
-        />
-      )}
+      {modalOpen && modalItem && (() => {
+        // Find the backend content item and channel
+        const backendContentItem = content.find(item => item.id === modalItem.id);
+        const backendChannel = channels.find(ch => ch.id === modalItem.channelId);
+        
+        return (
+          <ContentModal 
+            isOpen={modalOpen} 
+            onClose={(open) => !open && handleCloseModal()} 
+            item={modalItem as any}
+            variant={modalType || "auto"}
+            autoDetectKids={true}
+            onPlayEpisode={(url, episodeTitle) => {
+              setFullscreenUrl(url);
+              setFullscreenTitle(episodeTitle);
+              setFullscreenOpen(true);
+            }} 
+            videoUrl={backendContentItem?.video_url || modalItem.videoUrl} 
+            contentItem={backendContentItem} 
+            channel={backendChannel} 
+          />
+        );
+      })()}
     </div>
   );
 }, (prevProps, nextProps) => {

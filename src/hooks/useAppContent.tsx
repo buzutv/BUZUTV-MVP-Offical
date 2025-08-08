@@ -18,7 +18,7 @@ const transformDatabaseContent = (dbContent: any[]) => {
     backdropUrl: item.backdrop_url || "/placeholder.svg",
     videoUrl: item.video_url || "",
     youtubeId: "", // Required for Movie type compatibility
-    duration: item.duration_minutes || 120,
+    duration: item.duration_minutes || undefined,
     seasons: item.seasons,
     episodes: item.episodes,
     isFeatured: item.is_featured || false,

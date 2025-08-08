@@ -6,11 +6,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Movie } from "@/data/mockMovies";
 import HomeRow from "@/components/HomeRow";
 import BrandButton from "@/components/ui/BrandButton";
-import SeriesPlayer from "@/components/SeriesPlayer";
-import FullscreenPlayer from "@/components/FullscreenPlayer";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { Content, useContent } from "@/hooks/useContent";
 import { Channel, useChannels } from "@/hooks/useChannels";
+import { useMoreLikeThis } from "@/hooks/useMoreLikeThis";
 
 // Type guards to safely access properties
 const isMovie = (item: Movie | Content): item is Movie => {
@@ -71,19 +70,19 @@ export interface ContentModalProps {
   variant?: "movie" | "series" | "auto"; // auto determines from item.type
   isKidsMode?: boolean; // Force kids styling
   autoDetectKids?: boolean; // Auto-detect kids mode from content
-  isSaved: boolean;
-  onSave: () => void;
-  onPlay?: () => void; // For movies
-  onPlayEpisode?: (videoUrl: string, episodeTitle: string) => void; // For series
-  videoUrl?: string;
-  contentItem?: Content;
-  channel?: Channel;
-  recommendedContent: Content[];
-  seasons?: Season[];
+  onPlayEpisode?: (videoUrl: string, episodeTitle: string) => void; // Unified play handler
+  videoUrl?: string; // Fallback video URL
+  contentItem?: Content; // Backend content item
+  channel?: Channel; // Channel information
+  seasons?: Season[]; // Season data for series
+  customBackground?: string; // Custom background styling
+  // Deprecated props - kept for backward compatibility but ignored
+  isSaved?: boolean;
+  onSave?: () => void;
+  onPlay?: () => void;
+  recommendedContent?: Content[];
   onOpenRelatedItem?: (item: Movie | Content) => void;
   skipContentFiltering?: boolean;
-  customBackground?: string;
-  // Support for nested modals in kids mode
   allowNestedModals?: boolean;
 }
 
@@ -94,61 +93,86 @@ const ContentModal: React.FC<ContentModalProps> = ({
   variant = "auto",
   isKidsMode,
   autoDetectKids = true,
-  isSaved,
-  onSave,
-  onPlay,
   onPlayEpisode,
   videoUrl,
   contentItem,
   channel,
-  recommendedContent,
   seasons = [],
-  onOpenRelatedItem,
-  skipContentFiltering = false,
   customBackground,
-  allowNestedModals = false,
+  // Backward compatibility - these are ignored
+  isSaved,
+  onSave,
+  onPlay,
+  recommendedContent,
+  onOpenRelatedItem,
+  skipContentFiltering,
+  allowNestedModals,
 }) => {
-  // State for series functionality
-  const [isSeriesPlayerOpen, setIsSeriesPlayerOpen] = useState(false);
-  const [currentPlayingEpisode, setCurrentPlayingEpisode] =
-    useState<Episode | null>(null);
-  const [currentPlayingSeason, setCurrentPlayingSeason] = useState<number>(1);
-
-  // State for nested modals (kids mode)
-  const [nestedItem, setNestedItem] = useState<Movie | null>(null);
-  const [isNestedFullscreen, setIsNestedFullscreen] = useState(false);
-  const [nestedVideoUrl, setNestedVideoUrl] = useState<string>("");
-  const [nestedVideoTitle, setNestedVideoTitle] = useState<string>("");
+  // State for switching items within the modal
+  const [currentItem, setCurrentItem] = useState<Movie | Content>(item);
 
   const { favoriteIds, addToFavorites, removeFromFavorites } =
     useUserFavorites();
   const { content } = useContent();
   const { channels } = useChannels();
 
+  // Always find current backend content item dynamically
+  const currentContentItem = React.useMemo(() => {
+    return content.find((c) => c.id === currentItem.id);
+  }, [currentItem.id, content]);
+
+  // Reset currentItem when item prop changes (new modal opening)
+  React.useEffect(() => {
+    setCurrentItem(item);
+  }, [item]);
+
+  // Dynamic favorite status based on current item
+  const isCurrentItemSaved = favoriteIds.includes(currentItem.id);
+
+  // Dynamic save handler for current item
+  const handleCurrentItemSave = () => {
+    if (isCurrentItemSaved) {
+      removeFromFavorites(currentItem.id);
+    } else {
+      addToFavorites(currentItem.id);
+    }
+  };
+
   // Determine if we're in kids mode
   const effectiveKidsMode =
     isKidsMode ??
-    (autoDetectKids ? getIsKids(item) || contentItem?.is_kids : false);
+    (autoDetectKids
+      ? getIsKids(currentItem) || currentContentItem?.is_kids
+      : false);
+
+  // Get More Like This recommendations using the unified hook
+  const { recommendations: moreLikeThisContent } = useMoreLikeThis({
+    currentItem,
+    contentItem: currentContentItem,
+    effectiveKidsMode,
+    limit: 6,
+  });
 
   // Determine content type
-  const contentType = variant === "auto" ? item.type || "movie" : variant;
+  const contentType =
+    variant === "auto" ? currentItem.type || "movie" : variant;
 
   // Normalize item to work with both Movie interface and backend items
   const normalizedItem = React.useMemo(
     () => ({
-      id: item.id,
-      title: item.title,
-      posterUrl: getPosterUrl(item),
-      type: item.type || "movie",
-      genre: item.genre,
-      year: item.year,
-      rating: item.rating,
-      channelId: getChannelId(item),
-      isKids: getIsKids(item),
-      duration: getDuration(item),
-      ...item,
+      id: currentItem.id,
+      title: currentItem.title,
+      posterUrl: getPosterUrl(currentItem),
+      type: currentItem.type || "movie",
+      genre: currentItem.genre,
+      year: currentItem.year,
+      rating: currentItem.rating,
+      channelId: getChannelId(currentItem),
+      isKids: getIsKids(currentItem),
+      duration: getDuration(currentItem),
+      ...currentItem,
     }),
-    [item],
+    [currentItem],
   );
 
   // Format duration helper
@@ -162,14 +186,74 @@ const ContentModal: React.FC<ContentModalProps> = ({
     return `${mins}m`;
   };
 
+  // Get display text for duration/seasons
+  const getDurationOrSeasonsText = () => {
+    if (contentType === "series") {
+      const seasonCount = seasonsData.length;
+      if (seasonCount > 0) {
+        return seasonCount === 1 ? "1 Season" : `${seasonCount} Seasons`;
+      }
+      // Fallback: try to get from content item
+      if (currentContentItem?.seasons_data) {
+        try {
+          const seasonsData =
+            typeof currentContentItem.seasons_data === "string"
+              ? JSON.parse(currentContentItem.seasons_data)
+              : currentContentItem.seasons_data;
+          if (Array.isArray(seasonsData) && seasonsData.length > 0) {
+            const count = seasonsData.length;
+            return count === 1 ? "1 Season" : `${count} Seasons`;
+          }
+        } catch (error) {
+          console.error(
+            "Error parsing seasons data for duration display:",
+            error,
+          );
+        }
+      }
+      return "Series";
+    } else {
+      // For movies, show duration with enhanced fallback logic
+      const backendDuration = currentContentItem?.duration_minutes;
+      const frontendDuration = normalizedItem.duration;
+
+      // Also try alternative field names that might exist in the data
+      const alternativeDuration =
+        (currentItem as any)?.duration_minutes ||
+        (currentItem as any)?.duration ||
+        (currentItem as any)?.runtime;
+
+      const finalDuration =
+        backendDuration ?? frontendDuration ?? alternativeDuration;
+
+      console.log("Movie duration debug:", {
+        itemTitle: normalizedItem.title,
+        itemType: contentType,
+        backendDuration,
+        frontendDuration,
+        alternativeDuration,
+        finalDuration,
+        currentContentItem: !!currentContentItem,
+        currentItemKeys: Object.keys(currentItem),
+      });
+
+      if (finalDuration) {
+        return formatDuration(finalDuration);
+      }
+
+      // If no duration available, return null to hide the display
+      return null;
+    }
+  };
+
   // Get seasons data for series
   const getSeasonsData = (): Season[] => {
-    if (contentItem?.seasons_data) {
+    if (currentContentItem?.seasons_data) {
       try {
         const seasonsData =
-          typeof contentItem.seasons_data === "string"
-            ? JSON.parse(contentItem.seasons_data)
-            : contentItem.seasons_data;
+          typeof currentContentItem.seasons_data === "string"
+            ? JSON.parse(currentContentItem.seasons_data)
+            : currentContentItem.seasons_data;
 
         if (Array.isArray(seasonsData) && seasonsData.length > 0) {
           return seasonsData.map((season) => ({
@@ -195,10 +279,29 @@ const ContentModal: React.FC<ContentModalProps> = ({
 
   const seasonsData = getSeasonsData();
 
-  // Handle play actions
+  // Get current video URL from the current content item
+  const currentVideoUrl = React.useMemo(() => {
+    return (
+      currentContentItem?.video_url ||
+      (isMovie(currentItem) ? currentItem.videoUrl : undefined)
+    );
+  }, [currentContentItem?.video_url, currentItem]);
+
+  // Handle play actions - ALWAYS use current item's data
   const handlePlayMovie = () => {
-    if (onPlay) {
-      onPlay();
+    if (currentVideoUrl && onPlayEpisode) {
+      // Use onPlayEpisode for consistency across all components
+      onPlayEpisode(currentVideoUrl, normalizedItem.title);
+    } else if (currentVideoUrl) {
+      console.warn(
+        "No play handler provided, but video URL available:",
+        currentVideoUrl,
+      );
+    } else {
+      console.warn(
+        "No video URL available for current item:",
+        normalizedItem.title,
+      );
     }
   };
 
@@ -221,40 +324,12 @@ const ContentModal: React.FC<ContentModalProps> = ({
     }
   };
 
-  // Filter recommended content
-  const filteredRecommendedContent = skipContentFiltering
-    ? recommendedContent.filter((recItem) => recItem.id !== normalizedItem.id)
-    : recommendedContent.filter((recItem) => {
-        const passesId = recItem.id !== normalizedItem.id;
+  // Use the unified More Like This content (already normalized with posterUrl)
+  const normalizedRecommendedContent = moreLikeThisContent;
 
-        // Handle kids content filtering
-        const passesKids = effectiveKidsMode
-          ? recItem.is_kids === true // Show only kids content in kids mode
-          : !recItem.is_kids; // Exclude kids content in regular mode
-
-        const passesGenre =
-          recItem.genre === normalizedItem.genre ||
-          recItem.channel_id === normalizedItem.channelId ||
-          recItem.channel_id === contentItem?.channel_id;
-
-        return passesId && passesKids && passesGenre;
-      });
-
-  const normalizedRecommendedContent = filteredRecommendedContent.map(
-    (recItem) => ({
-      ...recItem,
-      posterUrl: getPosterUrl(recItem),
-    }),
-  );
-
-  // Handle nested modals for kids mode
-  const handleNestedItemClick = (clickedItem) => {
-    if (allowNestedModals && effectiveKidsMode) {
-      setNestedItem(clickedItem);
-    } else if (onOpenRelatedItem) {
-      onClose(false); // Close current modal
-      onOpenRelatedItem(clickedItem); // Open new modal with selected item
-    }
+  // Handle More Like This clicks - ALWAYS switch current item within modal
+  const handleMoreLikeThisClick = (clickedItem) => {
+    setCurrentItem(clickedItem);
   };
 
   // Background styles
@@ -344,14 +419,14 @@ const ContentModal: React.FC<ContentModalProps> = ({
                           : handlePlayMovie
                       }
                       disabled={
-                        !videoUrl &&
+                        !currentVideoUrl &&
                         (!seasonsData.length ||
                           !seasonsData[0]?.episodes[0]?.video_url)
                       }
                       variant={effectiveKidsMode ? "kids" : "primary"}
                       size="md"
                       className={
-                        !videoUrl &&
+                        !currentVideoUrl &&
                         (!seasonsData.length ||
                           !seasonsData[0]?.episodes[0]?.video_url)
                           ? "!bg-gray-600 !text-gray-400 !cursor-not-allowed !hover:bg-gray-600 !hover:-translate-y-0"
@@ -363,38 +438,17 @@ const ContentModal: React.FC<ContentModalProps> = ({
                     </BrandButton>
 
                     <button
-                      onClick={onSave}
+                      onClick={handleCurrentItemSave}
                       className={`bg-black/20 backdrop-blur-md text-white p-2 rounded-full transition-all duration-200 border ${gradientStyles.heartBorder} hover:bg-black/30`}
                     >
                       <Heart
-                        className={`w-5 h-5 ${isSaved ? "fill-current text-red-500" : ""}`}
+                        className={`w-5 h-5 ${isCurrentItemSaved ? "fill-current text-red-500" : ""}`}
                       />
                     </button>
-
-                    {/* Duration display */}
-                    {effectiveKidsMode ? (
-                      <BrandButton
-                        variant="kids"
-                        size="sm"
-                        className="pointer-events-none"
-                      >
-                        {formatDuration(
-                          contentItem?.duration_minutes ??
-                            normalizedItem.duration,
-                        )}
-                      </BrandButton>
-                    ) : (
-                      <span className="text-white text-xl font-medium">
-                        {formatDuration(
-                          contentItem?.duration_minutes ??
-                            normalizedItem.duration,
-                        )}
-                      </span>
-                    )}
                   </div>
 
                   {/* Info Row */}
-                  <div className="flex items-center space-x-4 text-sm">
+                  <div className="flex items-center space-x-4 text-sm h-8">
                     <div className="flex items-center space-x-1">
                       <Star className="w-4 h-4 text-yellow-400 fill-current" />
                       <span className="text-green-400 font-semibold">
@@ -404,6 +458,19 @@ const ContentModal: React.FC<ContentModalProps> = ({
                     <span className="text-white font-medium">
                       {normalizedItem.year}
                     </span>
+                    
+                    {/* Duration display after year - only show if duration exists */}
+                    {getDurationOrSeasonsText() && (
+                      effectiveKidsMode ? (
+                        <span className="bg-blue-500 text-white px-2 py-1 rounded text-xs font-medium">
+                          {getDurationOrSeasonsText()}
+                        </span>
+                      ) : (
+                        <span className="text-white font-medium">
+                          {getDurationOrSeasonsText()}
+                        </span>
+                      )
+                    )}
 
                     {effectiveKidsMode ? (
                       <>
@@ -498,7 +565,10 @@ const ContentModal: React.FC<ContentModalProps> = ({
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handlePlayEpisode(episode, season.season_number);
+                                  handlePlayEpisode(
+                                    episode,
+                                    season.season_number,
+                                  );
                                 }}
                                 className="ml-3 p-2 rounded-full transition-colors bg-white/10 hover:bg-white/20 text-white flex-shrink-0"
                                 aria-label={`Play ${episode.title}`}
@@ -519,7 +589,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
                     title="More Like This"
                     items={normalizedRecommendedContent}
                     isMoreLikeThis={true}
-                    onItemClick={handleNestedItemClick}
+                    onItemClick={handleMoreLikeThisClick}
                   />
                 )}
               </div>
@@ -527,99 +597,6 @@ const ContentModal: React.FC<ContentModalProps> = ({
           </ScrollArea>
         </DialogContent>
       </Dialog>
-
-      {/* Nested modals for kids mode */}
-      {allowNestedModals &&
-        effectiveKidsMode &&
-        nestedItem &&
-        (() => {
-          const nestedIsSaved = favoriteIds.includes(nestedItem.id);
-          const nestedContentItem = content.find(
-            (contentItem) => contentItem.id === nestedItem.id,
-          );
-          const nestedVideoUrl = nestedContentItem?.video_url;
-          const nestedChannel = channels.find(
-            (ch) => ch.id === getChannelId(nestedItem),
-          );
-          const nestedRecommendedContent = content
-            .filter(
-              (contentItem) =>
-                contentItem.id !== nestedItem.id &&
-                contentItem.is_kids === true,
-            )
-            .slice(0, 6);
-
-          const handleNestedSave = () => {
-            if (nestedIsSaved) {
-              removeFromFavorites(nestedItem.id);
-            } else {
-              addToFavorites(nestedItem.id);
-            }
-          };
-
-          const handleNestedPlay = () => {
-            if (nestedVideoUrl) {
-              setNestedItem(null);
-              setNestedVideoUrl(nestedVideoUrl);
-              setNestedVideoTitle(nestedItem.title);
-              setIsNestedFullscreen(true);
-            }
-          };
-
-          const handleNestedPlayEpisode = (
-            url: string,
-            episodeTitle: string,
-          ) => {
-            setNestedItem(null);
-            setNestedVideoUrl(url);
-            setNestedVideoTitle(episodeTitle);
-            setIsNestedFullscreen(true);
-          };
-
-          return (
-            <ContentModal
-              isOpen={!!nestedItem}
-              onClose={(open) => !open && setNestedItem(null)}
-              item={nestedItem}
-              variant="auto"
-              isKidsMode={true}
-              isSaved={nestedIsSaved}
-              onSave={handleNestedSave}
-              onPlay={handleNestedPlay}
-              onPlayEpisode={handleNestedPlayEpisode}
-              videoUrl={nestedVideoUrl}
-              contentItem={nestedContentItem}
-              channel={nestedChannel}
-              recommendedContent={nestedRecommendedContent}
-              allowNestedModals={false} // Prevent infinite nesting
-            />
-          );
-        })()}
-
-      {/* Nested Fullscreen Player for kids mode */}
-      {isNestedFullscreen && nestedVideoUrl && (
-        <FullscreenPlayer
-          isOpen={isNestedFullscreen}
-          onClose={() => {
-            setIsNestedFullscreen(false);
-            setNestedVideoUrl("");
-            setNestedVideoTitle("");
-          }}
-          videoUrl={nestedVideoUrl}
-          title={nestedVideoTitle}
-        />
-      )}
-
-      {/* Series Player */}
-      {isSeriesPlayerOpen && currentPlayingEpisode && (
-        <SeriesPlayer
-          isOpen={isSeriesPlayerOpen}
-          onClose={() => setIsSeriesPlayerOpen(false)}
-          episode={currentPlayingEpisode}
-          seasonNumber={currentPlayingSeason}
-          seriesTitle={normalizedItem.title}
-        />
-      )}
     </>
   );
 };

@@ -20,6 +20,8 @@ const Kids = () => {
   const { content } = useContent();
   const { channels } = useChannels();
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [currentVideoUrl, setCurrentVideoUrl] = useState<string>("");
+  const [currentVideoTitle, setCurrentVideoTitle] = useState<string>("");
 
   // Enhanced kids content with additional categories
   const enhancedKidsContent = useMemo(() => {
@@ -215,13 +217,8 @@ const Kids = () => {
                         const channel = channels.find(
                           (ch) => ch.id === selectedMovie.channelId,
                         );
-                        const recommendedContent = content
-                          .filter(
-                            (item) =>
-                              item.id !== selectedMovie.id &&
-                              item.is_kids === true,
-                          )
-                          .slice(0, 6);
+                        // This will be handled internally by ContentModal using useMoreLikeThis hook
+                        const recommendedContent = [];
                         const handleSaveModal = () => {
                           if (isSaved) {
                             removeFromFavorites(selectedMovie.id);
@@ -239,12 +236,16 @@ const Kids = () => {
                         };
                         return (
                           <>
-                            {isFullscreen && videoUrl && (
+                            {isFullscreen && currentVideoUrl && (
                               <FullscreenPlayer
                                 isOpen={isFullscreen}
-                                onClose={handleExitFullscreen}
-                                videoUrl={videoUrl}
-                                title={selectedMovie.title}
+                                onClose={() => {
+                                  setIsFullscreen(false);
+                                  setCurrentVideoUrl("");
+                                  setCurrentVideoTitle("");
+                                }}
+                                videoUrl={currentVideoUrl}
+                                title={currentVideoTitle}
                               />
                             )}
                             <ContentModal
@@ -253,17 +254,16 @@ const Kids = () => {
                               item={selectedMovie}
                               variant="auto"
                               isKidsMode={true}
-                              isSaved={isSaved}
-                              onSave={handleSaveModal}
-                              onPlay={selectedMovie.type === "movie" ? handleModalPlayClick : undefined}
-                              onPlayEpisode={selectedMovie.type === "series" ? (url, episodeTitle) => {
-                                setIsFullscreen(true);
-                              } : undefined}
+                              onPlayEpisode={(url, episodeTitle) => {
+                                if (url) {
+                                  setCurrentVideoUrl(url);
+                                  setCurrentVideoTitle(episodeTitle);
+                                  setIsFullscreen(true);
+                                }
+                              }}
                               videoUrl={videoUrl}
                               contentItem={contentItem}
                               channel={channel}
-                              recommendedContent={recommendedContent}
-                              allowNestedModals={true}
                             />
                           </>
                         );

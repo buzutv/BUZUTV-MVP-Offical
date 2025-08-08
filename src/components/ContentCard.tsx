@@ -273,8 +273,7 @@ const ContentCard = React.memo(
             autoDetectKids={false} // We already determined the mode
             isSaved={isSaved}
             onSave={handleSaveModal}
-            onPlay={contentType === "movie" ? handleModalPlayClick : undefined}
-            onPlayEpisode={contentType === "series" ? handlePlayEpisode : undefined}
+            onPlayEpisode={handlePlayEpisode}
             videoUrl={videoUrl}
             contentItem={contentItem}
             channel={channel}

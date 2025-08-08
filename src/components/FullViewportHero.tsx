@@ -7,6 +7,8 @@ import "swiper/css/pagination";
 import "./HeroCarousel.css";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
+import { useContent } from "@/hooks/useContent";
+import { useChannels } from "@/hooks/useChannels";
 import { ArrowLeft, ArrowRight, Info, Play } from "lucide-react";
 import ContentModal from "./ContentModal";
 import FullscreenPlayer from "./FullscreenPlayer";
@@ -45,6 +47,8 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
   const { isLoggedIn, setShowLoginModal } = useAuth();
   const { favoriteIds, addToFavorites, removeFromFavorites } =
     useUserFavorites();
+  const { content } = useContent();
+  const { channels: backendChannels } = useChannels();
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<"movie" | "series" | null>(null);
   const [modalItem, setModalItem] = useState<HeroCarouselItem | null>(null);
@@ -98,21 +102,8 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
   const handleMoreInfo = (item: HeroCarouselItem) => {
     setModalType(item.type || "movie");
     setModalItem(item);
-    const recs = allContent
-      .filter((c) => {
-        const passesId = c.id !== item.id;
-        // If current item is kids content, show only kids content in recommendations
-        // If current item is not kids content, exclude kids content from recommendations
-        const passesKids = item.isKids
-          ? c.isKids === true // Show only kids content
-          : !c.isKids; // Exclude kids content
-        const passesGenre =
-          c.genre === item.genre || c.channelId === item.channelId;
-
-        return passesId && passesKids && passesGenre;
-      })
-      .slice(0, 6);
-    setRecommendedContent(recs);
+    // Recommendations will be handled internally by ContentModal using useMoreLikeThis hook
+    setRecommendedContent([]);
     setModalOpen(true);
   };
 
@@ -307,27 +298,29 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
       )}
 
       {/* Modals */}
-      {modalOpen && modalItem && (
-        <ContentModal
-          isOpen={modalOpen}
-          onClose={(open) => !open && handleCloseModal()}
-          item={modalItem as any}
-          variant={modalType || "auto"}
-          autoDetectKids={true}
-          isSaved={favoriteIds.includes(modalItem.id)}
-          onSave={() => handleSaveItem(modalItem.id)}
-          onPlay={modalType === "movie" ? () => handlePlay(modalItem) : undefined}
-          onPlayEpisode={modalType === "series" ? (url, episodeTitle) => {
-            setFullscreenUrl(url);
-            setFullscreenTitle(episodeTitle);
-            setFullscreenOpen(true);
-          } : undefined}
-          videoUrl={modalItem.videoUrl}
-          contentItem={modalItem}
-          channel={null}
-          recommendedContent={recommendedContent}
-        />
-      )}
+      {modalOpen && modalItem && (() => {
+        // Find the backend content item and channel
+        const backendContentItem = content.find(item => item.id === modalItem.id);
+        const backendChannel = backendChannels.find(ch => ch.id === modalItem.channelId);
+        
+        return (
+          <ContentModal
+            isOpen={modalOpen}
+            onClose={(open) => !open && handleCloseModal()}
+            item={modalItem as any}
+            variant={modalType || "auto"}
+            autoDetectKids={true}
+            onPlayEpisode={(url, episodeTitle) => {
+              setFullscreenUrl(url);
+              setFullscreenTitle(episodeTitle);
+              setFullscreenOpen(true);
+            }}
+            videoUrl={backendContentItem?.video_url || modalItem.videoUrl}
+            contentItem={backendContentItem}
+            channel={backendChannel}
+          />
+        );
+      })()}
 
       {/* Custom Pagination Styles */}
       <style>{`

@@ -53,6 +53,7 @@ export type Database = {
           genre: string | null
           id: string
           is_featured: boolean | null
+          is_kids: boolean | null
           is_trending: boolean | null
           poster_url: string | null
           rating: number | null
@@ -74,6 +75,7 @@ export type Database = {
           genre?: string | null
           id?: string
           is_featured?: boolean | null
+          is_kids?: boolean | null
           is_trending?: boolean | null
           poster_url?: string | null
           rating?: number | null
@@ -95,6 +97,7 @@ export type Database = {
           genre?: string | null
           id?: string
           is_featured?: boolean | null
+          is_kids?: boolean | null
           is_trending?: boolean | null
           poster_url?: string | null
           rating?: number | null
