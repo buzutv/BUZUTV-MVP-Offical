@@ -257,17 +257,48 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                         <span className="text-white text-sm">
                           {currentMovie?.year}
                         </span>
-                        {/* Duration after year - only show if duration exists */}
+                        {/* Duration/Seasons - show duration for movies, seasons for series */}
                         {(() => {
-                          const movieDuration =
-                            contentItem?.duration_minutes ||
-                            currentMovie?.duration;
+                          if (currentMovie?.type === "series") {
+                            // For series, show number of seasons - using same logic as FullViewportHero
+                            if (contentItem?.seasons_data) {
+                              try {
+                                const seasonsData =
+                                  typeof contentItem.seasons_data === "string"
+                                    ? JSON.parse(contentItem.seasons_data)
+                                    : contentItem.seasons_data;
+                                
+                                if (Array.isArray(seasonsData) && seasonsData.length > 0) {
+                                  const seasonCount = seasonsData.length;
+                                  return (
+                                    <span className="text-white text-sm">
+                                      {seasonCount === 1 ? "1 Season" : `${seasonCount} Seasons`}
+                                    </span>
+                                  );
+                                }
+                              } catch (error) {
+                                console.error("Error parsing seasons data for duration display:", error);
+                              }
+                            }
+                            
+                            // Fallback for series
+                            return (
+                              <span className="text-white text-sm">
+                                Series
+                              </span>
+                            );
+                          } else {
+                            // For movies, show duration
+                            const movieDuration =
+                              contentItem?.duration_minutes ||
+                              currentMovie?.duration;
 
-                          return movieDuration ? (
-                            <span className="text-white text-sm">
-                              {formatDuration(movieDuration)}
-                            </span>
-                          ) : null;
+                            return movieDuration ? (
+                              <span className="text-white text-sm">
+                                {formatDuration(movieDuration)}
+                              </span>
+                            ) : null;
+                          }
                         })()}
                         <div className="flex items-center space-x-1">
                           <span className="text-yellow-400">★</span>
