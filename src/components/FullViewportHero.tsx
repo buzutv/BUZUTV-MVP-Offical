@@ -188,6 +188,80 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
                       {slide.title}
                     </h1>
 
+                    {/* Info Row */}
+                    <div className="flex items-center space-x-3 mb-6">
+                      {slide.genre && (
+                        <span className="bg-brand-500/70 text-white px-2 py-1 rounded text-sm">
+                          {slide.genre}
+                        </span>
+                      )}
+                      {slide.year && (
+                        <span className="text-white text-sm">
+                          {slide.year}
+                        </span>
+                      )}
+                      {/* Duration/Seasons - only show if available */}
+                      {(() => {
+                        const currentContentItem = content.find((c) => c.id === slide.id);
+                        
+                        if (slide.type === "series") {
+                          // For series, show number of seasons - using same logic as ContentModal
+                          if (currentContentItem?.seasons_data) {
+                            try {
+                              const seasonsData =
+                                typeof currentContentItem.seasons_data === "string"
+                                  ? JSON.parse(currentContentItem.seasons_data)
+                                  : currentContentItem.seasons_data;
+                              
+                              if (Array.isArray(seasonsData) && seasonsData.length > 0) {
+                                const seasonCount = seasonsData.length;
+                                return (
+                                  <span className="text-white text-sm">
+                                    {seasonCount === 1 ? "1 Season" : `${seasonCount} Seasons`}
+                                  </span>
+                                );
+                              }
+                            } catch (error) {
+                              console.error("Error parsing seasons data for duration display:", error);
+                            }
+                          }
+                          
+                          // Fallback for series
+                          return (
+                            <span className="text-white text-sm">
+                              Series
+                            </span>
+                          );
+                        } else {
+                          // For movies, show duration
+                          const duration = currentContentItem?.duration_minutes;
+                          
+                          if (duration) {
+                            const hours = Math.floor(duration / 60);
+                            const mins = duration % 60;
+                            const formattedDuration = hours > 0 
+                              ? (mins > 0 ? `${hours}h ${mins}m` : `${hours}h`)
+                              : `${mins}m`;
+                            
+                            return (
+                              <span className="text-white text-sm">
+                                {formattedDuration}
+                              </span>
+                            );
+                          }
+                        }
+                        
+                        return null;
+                      })()}
+                      {/* Rating - always display like HeroBanner */}
+                      <div className="flex items-center space-x-1">
+                        <span className="text-yellow-400">★</span>
+                        <span className="text-white text-sm">
+                          {slide.rating || 0}
+                        </span>
+                      </div>
+                    </div>
+
                     {/* Description */}
                     {slide.description && (
                       <p className="text-base md:text-xl text-gray-200 max-w-2xl leading-relaxed line-clamp-3 md:line-clamp-none">
