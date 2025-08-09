@@ -4,7 +4,7 @@ import { Heart } from "lucide-react";
 import ChannelCard from "@/components/ChannelCard";
 import ChannelModal from "@/components/ChannelModal";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import HomeRow from "@/components/HomeRow";
+import ContentRow from "@/components/ContentRow";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useUserChannelFavorites } from "@/hooks/useUserChannelFavorites";
 import { useAppContent } from "@/hooks/useAppContent";
@@ -152,12 +152,12 @@ const MyList = React.memo(() => {
 
               {/* Movies */}
               {savedMovies.length > 0 && (
-                <HomeRow title="Movies" items={savedMovies} />
+                <ContentRow title="Movies" items={savedMovies} />
               )}
 
               {/* TV Shows */}
               {savedTVShows.length > 0 && (
-                <HomeRow title="TV Shows" items={savedTVShows} />
+                <ContentRow title="TV Shows" items={savedTVShows} />
               )}
 
               {/* Empty State */}

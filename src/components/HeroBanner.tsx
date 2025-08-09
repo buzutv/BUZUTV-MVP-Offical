@@ -1,13 +1,5 @@
 import { useState } from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Heart,
-  Info,
-  Play,
-  Star,
-  X,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Info, Play, X } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Navigation, Pagination } from "swiper/modules";
 import "swiper/css";
@@ -15,15 +7,11 @@ import "swiper/css/navigation";
 import "swiper/css/pagination";
 import "./HeroCarousel.css";
 import { Movie } from "@/data/mockMovies";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import BrandButton from "@/components/ui/BrandButton";
-import SeriesModal from "./SeriesModal";
-import KidsSeriesModal from "./KidsSeriesModal";
-import HomeRow from "./HomeRow";
+import ContentModal from "./ContentModal";
 
 interface HeroBannerProps {
   movies: Movie[];
@@ -104,6 +92,8 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
   );
   const handleCloseVideo = () => {
     setIsPlaying(false);
+    setCurrentVideoUrl(null);
+    setCurrentVideoTitle(null);
   };
 
   const handleModalPlayClick = () => {
@@ -155,30 +145,11 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
   // Check if modal movie is in favorites
   const isSaved = modalMovie ? favoriteIds.includes(modalMovie.id) : false;
 
-  // Get recommended content from backend (same channel or genre)
-  const recommendedContent = modalMovie
-    ? (() => {
-        const filtered = content.filter((item) => {
-          const passesId = item.id !== modalMovie.id;
-          // If current movie is kids content, show only kids content in recommendations
-          // If current movie is not kids content, exclude kids content from recommendations
-          const passesKids =
-            modalMovie.isKids || modalContentItem?.is_kids
-              ? item.is_kids === true // Show only kids content
-              : !item.is_kids; // Exclude kids content
-          const passesGenre =
-            item.genre === modalMovie.genre ||
-            item.channel_id === modalMovie.channelId;
-
-          return passesId && passesKids && passesGenre;
-        });
-
-        return filtered.slice(0, 6);
-      })()
-    : [];
+  // This will be handled internally by ContentModal using useMoreLikeThis hook
+  const recommendedContent = [];
 
   // Format duration from minutes to "Xh Ym" format
-  const formatDuration = (minutes: number | undefined) => {
+  const formatDuration = (minutes: number | undefined | null) => {
     if (!minutes) return "N/A";
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
@@ -217,13 +188,26 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
             bulletActiveClass: "swiper-pagination-bullet-movies-active",
           }}
           autoplay={
-            isPlaying ? false : { delay: 5000, disableOnInteraction: false }
+            isPlaying || showModal
+              ? false
+              : { delay: 5000, disableOnInteraction: false }
           }
           loop={movies.length > 1}
           className="h-full w-full"
           onSlideChange={(swiper) => {
             if (!isPlaying) {
-              setCurrentMovie(movies[swiper.realIndex] || movies[0]);
+              const newMovie = movies[swiper.realIndex] || movies[0];
+              setCurrentMovie(newMovie);
+            }
+          }}
+          onSliderFirstMove={(swiper) => {
+            // Ensure currentMovie is set on first interaction
+            const newMovie = movies[swiper.realIndex] || movies[0];
+            if (
+              newMovie &&
+              (!currentMovie || currentMovie.id !== newMovie.id)
+            ) {
+              setCurrentMovie(newMovie);
             }
           }}
         >
@@ -261,26 +245,71 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
                     <div className="max-w-xl">
                       <h1 className="text-3xl md:text-4xl font-bold mb-3 text-white">
-                        {movie.title}
+                        {currentMovie?.title}
                       </h1>
 
                       <div className="flex items-center space-x-3 mb-6">
                         <span
                           className={`${genreBgClass} text-white px-2 py-1 rounded text-sm`}
                         >
-                          {movie.genre}
+                          {currentMovie?.genre}
                         </span>
-                        <span className="text-white text-sm">{movie.year}</span>
+                        <span className="text-white text-sm">
+                          {currentMovie?.year}
+                        </span>
+                        {/* Duration/Seasons - show duration for movies, seasons for series */}
+                        {(() => {
+                          if (currentMovie?.type === "series") {
+                            // For series, show number of seasons - using same logic as FullViewportHero
+                            if (contentItem?.seasons_data) {
+                              try {
+                                const seasonsData =
+                                  typeof contentItem.seasons_data === "string"
+                                    ? JSON.parse(contentItem.seasons_data)
+                                    : contentItem.seasons_data;
+                                
+                                if (Array.isArray(seasonsData) && seasonsData.length > 0) {
+                                  const seasonCount = seasonsData.length;
+                                  return (
+                                    <span className="text-white text-sm">
+                                      {seasonCount === 1 ? "1 Season" : `${seasonCount} Seasons`}
+                                    </span>
+                                  );
+                                }
+                              } catch (error) {
+                                console.error("Error parsing seasons data for duration display:", error);
+                              }
+                            }
+                            
+                            // Fallback for series
+                            return (
+                              <span className="text-white text-sm">
+                                Series
+                              </span>
+                            );
+                          } else {
+                            // For movies, show duration
+                            const movieDuration =
+                              contentItem?.duration_minutes ||
+                              currentMovie?.duration;
+
+                            return movieDuration ? (
+                              <span className="text-white text-sm">
+                                {formatDuration(movieDuration)}
+                              </span>
+                            ) : null;
+                          }
+                        })()}
                         <div className="flex items-center space-x-1">
                           <span className="text-yellow-400">★</span>
                           <span className="text-white text-sm">
-                            {movie.rating}
+                            {currentMovie?.rating}
                           </span>
                         </div>
                       </div>
                       <div className="flex items-center space-x-3 mb-6">
                         {/* Only show Play button if not a series */}
-                        {movie.type !== "series" && (
+                        {currentMovie?.type !== "series" && (
                           <BrandButton
                             onClick={handleWatchNow}
                             disabled={!watchNowEnabled}
@@ -303,7 +332,7 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                           </BrandButton>
                         )}
                         {/* For series, show a non-clickable pill instead of More Info */}
-                        {movie.type === "series" ? (
+                        {currentMovie?.type === "series" ? (
                           <BrandButton
                             variant={
                               variant === "kids" ? "kidsSecondary" : "secondary"
@@ -337,18 +366,24 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
         {/* Navigation buttons */}
         {movies.length > 1 && (
           <>
-            <button className="hero-prev-movies absolute left-4 top-1/2 transform -translate-y-1/2 z-20 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors">
-              <ChevronLeft className="w-5 h-5" />
+            <button 
+              className="hero-prev-movies absolute left-4 top-1/2 transform -translate-y-1/2 z-20 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
+              aria-label="Previous movie"
+            >
+              <ChevronLeft className="w-5 h-5" aria-hidden="true" />
             </button>
-            <button className="hero-next-movies absolute right-4 top-1/2 transform -translate-y-1/2 z-20 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors">
-              <ChevronRight className="w-5 h-5" />
+            <button 
+              className="hero-next-movies absolute right-4 top-1/2 transform -translate-y-1/2 z-20 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
+              aria-label="Next movie"
+            >
+              <ChevronRight className="w-5 h-5" aria-hidden="true" />
             </button>
           </>
         )}
       </div>
 
       {/* Full Screen Video Player - Fixed positioning */}
-      {isPlaying && embedUrl && (
+      {isPlaying && (
         <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center">
           {/* Close Button */}
           <button
@@ -359,191 +394,81 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
           </button>
           {/* Video Player */}
           <div className="w-full h-full flex items-center justify-center">
-            {embedUrl.includes("youtube.com/embed") ? (
-              <iframe
-                src={`${embedUrl}?autoplay=1&controls=1&rel=0&fs=1&playsinline=1`}
-                className="w-full h-full"
-                allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-                allowFullScreen
-                sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-              />
-            ) : (
-              <video
-                src={embedUrl}
-                controls
-                autoPlay
-                className="w-full h-full object-contain"
-                onError={() => {
-                  setIsPlaying(false);
-                }}
-              />
-            )}
+            {(() => {
+              // Use currentVideoUrl if available (from modal), otherwise use hero's embedUrl
+              const videoToPlay = currentVideoUrl || embedUrl;
+              const videoTitle = currentVideoTitle || currentMovie?.title;
+
+
+              if (!videoToPlay) {
+                return (
+                  <div className="text-white text-center">
+                    <p>No video available</p>
+                    <button
+                      onClick={handleCloseVideo}
+                      className="mt-4 px-4 py-2 bg-gray-600 rounded text-white"
+                    >
+                      Close
+                    </button>
+                  </div>
+                );
+              }
+
+              const finalEmbedUrl = videoToPlay.includes("youtube.com/embed")
+                ? videoToPlay
+                : getYouTubeEmbedUrl(videoToPlay) || videoToPlay;
+
+              return finalEmbedUrl.includes("youtube.com/embed") ? (
+                <iframe
+                  src={`${finalEmbedUrl}?autoplay=1&controls=1&rel=0&fs=1&playsinline=1`}
+                  className="w-full h-full"
+                  allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+                  allowFullScreen
+                  sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                />
+              ) : (
+                <video
+                  src={finalEmbedUrl}
+                  controls
+                  autoPlay
+                  className="w-full h-full object-contain"
+                  onError={() => {
+                    setIsPlaying(false);
+                  }}
+                />
+              );
+            })()}
           </div>
         </div>
       )}
 
-      {/* More Info Modal - Consistent with MovieModal */}
-      <Dialog open={showModal && !isPlaying} onOpenChange={setShowModal}>
-        <DialogContent
-          className={`max-w-full md:max-w-[75vw] max-h-full md:max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-1000 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 ${variant === "kids" ? "bg-gradient-to-tl from-yellow-300 via-blue-300 to-sky-400" : "bg-gradient-to-br from-black via-slate-900 to-violet-900"}`}
-        >
-          <DialogTitle className="sr-only">{modalMovie?.title}</DialogTitle>
-          <ScrollArea className="h-[90vh] scroll-smooth">
-            <div className="relative min-h-full">
-              {/* Hero Section with Fixed Gradient */}
-              <div className="relative w-full h-[60vh] overflow-hidden">
-                {/* Background Image */}
-                <div className="absolute inset-0">
-                  <img
-                    src={modalMovie?.posterUrl}
-                    alt={modalMovie?.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-
-                {/* Only bottom gradient for fade effect */}
-                <div
-                  className={`absolute bottom-0 left-0 right-0 h-48 ${variant === "kids" ? "bg-gradient-to-t from-blue-400 via-blue-400/30 to-transparent" : "bg-gradient-to-t from-black via-black/60 to-transparent"}`}
-                />
-
-                {/* Title and Info Container */}
-                <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
-                  <h1 className="text-5xl font-bold text-white mb-6">
-                    {modalMovie?.title}
-                  </h1>
-
-                  {/* Action Buttons Row */}
-                  <div className="flex items-center space-x-4 mb-4">
-                    <BrandButton
-                      onClick={handleModalPlayClick}
-                      disabled={!modalVideoUrl}
-                      variant={
-                        modalVideoUrl
-                          ? variant === "kids"
-                            ? "kids"
-                            : "primary"
-                          : "ghost"
-                      }
-                      size="md"
-                      className={
-                        !modalVideoUrl
-                          ? "!bg-gray-600 !text-gray-400 !cursor-not-allowed !hover:bg-gray-600 !hover:-translate-y-0"
-                          : ""
-                      }
-                    >
-                      <Play className="w-6 h-6 fill-current" />
-                      <span>Play</span>
-                    </BrandButton>
-
-                    <button
-                      onClick={handleSave}
-                      className={`bg-black/20 backdrop-blur-md text-white p-2 rounded-full transition-all duration-200 border ${variant === "kids" ? "border-blue-400/50 hover:border-blue-400" : "border-brand-500/50 hover:border-brand-500"} hover:bg-black/30`}
-                    >
-                      <Heart
-                        className={`w-5 h-5 ${isSaved ? "fill-current text-red-500" : ""}`}
-                      />
-                    </button>
-
-                    <span className="text-white text-xl font-medium">
-                      {formatDuration(modalContentItem?.duration_minutes)}
-                    </span>
-                  </div>
-
-                  {/* Netflix-style Info Row */}
-                  <div className="flex items-center space-x-4 text-sm">
-                    <div className="flex items-center space-x-1">
-                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                      <span className="text-green-400 font-semibold">
-                        {modalMovie?.rating}
-                      </span>
-                    </div>
-                    <span className="text-white font-medium">
-                      {modalMovie?.year}
-                    </span>
-                    <span
-                      className={`border ${variant === "kids" ? "border-blue-400 px-2 py-0.5 text-xs text-white font-medium bg-blue-500/90" : "border-brand-500 px-2 py-0.5 text-xs text-gray-300 font-medium"}`}
-                    >
-                      {variant === "kids" ? "KIDS" : "TV-MA"}
-                    </span>
-                    <span className="text-white">{modalMovie?.genre}</span>
-                    {channel?.logo_url && (
-                      <img
-                        src={channel.logo_url}
-                        alt={channel.name}
-                        className="w-8 h-8 object-contain rounded"
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Content Section - Minimized gap */}
-              <div className="p-4 md:p-8 pt-6 pb-0 relative">
-                <div
-                  className={`absolute top-0 left-0 right-0 h-4 ${variant === "kids" ? "bg-gradient-to-b from-blue-400 to-transparent" : "bg-gradient-to-b from-black to-transparent"} pointer-events-none`}
-                />
-
-                {/* More Like This Section */}
-                {recommendedContent.length > 0 && (
-                  <HomeRow
-                    title="More Like This"
-                    items={recommendedContent.map((item) => ({
-                      ...item,
-                      posterUrl: item.poster_url || "/placeholder.svg",
-                    }))}
-                    isMoreLikeThis={true}
-                    onItemClick={(movie) => {
-                      setShowModal(false); // Close current modal
-                      setModalMovie(movie); // Set new modal movie
-                      setShowModal(true); // Open new modal with selected movie
-                    }}
-                  />
-                )}
-              </div>
-            </div>
-          </ScrollArea>
-        </DialogContent>
-        {/* Pass seasons_data to the modal if this is a series */}
-        {modalMovie &&
-          modalMovie.type === "series" &&
-          modalContentItem &&
-          (variant === "kids" ? (
-            <KidsSeriesModal
-              isOpen={showModal && !isPlaying}
-              onClose={setShowModal}
-              series={modalMovie}
-              isSaved={isSaved}
-              onSave={handleSave}
-              onPlayEpisode={() => {}}
-              videoUrl={modalVideoUrl}
-              contentItem={{
-                ...modalContentItem,
-                seasons_data: modalSeasonsData,
-              }}
-              channel={channel}
-              recommendedContent={recommendedContent}
-              seasons={modalSeasonsData}
-            />
-          ) : (
-            <SeriesModal
-              isOpen={showModal && !isPlaying}
-              onClose={setShowModal}
-              series={modalMovie}
-              isSaved={isSaved}
-              onSave={handleSave}
-              onPlayEpisode={() => {}}
-              videoUrl={modalVideoUrl}
-              contentItem={{
-                ...modalContentItem,
-                seasons_data: modalSeasonsData,
-              }}
-              channel={channel}
-              recommendedContent={recommendedContent}
-              seasons={modalSeasonsData}
-              customBackground="bg-gradient-to-br from-black via-slate-900 to-violet-900"
-            />
-          ))}
-      </Dialog>
+      {/* More Info Modal - Using unified ContentModal */}
+      {modalMovie && (
+        <ContentModal
+          isOpen={showModal && !isPlaying}
+          onClose={(open) => setShowModal(open)}
+          item={modalMovie}
+          variant={modalMovie.type || "auto"}
+          isKidsMode={variant === "kids"}
+          onPlayEpisode={(url, episodeTitle) => {
+            setCurrentVideoUrl(url);
+            setCurrentVideoTitle(episodeTitle);
+            setIsPlaying(true);
+          }}
+          videoUrl={modalVideoUrl}
+          contentItem={{
+            ...modalContentItem,
+            seasons_data: modalSeasonsData,
+          }}
+          channel={channel}
+          seasons={modalSeasonsData}
+          customBackground={
+            variant === "kids"
+              ? undefined
+              : undefined
+          }
+        />
+      )}
 
       {/* Custom Pagination Styles */}
       <style>{`

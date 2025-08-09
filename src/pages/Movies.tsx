@@ -1,10 +1,9 @@
 import React, { useCallback, useMemo, useState } from "react";
-import OptimizedMovieCard from "@/components/OptimizedMovieCard";
-import MovieHoverRow from "@/components/MovieHoverRow";
+import ContentCard from "@/components/ContentCard";
 import HeroBanner from "@/components/HeroBanner";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import FilterBar from "@/components/FilterBar";
-import HomeRow from "@/components/HomeRow";
+import ContentRow from "@/components/ContentRow";
 import ContentGrid from "@/components/ContentGrid";
 import { useAppContent } from "@/hooks/useAppContent";
 import {
@@ -14,7 +13,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import MovieModal from "@/components/MovieModal";
+import ContentModal from "@/components/ContentModal";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
@@ -32,6 +31,8 @@ const Movies = React.memo(() => {
   const { content: rawContent } = useContent();
   const { channels } = useChannels();
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [currentVideoUrl, setCurrentVideoUrl] = useState<string>("");
+  const [currentVideoTitle, setCurrentVideoTitle] = useState<string>("");
 
   const availableMovieGenres = useMemo(() => {
     if (!movieContent.all || movieContent.all.length === 0) {
@@ -61,7 +62,7 @@ const Movies = React.memo(() => {
     return filtered;
   }, [movieContent.all, activeGenre]);
 
-  const handleHomeRowCardClick = useCallback(() => {
+  const handleContentRowCardClick = useCallback(() => {
     return false;
   }, []);
 
@@ -112,15 +113,20 @@ const Movies = React.memo(() => {
         className="w-full"
       >
         <CarouselContent className="-ml-1">
-          <MovieHoverRow className="flex">
+          <div className="flex py-2">
             {movies.map((movie) => (
               <CarouselItem key={movie.id} className="pl-1 basis-auto">
                 <div className="w-64">
-                  <OptimizedMovieCard movie={movie} />
+                  <ContentCard 
+                    item={movie}
+                    variant="movie"
+                    autoDetectKids={true}
+                    width="w-64"
+                  />
                 </div>
               </CarouselItem>
             ))}
-          </MovieHoverRow>
+          </div>
         </CarouselContent>
         <CarouselPrevious />
         <CarouselNext />
@@ -227,22 +233,8 @@ const Movies = React.memo(() => {
                           (ch) => ch.id === selectedMovie.channelId,
                         );
 
-                        const recommendedContent = rawContent
-                          .filter((item) => {
-                            const passesId = item.id !== selectedMovie.id;
-                            // If current movie is kids content, show only kids content in recommendations
-                            // If current movie is not kids content, exclude kids content from recommendations
-                            const passesKids =
-                              selectedMovie.is_kids || contentItem?.is_kids
-                                ? item.is_kids === true // Show only kids content
-                                : !item.is_kids; // Exclude kids content
-                            const passesGenre =
-                              item.genre === selectedMovie.genre ||
-                              item.channel_id === selectedMovie.channelId;
-
-                            return passesId && passesKids && passesGenre;
-                          })
-                          .slice(0, 6);
+                        // This will be handled internally by ContentModal using useMoreLikeThis hook
+                        const recommendedContent = [];
                         const handleSaveModal = () => {
                           if (isSaved) {
                             removeFromFavorites(selectedMovie.id);
@@ -260,25 +252,34 @@ const Movies = React.memo(() => {
                         };
                         return (
                           <>
-                            {isFullscreen && videoUrl && (
+                            {isFullscreen && currentVideoUrl && (
                               <FullscreenPlayer
                                 isOpen={isFullscreen}
-                                onClose={handleExitFullscreen}
-                                videoUrl={videoUrl}
-                                title={selectedMovie.title}
+                                onClose={() => {
+                                  setIsFullscreen(false);
+                                  setCurrentVideoUrl("");
+                                  setCurrentVideoTitle("");
+                                }}
+                                videoUrl={currentVideoUrl}
+                                title={currentVideoTitle}
                               />
                             )}
-                            <MovieModal
+                            <ContentModal
                               isOpen={!!selectedMovie && !isFullscreen}
-                              onClose={() => setSelectedMovie(null)}
-                              movie={selectedMovie}
-                              isSaved={isSaved}
-                              onSave={handleSaveModal}
-                              onPlay={handleModalPlayClick}
+                              onClose={(open) => !open && setSelectedMovie(null)}
+                              item={selectedMovie}
+                              variant="movie"
+                              autoDetectKids={true}
+                              onPlayEpisode={(url, title) => {
+                                if (url) {
+                                  setCurrentVideoUrl(url);
+                                  setCurrentVideoTitle(title);
+                                  setIsFullscreen(true);
+                                }
+                              }}
                               videoUrl={videoUrl}
                               contentItem={contentItem}
                               channel={channel}
-                              recommendedContent={recommendedContent}
                             />
                           </>
                         );
@@ -314,10 +315,10 @@ const Movies = React.memo(() => {
 
                       return (
                         newMovies.length > 0 && (
-                          <HomeRow
+                          <ContentRow
                             title="New Movies"
                             items={newMovies}
-                            onCardClick={handleHomeRowCardClick}
+                            onCardClick={handleContentRowCardClick}
                           />
                         )
                       );
@@ -325,99 +326,99 @@ const Movies = React.memo(() => {
 
                     {/*/!* Continue Watching - Show trending movies *!/*/}
                     {/*{movieContent.trending.length > 0 && (*/}
-                    {/*  <HomeRow*/}
+                    {/*  <ContentRow*/}
                     {/*    title="Continue Watching"*/}
                     {/*    items={movieContent.trending.slice(0, 8)}*/}
-                    {/*    onCardClick={handleHomeRowCardClick}*/}
+                    {/*    onCardClick={handleContentRowCardClick}*/}
                     {/*  />*/}
                     {/*)}*/}
 
                     {/* Recommended */}
                     {movieContent.recommended.length > 0 && (
-                      <HomeRow
+                      <ContentRow
                         title="Recommended"
                         items={movieContent.recommended.slice(0, 8)}
-                        onCardClick={handleHomeRowCardClick}
+                        onCardClick={handleContentRowCardClick}
                       />
                     )}
 
                     {/* Comedy */}
                     {movieContent.byGenre.Comedy &&
                       movieContent.byGenre.Comedy.length > 0 && (
-                        <HomeRow
+                        <ContentRow
                           title="Comedy"
                           items={movieContent.byGenre.Comedy.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       )}
 
                     {/* Drama */}
                     {movieContent.byGenre.Drama &&
                       movieContent.byGenre.Drama.length > 0 && (
-                        <HomeRow
+                        <ContentRow
                           title="Drama"
                           items={movieContent.byGenre.Drama.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       )}
 
                     {/* Sports */}
                     {movieContent.byGenre.Sports &&
                       movieContent.byGenre.Sports.length > 0 && (
-                        <HomeRow
+                        <ContentRow
                           title="Sports"
                           items={movieContent.byGenre.Sports.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       )}
 
                     {/* Romance */}
                     {movieContent.byGenre.Romance &&
                       movieContent.byGenre.Romance.length > 0 && (
-                        <HomeRow
+                        <ContentRow
                           title="Romance"
                           items={movieContent.byGenre.Romance.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       )}
 
                     {/* Action */}
                     {movieContent.byGenre.Action &&
                       movieContent.byGenre.Action.length > 0 && (
-                        <HomeRow
+                        <ContentRow
                           title="Action"
                           items={movieContent.byGenre.Action.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       )}
 
                     {/* Lifestyle */}
                     {movieContent.byGenre.Lifestyle &&
                       movieContent.byGenre.Lifestyle.length > 0 && (
-                        <HomeRow
+                        <ContentRow
                           title="Lifestyle"
                           items={movieContent.byGenre.Lifestyle.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       )}
 
                     {/* Documentary */}
                     {movieContent.byGenre.Documentary &&
                       movieContent.byGenre.Documentary.length > 0 && (
-                        <HomeRow
+                        <ContentRow
                           title="Documentary"
                           items={movieContent.byGenre.Documentary.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       )}
 
                     {/* Informational */}
                     {movieContent.byGenre.Informational &&
                       movieContent.byGenre.Informational.length > 0 && (
-                        <HomeRow
+                        <ContentRow
                           title="Informational"
                           items={movieContent.byGenre.Informational.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       )}
                   </>
@@ -465,7 +466,7 @@ const Movies = React.memo(() => {
 
                           return (
                             newMoviesFiltered.length > 0 && (
-                              <HomeRow
+                              <ContentRow
                                 key={`new-movies-${activeGenre}`}
                                 title={
                                   activeGenre === "all"
@@ -473,14 +474,14 @@ const Movies = React.memo(() => {
                                     : `New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies`
                                 }
                                 items={newMoviesFiltered}
-                                onCardClick={handleHomeRowCardClick}
+                                onCardClick={handleContentRowCardClick}
                               />
                             )
                           );
                         })()}
 
                         {/* Recommended row */}
-                        <HomeRow
+                        <ContentRow
                           key={`recommended-movies-${activeGenre}`}
                           title={
                             activeGenre === "all"
@@ -488,7 +489,7 @@ const Movies = React.memo(() => {
                               : `Recommended ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies`
                           }
                           items={filteredMovies.slice(2, 10)}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       </>
                     )}
@@ -504,7 +505,7 @@ const Movies = React.memo(() => {
                       {filteredMovies.length > 0 ? (
                         <ContentGrid
                           items={filteredMovies}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       ) : (
                         <div className="text-center py-16">

@@ -9,13 +9,11 @@ import { Search, X } from "lucide-react";
 import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
-import MovieModal from "@/components/MovieModal";
-import SeriesModal from "@/components/SeriesModal";
+import ContentModal from "@/components/ContentModal";
 import FullscreenPlayer from "@/components/FullscreenPlayer";
 import ChannelCard from "@/components/ChannelCard";
 import ChannelModal from "@/components/ChannelModal";
-import MovieCard from "@/components/OptimizedMovieCard";
-import SeriesCard from "@/components/SeriesCard";
+import ContentCard from "@/components/ContentCard";
 
 interface SearchOverlayProps {
   searchQuery: string;
@@ -159,8 +157,8 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
     setSelectedItem(item);
   };
 
-  const handleCloseModal = () => {
-    setSelectedItem(null);
+  const handleCloseModal = (open: boolean) => {
+    if (!open) setSelectedItem(null);
   };
 
   const handleCloseChannelModal = () => {
@@ -256,7 +254,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
                   key={movie.id}
                   className="group hover:scale-105 transition-transform duration-200"
                 >
-                  <MovieCard movie={movie} />
+                  <ContentCard item={movie} variant="movie" autoDetectKids={true} />
                 </div>
               ))}
             </div>
@@ -271,7 +269,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
                   key={series.id}
                   className="group hover:scale-105 transition-transform duration-200"
                 >
-                  <SeriesCard series={series} />
+                  <ContentCard item={series} variant="series" autoDetectKids={true} />
                 </div>
               ))}
             </div>
@@ -355,33 +353,21 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
                 />
               )}
 
-              {selectedItem.type === "series" ? (
-                <SeriesModal
-                  isOpen={!!selectedItem && !isFullscreen}
-                  onClose={handleCloseModal}
-                  series={selectedItem}
-                  isSaved={isSaved}
-                  onSave={handleSaveModal}
-                  onPlayEpisode={handlePlayEpisode}
-                  videoUrl={videoUrl}
-                  contentItem={contentItem}
-                  channel={channel}
-                  recommendedContent={recommendedContent}
-                />
-              ) : (
-                <MovieModal
-                  isOpen={!!selectedItem && !isFullscreen}
-                  onClose={handleCloseModal}
-                  movie={selectedItem}
-                  isSaved={isSaved}
-                  onSave={handleSaveModal}
-                  onPlay={handleModalPlayClick}
-                  videoUrl={videoUrl}
-                  contentItem={contentItem}
-                  channel={channel}
-                  recommendedContent={recommendedContent}
-                />
-              )}
+              <ContentModal
+                isOpen={!!selectedItem && !isFullscreen}
+                onClose={handleCloseModal}
+                item={selectedItem}
+                variant="auto"
+                autoDetectKids={true}
+                isSaved={isSaved}
+                onSave={handleSaveModal}
+                onPlay={selectedItem.type === "movie" ? handleModalPlayClick : undefined}
+                onPlayEpisode={selectedItem.type === "series" ? handlePlayEpisode : undefined}
+                videoUrl={videoUrl}
+                contentItem={contentItem}
+                channel={channel}
+                recommendedContent={recommendedContent}
+              />
             </>
           );
         })()}

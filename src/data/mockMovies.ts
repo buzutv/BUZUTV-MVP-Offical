@@ -12,6 +12,7 @@ export interface Movie {
   isKids: boolean;
   type: 'movie' | 'series';
   channelId?: string;
+  duration?: number;
   // Series-specific fields
   seasons?: number;
   episodes?: number;

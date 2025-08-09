@@ -1,12 +1,11 @@
 import React, { useMemo, useState } from "react";
-import HomeRow from "@/components/HomeRow";
+import ContentRow from "@/components/ContentRow";
 import HeroBanner from "@/components/HeroBanner";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import FilterBar from "@/components/FilterBar";
 import ContentGrid from "@/components/ContentGrid";
 import { useAppContent } from "@/hooks/useAppContent";
-import KidsMovieModal from "@/components/KidsMovieModal";
-import KidsSeriesModal from "@/components/KidsSeriesModal";
+import ContentModal from "@/components/ContentModal";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
@@ -21,6 +20,8 @@ const Kids = () => {
   const { content } = useContent();
   const { channels } = useChannels();
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [currentVideoUrl, setCurrentVideoUrl] = useState<string>("");
+  const [currentVideoTitle, setCurrentVideoTitle] = useState<string>("");
 
   // Enhanced kids content with additional categories
   const enhancedKidsContent = useMemo(() => {
@@ -99,7 +100,7 @@ const Kids = () => {
 
   const filteredKidsContent = getFilteredKidsContent();
 
-  const handleHomeRowCardClick = () => {
+  const handleContentRowCardClick = () => {
     return false; // Kids page doesn't need login modal for card clicks
   };
 
@@ -216,13 +217,8 @@ const Kids = () => {
                         const channel = channels.find(
                           (ch) => ch.id === selectedMovie.channelId,
                         );
-                        const recommendedContent = content
-                          .filter(
-                            (item) =>
-                              item.id !== selectedMovie.id &&
-                              item.is_kids === true,
-                          )
-                          .slice(0, 6);
+                        // This will be handled internally by ContentModal using useMoreLikeThis hook
+                        const recommendedContent = [];
                         const handleSaveModal = () => {
                           if (isSaved) {
                             removeFromFavorites(selectedMovie.id);
@@ -240,43 +236,35 @@ const Kids = () => {
                         };
                         return (
                           <>
-                            {isFullscreen && videoUrl && (
+                            {isFullscreen && currentVideoUrl && (
                               <FullscreenPlayer
                                 isOpen={isFullscreen}
-                                onClose={handleExitFullscreen}
-                                videoUrl={videoUrl}
-                                title={selectedMovie.title}
-                              />
-                            )}
-                            {selectedMovie.type === "series" ? (
-                              <KidsSeriesModal
-                                isOpen={!!selectedMovie && !isFullscreen}
-                                onClose={() => setSelectedMovie(null)}
-                                series={selectedMovie}
-                                isSaved={isSaved}
-                                onSave={handleSaveModal}
-                                onPlayEpisode={(url, episodeTitle) => {
-                                  setIsFullscreen(true);
+                                onClose={() => {
+                                  setIsFullscreen(false);
+                                  setCurrentVideoUrl("");
+                                  setCurrentVideoTitle("");
                                 }}
-                                videoUrl={videoUrl}
-                                contentItem={contentItem}
-                                channel={channel}
-                                recommendedContent={recommendedContent}
-                              />
-                            ) : (
-                              <KidsMovieModal
-                                isOpen={!!selectedMovie && !isFullscreen}
-                                onClose={() => setSelectedMovie(null)}
-                                movie={selectedMovie}
-                                isSaved={isSaved}
-                                onSave={handleSaveModal}
-                                onPlay={handleModalPlayClick}
-                                videoUrl={videoUrl}
-                                contentItem={contentItem}
-                                channel={channel}
-                                recommendedContent={recommendedContent}
+                                videoUrl={currentVideoUrl}
+                                title={currentVideoTitle}
                               />
                             )}
+                            <ContentModal
+                              isOpen={!!selectedMovie && !isFullscreen}
+                              onClose={(open) => !open && setSelectedMovie(null)}
+                              item={selectedMovie}
+                              variant="auto"
+                              isKidsMode={true}
+                              onPlayEpisode={(url, episodeTitle) => {
+                                if (url) {
+                                  setCurrentVideoUrl(url);
+                                  setCurrentVideoTitle(episodeTitle);
+                                  setIsFullscreen(true);
+                                }
+                              }}
+                              videoUrl={videoUrl}
+                              contentItem={contentItem}
+                              channel={channel}
+                            />
                           </>
                         );
                       })()}
@@ -301,28 +289,28 @@ const Kids = () => {
                   <>
                     {/* New Kids */}
                     {enhancedKidsContent.new.length > 0 && (
-                      <HomeRow
+                      <ContentRow
                         title="New Kids Content"
                         items={enhancedKidsContent.new}
-                        onCardClick={handleHomeRowCardClick}
+                        onCardClick={handleContentRowCardClick}
                       />
                     )}
 
                     {/*/!* Continue Watching *!/*/}
                     {/*{enhancedKidsContent.trending.length > 0 && (*/}
-                    {/*  <HomeRow*/}
+                    {/*  <ContentRow*/}
                     {/*    title="Continue Watching"*/}
                     {/*    items={enhancedKidsContent.trending}*/}
-                    {/*    onCardClick={handleHomeRowCardClick}*/}
+                    {/*    onCardClick={handleContentRowCardClick}*/}
                     {/*  />*/}
                     {/*)}*/}
 
                     {/* Recommended */}
                     {enhancedKidsContent.recommended.length > 0 && (
-                      <HomeRow
+                      <ContentRow
                         title="Recommended"
                         items={enhancedKidsContent.recommended}
-                        onCardClick={handleHomeRowCardClick}
+                        onCardClick={handleContentRowCardClick}
                       />
                     )}
 
@@ -333,10 +321,10 @@ const Kids = () => {
                       );
                       return (
                         kidsShows.length > 0 && (
-                          <HomeRow
+                          <ContentRow
                             title="TV Shows"
                             items={kidsShows.slice(0, 8)}
-                            onCardClick={handleHomeRowCardClick}
+                            onCardClick={handleContentRowCardClick}
                           />
                         )
                       );
@@ -349,10 +337,10 @@ const Kids = () => {
                       );
                       return (
                         kidsMovies.length > 0 && (
-                          <HomeRow
+                          <ContentRow
                             title="Movies"
                             items={kidsMovies.slice(0, 8)}
-                            onCardClick={handleHomeRowCardClick}
+                            onCardClick={handleContentRowCardClick}
                           />
                         )
                       );
@@ -366,10 +354,10 @@ const Kids = () => {
                       );
                       return (
                         educationalContent.length > 0 && (
-                          <HomeRow
+                          <ContentRow
                             title="Educational"
                             items={educationalContent}
-                            onCardClick={handleHomeRowCardClick}
+                            onCardClick={handleContentRowCardClick}
                           />
                         )
                       );
@@ -393,7 +381,7 @@ const Kids = () => {
 
                           return (
                             newKidsContentFiltered.length > 0 && (
-                              <HomeRow
+                              <ContentRow
                                 key={`new-kids-content-${activeGenre}`}
                                 title={
                                   activeGenre === "all"
@@ -401,14 +389,14 @@ const Kids = () => {
                                     : `New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Kids Content`
                                 }
                                 items={newKidsContentFiltered}
-                                onCardClick={handleHomeRowCardClick}
+                                onCardClick={handleContentRowCardClick}
                               />
                             )
                           );
                         })()}
 
                         {/* Recommended row */}
-                        <HomeRow
+                        <ContentRow
                           key={`recommended-kids-content-${activeGenre}`}
                           title={
                             activeGenre === "all"
@@ -416,7 +404,7 @@ const Kids = () => {
                               : `Recommended ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Kids Content`
                           }
                           items={filteredKidsContent.slice(2, 10)}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       </>
                     )}
@@ -432,7 +420,7 @@ const Kids = () => {
                       {filteredKidsContent.length > 0 ? (
                         <ContentGrid
                           items={filteredKidsContent}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       ) : (
                         <div className="text-center py-16">

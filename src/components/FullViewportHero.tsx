@@ -7,9 +7,10 @@ import "swiper/css/pagination";
 import "./HeroCarousel.css";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
+import { useContent } from "@/hooks/useContent";
+import { useChannels } from "@/hooks/useChannels";
 import { ArrowLeft, ArrowRight, Info, Play } from "lucide-react";
-import MovieModal from "./MovieModal";
-import SeriesModal from "./SeriesModal";
+import ContentModal from "./ContentModal";
 import FullscreenPlayer from "./FullscreenPlayer";
 import ChannelCard from "./ChannelCard";
 import BrandButton from "./ui/BrandButton";
@@ -46,6 +47,8 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
   const { isLoggedIn, setShowLoginModal } = useAuth();
   const { favoriteIds, addToFavorites, removeFromFavorites } =
     useUserFavorites();
+  const { content } = useContent();
+  const { channels: backendChannels } = useChannels();
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<"movie" | "series" | null>(null);
   const [modalItem, setModalItem] = useState<HeroCarouselItem | null>(null);
@@ -99,21 +102,8 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
   const handleMoreInfo = (item: HeroCarouselItem) => {
     setModalType(item.type || "movie");
     setModalItem(item);
-    const recs = allContent
-      .filter((c) => {
-        const passesId = c.id !== item.id;
-        // If current item is kids content, show only kids content in recommendations
-        // If current item is not kids content, exclude kids content from recommendations
-        const passesKids = item.isKids
-          ? c.isKids === true // Show only kids content
-          : !c.isKids; // Exclude kids content
-        const passesGenre =
-          c.genre === item.genre || c.channelId === item.channelId;
-
-        return passesId && passesKids && passesGenre;
-      })
-      .slice(0, 6);
-    setRecommendedContent(recs);
+    // Recommendations will be handled internally by ContentModal using useMoreLikeThis hook
+    setRecommendedContent([]);
     setModalOpen(true);
   };
 
@@ -197,6 +187,80 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
                     <h1 className="text-3xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
                       {slide.title}
                     </h1>
+
+                    {/* Info Row */}
+                    <div className="flex items-center space-x-3 mb-6">
+                      {slide.genre && (
+                        <span className="bg-brand-500/70 text-white px-2 py-1 rounded text-sm">
+                          {slide.genre}
+                        </span>
+                      )}
+                      {slide.year && (
+                        <span className="text-white text-sm">
+                          {slide.year}
+                        </span>
+                      )}
+                      {/* Duration/Seasons - only show if available */}
+                      {(() => {
+                        const currentContentItem = content.find((c) => c.id === slide.id);
+                        
+                        if (slide.type === "series") {
+                          // For series, show number of seasons - using same logic as ContentModal
+                          if (currentContentItem?.seasons_data) {
+                            try {
+                              const seasonsData =
+                                typeof currentContentItem.seasons_data === "string"
+                                  ? JSON.parse(currentContentItem.seasons_data)
+                                  : currentContentItem.seasons_data;
+                              
+                              if (Array.isArray(seasonsData) && seasonsData.length > 0) {
+                                const seasonCount = seasonsData.length;
+                                return (
+                                  <span className="text-white text-sm">
+                                    {seasonCount === 1 ? "1 Season" : `${seasonCount} Seasons`}
+                                  </span>
+                                );
+                              }
+                            } catch (error) {
+                              console.error("Error parsing seasons data for duration display:", error);
+                            }
+                          }
+                          
+                          // Fallback for series
+                          return (
+                            <span className="text-white text-sm">
+                              Series
+                            </span>
+                          );
+                        } else {
+                          // For movies, show duration
+                          const duration = currentContentItem?.duration_minutes;
+                          
+                          if (duration) {
+                            const hours = Math.floor(duration / 60);
+                            const mins = duration % 60;
+                            const formattedDuration = hours > 0 
+                              ? (mins > 0 ? `${hours}h ${mins}m` : `${hours}h`)
+                              : `${mins}m`;
+                            
+                            return (
+                              <span className="text-white text-sm">
+                                {formattedDuration}
+                              </span>
+                            );
+                          }
+                        }
+                        
+                        return null;
+                      })()}
+                      {/* Rating - always display like HeroBanner */}
+                      <div className="flex items-center space-x-1">
+                        <span className="text-yellow-400">★</span>
+                        <span className="text-white text-sm">
+                          {slide.rating || 0}
+                        </span>
+                      </div>
+                    </div>
 
                     {/* Description */}
                     {slide.description && (
@@ -308,38 +372,29 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
       )}
 
       {/* Modals */}
-      {modalOpen && modalType === "movie" && modalItem && (
-        <MovieModal
-          isOpen={modalOpen}
-          onClose={handleCloseModal}
-          movie={modalItem as any}
-          isSaved={favoriteIds.includes(modalItem.id)}
-          onSave={() => handleSaveItem(modalItem.id)}
-          onPlay={() => handlePlay(modalItem)}
-          videoUrl={modalItem.videoUrl}
-          contentItem={modalItem}
-          channel={null}
-          recommendedContent={recommendedContent}
-        />
-      )}
-      {modalOpen && modalType === "series" && modalItem && (
-        <SeriesModal
-          isOpen={modalOpen}
-          onClose={handleCloseModal}
-          series={modalItem as any}
-          isSaved={favoriteIds.includes(modalItem.id)}
-          onSave={() => handleSaveItem(modalItem.id)}
-          onPlayEpisode={(url, episodeTitle) => {
-            setFullscreenUrl(url);
-            setFullscreenTitle(episodeTitle);
-            setFullscreenOpen(true);
-          }}
-          videoUrl={modalItem.videoUrl}
-          contentItem={modalItem}
-          channel={null}
-          recommendedContent={recommendedContent}
-        />
-      )}
+      {modalOpen && modalItem && (() => {
+        // Find the backend content item and channel
+        const backendContentItem = content.find(item => item.id === modalItem.id);
+        const backendChannel = backendChannels.find(ch => ch.id === modalItem.channelId);
+        
+        return (
+          <ContentModal
+            isOpen={modalOpen}
+            onClose={(open) => !open && handleCloseModal()}
+            item={modalItem as any}
+            variant={modalType || "auto"}
+            autoDetectKids={true}
+            onPlayEpisode={(url, episodeTitle) => {
+              setFullscreenUrl(url);
+              setFullscreenTitle(episodeTitle);
+              setFullscreenOpen(true);
+            }}
+            videoUrl={backendContentItem?.video_url || modalItem.videoUrl}
+            contentItem={backendContentItem}
+            channel={backendChannel}
+          />
+        );
+      })()}
 
       {/* Custom Pagination Styles */}
       <style>{`

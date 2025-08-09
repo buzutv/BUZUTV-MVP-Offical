@@ -1,10 +1,9 @@
 import React, { useState } from "react";
-import SeriesCard from "@/components/SeriesCard";
-import MovieHoverRow from "@/components/MovieHoverRow";
+import ContentCard from "@/components/ContentCard";
 import HeroBanner from "@/components/HeroBanner";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import FilterBar from "@/components/FilterBar";
-import HomeRow from "@/components/HomeRow";
+import ContentRow from "@/components/ContentRow";
 import ContentGrid from "@/components/ContentGrid";
 import { useAppContent } from "@/hooks/useAppContent";
 import {
@@ -14,7 +13,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import SeriesModal from "@/components/SeriesModal";
+import ContentModal from "@/components/ContentModal";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
@@ -66,7 +65,7 @@ const Series = () => {
 
   const filteredSeries = getFilteredSeries();
 
-  const handleHomeRowCardClick = () => {
+  const handleContentRowCardClick = () => {
     return false; // Series page doesn't need login modal for card clicks
   };
 
@@ -113,15 +112,20 @@ const Series = () => {
         className="w-full"
       >
         <CarouselContent className="-ml-1">
-          <MovieHoverRow className="flex">
+          <div className="flex py-2">
             {series.map((show) => (
               <CarouselItem key={show.id} className="pl-1 basis-auto">
                 <div className="w-64">
-                  <SeriesCard series={show} />
+                  <ContentCard 
+                    item={show}
+                    variant="series"
+                    autoDetectKids={true}
+                    width="w-64"
+                  />
                 </div>
               </CarouselItem>
             ))}
-          </MovieHoverRow>
+          </div>
         </CarouselContent>
         <CarouselPrevious />
         <CarouselNext />
@@ -230,22 +234,8 @@ const Series = () => {
                           (ch) => ch.id === selectedSeries.channelId,
                         );
 
-                        const recommendedContent = rawContent
-                          .filter((item) => {
-                            const passesId = item.id !== selectedSeries.id;
-                            // If current series is kids content, show only kids content in recommendations
-                            // If current series is not kids content, exclude kids content from recommendations
-                            const passesKids =
-                              selectedSeries.is_kids || contentItem?.is_kids
-                                ? item.is_kids === true // Show only kids content
-                                : !item.is_kids; // Exclude kids content
-                            const passesGenre =
-                              item.genre === selectedSeries.genre ||
-                              item.channel_id === selectedSeries.channelId;
-
-                            return passesId && passesKids && passesGenre;
-                          })
-                          .slice(0, 6);
+                        // This will be handled internally by ContentModal using useMoreLikeThis hook
+                        const recommendedContent = [];
                         const handleSaveModal = () => {
                           if (isSaved) {
                             removeFromFavorites(selectedSeries.id);
@@ -276,17 +266,20 @@ const Series = () => {
                                 title={fullscreenVideoTitle}
                               />
                             )}
-                            <SeriesModal
+                            <ContentModal
                               isOpen={!!selectedSeries && !isFullscreen}
-                              onClose={() => setSelectedSeries(null)}
-                              series={selectedSeries}
-                              isSaved={isSaved}
-                              onSave={handleSaveModal}
-                              onPlayEpisode={handlePlayEpisode}
+                              onClose={(open) => !open && setSelectedSeries(null)}
+                              item={selectedSeries}
+                              variant="series"
+                              autoDetectKids={true}
+                              onPlayEpisode={(videoUrl, episodeTitle) => {
+                                setFullscreenVideoUrl(videoUrl);
+                                setFullscreenVideoTitle(episodeTitle);
+                                setIsFullscreen(true);
+                              }}
                               videoUrl={videoUrl}
                               contentItem={contentItem}
                               channel={channel}
-                              recommendedContent={recommendedContent}
                             />
                           </>
                         );
@@ -322,10 +315,10 @@ const Series = () => {
 
                       return (
                         newSeries.length > 0 && (
-                          <HomeRow
+                          <ContentRow
                             title="New TV Shows"
                             items={newSeries}
-                            onCardClick={handleHomeRowCardClick}
+                            onCardClick={handleContentRowCardClick}
                           />
                         )
                       );
@@ -333,102 +326,102 @@ const Series = () => {
 
                     {/*/!* Continue Watching - Show trending series *!/*/}
                     {/*{seriesContent.trending.length > 0 && (*/}
-                    {/*  <HomeRow*/}
+                    {/*  <ContentRow*/}
                     {/*    title="Continue Watching"*/}
                     {/*    items={seriesContent.trending.slice(0, 8)}*/}
-                    {/*    onCardClick={handleHomeRowCardClick}*/}
+                    {/*    onCardClick={handleContentRowCardClick}*/}
                     {/*  />*/}
                     {/*)}*/}
 
                     {/* Recommended */}
                     {seriesContent.recommended.length > 0 && (
-                      <HomeRow
+                      <ContentRow
                         title="Recommended"
                         items={seriesContent.recommended.slice(0, 8)}
-                        onCardClick={handleHomeRowCardClick}
+                        onCardClick={handleContentRowCardClick}
                       />
                     )}
 
                     {/* Comedy */}
                     {seriesContent.byGenre.Comedy &&
                       seriesContent.byGenre.Comedy.length > 0 && (
-                        <HomeRow
+                        <ContentRow
                           title="Comedy"
                           items={seriesContent.byGenre.Comedy.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       )}
 
                     {/* Drama */}
                     {seriesContent.byGenre.Drama &&
                       seriesContent.byGenre.Drama.length > 0 && (
-                        <HomeRow
+                        <ContentRow
                           title="Drama"
                           items={seriesContent.byGenre.Drama.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       )}
 
                     {/* Sports */}
                     {seriesContent.byGenre.Sports &&
                       seriesContent.byGenre.Sports.length > 0 && (
-                        <HomeRow
+                        <ContentRow
                           title="Sports"
                           items={seriesContent.byGenre.Sports.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       )}
 
                     {/* Romance */}
                     {seriesContent.byGenre.Romance &&
                       seriesContent.byGenre.Romance.length > 0 && (
-                        <HomeRow
+                        <ContentRow
                           title="Romance"
                           items={seriesContent.byGenre.Romance.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       )}
 
                     {/* Action */}
                     {seriesContent.byGenre.Action &&
                       seriesContent.byGenre.Action.length > 0 && (
-                        <HomeRow
+                        <ContentRow
                           title="Action"
                           items={seriesContent.byGenre.Action.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       )}
 
                     {/* Lifestyle */}
                     {seriesContent.byGenre.Lifestyle &&
                       seriesContent.byGenre.Lifestyle.length > 0 && (
-                        <HomeRow
+                        <ContentRow
                           title="Lifestyle"
                           items={seriesContent.byGenre.Lifestyle.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       )}
 
                     {/* Documentary */}
                     {seriesContent.byGenre.Documentary &&
                       seriesContent.byGenre.Documentary.length > 0 && (
-                        <HomeRow
+                        <ContentRow
                           title="Documentary"
                           items={seriesContent.byGenre.Documentary.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       )}
 
                     {/* Informational */}
                     {seriesContent.byGenre.Informational &&
                       seriesContent.byGenre.Informational.length > 0 && (
-                        <HomeRow
+                        <ContentRow
                           title="Informational"
                           items={seriesContent.byGenre.Informational.slice(
                             0,
                             8,
                           )}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       )}
                   </>
@@ -476,7 +469,7 @@ const Series = () => {
 
                           return (
                             newSeriesFiltered.length > 0 && (
-                              <HomeRow
+                              <ContentRow
                                 key={`new-series-${activeGenre}`}
                                 title={
                                   activeGenre === "all"
@@ -484,14 +477,14 @@ const Series = () => {
                                     : `New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} TV Shows`
                                 }
                                 items={newSeriesFiltered}
-                                onCardClick={handleHomeRowCardClick}
+                                onCardClick={handleContentRowCardClick}
                               />
                             )
                           );
                         })()}
 
                         {/* Recommended row */}
-                        <HomeRow
+                        <ContentRow
                           key={`recommended-series-${activeGenre}`}
                           title={
                             activeGenre === "all"
@@ -499,7 +492,7 @@ const Series = () => {
                               : `Recommended ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} TV Shows`
                           }
                           items={filteredSeries.slice(2, 10)}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       </>
                     )}
@@ -515,7 +508,7 @@ const Series = () => {
                       {filteredSeries.length > 0 ? (
                         <ContentGrid
                           items={filteredSeries}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       ) : (
                         <div className="text-center py-16">

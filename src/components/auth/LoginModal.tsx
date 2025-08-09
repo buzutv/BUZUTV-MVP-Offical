@@ -23,8 +23,7 @@ const LoginModal = () => {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [fullName, setFullName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showOtpForm, setShowOtpForm] = useState(false);
@@ -34,11 +33,11 @@ const LoginModal = () => {
     e.preventDefault();
 
     // Shared validations
-    const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
+    const trimmedFullName = fullName.trim();
 
     if (isSignUp) {
       if (!email) return toast.error("Email is required");
-      if (!password || !confirmPassword || !firstName || !lastName)
+      if (!password || !confirmPassword || !fullName.trim())
         return toast.error("Please fill in all fields");
       if (password !== confirmPassword)
         return toast.error("Passwords do not match");
@@ -54,7 +53,7 @@ const LoginModal = () => {
     try {
       if (isSignUp) {
         // Email sign-up
-        const result = await signup(email, password, fullName, phone);
+        const result = await signup(email, password, trimmedFullName, phone);
         if (result.success) {
           toast.success("Account created successfully!");
           setShowLoginModal(false);
@@ -105,8 +104,7 @@ const LoginModal = () => {
     setPhone("");
     setPassword("");
     setConfirmPassword("");
-    setFirstName("");
-    setLastName("");
+    setFullName("");
     setIsSignUp(false);
     setShowOtpForm(false);
     setOtpCode("");
@@ -180,39 +178,21 @@ const LoginModal = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               {isSignUp && (
                 <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label
-                        htmlFor="firstName"
-                        className="block text-sm font-medium text-gray-300 mb-2"
-                      >
-                        First Name
-                      </label>
-                      <input
-                        id="firstName"
-                        type="text"
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
-                        placeholder="First name"
-                      />
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="lastName"
-                        className="block text-sm font-medium text-gray-300 mb-2"
-                      >
-                        Last Name
-                      </label>
-                      <input
-                        id="lastName"
-                        type="text"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
-                        placeholder="Last name"
-                      />
-                    </div>
+                  <div>
+                    <label
+                      htmlFor="fullName"
+                      className="block text-sm font-medium text-gray-300 mb-2"
+                    >
+                      Full Name
+                    </label>
+                    <input
+                      id="fullName"
+                      type="text"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
+                      placeholder="Enter your full name"
+                    />
                   </div>
 
                   <div>
