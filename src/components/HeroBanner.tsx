@@ -366,11 +366,17 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
         {/* Navigation buttons */}
         {movies.length > 1 && (
           <>
-            <button className="hero-prev-movies absolute left-4 top-1/2 transform -translate-y-1/2 z-20 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors">
-              <ChevronLeft className="w-5 h-5" />
+            <button 
+              className="hero-prev-movies absolute left-4 top-1/2 transform -translate-y-1/2 z-20 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
+              aria-label="Previous movie"
+            >
+              <ChevronLeft className="w-5 h-5" aria-hidden="true" />
             </button>
-            <button className="hero-next-movies absolute right-4 top-1/2 transform -translate-y-1/2 z-20 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors">
-              <ChevronRight className="w-5 h-5" />
+            <button 
+              className="hero-next-movies absolute right-4 top-1/2 transform -translate-y-1/2 z-20 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
+              aria-label="Next movie"
+            >
+              <ChevronRight className="w-5 h-5" aria-hidden="true" />
             </button>
           </>
         )}
@@ -459,7 +465,7 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
           customBackground={
             variant === "kids"
               ? undefined
-              : "bg-gradient-to-br from-black via-slate-900 to-violet-900"
+              : undefined
           }
         />
       )}

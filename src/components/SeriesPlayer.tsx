@@ -199,9 +199,10 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
           {previousEpisode && (
             <button
               onClick={handlePreviousEpisode}
-              className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all bg-white/10 hover:bg-white/20 text-white"
+              className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all bg-white/10 hover:bg-white/20 text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
+              aria-label={`Previous episode: Season ${previousEpisode.season} Episode ${previousEpisode.episode.episode_number} - ${previousEpisode.episode.title}`}
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-4 h-4" aria-hidden="true" />
               <span className="text-sm">
                 <span className="inline sm:hidden">Previous</span>
                 <span className="hidden sm:inline">
@@ -222,25 +223,21 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
           </div>
 
           {/* Next Episode */}
-          <button
-            onClick={handleNextEpisode}
-            disabled={!nextEpisode}
-            className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all ${
-              nextEpisode
-                ? "bg-white/10 hover:bg-white/20 text-white"
-                : "bg-gray-600 text-gray-400 cursor-not-allowed"
-            }`}
-          >
-            <span className="text-sm">
-              <span className="inline sm:hidden">Next</span>
-              <span className="hidden sm:inline">
-                {nextEpisode
-                  ? `Next: Season ${nextEpisode.season} Episode ${nextEpisode.episode.episode_number}`
-                  : "Next"}
+          {nextEpisode && (
+            <button
+              onClick={handleNextEpisode}
+              className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all bg-white/10 hover:bg-white/20 text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
+              aria-label={`Next episode: Season ${nextEpisode.season} Episode ${nextEpisode.episode.episode_number} - ${nextEpisode.episode.title}`}
+            >
+              <span className="text-sm">
+                <span className="inline sm:hidden">Next</span>
+                <span className="hidden sm:inline">
+                  {`Next: Season ${nextEpisode.season} Episode ${nextEpisode.episode.episode_number}`}
+                </span>
               </span>
-            </span>
-            <ChevronRight className="w-4 h-4" />
-          </button>
+              <ChevronRight className="w-4 h-4" aria-hidden="true" />
+            </button>
+          )}
         </div>
       </div>
     </div>

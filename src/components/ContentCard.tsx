@@ -207,7 +207,16 @@ const ContentCard = React.memo(
         )}
 
         <div
-          className={`content-card group ${widthClass} border-2 border-transparent hover:scale-105 hover:border-white hover:shadow-[0_0_4px_rgba(255,255,255,0.6)] rounded-lg transition-all duration-300 overflow-hidden ${className}`}
+          className={`content-card group ${widthClass} border-2 border-transparent hover:scale-105 hover:border-white hover:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:scale-105 focus:border-white focus:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:outline-none rounded-lg transition-all duration-300 overflow-hidden ${className}`}
+          tabIndex={0}
+          role="button"
+          aria-label={`${normalizedItem.type === 'series' ? 'View series' : 'View movie'} ${normalizedItem.title}`}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleCardClick();
+            }
+          }}
         >
           <div className="block cursor-pointer" onClick={handleCardClick}>
             <div
@@ -217,7 +226,7 @@ const ContentCard = React.memo(
               <div className="w-full h-full">
                 <img
                   src={normalizedItem.posterUrl}
-                  alt={normalizedItem.title}
+                  alt={`${normalizedItem.title} - ${normalizedItem.type === 'series' ? 'TV Series' : 'Movie'} poster`}
                   className="w-full h-full rounded-lg object-cover transform transition-transform duration-300 hover:scale-[1.1]"
                   loading="lazy"
                   decoding="async"
@@ -256,7 +265,11 @@ const ContentCard = React.memo(
               )}
 
               {isMoreLikeThis && (
-                <button className="absolute inset-0 z-20" onClick={handleCardClick} />
+                <button 
+                  className="absolute inset-0 z-20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black" 
+                  onClick={handleCardClick}
+                  aria-label={`View ${normalizedItem.title} details`}
+                />
               )}
             </div>
           </div>
