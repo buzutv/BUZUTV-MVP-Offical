@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import ContentCard from "@/components/ContentCard";
 
-interface HomeRowProps {
+interface ContentRowProps {
   title: string;
   items: any[];
   onCardClick?: () => boolean;
@@ -12,7 +12,7 @@ interface HomeRowProps {
   onOpenRelatedMovie?: (movie: any) => void;
 }
 
-const HomeRow = React.memo(
+const ContentRow = React.memo(
   ({
     title,
     items,
@@ -21,7 +21,7 @@ const HomeRow = React.memo(
     isMoreLikeThis = false,
     onOpenRelatedSeries,
     onOpenRelatedMovie,
-  }: HomeRowProps) => {
+  }: ContentRowProps) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(false);
@@ -99,7 +99,7 @@ const HomeRow = React.memo(
                 e.stopPropagation();
                 scrollLeft();
               }}
-              className="absolute left-0 top-1/2 transform -translate-y-1/2 z-50 bg-black/60 hover:bg-black/80 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm shadow-lg hover:scale-110"
+              className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-black/60 hover:bg-black/80 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm shadow-lg hover:scale-110"
               aria-label={`Scroll ${title} left`}
               style={{ marginLeft: "-10px" }}
             >
@@ -114,7 +114,7 @@ const HomeRow = React.memo(
                 e.stopPropagation();
                 scrollRight();
               }}
-              className="absolute right-0 top-1/2 transform -translate-y-1/2 z-50 bg-black/60 hover:bg-black/80 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm shadow-lg hover:scale-110"
+              className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-black/60 hover:bg-black/80 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm shadow-lg hover:scale-110"
               aria-label={`Scroll ${title} right`}
               style={{ marginRight: "-22px" }}
             >
@@ -164,6 +164,6 @@ const HomeRow = React.memo(
   },
 );
 
-HomeRow.displayName = "HomeRow";
+ContentRow.displayName = "ContentRow";
 
-export default HomeRow;
+export default ContentRow;

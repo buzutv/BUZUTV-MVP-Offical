@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import HomeRow from "@/components/HomeRow";
+import ContentRow from "@/components/ContentRow";
 import HeroBanner from "@/components/HeroBanner";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import FilterBar from "@/components/FilterBar";
@@ -100,7 +100,7 @@ const Kids = () => {
 
   const filteredKidsContent = getFilteredKidsContent();
 
-  const handleHomeRowCardClick = () => {
+  const handleContentRowCardClick = () => {
     return false; // Kids page doesn't need login modal for card clicks
   };
 
@@ -289,28 +289,28 @@ const Kids = () => {
                   <>
                     {/* New Kids */}
                     {enhancedKidsContent.new.length > 0 && (
-                      <HomeRow
+                      <ContentRow
                         title="New Kids Content"
                         items={enhancedKidsContent.new}
-                        onCardClick={handleHomeRowCardClick}
+                        onCardClick={handleContentRowCardClick}
                       />
                     )}
 
                     {/*/!* Continue Watching *!/*/}
                     {/*{enhancedKidsContent.trending.length > 0 && (*/}
-                    {/*  <HomeRow*/}
+                    {/*  <ContentRow*/}
                     {/*    title="Continue Watching"*/}
                     {/*    items={enhancedKidsContent.trending}*/}
-                    {/*    onCardClick={handleHomeRowCardClick}*/}
+                    {/*    onCardClick={handleContentRowCardClick}*/}
                     {/*  />*/}
                     {/*)}*/}
 
                     {/* Recommended */}
                     {enhancedKidsContent.recommended.length > 0 && (
-                      <HomeRow
+                      <ContentRow
                         title="Recommended"
                         items={enhancedKidsContent.recommended}
-                        onCardClick={handleHomeRowCardClick}
+                        onCardClick={handleContentRowCardClick}
                       />
                     )}
 
@@ -321,10 +321,10 @@ const Kids = () => {
                       );
                       return (
                         kidsShows.length > 0 && (
-                          <HomeRow
+                          <ContentRow
                             title="TV Shows"
                             items={kidsShows.slice(0, 8)}
-                            onCardClick={handleHomeRowCardClick}
+                            onCardClick={handleContentRowCardClick}
                           />
                         )
                       );
@@ -337,10 +337,10 @@ const Kids = () => {
                       );
                       return (
                         kidsMovies.length > 0 && (
-                          <HomeRow
+                          <ContentRow
                             title="Movies"
                             items={kidsMovies.slice(0, 8)}
-                            onCardClick={handleHomeRowCardClick}
+                            onCardClick={handleContentRowCardClick}
                           />
                         )
                       );
@@ -354,10 +354,10 @@ const Kids = () => {
                       );
                       return (
                         educationalContent.length > 0 && (
-                          <HomeRow
+                          <ContentRow
                             title="Educational"
                             items={educationalContent}
-                            onCardClick={handleHomeRowCardClick}
+                            onCardClick={handleContentRowCardClick}
                           />
                         )
                       );
@@ -381,7 +381,7 @@ const Kids = () => {
 
                           return (
                             newKidsContentFiltered.length > 0 && (
-                              <HomeRow
+                              <ContentRow
                                 key={`new-kids-content-${activeGenre}`}
                                 title={
                                   activeGenre === "all"
@@ -389,14 +389,14 @@ const Kids = () => {
                                     : `New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Kids Content`
                                 }
                                 items={newKidsContentFiltered}
-                                onCardClick={handleHomeRowCardClick}
+                                onCardClick={handleContentRowCardClick}
                               />
                             )
                           );
                         })()}
 
                         {/* Recommended row */}
-                        <HomeRow
+                        <ContentRow
                           key={`recommended-kids-content-${activeGenre}`}
                           title={
                             activeGenre === "all"
@@ -404,7 +404,7 @@ const Kids = () => {
                               : `Recommended ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Kids Content`
                           }
                           items={filteredKidsContent.slice(2, 10)}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       </>
                     )}
@@ -420,7 +420,7 @@ const Kids = () => {
                       {filteredKidsContent.length > 0 ? (
                         <ContentGrid
                           items={filteredKidsContent}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       ) : (
                         <div className="text-center py-16">

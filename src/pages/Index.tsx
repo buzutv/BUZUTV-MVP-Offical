@@ -6,7 +6,7 @@ import ContentGrid from "@/components/ContentGrid";
 import { useAppContent } from "@/hooks/useAppContent";
 import { useUserSubscriptions } from "@/hooks/useUserSubscriptions";
 import { useAuth } from "@/contexts/AuthContext";
-import HomeRow from "@/components/HomeRow";
+import ContentRow from "@/components/ContentRow";
 import { featuredContentIds } from "@/data/featuredContentIds";
 
 interface Channel {
@@ -73,7 +73,7 @@ const Index = React.memo(() => {
     setSelectedChannel(null);
   }, []);
 
-  const handleHomeRowCardClick = useCallback(() => {
+  const handleContentRowCardClick = useCallback(() => {
     if (!isLoggedIn) {
       setShowLoginModal(true);
       return true;
@@ -171,10 +171,10 @@ const Index = React.memo(() => {
               <>
                 {/*/!* Continue Watching - Show trending content as placeholder *!/*/}
                 {/*{homeContent.trending.length > 0 && (*/}
-                {/*  <HomeRow*/}
+                {/*  <ContentRow*/}
                 {/*    title="Continue Watching"*/}
                 {/*    items={homeContent.trending.slice(0, 8)}*/}
-                {/*    onCardClick={handleHomeRowCardClick}*/}
+                {/*    onCardClick={handleContentRowCardClick}*/}
                 {/*  />*/}
                 {/*)}*/}
 
@@ -191,10 +191,10 @@ const Index = React.memo(() => {
 
                   return (
                     newContent.length > 0 && (
-                      <HomeRow
+                      <ContentRow
                         title="New Content"
                         items={newContent}
-                        onCardClick={handleHomeRowCardClick}
+                        onCardClick={handleContentRowCardClick}
                       />
                     )
                   );
@@ -202,10 +202,10 @@ const Index = React.memo(() => {
 
                 {/* Recommended - Show trending content */}
                 {homeContent.trending.length > 0 && (
-                  <HomeRow
+                  <ContentRow
                     title="Recommended"
                     items={homeContent.trending}
-                    onCardClick={handleHomeRowCardClick}
+                    onCardClick={handleContentRowCardClick}
                   />
                 )}
 
@@ -217,10 +217,10 @@ const Index = React.memo(() => {
 
                   return (
                     kidsOnlyContent.length > 0 && (
-                      <HomeRow
+                      <ContentRow
                         title="Kids"
                         items={kidsOnlyContent}
-                        onCardClick={handleHomeRowCardClick}
+                        onCardClick={handleContentRowCardClick}
                       />
                     )
                   );
@@ -239,10 +239,10 @@ const Index = React.memo(() => {
 
                   return (
                     featuredMovies.length > 0 && (
-                      <HomeRow
+                      <ContentRow
                         title="Featured Movies"
                         items={featuredMovies}
-                        onCardClick={handleHomeRowCardClick}
+                        onCardClick={handleContentRowCardClick}
                       />
                     )
                   );
@@ -261,10 +261,10 @@ const Index = React.memo(() => {
 
                   return (
                     featuredShows.length > 0 && (
-                      <HomeRow
+                      <ContentRow
                         title="Featured Shows"
                         items={featuredShows}
-                        onCardClick={handleHomeRowCardClick}
+                        onCardClick={handleContentRowCardClick}
                       />
                     )
                   );
@@ -288,7 +288,7 @@ const Index = React.memo(() => {
 
                       return (
                         newContentFiltered.length > 0 && (
-                          <HomeRow
+                          <ContentRow
                             key={`new-content-${activeGenre}`}
                             title={
                               activeGenre === "all"
@@ -296,14 +296,14 @@ const Index = React.memo(() => {
                                 : `New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies and TV Shows`
                             }
                             items={newContentFiltered}
-                            onCardClick={handleHomeRowCardClick}
+                            onCardClick={handleContentRowCardClick}
                           />
                         )
                       );
                     })()}
 
                     {/* Recommended row */}
-                    <HomeRow
+                    <ContentRow
                       key={`recommended-content-${activeGenre}`}
                       title={
                         activeGenre === "all"
@@ -311,7 +311,7 @@ const Index = React.memo(() => {
                           : `Recommended ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies and TV Shows`
                       }
                       items={filteredContent.slice(2, 10)}
-                      onCardClick={handleHomeRowCardClick}
+                      onCardClick={handleContentRowCardClick}
                     />
                   </>
                 )}
@@ -327,7 +327,7 @@ const Index = React.memo(() => {
                   {filteredContent.length > 0 ? (
                     <ContentGrid
                       items={filteredContent}
-                      onCardClick={handleHomeRowCardClick}
+                      onCardClick={handleContentRowCardClick}
                     />
                   ) : (
                     <div className="text-center py-16">

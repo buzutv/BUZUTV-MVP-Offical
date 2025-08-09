@@ -3,7 +3,7 @@ import ContentCard from "@/components/ContentCard";
 import HeroBanner from "@/components/HeroBanner";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import FilterBar from "@/components/FilterBar";
-import HomeRow from "@/components/HomeRow";
+import ContentRow from "@/components/ContentRow";
 import ContentGrid from "@/components/ContentGrid";
 import { useAppContent } from "@/hooks/useAppContent";
 import {
@@ -65,7 +65,7 @@ const Series = () => {
 
   const filteredSeries = getFilteredSeries();
 
-  const handleHomeRowCardClick = () => {
+  const handleContentRowCardClick = () => {
     return false; // Series page doesn't need login modal for card clicks
   };
 
@@ -315,10 +315,10 @@ const Series = () => {
 
                       return (
                         newSeries.length > 0 && (
-                          <HomeRow
+                          <ContentRow
                             title="New TV Shows"
                             items={newSeries}
-                            onCardClick={handleHomeRowCardClick}
+                            onCardClick={handleContentRowCardClick}
                           />
                         )
                       );
@@ -326,102 +326,102 @@ const Series = () => {
 
                     {/*/!* Continue Watching - Show trending series *!/*/}
                     {/*{seriesContent.trending.length > 0 && (*/}
-                    {/*  <HomeRow*/}
+                    {/*  <ContentRow*/}
                     {/*    title="Continue Watching"*/}
                     {/*    items={seriesContent.trending.slice(0, 8)}*/}
-                    {/*    onCardClick={handleHomeRowCardClick}*/}
+                    {/*    onCardClick={handleContentRowCardClick}*/}
                     {/*  />*/}
                     {/*)}*/}
 
                     {/* Recommended */}
                     {seriesContent.recommended.length > 0 && (
-                      <HomeRow
+                      <ContentRow
                         title="Recommended"
                         items={seriesContent.recommended.slice(0, 8)}
-                        onCardClick={handleHomeRowCardClick}
+                        onCardClick={handleContentRowCardClick}
                       />
                     )}
 
                     {/* Comedy */}
                     {seriesContent.byGenre.Comedy &&
                       seriesContent.byGenre.Comedy.length > 0 && (
-                        <HomeRow
+                        <ContentRow
                           title="Comedy"
                           items={seriesContent.byGenre.Comedy.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       )}
 
                     {/* Drama */}
                     {seriesContent.byGenre.Drama &&
                       seriesContent.byGenre.Drama.length > 0 && (
-                        <HomeRow
+                        <ContentRow
                           title="Drama"
                           items={seriesContent.byGenre.Drama.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       )}
 
                     {/* Sports */}
                     {seriesContent.byGenre.Sports &&
                       seriesContent.byGenre.Sports.length > 0 && (
-                        <HomeRow
+                        <ContentRow
                           title="Sports"
                           items={seriesContent.byGenre.Sports.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       )}
 
                     {/* Romance */}
                     {seriesContent.byGenre.Romance &&
                       seriesContent.byGenre.Romance.length > 0 && (
-                        <HomeRow
+                        <ContentRow
                           title="Romance"
                           items={seriesContent.byGenre.Romance.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       )}
 
                     {/* Action */}
                     {seriesContent.byGenre.Action &&
                       seriesContent.byGenre.Action.length > 0 && (
-                        <HomeRow
+                        <ContentRow
                           title="Action"
                           items={seriesContent.byGenre.Action.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       )}
 
                     {/* Lifestyle */}
                     {seriesContent.byGenre.Lifestyle &&
                       seriesContent.byGenre.Lifestyle.length > 0 && (
-                        <HomeRow
+                        <ContentRow
                           title="Lifestyle"
                           items={seriesContent.byGenre.Lifestyle.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       )}
 
                     {/* Documentary */}
                     {seriesContent.byGenre.Documentary &&
                       seriesContent.byGenre.Documentary.length > 0 && (
-                        <HomeRow
+                        <ContentRow
                           title="Documentary"
                           items={seriesContent.byGenre.Documentary.slice(0, 8)}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       )}
 
                     {/* Informational */}
                     {seriesContent.byGenre.Informational &&
                       seriesContent.byGenre.Informational.length > 0 && (
-                        <HomeRow
+                        <ContentRow
                           title="Informational"
                           items={seriesContent.byGenre.Informational.slice(
                             0,
                             8,
                           )}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       )}
                   </>
@@ -469,7 +469,7 @@ const Series = () => {
 
                           return (
                             newSeriesFiltered.length > 0 && (
-                              <HomeRow
+                              <ContentRow
                                 key={`new-series-${activeGenre}`}
                                 title={
                                   activeGenre === "all"
@@ -477,14 +477,14 @@ const Series = () => {
                                     : `New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} TV Shows`
                                 }
                                 items={newSeriesFiltered}
-                                onCardClick={handleHomeRowCardClick}
+                                onCardClick={handleContentRowCardClick}
                               />
                             )
                           );
                         })()}
 
                         {/* Recommended row */}
-                        <HomeRow
+                        <ContentRow
                           key={`recommended-series-${activeGenre}`}
                           title={
                             activeGenre === "all"
@@ -492,7 +492,7 @@ const Series = () => {
                               : `Recommended ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} TV Shows`
                           }
                           items={filteredSeries.slice(2, 10)}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       </>
                     )}
@@ -508,7 +508,7 @@ const Series = () => {
                       {filteredSeries.length > 0 ? (
                         <ContentGrid
                           items={filteredSeries}
-                          onCardClick={handleHomeRowCardClick}
+                          onCardClick={handleContentRowCardClick}
                         />
                       ) : (
                         <div className="text-center py-16">

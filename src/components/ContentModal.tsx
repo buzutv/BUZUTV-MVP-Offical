@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Movie } from "@/data/mockMovies";
-import HomeRow from "@/components/HomeRow";
+import ContentRow from "@/components/ContentRow";
 import BrandButton from "@/components/ui/BrandButton";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { Content, useContent } from "@/hooks/useContent";
@@ -587,7 +587,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
 
                 {/* More Like This Section */}
                 {normalizedRecommendedContent.length > 0 && (
-                  <HomeRow
+                  <ContentRow
                     title="More Like This"
                     items={normalizedRecommendedContent}
                     isMoreLikeThis={true}
