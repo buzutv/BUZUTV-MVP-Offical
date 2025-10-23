@@ -8,7 +8,7 @@ import { useUserSubscriptions } from "@/hooks/useUserSubscriptions";
 import { useAuth } from "@/contexts/AuthContext";
 import ContentRow from "@/components/ContentRow";
 import { featuredContentIds } from "@/data/featuredContentIds";
-
+import { Spinner } from "@/components/ui/spinner"
 interface Channel {
   id: string;
   name: string;
@@ -113,7 +113,7 @@ const Index = React.memo(() => {
           }}
         ></div>
         <div className="relative flex items-center justify-center min-h-screen">
-          <div className="text-2xl font-bold text-white">Loading...</div>
+          <div className="text-2xl font-bold text-white"><Spinner /></div>
         </div>
       </div>
     );
