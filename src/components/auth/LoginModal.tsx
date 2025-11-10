@@ -28,17 +28,31 @@ const LoginModal = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showOtpForm, setShowOtpForm] = useState(false);
   const [otpCode, setOtpCode] = useState("");
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+
+  console.log("LoginModal rendered",errors);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Shared validations
     const trimmedFullName = fullName.trim();
+    if(!trimmedFullName && isSignUp){
+      setErrors((prev) => ({ ...prev, fullName: "Full Name is required" }));
+      toast.error("Full Name is required");
+    }
 
     if (isSignUp) {
-      if (!email) return toast.error("Email is required");
-      if (!password || !confirmPassword || !fullName.trim())
-        return toast.error("Please fill in all fields");
+      if (!email) {
+        setErrors((prev) => ({ ...prev, email: "Email is required" }));
+         toast.error("Email is required");
+      }
+      if (!password || !confirmPassword || !fullName.trim()){
+          setErrors((prev) => ({ ...prev, password: "All fields are required" }));
+          setErrors((prev) => ({ ...prev, confirmPassword: "All fields are required" }));
+          toast.error("All fields are required");
+      }
       if (password !== confirmPassword)
         return toast.error("Passwords do not match");
       if (password.length < 6)
@@ -185,6 +199,7 @@ const LoginModal = () => {
                     >
                       Full Name
                     </label>
+                    {errors.fullName && <p className="text-red-500 text-xs">{errors.fullName}</p>}
                     <input
                       id="fullName"
                       type="text"
@@ -192,6 +207,7 @@ const LoginModal = () => {
                       onChange={(e) => setFullName(e.target.value)}
                       className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
                       placeholder="Enter your full name"
+                      required
                     />
                   </div>
 
@@ -199,9 +215,11 @@ const LoginModal = () => {
                     <label
                       htmlFor="phone"
                       className="block text-sm font-medium text-gray-300 mb-2"
+                      
                     >
                       Phone Number
                     </label>
+                    {errors.phone && <p className="text-red-500 text-xs">{errors.phone}</p>}
                     <input
                       id="phone"
                       type="tel"
@@ -209,6 +227,7 @@ const LoginModal = () => {
                       onChange={(e) => setPhone(e.target.value)}
                       className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
                       placeholder="Enter your phone number"
+                      required
                     />
                   </div>
                 </>
@@ -221,6 +240,7 @@ const LoginModal = () => {
                 >
                   Email
                 </label>
+                {errors.email && <p className="text-red-500 text-xs">{errors.email}</p>}
                 <input
                   id="email"
                   type="email"
@@ -228,6 +248,7 @@ const LoginModal = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
                   placeholder="Enter your email"
+                  required
                 />
               </div>
 
@@ -238,6 +259,7 @@ const LoginModal = () => {
                 >
                   Password
                 </label>
+                {errors.password && <p className="text-red-500 text-xs">{errors.password}</p>}
                 <input
                   id="password"
                   type="password"
@@ -245,6 +267,7 @@ const LoginModal = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
                   placeholder="Enter your password"
+                  required
                 />
                 {!isSignUp && (
                   <div className="mt-2">
@@ -267,6 +290,7 @@ const LoginModal = () => {
                   >
                     Confirm Password
                   </label>
+                  {errors.confirmPassword && <p className="text-red-500 text-xs">{errors.confirmPassword}</p>}
                   <input
                     id="confirmPassword"
                     type="password"
@@ -274,6 +298,7 @@ const LoginModal = () => {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
                     placeholder="Confirm your password"
+                    required
                   />
                 </div>
               )}

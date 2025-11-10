@@ -19,49 +19,68 @@ const Auth = () => {
   const [fullName, setFullName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
-
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
   useEffect(() => {
     const mode = searchParams.get("mode");
     if (mode === "signup") setIsSignUp(true);
   }, [searchParams]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  
+  console.log("Erros", errors)
 
-    const trimmedFullName = fullName.trim();
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
+  const newErrors: { [key: string]: string } = {};
+
+  const trimmedFullName = fullName.trim();
+
+  // ----------------------------
+  // VALIDATION
+  // ----------------------------
+  if (isSignUp) {
+    if (!trimmedFullName) newErrors.fullName = "Full Name is required";
+    if (!email.trim()) newErrors.email = "Email is required";
+    if (!phone.trim()) newErrors.phone = "Phone number is required";
+    if (!password.trim()) newErrors.password = "Password is required";
+    if (!confirmPassword.trim())
+      newErrors.confirmPassword = "Confirm Password is required";
+
+    if (password && password.length < 6)
+      newErrors.password = "Password must be at least 6 characters long";
+
+    if (password && confirmPassword && password !== confirmPassword)
+      newErrors.confirmPassword = "Passwords do not match";
+  } else {
+    if (!email.trim()) newErrors.email = "Email is required";
+    if (!password.trim()) newErrors.password = "Password is required";
+  }
+
+  // Apply all errors at once
+  setErrors(newErrors);
+
+  // Stop execution if any validation failed
+  if (Object.keys(newErrors).length > 0) {
+    toast.error("Please fix the highlighted fields");
+    return;
+  }
+
+  // ----------------------------
+  // SUBMIT LOGIC
+  // ----------------------------
+  setIsLoading(true);
+  try {
     if (isSignUp) {
-      if (!email) return toast.error("Email is required");
-      if (!password || !confirmPassword || !fullName.trim())
-        return toast.error("Please fill in all fields");
-      if (password !== confirmPassword)
-        return toast.error("Passwords do not match");
-      if (password.length < 6)
-        return toast.error("Password must be at least 6 characters long");
-    }
-
-    if (!isSignUp && (!email || !password))
-      return toast.error("Please fill in all fields");
-
-    setIsLoading(true);
-
-    try {
-      if (isSignUp) {
-        // Email sign-up
-        const result = await signup(email, password, trimmedFullName, phone);
-        if (result.success) {
-          toast.success("Account created successfully!");
-          navigate("/");
-          resetForm();
-        } else {
-          toast.error("User already exists");
-        }
-        return;
+      const result = await signup(email, password, trimmedFullName, phone);
+      if (result.success) {
+        toast.success("Account created successfully!");
+        navigate("/");
+        resetForm();
+      } else {
+        toast.error(result.error || "User already exists");
       }
-
-      // Login
+    } else {
       const result = await login(email, password);
-
       if (result.success) {
         toast.success("Logged in successfully!");
         navigate("/");
@@ -69,12 +88,14 @@ const Auth = () => {
       } else {
         toast.error("Invalid credentials");
       }
-    } catch (error) {
-      toast.error("An error occurred. Please try again.");
-    } finally {
-      setIsLoading(false);
     }
-  };
+  } catch (error) {
+    toast.error("An error occurred. Please try again.");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
@@ -180,13 +201,15 @@ const Auth = () => {
                     >
                       Full Name
                     </label>
-                    <input
+                  {errors.fullName && <p className="text-red-500 text-xs">{errors.fullName}</p>}                    
+                  <input
                       id="fullName"
                       type="text"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
                       placeholder="Enter your full name"
+                      // required
                     />
                   </div>
 
@@ -197,6 +220,7 @@ const Auth = () => {
                     >
                       Phone Number
                     </label>
+                    {errors.phone && <p className="text-red-500 text-xs">{errors.phone}</p>}
                     <input
                       id="phone"
                       type="tel"
@@ -216,7 +240,7 @@ const Auth = () => {
                 >
                   Email
                 </label>
-
+                {errors.email && <p className="text-red-500 text-xs">{errors.email}</p>}
                 <input
                   id="email"
                   type="email"
@@ -234,6 +258,7 @@ const Auth = () => {
                 >
                   Password
                 </label>
+                {errors.password && <p className="text-red-500 text-xs">{errors.password}</p>}
                 <input
                   id="password"
                   type="password"
@@ -263,6 +288,7 @@ const Auth = () => {
                   >
                     Confirm Password
                   </label>
+                  {errors.confirmPassword && <p className="text-red-500 text-xs">{errors.confirmPassword}</p>}
                   <input
                     id="confirmPassword"
                     type="password"
