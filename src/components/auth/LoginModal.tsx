@@ -36,21 +36,29 @@ const LoginModal = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    
+
     // Shared validations
     const trimmedFullName = fullName.trim();
     if(!trimmedFullName && isSignUp){
       setErrors((prev) => ({ ...prev, fullName: "Full Name is required" }));
-      toast.error("Full Name is required");
+      // toast.error("Full Name is required");
     }
 
+    if(!email) setErrors((prev) => ({...prev, email:"Email is required"}))
+    if(!password) setErrors((prev) => ({...prev, password:"Password is required"}))
+    setTimeout(() =>{
+      setErrors({})
+    },1000)
+    
     if (isSignUp) {
       if (!email) {
-        setErrors((prev) => ({ ...prev, email: "Email is required" }));
+        // setErrors((prev) => ({ ...prev, email: "Email is required" }));
          toast.error("Email is required");
       }
       if (!password || !confirmPassword || !fullName.trim()){
-          setErrors((prev) => ({ ...prev, password: "All fields are required" }));
-          setErrors((prev) => ({ ...prev, confirmPassword: "All fields are required" }));
+          // setErrors((prev) => ({ ...prev, password: "All fields are required" }));
+          // setErrors((prev) => ({ ...prev, confirmPassword: "All fields are required" }));
           toast.error("All fields are required");
       }
       if (password !== confirmPassword)
@@ -199,7 +207,7 @@ const LoginModal = () => {
                     >
                       Full Name
                     </label>
-                    {errors.fullName && <p className="text-red-500 text-xs">{errors.fullName}</p>}
+                    {errors.fullName && <p className="text-red-500 text-xs mb-2">{errors.fullName}</p>}
                     <input
                       id="fullName"
                       type="text"

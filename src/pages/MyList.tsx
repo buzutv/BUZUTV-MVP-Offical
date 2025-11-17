@@ -8,6 +8,7 @@ import ContentRow from "@/components/ContentRow";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useUserChannelFavorites } from "@/hooks/useUserChannelFavorites";
 import { useAppContent } from "@/hooks/useAppContent";
+import { Spinner } from "@/components/ui/spinner";
 
 const MyList = React.memo(() => {
   const [selectedChannel, setSelectedChannel] = useState<any>(null);
@@ -86,7 +87,9 @@ const MyList = React.memo(() => {
             }}
           ></div>
           <div className="relative flex items-center justify-center min-h-screen">
-            <div className="text-2xl font-bold text-white">Loading...</div>
+            <div className="text-2xl font-bold text-white">
+              <Spinner className="w-12 h-12"/>
+            </div>
           </div>
         </div>
       </ProtectedRoute>

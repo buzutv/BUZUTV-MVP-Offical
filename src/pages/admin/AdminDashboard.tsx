@@ -4,6 +4,7 @@ import { useMockContent } from "@/hooks/useMockContent";
 import { genres } from "@/data/mockMovies";
 import { Film, Tv, Users, TrendingUp, PlayCircle, Calendar } from "lucide-react";
 import BulkImportUpload from "@/components/admin/BulkImportUpload";
+import { Spinner } from "@/components/ui/spinner";
 
 const AdminDashboard = () => {
   const { movies: mockMovies, channels, isLoading } = useMockContent();
@@ -12,7 +13,9 @@ const AdminDashboard = () => {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="text-white">Loading...</div>
+          <div className="text-white">
+            <Spinner className="w-12 h-12"/>
+          </div>
         </div>
       </AdminLayout>
     );

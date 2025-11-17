@@ -7,6 +7,7 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import { useMockContent } from "@/hooks/useMockContent";
 import { supabase } from "@/integrations/supabase/client";
 import { genres } from "@/data/mockMovies";
+import { Spinner } from "@/components/ui/spinner";
 
 const AdminMovies = () => {
   const { movies: mockMovies, isLoading } = useMockContent();
@@ -23,7 +24,9 @@ const AdminMovies = () => {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="text-white">Loading...</div>
+          <div className="text-white">
+            <Spinner className="w-12 h-12"/>
+          </div>
         </div>
       </AdminLayout>
     );

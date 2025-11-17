@@ -1,4 +1,4 @@
-
+import { supabase } from "../integrations/supabase/client";
 // Helper function to convert YouTube URLs to embed format
 export const getYouTubeEmbedUrl = (url: string): string | null => {
   if (!url) {
@@ -29,3 +29,34 @@ export const getYouTubeEmbedUrl = (url: string): string | null => {
   console.log('Could not extract video ID from URL:', url);
   return null;
 };
+
+
+
+export const getLastPausedTime = async (movieId: string, userId: string): Promise<number> => {
+  try {
+    const { data, error } = await supabase
+      .from("user_watch_history")
+      .select("last_position")
+      .eq("movie_id", movieId)
+      .eq("user_id", userId)
+      .order("watched_at", { ascending: false })
+      .limit(1);
+
+
+    if (error) {
+      console.error("Error fetching last  paused time:", error);
+      return 0;
+    }
+    if (data && data.length > 0) {  
+      console.log("Last paused time fetched:", data[0].last_position);
+      return data[0].last_position;
+    } else {
+      console.log("No last paused time found, returning 0");
+      return 0;
+    }
+  } catch (error) {
+    console.error("Error fetching last paused time:", error);
+    return 0;
+  }
+
+}

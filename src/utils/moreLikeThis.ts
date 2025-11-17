@@ -1,5 +1,6 @@
 import { Movie } from "@/data/mockMovies";
 import { Content } from "@/hooks/useContent";
+import { supabase } from "../integrations/supabase/client";
 
 export interface MoreLikeThisOptions {
   currentItem: Movie | Content;
@@ -12,6 +13,8 @@ export interface MoreLikeThisOptions {
 export interface FilteredRecommendation extends Content {
   posterUrl: string;
 }
+
+
 
 
 /**
@@ -33,6 +36,20 @@ const getChannelId = (item: Movie | Content): string | undefined => {
   }
   return item.channel_id || undefined;
 };
+
+
+export async function savePauseTime(videoId: string, userId: string, pauseTime: number) {
+  const { data, error } = await supabase
+    .from("video_pauses") // your table
+    .insert([{ video_id: videoId, user_id: userId, paused_at: pauseTime }]);
+
+  if (error) {
+    console.error("Error saving pause time:", error);
+  } else {
+    console.log("Pause time saved:", data);
+  }
+}
+
 
 /**
  * Normalize item to consistent format for comparison

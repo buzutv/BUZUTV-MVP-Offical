@@ -198,11 +198,11 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
           </div>
           <button
             onClick={handleClose}
-            className="text-gray-400 hover:text-white transition-colors"
+            className=" hover:text-white transition-colors w-12 h-12 text-slate-900"
             style={{ position: "absolute", right: 32, top: 24 }}
             aria-label="Close search overlay"
           >
-            <X className="w-6 h-6" />
+            <X className="w-12 h-12" />
           </button>
         </div>
       </div>

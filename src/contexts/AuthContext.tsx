@@ -29,7 +29,7 @@ interface AuthContextType {
   logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Demo users who should see mock content
 const demoUsers = ["user@example.com", "admin@example.com"];

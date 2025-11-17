@@ -18,7 +18,7 @@ const AdminChannels = () => {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="text-white">Loading...</div>
+          <div className="text-white"></div>
         </div>
       </AdminLayout>
     );
