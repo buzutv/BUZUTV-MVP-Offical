@@ -124,7 +124,7 @@ const ContentRow = React.memo(
 
           <div
             ref={scrollContainerRef}
-            className="flex space-x-2 overflow-x-auto px-4 scrollbar-hide"
+            className="flex overflow-x-auto scrollbar-hide"
             style={{
               scrollbarWidth: "none",
               msOverflowStyle: "none",
@@ -132,9 +132,9 @@ const ContentRow = React.memo(
               willChange: "scroll-position",
             }}
           >
-            <div className="flex space-x-2 py-2">
+            <div className="flex items-center gap-4 py-2 px-4">
               {items.map((item) => (
-                <div key={item.id} className="flex-shrink-0 w-64">
+                <div key={item.id} >
                   <ContentCard
                     item={item}
                     variant="auto"

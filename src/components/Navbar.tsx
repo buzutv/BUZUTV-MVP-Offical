@@ -144,6 +144,7 @@ const Navbar = React.memo(
         { to: "/series", label: "TV Shows" },
         { to: "/kids", label: "Kids" },
         { to: "/my-list", label: "Favorites" },
+        { to: "/playlists", label: "Playlists" },
       ],
       [],
     );

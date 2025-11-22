@@ -153,7 +153,7 @@ const Index = React.memo(() => {
         />
 
         {/* Content Sections Below Hero */}
-        <div className=" pt-8 relative pr-6 pl-0 md:pr-8 md:pl-6">
+        <div className="pt-8 relative pr-6 pl-0 md:pr-8 md:pl-6">
           <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-black to-transparent pointer-events-none" />
 
           {/* Filter Bar */}

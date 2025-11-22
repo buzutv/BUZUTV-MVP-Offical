@@ -99,6 +99,7 @@ const Movies = React.memo(() => {
     );
   }
 
+
   const MovieRow = ({
     title,
     movies,

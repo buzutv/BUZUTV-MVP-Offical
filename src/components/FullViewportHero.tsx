@@ -9,12 +9,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
-import { ArrowLeft, ArrowRight, Info, Play } from "lucide-react";
+import { ArrowLeft, ArrowRight, EllipsisVertical, Info, Play } from "lucide-react";
 import ContentModal from "./ContentModal";
 import FullscreenPlayer from "./FullscreenPlayer";
 import ChannelCard from "./ChannelCard";
 import BrandButton from "./ui/BrandButton";
 import { Channel } from "@/data/mockMovies";
+import { Button } from "./ui/button";
 
 export interface HeroCarouselItem {
   id: string;
@@ -319,6 +320,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
           <div className="mb-4">
             <h2 className="text-white text-xl md:text-2xl">Top Channels</h2>
           </div>
+           
 
           {/* Channels Scrollable Row with Side Navigation */}
           <div className="relative">
@@ -349,7 +351,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
               {channels.map((channel) => (
                 <div
                   key={channel.id}
-                  className="flex-shrink-0 w-48 md:w-48 lg:w-52"
+                  className="flex-shrink-0 w-58 md:w-48 lg:w-52"
                 >
                   <div onClick={() => onChannelClick(channel)}>
                     <ChannelCard channel={channel} />

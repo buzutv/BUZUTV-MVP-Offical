@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo, useState } from "react";
-import { Play } from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { EllipsisVertical, ListMinus, Play } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { Movie } from "@/data/mockMovies";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,23 +8,29 @@ import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
 import ContentModal from "@/components/ContentModal";
 import FullscreenPlayer from "@/components/FullscreenPlayer";
+import { Button } from "./ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { supabase } from "@/integrations/supabase/client";
+import usePlaylists from "@/hooks/usePlaylists";
 
 export interface ContentCardProps {
-  item: Movie | any; // Support both Movie interface and backend content items
-  variant?: "movie" | "series" | "auto"; // auto determines from item.type
-  isKidsMode?: boolean; // Force kids styling regardless of location
-  autoDetectKids?: boolean; // Auto-detect kids mode from location
+  item: Movie | any;
+  variant?: "movie" | "series" | "auto";
+  isKidsMode?: boolean;
+  autoDetectKids?: boolean;
   showSaveButton?: boolean;
   showProgress?: boolean;
   progressPercent?: number;
   showResumeButton?: boolean;
   onPlayFullscreen?: (videoUrl: string) => void;
   onOpen?: () => boolean;
-  onItemClick?: (item: Movie | any) => void; // For MoreLikeThis behavior
+  onItemClick?: (item: Movie | any) => void;
   className?: string;
-  // MoreLikeThisCard specific props
   isMoreLikeThis?: boolean;
-  width?: string; // Default: auto, MoreLikeThis: w-64
+  width?: string;
 }
 
 const ContentCard = React.memo(
@@ -45,128 +51,174 @@ const ContentCard = React.memo(
     width = "auto",
   }: ContentCardProps) => {
     const location = useLocation();
-    const { isLoggedIn, setShowLoginModal } = useAuth();
+    const { isLoggedIn, setShowLoginModal, user } = useAuth();
     const { favoriteIds, addToFavorites, removeFromFavorites } = useUserFavorites();
     const { content } = useContent();
     const { channels } = useChannels();
-
+    const { playlistForm , setPlaylistForm} = useState<{
+      title: string;
+      description: string;
+    }>({
+      title: '',
+      description: ''
+    })
     const [currentModalItem, setCurrentModalItem] = useState<Movie | null>(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [currentVideoUrl, setCurrentVideoUrl] = useState("");
     const [currentVideoTitle, setCurrentVideoTitle] = useState("");
 
-    // Determine if we're in kids mode
-    const effectiveKidsMode = isKidsMode ?? (autoDetectKids ? location.pathname === "/kids" : false);
-    
-    // Determine content type
+    const effectiveKidsMode =
+      isKidsMode ?? (autoDetectKids ? location.pathname === "/kids" : false);
+
     const contentType = variant === "auto" ? item.type || "movie" : variant;
-    
-    // Normalize item to work with both Movie interface and backend items
-    const normalizedItem = useMemo(() => ({
-      id: item.id,
-      title: item.title,
-      posterUrl: item.posterUrl || item.poster_url || "/placeholder.svg",
-      type: item.type || "movie",
-      genre: item.genre,
-      year: item.year,
-      rating: item.rating,
-      channelId: item.channelId || item.channel_id,
-      isKids: item.isKids || item.is_kids,
-      ...item, // Keep all other properties
-    }), [item]);
+    const normalizedItem = useMemo(
+      () => ({
+        id: item.id,
+        title: item.title,
+        posterUrl: item.posterUrl || item.poster_url || "/placeholder.svg",
+        type: item.type || "movie",
+        genre: item.genre,
+        year: item.year,
+        rating: item.rating,
+        channelId: item.channelId || item.channel_id,
+        isKids: item.isKids || item.is_kids,
+        ...item,
+      }),
+      [item]
+    );
+
+   
 
     const actualItem = currentModalItem || normalizedItem;
 
-    const isSaved = useMemo(
-      () => favoriteIds.includes(actualItem.id),
-      [favoriteIds, actualItem.id]
-    );
+    const isSaved = favoriteIds.includes(actualItem.id);
 
-    const contentItem = useMemo(
-      () => content.find((c) => c.id === actualItem.id),
-      [content, actualItem.id]
-    );
-
+    const contentItem = content.find((c) => c.id === actualItem.id);
     const videoUrl = contentItem?.video_url;
-    
-    const channel = useMemo(
-      () => channels.find((ch) => ch.id === actualItem.channelId),
-      [channels, actualItem.channelId]
-    );
 
+    const channel = channels.find((ch) => ch.id === actualItem.channelId);
+
+    const { playlists,fetchPlaylists }  = usePlaylists()
+
+ 
+
+  
+
+    console.log("Playlists Fetch", playlists);
     const handleSave = useCallback(
       (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
 
-        if (isSaved) {
-          removeFromFavorites(actualItem.id);
-        } else {
-          addToFavorites(actualItem.id);
-        }
+        if (isSaved) removeFromFavorites(actualItem.id);
+        else addToFavorites(actualItem.id);
       },
       [isSaved, actualItem.id, addToFavorites, removeFromFavorites]
     );
 
     const handleCardClick = useCallback(() => {
       if (onOpen && onOpen() === true) return;
-      
+
       if (onItemClick) {
         onItemClick(actualItem);
         return;
       }
-      
-      // If user is not logged in, show login modal instead of content modal
+
       if (!isLoggedIn) {
         setShowLoginModal(true);
         return;
       }
-      
+
       setCurrentModalItem(actualItem);
     }, [onOpen, onItemClick, actualItem, isLoggedIn, setShowLoginModal]);
 
-    const handleModalPlayClick = useCallback(() => {
-      if (contentItem?.video_url) {
-        if (onPlayFullscreen) {
-          onPlayFullscreen(contentItem.video_url);
-          setCurrentModalItem(null);
-        } else {
-          setCurrentModalItem(null);
-          setTimeout(() => {
-            setCurrentVideoUrl(contentItem.video_url);
-            setCurrentVideoTitle(actualItem.title);
-            setIsFullscreen(true);
-          }, 200);
-        }
-      }
-    }, [contentItem?.video_url, onPlayFullscreen, actualItem.title]);
 
-    const handlePlayEpisode = useCallback((videoUrl: string, episodeTitle: string) => {
+    const handleAddtoPlaylist = useCallback(async (id) => {
+      // console.log('Adding to playlist:', id, actualItem);
+      const { data, error } = await supabase.from('playlist_items').insert([
+        { 
+          id:crypto.randomUUID(),
+          playlist_id: id, 
+          position: 0,
+          content_id: actualItem.id 
+        }
+      ]);
+  
+      if (error) {
+        console.error('Error adding to playlist:', error);
+      } else {
+        console.log('Item added to playlist:', data);
+      }
+    }, [actualItem]);
+
+    const handleModalPlayClick = useCallback(() => {
+      if (!contentItem?.video_url) return;
+
       if (onPlayFullscreen) {
-        onPlayFullscreen(videoUrl);
+        onPlayFullscreen(contentItem.video_url);
         setCurrentModalItem(null);
       } else {
         setCurrentModalItem(null);
         setTimeout(() => {
-          setCurrentVideoUrl(videoUrl);
-          setCurrentVideoTitle(episodeTitle);
+          setCurrentVideoUrl(contentItem.video_url);
+          setCurrentVideoTitle(actualItem.title);
           setIsFullscreen(true);
         }, 200);
       }
-    }, [onPlayFullscreen]);
+    }, [contentItem?.video_url, onPlayFullscreen, actualItem.title]);
 
-    const handleExitFullscreen = useCallback(() => {
+
+    const handleSubmitPlaylist = async (e) => {
+
+
+      console.log('Submitting playlist form',playlistForm);
+      e.preventDefault();
+      const form = e.target;
+      const title = form.title.value;
+      const description = form.description.value;
+      const { data, error } = await supabase.from('playlists').insert([
+        { 
+          id:crypto.randomUUID(),
+          title: title, 
+          description: description,
+          created_by: user?.id 
+        }
+      ]);
+
+      if (error) {
+        console.error('Error adding to playlist:', error);
+      }
+      else {
+        console.log('Playlist created:', data);
+        // fetchPlaylists();
+      }
+    }
+    const handlePlayEpisode = useCallback(
+      (videoUrl: string, episodeTitle: string) => {
+        if (onPlayFullscreen) {
+          onPlayFullscreen(videoUrl);
+          setCurrentModalItem(null);
+        } else {
+          setCurrentModalItem(null);
+          setTimeout(() => {
+            setCurrentVideoUrl(videoUrl);
+            setCurrentVideoTitle(episodeTitle);
+            setIsFullscreen(true);
+          }, 200);
+        }
+      },
+      [onPlayFullscreen]
+    );
+
+    const handleExitFullscreen = () => {
       setIsFullscreen(false);
       setCurrentVideoUrl("");
       setCurrentVideoTitle("");
-    }, []);
+    };
 
     const handleSaveModal = useCallback(() => {
-      if (isSaved) {
-        removeFromFavorites(actualItem.id);
-      } else {
-        addToFavorites(actualItem.id);
-      }
+      if (isSaved) removeFromFavorites(actualItem.id);
+      else addToFavorites(actualItem.id);
     }, [isSaved, actualItem.id, addToFavorites, removeFromFavorites]);
 
     const recommendedContent = useMemo(
@@ -181,19 +233,20 @@ const ContentCard = React.memo(
       [content, actualItem.id, actualItem.genre, actualItem.channelId]
     );
 
-    // Gradient classes based on kids mode
     const gradientClasses = effectiveKidsMode
       ? {
-          base: "bg-[linear-gradient(to_top,_rgba(37,99,235,0.95)_0%,_rgba(37,99,235,0.7)_30%,_rgba(37,99,235,0.4)_60%,_rgba(37,99,235,0.2)_80%,_rgba(37,99,235,0.1)_90%,_transparent_100%)]",
-          hover: "bg-[linear-gradient(to_top,_rgba(37,99,235,0.95)_0%,_rgba(37,99,235,0.7)_30%,_rgba(37,99,235,0.4)_60%,_transparent_90%)]",
+          base: "bg-[linear-gradient(to_top,rgba(37,99,235,0.95)_0%,rgba(37,99,235,0.7)_30%,rgba(37,99,235,0.4)_60%,rgba(37,99,235,0.2)_80%,rgba(37,99,235,0.1)_90%,transparent_100%)]",
+          hover:
+            "bg-[linear-gradient(to_top,rgba(37,99,235,0.95)_0%,rgba(37,99,235,0.7)_30%,rgba(37,99,235,0.4)_60%,transparent_90%)]",
         }
       : {
-          base: "bg-[linear-gradient(to_top,_rgba(0,0,0,0.95)_0%,_rgba(0,0,0,0.7)_30%,_rgba(0,0,0,0.4)_60%,_rgba(0,0,0,0.2)_80%,_rgba(0,0,0,0.1)_90%,_transparent_100%)]",
-          hover: "bg-[linear-gradient(to_top,_rgba(0,0,0,0.95)_0%,_rgba(0,0,0,0.7)_30%,_rgba(0,0,0,0.4)_60%,_transparent_90%)]",
+          base: "bg-[linear-gradient(to_top,rgba(0,0,0,0.95)_0%,rgba(0,0,0,0.7)_30%,rgba(0,0,0,0.4)_60%,rgba(0,0,0,0.2)_80%,rgba(0,0,0,0.1)_90%,transparent_100%)]",
+          hover:
+            "bg-[linear-gradient(to_top,rgba(0,0,0,0.95)_0%,rgba(0,0,0,0.7)_30%,rgba(0,0,0,0.4)_60%,transparent_90%)]",
         };
 
-    // Width classes
-    const widthClass = isMoreLikeThis ? "w-64 flex-shrink-0" : width === "auto" ? "" : width;
+    const widthClass =
+      isMoreLikeThis ? "w-64 h-64 flex-shrink-0" : width === "auto" ? "" : width;
 
     return (
       <>
@@ -207,26 +260,117 @@ const ContentCard = React.memo(
         )}
 
         <div
-          className={`content-card group ${widthClass} border-2 border-transparent hover:scale-105 hover:border-white hover:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:scale-105 focus:border-white focus:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:outline-none rounded-lg transition-all duration-300 overflow-hidden ${className}`}
+          className={`content-card group ${widthClass} w-[360px] h-[220px] border-2 border-transparent hover:scale-105 hover:border-white hover:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:scale-105 focus:border-white focus:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:outline-none rounded-lg transition-all duration-300 overflow-hidden relative ${className}`}
           tabIndex={0}
           role="button"
-          aria-label={`${normalizedItem.type === 'series' ? 'View series' : 'View movie'} ${normalizedItem.title}`}
+          aria-label={`${normalizedItem.type === "series" ? "View series" : "View movie"} ${
+            normalizedItem.title
+          }`}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
+            if (e.key === "Enter" || e.key === " ") {
               e.preventDefault();
               handleCardClick();
             }
           }}
         >
-          <div className="block cursor-pointer" onClick={handleCardClick}>
-            <div
-              className="relative overflow-hidden transition-all duration-300"
-              style={{ aspectRatio: "16/9" }}
+          {/* ✅ Ellipsis Button in Top-Right Corner */}
+          <Popover>
+  <PopoverTrigger asChild>
+    <Button
+      variant="ghost"
+      size="icon"
+      className="absolute top-2 right-2 z-20 bg-black/50 hover:bg-black/70 text-white rounded-full p-1"
+    >
+      <EllipsisVertical className="w-5 h-5" />
+    </Button>
+  </PopoverTrigger>
+
+  <PopoverContent className="min-w-[200px] p-3 flex flex-col gap-3">
+    <Dialog>
+       <div className="mt-4 flex flex-col gap-4">
+         
+            {playlists.map((playlist) => (
+              <div
+                key={playlist.id}
+                className="flex items-center justify-between p-2 border-b border-gray-200"
+              >
+                <span>{playlist.title}</span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() =>handleAddtoPlaylist(playlist?.id)}
+                >
+                  Add
+                </Button>  
+              </div>
+            )
+          )}
+          
+        </div>
+      <DialogTrigger asChild>
+        <Button className="w-full bg-slate-800 rounded-600 text-white text-center text-sm p-2 cursor-pointer"
+          >
+            Add New Playlist
+          </Button>
+      </DialogTrigger>
+
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Create New Playlist</DialogTitle>
+        </DialogHeader>
+          <form className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <label htmlFor="playlist-title" className="text-sm font-medium">
+                Playlist Title
+              </label>
+              <input
+                type="text"
+                id="playlist-title"
+                name="title"
+                value={playlistForm.title}
+                onChange={(e) => {
+                  const { name, value } = e.target;
+                  setPlaylistForm({ ...playlistForm, [name]: value });
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter playlist title"
+              />
+            </div>
+            <div className="grid gap-2">
+              <label htmlFor="playlist-description" className="text-sm font-medium">
+                Description
+              </label>
+              <textarea
+                id="playlist-description"
+                name="description"
+                value={playlistForm.description}
+                onChange={(e) => {
+                  const { name, value } = e.target;
+                  setPlaylistForm({ ...playlistForm, [name]: value });
+                }}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter playlist description (optional)"
+              />
+            </div>
+            <Button type="submit" className="w-full bg-slate-800 rounded-600 text-white text-center text-sm p-2 cursor-pointer"
+              onClick={(e) => handleSubmitPlaylist(e)}
             >
+              Create Playlist
+            </Button>
+          </form>
+      </DialogContent>
+    </Dialog>
+  </PopoverContent>
+</Popover>
+
+
+          <div className="block cursor-pointer" onClick={handleCardClick}>
+            <div className="relative overflow-hidden transition-all duration-300">
               <div className="w-full h-full">
                 <img
                   src={normalizedItem.posterUrl}
-                  alt={`${normalizedItem.title} - ${normalizedItem.type === 'series' ? 'TV Series' : 'Movie'} poster`}
+                  alt={`${normalizedItem.title} poster`}
                   className="w-full h-full rounded-lg object-cover transform transition-transform duration-300 hover:scale-[1.1]"
                   loading="lazy"
                   decoding="async"
@@ -245,7 +389,9 @@ const ContentCard = React.memo(
               <div className="absolute inset-0 z-0 rounded-lg pointer-events-none">
                 <div className={`absolute bottom-[-1px] left-0 right-0 h-1/2 ${gradientClasses.base}`} />
                 <div
-                  className={`absolute bottom-[-1px] left-0 right-0 h-1/2 ${gradientClasses.hover} opacity-0 group-hover:opacity-50 transition-opacity duration-300`}
+                  className={`absolute bottom-[-1px] left-0 right-0 h-1/2 ${
+                    gradientClasses.hover
+                  } opacity-0 group-hover:opacity-50 transition-opacity duration-300`}
                 />
               </div>
 
@@ -265,8 +411,8 @@ const ContentCard = React.memo(
               )}
 
               {isMoreLikeThis && (
-                <button 
-                  className="absolute inset-0 z-20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black" 
+                <button
+                  className="absolute inset-0 z-20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
                   onClick={handleCardClick}
                   aria-label={`View ${normalizedItem.title} details`}
                 />
@@ -275,7 +421,6 @@ const ContentCard = React.memo(
           </div>
         </div>
 
-        {/* Unified Modal Rendering */}
         {currentModalItem && !isFullscreen && (
           <ContentModal
             isOpen={true}
@@ -283,7 +428,7 @@ const ContentCard = React.memo(
             item={actualItem}
             variant={contentType}
             isKidsMode={effectiveKidsMode}
-            autoDetectKids={false} // We already determined the mode
+            autoDetectKids={false}
             isSaved={isSaved}
             onSave={handleSaveModal}
             onPlayEpisode={handlePlayEpisode}
