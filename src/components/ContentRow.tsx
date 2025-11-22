@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import ContentCard from "@/components/ContentCard";
+import usePlaylists from "@/hooks/usePlaylists";
 
 interface ContentRowProps {
   title: string;
@@ -26,6 +27,11 @@ const ContentRow = React.memo(
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(false);
     const timeoutRef = useRef<NodeJS.Timeout>();
+    const { playlists } = usePlaylists()
+
+
+    console.log("Playlists in ContentRow:", playlists);
+
 
     const checkScrollability = useCallback(() => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -143,6 +149,7 @@ const ContentRow = React.memo(
                     width="w-64"
                     onOpen={onCardClick}
                     onItemClick={onItemClick}
+                    playlists={playlists}
                   />
                 </div>
               ))}

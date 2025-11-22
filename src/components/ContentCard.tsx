@@ -31,9 +31,10 @@ export interface ContentCardProps {
   className?: string;
   isMoreLikeThis?: boolean;
   width?: string;
+  playlists?: any[];
 }
 
-const ContentCard = React.memo(
+const ContentCard = 
   ({
     item,
     variant = "auto",
@@ -49,19 +50,26 @@ const ContentCard = React.memo(
     className = "",
     isMoreLikeThis = false,
     width = "auto",
+    playlists
   }: ContentCardProps) => {
     const location = useLocation();
     const { isLoggedIn, setShowLoginModal, user } = useAuth();
     const { favoriteIds, addToFavorites, removeFromFavorites } = useUserFavorites();
     const { content } = useContent();
     const { channels } = useChannels();
-    const { playlistForm , setPlaylistForm} = useState<{
+    // const { data: { user } } = await supabase.auth.getUser();
+
+
+    const [ playlistForm , setPlaylistForm] = useState<{
       title: string;
       description: string;
     }>({
       title: '',
       description: ''
     })
+
+
+    console.log("User in ContentCard:", playlists);
     const [currentModalItem, setCurrentModalItem] = useState<Movie | null>(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [currentVideoUrl, setCurrentVideoUrl] = useState("");
@@ -98,13 +106,6 @@ const ContentCard = React.memo(
 
     const channel = channels.find((ch) => ch.id === actualItem.channelId);
 
-    const { playlists,fetchPlaylists }  = usePlaylists()
-
- 
-
-  
-
-    console.log("Playlists Fetch", playlists);
     const handleSave = useCallback(
       (e: React.MouseEvent) => {
         e.preventDefault();
@@ -176,13 +177,18 @@ const ContentCard = React.memo(
       const form = e.target;
       const title = form.title.value;
       const description = form.description.value;
-      const { data, error } = await supabase.from('playlists').insert([
-        { 
+
+      const payload = { 
           id:crypto.randomUUID(),
           title: title, 
           description: description,
-          created_by: user?.id 
+          created_by: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
         }
+
+
+      console.log('Playlist payload:', user);
+      const { data, error } = await supabase.from('playlists').insert([
+       payload
       ]);
 
       if (error) {
@@ -215,6 +221,12 @@ const ContentCard = React.memo(
       setCurrentVideoUrl("");
       setCurrentVideoTitle("");
     };
+
+
+    const handleChange = (e) =>{
+      const { name, value } = e.target;
+      setPlaylistForm({ ...playlistForm, [name]: value });
+    } 
 
     const handleSaveModal = useCallback(() => {
       if (isSaved) removeFromFavorites(actualItem.id);
@@ -318,7 +330,7 @@ const ContentCard = React.memo(
         <DialogHeader>
           <DialogTitle>Create New Playlist</DialogTitle>
         </DialogHeader>
-          <form className="grid gap-4 py-4">
+          <form className="grid gap-4 py-4" onSubmit={handleSubmitPlaylist}>
             <div className="grid gap-2">
               <label htmlFor="playlist-title" className="text-sm font-medium">
                 Playlist Title
@@ -327,11 +339,8 @@ const ContentCard = React.memo(
                 type="text"
                 id="playlist-title"
                 name="title"
-                value={playlistForm.title}
-                onChange={(e) => {
-                  const { name, value } = e.target;
-                  setPlaylistForm({ ...playlistForm, [name]: value });
-                }}
+                value={playlistForm?.title}
+                onChange={(e) => handleChange(e)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter playlist title"
               />
@@ -343,18 +352,15 @@ const ContentCard = React.memo(
               <textarea
                 id="playlist-description"
                 name="description"
-                value={playlistForm.description}
-                onChange={(e) => {
-                  const { name, value } = e.target;
-                  setPlaylistForm({ ...playlistForm, [name]: value });
-                }}
+                value={playlistForm?.description}
+                onChange={(e) => handleChange(e)}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter playlist description (optional)"
               />
             </div>
             <Button type="submit" className="w-full bg-slate-800 rounded-600 text-white text-center text-sm p-2 cursor-pointer"
-              onClick={(e) => handleSubmitPlaylist(e)}
+              // onClick={(e) => handleSubmitPlaylist(e)}
             >
               Create Playlist
             </Button>
@@ -443,19 +449,19 @@ const ContentCard = React.memo(
         )}
       </>
     );
-  },
-  (prevProps, nextProps) => {
-    return (
-      prevProps.item.id === nextProps.item.id &&
-      prevProps.showProgress === nextProps.showProgress &&
-      prevProps.progressPercent === nextProps.progressPercent &&
-      prevProps.showResumeButton === nextProps.showResumeButton &&
-      prevProps.isKidsMode === nextProps.isKidsMode &&
-      prevProps.variant === nextProps.variant
-    );
   }
-);
+  // (prevProps, nextProps) => {
+  //   return (
+  //     prevProps.item.id === nextProps.item.id &&
+  //     prevProps.showProgress === nextProps.showProgress &&
+  //     prevProps.progressPercent === nextProps.progressPercent &&
+  //     prevProps.showResumeButton === nextProps.showResumeButton &&
+  //     prevProps.isKidsMode === nextProps.isKidsMode &&
+  //     prevProps.variant === nextProps.variant
+  //   );
+  // }
+// );
 
-ContentCard.displayName = "ContentCard";
+// ContentCard.displayName = "ContentCard";
 
 export default ContentCard;
