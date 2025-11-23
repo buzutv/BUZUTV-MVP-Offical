@@ -15,7 +15,7 @@ import {supabase} from "../integrations/supabase/client";
 import { getLastPausedTime } from "@/utils/youtubeUtils";
 interface FullscreenPlayerProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose?: () => void;
   videoUrl: string;
   title: string;
   userId: string;
@@ -46,6 +46,8 @@ const FullscreenPlayer = ({
         .select('*')          // make sure to select columns
         .eq('video_url', videoUrl);
 
+
+      console.log("Fetched Movie", data)
       if (error) {
         console.error('Error fetching movies:', error);
       } else {
@@ -162,6 +164,7 @@ const FullscreenPlayer = ({
                 setIsPlaying(false);
                 // savePauseTime(videoId, userId, player.getCurrentTime());
               }
+              
             },
           },
         }

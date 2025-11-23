@@ -23,6 +23,7 @@ const ContentGrid: React.FC<ContentGridProps> = ({
               autoDetectKids={true}
               isMoreLikeThis={isMoreLikeThis}
               // className="w-96 h-96"
+              
               onOpen={() => onCardClick?.(item)}
             />
           </div>
