@@ -60,7 +60,7 @@ const fetchSinglePlaylist = async (id: string) => {
 };
 
 
-console.log("Movie found", content)
+
 
 
 
