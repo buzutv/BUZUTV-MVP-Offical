@@ -171,6 +171,7 @@ const FullscreenPlayer = ({
               }
               if (e.data === window.YT.PlayerState.PAUSED) {
                 setIsPlaying(false);
+                //  saveWatchHistory(player.getCurrentTime(), true);
               }
               // Video ended - trigger autoplay
               if (e.data === window.YT.PlayerState.ENDED) {
@@ -178,7 +179,7 @@ const FullscreenPlayer = ({
                 setVideoEnded(true);
                 
                 // Save completion to watch history
-                saveWatchHistory(player.getCurrentTime(), true);
+                saveWatchHistory(player.getCurrentTime(),false);
                 
                 // Trigger autoplay callback
                 if (onVideoEnd) {
@@ -221,7 +222,7 @@ const FullscreenPlayer = ({
         .from("user_watch_history")
         .upsert(
           {
-            user_id: userId,
+            user_id: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3",
             movie_id: movies[0]?.id,
             watched_at: new Date(),
             last_position: Math.floor(pausedAt),
