@@ -34,434 +34,422 @@ export interface ContentCardProps {
   playlists?: any[];
 }
 
-const ContentCard = 
-  ({
-    item,
-    variant = "auto",
-    isKidsMode,
-    autoDetectKids = true,
-    showSaveButton = true,
-    showProgress = false,
-    progressPercent = 0,
-    showResumeButton = false,
-    onPlayFullscreen,
-    onOpen,
-    onItemClick,
-    className = "",
-    isMoreLikeThis = false,
-    width = "auto",
-    playlists
-  }: ContentCardProps) => {
-    const location = useLocation();
-    const { isLoggedIn, setShowLoginModal, user } = useAuth();
-    const { favoriteIds, addToFavorites, removeFromFavorites } = useUserFavorites();
-    const { content } = useContent();
-    const { channels } = useChannels();
-    // const { data: { user } } = await supabase.auth.getUser();
+const ContentCard = ({
+  item,
+  variant = "auto",
+  isKidsMode,
+  autoDetectKids = true,
+  showSaveButton = true,
+  showProgress = false,
+  progressPercent = 0,
+  showResumeButton = false,
+  onPlayFullscreen,
+  onOpen,
+  onItemClick,
+  className = "",
+  isMoreLikeThis = false,
+  width = "auto",
+  playlists
+}: ContentCardProps) => {
+  const location = useLocation();
+  const { isLoggedIn, setShowLoginModal, user } = useAuth();
+  const { favoriteIds, addToFavorites, removeFromFavorites } = useUserFavorites();
+  const { content } = useContent();
+  const { channels } = useChannels();
+
+  // State for playlist creation form
+  const [playlistForm, setPlaylistForm] = useState<{
+    title: string;
+    description: string;
+  }>({
+    title: '',
+    description: ''
+  });
+
+  // State to control the create playlist dialog
+  const [isCreatePlaylistOpen, setIsCreatePlaylistOpen] = useState(false);
+
+  console.log("User in ContentCard:", playlists);
+  const [currentModalItem, setCurrentModalItem] = useState<Movie | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [currentVideoUrl, setCurrentVideoUrl] = useState("");
+  const [currentVideoTitle, setCurrentVideoTitle] = useState("");
+
+  const effectiveKidsMode =
+    isKidsMode ?? (autoDetectKids ? location.pathname === "/kids" : false);
+
+  const contentType = variant === "auto" ? item.type || "movie" : variant;
+  const normalizedItem = useMemo(
+    () => ({
+      id: item.id,
+      title: item.title,
+      posterUrl: item.posterUrl || item.poster_url || "/placeholder.svg",
+      type: item.type || "movie",
+      genre: item.genre,
+      year: item.year,
+      rating: item.rating,
+      channelId: item.channelId || item.channel_id,
+      isKids: item.isKids || item.is_kids,
+      ...item,
+    }),
+    [item]
+  );
+
+  const actualItem = currentModalItem || normalizedItem;
+
+  const isSaved = favoriteIds.includes(actualItem.id);
+
+  const contentItem = content.find((c) => c.id === actualItem.id);
+  const videoUrl = contentItem?.video_url;
+
+  const channel = channels.find((ch) => ch.id === actualItem.channelId);
+
+  const handleSave = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (isSaved) removeFromFavorites(actualItem.id);
+      else addToFavorites(actualItem.id);
+    },
+    [isSaved, actualItem.id, addToFavorites, removeFromFavorites]
+  );
+
+  const handleCardClick = useCallback(() => {
+    if (onOpen && onOpen() === true) return;
+
+    if (onItemClick) {
+      onItemClick(actualItem);
+      return;
+    }
+
+    if (!isLoggedIn) {
+      setShowLoginModal(true);
+      return;
+    }
+
+    setCurrentModalItem(actualItem);
+  }, [onOpen, onItemClick, actualItem, isLoggedIn, setShowLoginModal]);
 
 
-    const [ playlistForm , setPlaylistForm] = useState<{
-      title: string;
-      description: string;
-    }>({
-      title: '',
-      description: ''
-    })
-
-
-    console.log("User in ContentCard:", playlists);
-    const [currentModalItem, setCurrentModalItem] = useState<Movie | null>(null);
-    const [isFullscreen, setIsFullscreen] = useState(false);
-    const [currentVideoUrl, setCurrentVideoUrl] = useState("");
-    const [currentVideoTitle, setCurrentVideoTitle] = useState("");
-
-    const effectiveKidsMode =
-      isKidsMode ?? (autoDetectKids ? location.pathname === "/kids" : false);
-
-    const contentType = variant === "auto" ? item.type || "movie" : variant;
-    const normalizedItem = useMemo(
-      () => ({
-        id: item.id,
-        title: item.title,
-        posterUrl: item.posterUrl || item.poster_url || "/placeholder.svg",
-        type: item.type || "movie",
-        genre: item.genre,
-        year: item.year,
-        rating: item.rating,
-        channelId: item.channelId || item.channel_id,
-        isKids: item.isKids || item.is_kids,
-        ...item,
-      }),
-      [item]
-    );
-
-   
-
-    const actualItem = currentModalItem || normalizedItem;
-
-    const isSaved = favoriteIds.includes(actualItem.id);
-
-    const contentItem = content.find((c) => c.id === actualItem.id);
-    const videoUrl = contentItem?.video_url;
-
-    const channel = channels.find((ch) => ch.id === actualItem.channelId);
-
-    const handleSave = useCallback(
-      (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        if (isSaved) removeFromFavorites(actualItem.id);
-        else addToFavorites(actualItem.id);
-      },
-      [isSaved, actualItem.id, addToFavorites, removeFromFavorites]
-    );
-
-    const handleCardClick = useCallback(() => {
-      if (onOpen && onOpen() === true) return;
-
-      if (onItemClick) {
-        onItemClick(actualItem);
-        return;
+  const handleAddtoPlaylist = useCallback(async (id) => {
+    const { data, error } = await supabase.from('playlist_items').insert([
+      {
+        id: crypto.randomUUID(),
+        playlist_id: id,
+        position: 0,
+        content_id: actualItem.id
       }
+    ]);
 
-      if (!isLoggedIn) {
-        setShowLoginModal(true);
-        return;
-      }
+    if (error) {
+      console.error('Error adding to playlist:', error);
+    } else {
+      console.log('Item added to playlist:', data);
+    }
+  }, [actualItem]);
 
-      setCurrentModalItem(actualItem);
-    }, [onOpen, onItemClick, actualItem, isLoggedIn, setShowLoginModal]);
+  const handleModalPlayClick = useCallback(() => {
+    if (!contentItem?.video_url) return;
+
+    if (onPlayFullscreen) {
+      onPlayFullscreen(contentItem.video_url);
+      setCurrentModalItem(null);
+    } else {
+      setCurrentModalItem(null);
+      setTimeout(() => {
+        setCurrentVideoUrl(contentItem.video_url);
+        setCurrentVideoTitle(actualItem.title);
+        setIsFullscreen(true);
+      }, 200);
+    }
+  }, [contentItem?.video_url, onPlayFullscreen, actualItem.title]);
 
 
-    const handleAddtoPlaylist = useCallback(async (id) => {
-      // console.log('Adding to playlist:', id, actualItem);
-      const { data, error } = await supabase.from('playlist_items').insert([
-        { 
-          id:crypto.randomUUID(),
-          playlist_id: id, 
-          position: 0,
-          content_id: actualItem.id 
-        }
-      ]);
-  
-      if (error) {
-        console.error('Error adding to playlist:', error);
-      } else {
-        console.log('Item added to playlist:', data);
-      }
-    }, [actualItem]);
+  const handleSubmitPlaylist = async (e) => {
+    console.log('Submitting playlist form', playlistForm);
+    e.preventDefault();
+    const form = e.target;
+    // const title = form.title.value; // Using state instead
+    // const description = form.description.value; // Using state instead
 
-    const handleModalPlayClick = useCallback(() => {
-      if (!contentItem?.video_url) return;
+    const payload = {
+      id: crypto.randomUUID(),
+      title: playlistForm.title,
+      description: playlistForm.description,
+      created_by: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3" // Ideally use user.id from auth context
+    }
 
+    console.log('Playlist payload:', user);
+    const { data, error } = await supabase.from('playlists').insert([
+      payload
+    ]);
+
+    if (error) {
+      console.error('Error creating playlist:', error);
+    }
+    else {
+      console.log('Playlist created:', data);
+      // Close the dialog and reset form
+      setIsCreatePlaylistOpen(false);
+      setPlaylistForm({ title: '', description: '' });
+    }
+  }
+
+  const handlePlayEpisode = useCallback(
+    (videoUrl: string, episodeTitle: string) => {
       if (onPlayFullscreen) {
-        onPlayFullscreen(contentItem.video_url);
+        onPlayFullscreen(videoUrl);
         setCurrentModalItem(null);
       } else {
         setCurrentModalItem(null);
         setTimeout(() => {
-          setCurrentVideoUrl(contentItem.video_url);
-          setCurrentVideoTitle(actualItem.title);
+          setCurrentVideoUrl(videoUrl);
+          setCurrentVideoTitle(episodeTitle);
           setIsFullscreen(true);
         }, 200);
       }
-    }, [contentItem?.video_url, onPlayFullscreen, actualItem.title]);
+    },
+    [onPlayFullscreen]
+  );
+
+  const handleExitFullscreen = () => {
+    setIsFullscreen(false);
+    setCurrentVideoUrl("");
+    setCurrentVideoTitle("");
+  };
 
 
-    const handleSubmitPlaylist = async (e) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setPlaylistForm({ ...playlistForm, [name]: value });
+  }
 
+  const handleSaveModal = useCallback(() => {
+    if (isSaved) removeFromFavorites(actualItem.id);
+    else addToFavorites(actualItem.id);
+  }, [isSaved, actualItem.id, addToFavorites, removeFromFavorites]);
 
-      console.log('Submitting playlist form',playlistForm);
-      e.preventDefault();
-      const form = e.target;
-      const title = form.title.value;
-      const description = form.description.value;
+  const recommendedContent = useMemo(
+    () =>
+      content
+        .filter(
+          (c) =>
+            c.id !== actualItem.id &&
+            (c.genre === actualItem.genre || c.channel_id === actualItem.channelId)
+        )
+        .slice(0, 6),
+    [content, actualItem.id, actualItem.genre, actualItem.channelId]
+  );
 
-      const payload = { 
-          id:crypto.randomUUID(),
-          title: title, 
-          description: description,
-          created_by: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
-        }
-
-
-      console.log('Playlist payload:', user);
-      const { data, error } = await supabase.from('playlists').insert([
-       payload
-      ]);
-
-      if (error) {
-        console.error('Error adding to playlist:', error);
-      }
-      else {
-        console.log('Playlist created:', data);
-        // fetchPlaylists();
-      }
+  const gradientClasses = effectiveKidsMode
+    ? {
+      base: "bg-[linear-gradient(to_top,rgba(37,99,235,0.95)_0%,rgba(37,99,235,0.7)_30%,rgba(37,99,235,0.4)_60%,rgba(37,99,235,0.2)_80%,rgba(37,99,235,0.1)_90%,transparent_100%)]",
+      hover:
+        "bg-[linear-gradient(to_top,rgba(37,99,235,0.95)_0%,rgba(37,99,235,0.7)_30%,rgba(37,99,235,0.4)_60%,transparent_90%)]",
     }
-    const handlePlayEpisode = useCallback(
-      (videoUrl: string, episodeTitle: string) => {
-        if (onPlayFullscreen) {
-          onPlayFullscreen(videoUrl);
-          setCurrentModalItem(null);
-        } else {
-          setCurrentModalItem(null);
-          setTimeout(() => {
-            setCurrentVideoUrl(videoUrl);
-            setCurrentVideoTitle(episodeTitle);
-            setIsFullscreen(true);
-          }, 200);
-        }
-      },
-      [onPlayFullscreen]
-    );
-
-    const handleExitFullscreen = () => {
-      setIsFullscreen(false);
-      setCurrentVideoUrl("");
-      setCurrentVideoTitle("");
+    : {
+      base: "bg-[linear-gradient(to_top,rgba(0,0,0,0.95)_0%,rgba(0,0,0,0.7)_30%,rgba(0,0,0,0.4)_60%,rgba(0,0,0,0.2)_80%,rgba(0,0,0,0.1)_90%,transparent_100%)]",
+      hover:
+        "bg-[linear-gradient(to_top,rgba(0,0,0,0.95)_0%,rgba(0,0,0,0.7)_30%,rgba(0,0,0,0.4)_60%,transparent_90%)]",
     };
 
+  const widthClass =
+    isMoreLikeThis ? "w-64 h-64 flex-shrink-0" : width === "auto" ? "" : width;
 
-    const handleChange = (e) =>{
-      const { name, value } = e.target;
-      setPlaylistForm({ ...playlistForm, [name]: value });
-    } 
+  return (
+    <>
+      {isFullscreen && currentVideoUrl && (
+        <FullscreenPlayer
+          isOpen={isFullscreen}
+          onClose={handleExitFullscreen}
+          videoUrl={currentVideoUrl}
+          title={currentVideoTitle}
+          userId={user?.id || ""} // Pass userId prop
+        />
+      )}
 
-    const handleSaveModal = useCallback(() => {
-      if (isSaved) removeFromFavorites(actualItem.id);
-      else addToFavorites(actualItem.id);
-    }, [isSaved, actualItem.id, addToFavorites, removeFromFavorites]);
+      <div
+        className={`content-card group ${widthClass} w-[360px] h-[220px] border-2 border-transparent hover:scale-105 hover:border-white hover:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:scale-105 focus:border-white focus:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:outline-none rounded-lg transition-all duration-300 overflow-hidden relative ${className}`}
+        tabIndex={0}
+        role="button"
+        aria-label={`${normalizedItem.type === "series" ? "View series" : "View movie"} ${normalizedItem.title
+          }`}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleCardClick();
+          }
+        }}
+      >
+        {/* ✅ Ellipsis Button in Top-Right Corner - ONLY FOR MOVIES */}
+        {normalizedItem.type === 'movie' && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2 z-20 bg-black/50 hover:bg-black/70 text-white rounded-full p-1"
+                onClick={(e) => e.stopPropagation()} // Prevent card click when clicking popover
+              >
+                <EllipsisVertical className="w-5 h-5" />
+              </Button>
+            </PopoverTrigger>
 
-    const recommendedContent = useMemo(
-      () =>
-        content
-          .filter(
-            (c) =>
-              c.id !== actualItem.id &&
-              (c.genre === actualItem.genre || c.channel_id === actualItem.channelId)
-          )
-          .slice(0, 6),
-      [content, actualItem.id, actualItem.genre, actualItem.channelId]
-    );
+            <PopoverContent className="min-w-[200px] p-3 flex flex-col gap-3" onInteractOutside={(e) => e.stopPropagation()}>
+              <div className="flex flex-col gap-2">
+                <span className="text-xs font-semibold text-gray-500 uppercase px-2">Add to Playlist</span>
+                <div className="flex flex-col gap-1 max-h-[200px] overflow-y-auto">
+                  {playlists?.map((playlist) => (
+                    <div
+                      key={playlist.id}
+                      className="flex items-center justify-between p-2 hover:bg-gray-100 rounded-md transition-colors"
+                    >
+                      <span className="text-sm truncate max-w-[120px]" title={playlist.title}>{playlist.title}</span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2"
+                        onClick={() => handleAddtoPlaylist(playlist?.id)}
+                      >
+                        Add
+                      </Button>
+                    </div>
+                  ))}
+                  {(!playlists || playlists.length === 0) && (
+                    <div className="text-sm text-gray-400 p-2 italic">No playlists found</div>
+                  )}
+                </div>
+              </div>
 
-    const gradientClasses = effectiveKidsMode
-      ? {
-          base: "bg-[linear-gradient(to_top,rgba(37,99,235,0.95)_0%,rgba(37,99,235,0.7)_30%,rgba(37,99,235,0.4)_60%,rgba(37,99,235,0.2)_80%,rgba(37,99,235,0.1)_90%,transparent_100%)]",
-          hover:
-            "bg-[linear-gradient(to_top,rgba(37,99,235,0.95)_0%,rgba(37,99,235,0.7)_30%,rgba(37,99,235,0.4)_60%,transparent_90%)]",
-        }
-      : {
-          base: "bg-[linear-gradient(to_top,rgba(0,0,0,0.95)_0%,rgba(0,0,0,0.7)_30%,rgba(0,0,0,0.4)_60%,rgba(0,0,0,0.2)_80%,rgba(0,0,0,0.1)_90%,transparent_100%)]",
-          hover:
-            "bg-[linear-gradient(to_top,rgba(0,0,0,0.95)_0%,rgba(0,0,0,0.7)_30%,rgba(0,0,0,0.4)_60%,transparent_90%)]",
-        };
+              <Dialog open={isCreatePlaylistOpen} onOpenChange={setIsCreatePlaylistOpen}>
+                <DialogTrigger asChild>
+                  <Button className="w-full bg-slate-800 hover:bg-slate-700 text-white text-sm p-2">
+                    Create New Playlist
+                  </Button>
+                </DialogTrigger>
 
-    const widthClass =
-      isMoreLikeThis ? "w-64 h-64 flex-shrink-0" : width === "auto" ? "" : width;
-
-    return (
-      <>
-        {isFullscreen && currentVideoUrl && (
-          <FullscreenPlayer
-            isOpen={isFullscreen}
-            onClose={handleExitFullscreen}
-            videoUrl={currentVideoUrl}
-            title={currentVideoTitle}
-          />
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Create New Playlist</DialogTitle>
+                  </DialogHeader>
+                  <form className="grid gap-4 py-4" onSubmit={handleSubmitPlaylist}>
+                    <div className="grid gap-2">
+                      <label htmlFor="playlist-title" className="text-sm font-medium">
+                        Playlist Title
+                      </label>
+                      <input
+                        type="text"
+                        id="playlist-title"
+                        name="title"
+                        value={playlistForm.title}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter playlist title"
+                        required
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <label htmlFor="playlist-description" className="text-sm font-medium">
+                        Description
+                      </label>
+                      <textarea
+                        id="playlist-description"
+                        name="description"
+                        value={playlistForm.description}
+                        onChange={handleChange}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter playlist description (optional)"
+                      />
+                    </div>
+                    <Button type="submit" className="w-full bg-slate-800 hover:bg-slate-700 text-white">
+                      Create Playlist
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </PopoverContent>
+          </Popover>
         )}
 
-        <div
-          className={`content-card group ${widthClass} w-[360px] h-[220px] border-2 border-transparent hover:scale-105 hover:border-white hover:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:scale-105 focus:border-white focus:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:outline-none rounded-lg transition-all duration-300 overflow-hidden relative ${className}`}
-          tabIndex={0}
-          role="button"
-          aria-label={`${normalizedItem.type === "series" ? "View series" : "View movie"} ${
-            normalizedItem.title
-          }`}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              handleCardClick();
-            }
-          }}
-        >
-          {/* ✅ Ellipsis Button in Top-Right Corner */}
-          <Popover>
-  <PopoverTrigger asChild>
-    <Button
-      variant="ghost"
-      size="icon"
-      className="absolute top-2 right-2 z-20 bg-black/50 hover:bg-black/70 text-white rounded-full p-1"
-    >
-      <EllipsisVertical className="w-5 h-5" />
-    </Button>
-  </PopoverTrigger>
-
-  <PopoverContent className="min-w-[200px] p-3 flex flex-col gap-3">
-    <Dialog>
-       <div className="mt-4 flex flex-col gap-4">
-         
-            {playlists.map((playlist) => (
-              <div
-                key={playlist.id}
-                className="flex items-center justify-between p-2 border-b border-gray-200"
-              >
-                <span>{playlist.title}</span>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() =>handleAddtoPlaylist(playlist?.id)}
-                >
-                  Add
-                </Button>  
-              </div>
-            )
-          )}
-          
-        </div>
-      <DialogTrigger asChild>
-        <Button className="w-full bg-slate-800 rounded-600 text-white text-center text-sm p-2 cursor-pointer"
-          >
-            Add New Playlist
-          </Button>
-      </DialogTrigger>
-
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Create New Playlist</DialogTitle>
-        </DialogHeader>
-          <form className="grid gap-4 py-4" onSubmit={handleSubmitPlaylist}>
-            <div className="grid gap-2">
-              <label htmlFor="playlist-title" className="text-sm font-medium">
-                Playlist Title
-              </label>
-              <input
-                type="text"
-                id="playlist-title"
-                name="title"
-                value={playlistForm?.title}
-                onChange={(e) => handleChange(e)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter playlist title"
+        <div className="block cursor-pointer" onClick={handleCardClick}>
+          <div className="relative overflow-hidden transition-all duration-300">
+            <div className="w-full h-full">
+              <img
+                src={normalizedItem.posterUrl}
+                alt={`${normalizedItem.title} poster`}
+                className="w-full h-full rounded-lg object-cover transform transition-transform duration-300 hover:scale-[1.1]"
+                loading="lazy"
+                decoding="async"
               />
             </div>
-            <div className="grid gap-2">
-              <label htmlFor="playlist-description" className="text-sm font-medium">
-                Description
-              </label>
-              <textarea
-                id="playlist-description"
-                name="description"
-                value={playlistForm?.description}
-                onChange={(e) => handleChange(e)}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter playlist description (optional)"
-              />
-            </div>
-            <Button type="submit" className="w-full bg-slate-800 rounded-600 text-white text-center text-sm p-2 cursor-pointer"
-              // onClick={(e) => handleSubmitPlaylist(e)}
-            >
-              Create Playlist
-            </Button>
-          </form>
-      </DialogContent>
-    </Dialog>
-  </PopoverContent>
-</Popover>
 
-
-          <div className="block cursor-pointer" onClick={handleCardClick}>
-            <div className="relative overflow-hidden transition-all duration-300">
-              <div className="w-full h-full">
-                <img
-                  src={normalizedItem.posterUrl}
-                  alt={`${normalizedItem.title} poster`}
-                  className="w-full h-full rounded-lg object-cover transform transition-transform duration-300 hover:scale-[1.1]"
-                  loading="lazy"
-                  decoding="async"
-                />
-              </div>
-
-              {showProgress && (
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-600">
-                  <div
-                    className="h-full bg-red-600 transition-all duration-300"
-                    style={{ width: `${progressPercent}%` }}
-                  />
-                </div>
-              )}
-
-              <div className="absolute inset-0 z-0 rounded-lg pointer-events-none">
-                <div className={`absolute bottom-[-1px] left-0 right-0 h-1/2 ${gradientClasses.base}`} />
+            {showProgress && (
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-600">
                 <div
-                  className={`absolute bottom-[-1px] left-0 right-0 h-1/2 ${
-                    gradientClasses.hover
+                  className="h-full bg-red-600 transition-all duration-300"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            )}
+
+            <div className="absolute inset-0 z-0 rounded-lg pointer-events-none">
+              <div className={`absolute bottom-[-1px] left-0 right-0 h-1/2 ${gradientClasses.base}`} />
+              <div
+                className={`absolute bottom-[-1px] left-0 right-0 h-1/2 ${gradientClasses.hover
                   } opacity-0 group-hover:opacity-50 transition-opacity duration-300`}
-                />
-              </div>
-
-              <div className="absolute bottom-0 left-0 right-0 z-10 p-3 pt-6 pointer-events-none">
-                <h3 className="font-medium text-white text-md line-clamp-2 transform transition-transform duration-300 origin-left group-hover:scale-[1.1]">
-                  {normalizedItem.title}
-                </h3>
-              </div>
-
-              {showResumeButton && (
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                  <button className="bg-white text-black px-4 py-2 rounded-lg font-semibold flex items-center space-x-2">
-                    <Play className="w-4 h-4" />
-                    <span>Resume</span>
-                  </button>
-                </div>
-              )}
-
-              {isMoreLikeThis && (
-                <button
-                  className="absolute inset-0 z-20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
-                  onClick={handleCardClick}
-                  aria-label={`View ${normalizedItem.title} details`}
-                />
-              )}
+              />
             </div>
+
+            <div className="absolute bottom-0 left-0 right-0 z-10 p-3 pt-6 pointer-events-none">
+              <h3 className="font-medium text-white text-md line-clamp-2 transform transition-transform duration-300 origin-left group-hover:scale-[1.1]">
+                {normalizedItem.title}
+              </h3>
+            </div>
+
+            {showResumeButton && (
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                <button className="bg-white text-black px-4 py-2 rounded-lg font-semibold flex items-center space-x-2">
+                  <Play className="w-4 h-4" />
+                  <span>Resume</span>
+                </button>
+              </div>
+            )}
+
+            {isMoreLikeThis && (
+              <button
+                className="absolute inset-0 z-20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
+                onClick={handleCardClick}
+                aria-label={`View ${normalizedItem.title} details`}
+              />
+            )}
           </div>
         </div>
+      </div>
 
-        {currentModalItem && !isFullscreen && (
-          <ContentModal
-            isOpen={true}
-            onClose={(open) => !open && setCurrentModalItem(null)}
-            item={actualItem}
-            variant={contentType}
-            isKidsMode={effectiveKidsMode}
-            autoDetectKids={false}
-            isSaved={isSaved}
-            onSave={handleSaveModal}
-            onPlayEpisode={handlePlayEpisode}
-            videoUrl={videoUrl}
-            contentItem={contentItem}
-            channel={channel}
-            recommendedContent={recommendedContent}
-            onOpenRelatedItem={setCurrentModalItem}
-            skipContentFiltering={isMoreLikeThis}
-            allowNestedModals={effectiveKidsMode}
-          />
-        )}
-      </>
-    );
-  }
-  // (prevProps, nextProps) => {
-  //   return (
-  //     prevProps.item.id === nextProps.item.id &&
-  //     prevProps.showProgress === nextProps.showProgress &&
-  //     prevProps.progressPercent === nextProps.progressPercent &&
-  //     prevProps.showResumeButton === nextProps.showResumeButton &&
-  //     prevProps.isKidsMode === nextProps.isKidsMode &&
-  //     prevProps.variant === nextProps.variant
-  //   );
-  // }
-// );
-
-// ContentCard.displayName = "ContentCard";
+      {currentModalItem && !isFullscreen && (
+        <ContentModal
+          isOpen={true}
+          onClose={(open) => !open && setCurrentModalItem(null)}
+          item={actualItem}
+          variant={contentType}
+          isKidsMode={effectiveKidsMode}
+          autoDetectKids={false}
+          isSaved={isSaved}
+          onSave={handleSaveModal}
+          onPlayEpisode={handlePlayEpisode}
+          videoUrl={videoUrl}
+          contentItem={contentItem}
+          channel={channel}
+          recommendedContent={recommendedContent}
+          onOpenRelatedItem={setCurrentModalItem}
+          skipContentFiltering={isMoreLikeThis}
+          allowNestedModals={effectiveKidsMode}
+        />
+      )}
+    </>
+  );
+}
 
 export default ContentCard;

@@ -13,48 +13,67 @@ const PlaylistDetail = () => {
   const [isAutoPlay, setIsAutoPlay] = useState(true) // Toggle autoplay
   const [user_watch_history, setUserWatchHistory] = useState<any[]>([])
   const navigate = useNavigate()
+
+  // 1. NEW STATE: Key to manually trigger a history re-fetch
+  const [historyUpdateKey, setHistoryUpdateKey] = useState(0)
+
   console.log("Content in PlaylistDetail:", content)
+
+  // Function to be passed to the player to trigger a re-fetch of history
+  const triggerHistoryRefresh = () => {
+      console.log("Watch history refresh triggered. Incrementing key.");
+      setHistoryUpdateKey(prev => prev + 1);
+  }
+
+  // Fetch playlist content only when ID changes
   useEffect(() => {
     if (id) fetchSinglePlaylist(id)
   }, [id])
 
-  useEffect(() =>{
+  // Fetch watch history when content loads OR when historyUpdateKey changes
+  useEffect(() => {
     async function loadWatchHistory() {
-        if (content.length > 0) {
-            // Fetch watch history or any other data if needed
-            console.log("Content loaded in PlaylistDetail:", content);
-            const fetchWatchHistoryPromises =  Promise.all(
-                content.map(async (item) => {
-                    const { data: historyData, error: historyError } = await supabase
-                        .from("user_watch_history")
-                        .select("*")
-                        .eq("user_id","03fa9a91-4281-4bd4-9e60-4da2ba72b0f3")
-                        .eq("movie_id",item.id);
-                    if (historyError) {
-                        console.log("Error fetching watch history:", historyError);
-                        return null;
-                    }
-                    return {
-                      ...item,
-                      last_position: historyData[0]?.last_position || 0,
-                      watch_duration: historyData[0]?.watch_duration || 0,
-                      watch_percentage: historyData[0]?.watch_percentage || 0,
-                      total_duration: historyData[0]?.total_duration || 0,
-                      completed: historyData[0]?.completed || false,
-                    
-                    };
-                })
-            );  
+      if (content.length > 0) {
+        console.log("Content loaded in PlaylistDetail. Fetching history...");
+        
+        // --- NOTE: You MUST replace this hardcoded user_id with the actual authenticated user's ID ---
+        const USER_ID = "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"; 
+        
+        const fetchWatchHistoryPromises = Promise.all(
+          content.map(async (item) => {
+            const { data: historyData, error: historyError } = await supabase
+              .from("user_watch_history")
+              .select("*")
+              .eq("user_id", USER_ID)
+              .eq("movie_id", item.id)
+              .maybeSingle(); // Use maybeSingle to get a single object or null
+            
+            if (historyError) {
+              console.log("Error fetching watch history:", historyError);
+              return null;
+            }
 
-            const data =  await fetchWatchHistoryPromises
-            setUserWatchHistory(data)
-          }
-          
+            const history = historyData || {}; // Use empty object if no history found
+            
+            return {
+              ...item,
+              last_position: history.last_position || 0,
+              watch_duration: history.watch_duration || 0,
+              watch_percentage: history.watch_percentage || 0,
+              total_duration: history.total_duration || 0,
+              completed: history.completed || false,
+            };
+          })
+        );  
 
+        const data = await fetchWatchHistoryPromises
+        // Filter out any null entries if an error occurred in the map
+        setUserWatchHistory(data.filter(item => item !== null))
       }
+    }
 
     loadWatchHistory()
-  },[content.length])
+  }, [content.length, historyUpdateKey]) // 4. ADDED historyUpdateKey dependency
 
 
   console.log("User Watch History in PlaylistDetail:", user_watch_history)
@@ -76,6 +95,8 @@ const PlaylistDetail = () => {
       // Optional: Show a "Playlist Complete" message or loop back to start
       // To loop: setCurrentVideoIndex(0)
     }
+    // Refresh history immediately after a video ends (in case 'completed' status updated)
+    triggerHistoryRefresh();
   }
 
   // Handle manual next/previous navigation
@@ -98,6 +119,8 @@ const PlaylistDetail = () => {
   // Handle close player
   const handleClose = () => {
     setCurrentVideoIndex(null)
+    // Refresh history when closing the player, ensuring the progress bar updates immediately
+    triggerHistoryRefresh();
   }
 
   // Play entire playlist from start
@@ -107,6 +130,11 @@ const PlaylistDetail = () => {
       setIsAutoPlay(true)
     }
   }
+
+  // Use history data if available, otherwise use raw content (for safety during loading)
+  const displayItems = user_watch_history.length > 0 ? user_watch_history : content;
+  const isLoading = content.length > 0 && user_watch_history.length === 0;
+
 
   return (
     <div className="mt-24 p-10">
