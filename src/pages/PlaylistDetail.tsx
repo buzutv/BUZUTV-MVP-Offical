@@ -1,26 +1,33 @@
 import FullscreenPlayer from '@/components/FullscreenPlayer'
+import SearchOverlay from '@/components/SearchOverlay'
+import { Button } from '@/components/ui/button'
+import { DialogTrigger } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from '@/components/ui/sonner'
 import { Spinner } from '@/components/ui/spinner'
+import { useContent } from '@/hooks/useContent'
 import usePlaylists from '@/hooks/usePlaylists'
 import { supabase } from '@/integrations/supabase/client'
-import { Trash } from 'lucide-react'
+import { Dialog, DialogContent } from '@radix-ui/react-dialog'
+import { Plus, Trash } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 const PlaylistDetail = () => {
   const { id } = useParams()
   const { content, fetchSinglePlaylist,refetch } = usePlaylists()
+  const {searchContentData} = useContent()
   const [currentVideoIndex, setCurrentVideoIndex] = useState<number | null>(null)
   const [isAutoPlay, setIsAutoPlay] = useState(true) // Toggle autoplay
   const [user_watch_history, setUserWatchHistory] = useState<any[]>([])
   const navigate = useNavigate()
-
+  const [openDialog, setOpenDialog] = useState(false)
   // 1. NEW STATE: Key to manually trigger a history re-fetch
   const [historyUpdateKey, setHistoryUpdateKey] = useState(0)
-
-  console.log("Content in PlaylistDetail:", content)
-
+  const [search, setSearch] = useState("")
+  const [searchResults, setSearchResults] = useState([])
+  console.log("Content in PlaylistDetail:", searchResults)
+  const [selectedMovies, setSelectedMovies] = useState<string[]>([]);
   // Function to be passed to the player to trigger a re-fetch of history
   const triggerHistoryRefresh = () => {
       console.log("Watch history refresh triggered. Incrementing key.");
@@ -82,6 +89,20 @@ const PlaylistDetail = () => {
   // Get the currently selected video
   const selectedVideo = currentVideoIndex !== null ? content[currentVideoIndex] : null
 
+  const handleSearch = async (e) => {
+  const value = e.target.value
+  setSearch(value)
+
+  if (value.trim().length === 0) {
+    setSearchResults([])
+    return
+  }
+
+  const data = await searchContentData(value)
+
+  console.log("Search results in PlaylistDetail:", data)
+  setSearchResults(data || [])
+}
   // Handle video end - auto-play next video
   const handleVideoEnd = () => {
     if (currentVideoIndex === null || !isAutoPlay) return
@@ -110,6 +131,32 @@ const PlaylistDetail = () => {
     }
   }
 
+  const handleMovies = async (movieIds: string[]) => {
+    if (!id) return;
+    console.log("Adding movies to playlist:", movieIds);
+
+    const inserts = movieIds.map((movieId) => ({
+      id: crypto.randomUUID(),
+      playlist_id: id,
+      content_id: movieId,
+      position:0
+      // added_at: new Date().toISOString(),
+    }));
+    
+    const { error } = await supabase
+      .from("playlist_items")
+      .insert(inserts);
+
+    if (error) {
+      console.error("Error adding movies to playlist:", error);
+      return;
+    }
+
+    // Refresh playlist content after adding movies
+    await refetch(id);
+    console.log("Movies added successfully to playlist.");
+  }
+
   const handlePrevious = () => {
     if (currentVideoIndex === null) return
     const prevIndex = currentVideoIndex - 1
@@ -132,7 +179,24 @@ const PlaylistDetail = () => {
       setIsAutoPlay(true)
     }
   }
-
+const toggleMovieSelection = (movieId: string) => {
+  setSelectedMovies(prev =>
+    prev.includes(movieId)
+      ? prev.filter(id => id !== movieId)
+      : [...prev, movieId]
+  );
+};
+  const handleSubmitMovies = async () => {
+  if (selectedMovies.length === 0) {
+    toast.error("No movies selected!");
+    return;
+  }
+  // Call your handler to add these movies to the playlist
+  await handleMovies(selectedMovies);
+  setSelectedMovies([]);
+  setOpenDialog(false);
+  toast.success("Movies added successfully!");
+};
   const handleDelete = async (e, item) => {
       e.stopPropagation(); // prevent opening video
 
@@ -192,6 +256,87 @@ const PlaylistDetail = () => {
           <p className="text-lg font-semibold text-white">Back</p>
         </div>
        
+       <div className='flex gap-4'>
+
+        
+            <button 
+         className="flex items-center gap-2 px-6 py-3 bg-white  rounded-lg hover:bg-foreground/90 hover:text-white transition font-semibold shadow-lg" 
+        onClick={() => setOpenDialog(true)}>
+          <Plus className="w-5 h-5" />
+          Add More Movies
+        </button>
+        <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+  <DialogContent className="bg-zinc-900 text-white p-6 rounded-xl min-w-[50%] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-40 h-auto overflow-y-auto border-2 border-white/10 overflow-y-scroll">
+  <div
+        className="fixed inset-0 -z-10"
+        style={{
+          background: `
+              linear-gradient(
+                200deg,
+                #311066 0%,   /* very dark violet */
+                #1D0833 20%,  /* deep blackish purple */
+                #120222 45%,  /* near-black violet */
+                black 100%    /* pure black */
+            `,
+        }}
+      ></div>
+    <h2 className="text-xl font-bold mb-4">Add Movies to Playlist</h2>
+
+    {/* Search Input */}
+    <input
+      type="text"
+      placeholder="Search movies..."
+      value={search}
+      onChange={(e) => handleSearch(e)}
+      className="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 mb-4"
+    />
+
+    {/* Movie Grid */}
+    <div className="grid grid-cols-3 gap-8 overflow-hidden h-[65vh]">
+      {searchResults.map((movie) => {
+        const isSelected = selectedMovies.includes(movie.id);
+        return (
+          <div
+            key={movie.id}
+            className={`relative h-48 rounded-xl cursor-pointer overflow-hidden shadow-md transition-transform ${
+              isSelected ? "ring-4 ring-primary/70 scale-105 bg-black opacity-1 border-4 border-white" : "hover:scale-105"
+            }`}
+            style={{
+              backgroundImage: `url(${movie.poster_url || movie.backdrop_url || "/placeholder.jpg"})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              opacity: isSelected ? 1 : 0.8,
+              backgroundColor: isSelected ? "purple" : "transparent"
+            }}
+            onClick={() => toggleMovieSelection(movie.id)}
+          >
+            {/* Overlay for darkening and info */}
+            <div className="absolute inset-0 bg-black/40 flex flex-col justify-end p-3">
+              <p className="font-bold text-white line-clamp-1">{movie.title}</p>
+              <p className="text-xs text-zinc-300">
+                {movie.year || "—"} • {movie.type || "Unknown"}
+              </p>
+              {movie.rating && (
+                <p className="text-xs text-yellow-400 mt-1">⭐ {movie.rating}</p>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+
+    {/* Submit Button */}
+    <button
+      onClick={handleSubmitMovies}
+      disabled={selectedMovies.length === 0}
+      className="fixed bottom-6 right-6 px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/80 shadow-lg transition"
+    >
+      Add Selected ({selectedMovies.length})
+    </button>
+  </DialogContent>
+</Dialog>
+          
+         
         
 
         {/* Play All Button */}
@@ -206,6 +351,9 @@ const PlaylistDetail = () => {
             Play All ({content.length})
           </button>
         )}
+
+
+       </div>
       </div>
 
       {/* Autoplay Toggle */}
@@ -315,7 +463,7 @@ const PlaylistDetail = () => {
           </div>
         ))}
       </div>
-
+      
       {/* Render player with auto-play capability */}
       {selectedVideo && (
         <FullscreenPlayer
@@ -337,6 +485,7 @@ const PlaylistDetail = () => {
           }}
         />
       )}
+        
     </div>
   )
 }
