@@ -39,7 +39,7 @@ const ChannelCard = ({ channel }: ChannelCardProps) => {
         />
 
         {/* Top-right ellipsis button */}
-        <Button
+        {/* <Button
           size="icon"
           variant="ghost"
           className="absolute top-3 right-3 z-20 h-8 w-8 text-white bg-black/40 hover:bg-black/60 rounded-full"
@@ -49,7 +49,7 @@ const ChannelCard = ({ channel }: ChannelCardProps) => {
           }}
         >
           <EllipsisVertical size={18} />
-        </Button>
+        </Button> */}
 
         {/* Gradient overlay */}
         <div className="absolute inset-0 z-0 rounded-xl pointer-events-none">

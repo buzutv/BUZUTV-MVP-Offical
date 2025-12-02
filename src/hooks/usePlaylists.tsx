@@ -1,5 +1,7 @@
 import { supabase } from "@/integrations/supabase/client"
 import { useEffect, useState } from "react";
+import { useContentCache } from "./useContentCache";
+import { set } from "date-fns";
 
 interface PlaylistHookProps {
   id?: string;
@@ -8,9 +10,15 @@ interface PlaylistHookProps {
 const usePlaylists = ({ id }: PlaylistHookProps = {}) => {
   const [playlists, setPlaylists] = useState<any[]>([]);
   const [content, setContent] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
+  const [error, setError] = useState(null);
 
   const fetchPlaylists = async () => {
     // 1. Fetch all playlists
+    setIsFetching(true);
+    setIsLoading(true);
+    setError(null);
     const { data, error } = await supabase.from('playlists').select('*');
     const playlistWithItems = [];
     
@@ -18,6 +26,9 @@ const usePlaylists = ({ id }: PlaylistHookProps = {}) => {
 
     if (error) {
         console.log("Error fetching playlists:", error);
+        setError(error);
+        setIsFetching(false);
+        setIsLoading(false);
         return { data, error };
     }
 
@@ -35,6 +46,9 @@ const usePlaylists = ({ id }: PlaylistHookProps = {}) => {
       
       if (itemsError) {
           console.log("Error fetching playlist items:", itemsError);
+          setError(itemsError);
+          setIsFetching(false);
+          setIsLoading(false);
           continue;
       }
 
@@ -48,6 +62,9 @@ const usePlaylists = ({ id }: PlaylistHookProps = {}) => {
 
           if (contentError) {
               console.log("Error fetching content:", contentError);
+              setError(contentError);
+              setIsFetching(false);
+              setIsLoading(false);
               continue;
           }             
           // 6. Push content into the *current* playlist's items array
@@ -61,66 +78,88 @@ const usePlaylists = ({ id }: PlaylistHookProps = {}) => {
       });
       
     }
-
+  
     setPlaylists(playlistWithItems);
+    setIsFetching(false);
+    setIsLoading(false);
+
     return { data, error };
   }
 
-  const fetchSinglePlaylist = async (id: string) => {
-    console.log("Fetching single playlist with id:", id);
+  const run = async (fn: () => Promise<any>) => {
+   setIsFetching(true);
+  if (!playlists.length) setIsLoading(true);
+  setError(null);
 
-    // Fetch playlist info
-    const { data: playlist, error: playlistError } =
-      await supabase.from("playlists").select("*").eq("id", id).single();
-
-    console.log("Fetched playlist data:", playlist);
-    if (playlistError) {
-      console.log("Error fetching playlist:", playlistError);
-      return { playlist: null, items: [], error: playlistError };
-    }
-
-    // Fetch playlist items
-    const { data: items, error: itemsError } =
-      await supabase.from("playlist_items").select("*").eq("playlist_id", id);
+  try {
+    return await fn();
+  } catch (err: any) {
+    setError(err);
+    return null;
+  } finally {
+    setIsFetching(false);
+    setIsLoading(false);
+  }
+};
 
 
-    
-      if (itemsError) {
-        return { playlist, items: [], error: itemsError };
-      }
+  const fetchSinglePlaylist = async (id: string) =>
+  run(async () => {
+    const { data: playlist, error: playlistError } = await supabase
+      .from("playlists")
+      .select("*")
+      .eq("id", id)
+      .single();
 
-      // Fetch all content items in parallel
-      const contents = await Promise.all(
-        items.map(async (movie) => {
-          const { data, error } = await supabase
-            .from("content")
-            .select("*")
-            .eq("id", movie.content_id)
-            .single();
+    if (playlistError) throw playlistError;
 
-          if (error) {
-            console.log("Error fetching content:", error);
-            return null;
-          }
-          console.log("Fetched content data:", data);
+    const { data: items, error: itemsError } = await supabase
+      .from("playlist_items")
+      .select("*")
+      .eq("playlist_id", id);
 
-          return {
-            ...data,
-            title: playlist?.title || "Untitled",
-            content_title: data?.title || "Untitled",
-            description: playlist?.description || "No description available",
-          };
-        })
-      );
+    if (itemsError) throw itemsError;
 
-    const filteredContents = contents.filter(Boolean);
+    const contents = await Promise.all(
+      items.map(async (movie) => {
+        const { data, error } = await supabase
+          .from("content")
+          .select("*")
+          .eq("id", movie.content_id)
+          .single();
 
-    setContent(filteredContents);
+        if (error) return null;
 
-    setPlaylists([{ ...playlist, items: filteredContents }]); // Also fixed assignment here
+        return {
+          ...data,
+          title: playlist.title,
+          content_title: data.title,
+          description: playlist.description,
+        };
+      })
+    );
 
-    return { playlist, items, contents: filteredContents };
+    const filtered = contents.filter(Boolean);
+
+    setContent(filtered);
+    setPlaylists([{ ...playlist, items: filtered }]);
+
+    return { playlist, items, contents: filtered };
+  });
+
+  const refetch = async (id?:string) => {
+    if (id) return fetchSinglePlaylist(id);
+    return fetchPlaylists();
   };
+
+
+
+  // const {
+  //     data: playlistContent,
+  //     isLoading,
+  //     error,
+  //     refetch,
+  //   } = useContentCache("playlists", fetchPlaylists, []);
 
 
   useEffect(() =>{
@@ -140,7 +179,11 @@ const usePlaylists = ({ id }: PlaylistHookProps = {}) => {
     fetchPlaylists,
     fetchSinglePlaylist,
     playlists: playlists,
-    content:content
+    content:content,
+    isLoading,
+    isFetching,
+    error,
+    refetch,
   }
 }
 

@@ -1,14 +1,16 @@
 import FullscreenPlayer from '@/components/FullscreenPlayer'
 import { Skeleton } from '@/components/ui/skeleton'
+import { toast } from '@/components/ui/sonner'
 import { Spinner } from '@/components/ui/spinner'
 import usePlaylists from '@/hooks/usePlaylists'
 import { supabase } from '@/integrations/supabase/client'
+import { Trash } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 const PlaylistDetail = () => {
   const { id } = useParams()
-  const { content, fetchSinglePlaylist } = usePlaylists()
+  const { content, fetchSinglePlaylist,refetch } = usePlaylists()
   const [currentVideoIndex, setCurrentVideoIndex] = useState<number | null>(null)
   const [isAutoPlay, setIsAutoPlay] = useState(true) // Toggle autoplay
   const [user_watch_history, setUserWatchHistory] = useState<any[]>([])
@@ -131,6 +133,37 @@ const PlaylistDetail = () => {
     }
   }
 
+  const handleDelete = async (e, item) => {
+      e.stopPropagation(); // prevent opening video
+
+      const { error } = await supabase
+      .from("playlist_items")
+      .delete()
+      .match({
+        content_id: item.id,
+        playlist_id: id
+      });
+
+      if(!error){
+        refetch(id);
+        toast.success("Item successfully removed from playlist!");
+      }
+
+
+
+      if (error) {
+        console.error("Delete error:", error.message);
+        return;
+      }
+
+      // Remove from UI state
+      // refetch(id);
+      setUserWatchHistory(prev =>
+        prev.filter(item => item.id !== id)
+      );
+    };
+
+
   // Use history data if available, otherwise use raw content (for safety during loading)
   const displayItems = user_watch_history.length > 0 ? user_watch_history : content;
   const isLoading = content.length > 0 && user_watch_history.length === 0;
@@ -229,6 +262,12 @@ const PlaylistDetail = () => {
                 className="w-full h-48 object-cover"
               />
               
+               <button
+                onClick={(e) => handleDelete(e, item)}
+                className="absolute bottom-2 right-2 p-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition shadow-md z-20"
+              >
+                <Trash className="w-4 h-4" />
+              </button>
               {/* Play icon overlay */}
               <div className="absolute inset-0 flex items-center  justify-center opacity-0 hover:opacity-100 transition">
                 <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -260,12 +299,19 @@ const PlaylistDetail = () => {
                 {item.year || "—"} • {item.type}
               </p>
 
+           
               {item.type === "series" && (
                 <p className="text-[11px] text-muted-foreground mt-1">
                   {item.seasons} season • {item.episodes} episodes
                 </p>
               )}
+
             </div>
+
+
+            {/* Delete button */}
+              
+
           </div>
         ))}
       </div>

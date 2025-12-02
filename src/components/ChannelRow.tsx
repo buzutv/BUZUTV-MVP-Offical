@@ -1,4 +1,4 @@
-Content;
+// Content;
 import React, { useRef } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Channel } from "@/data/mockMovies";
@@ -30,12 +30,14 @@ const ChannelRow = React.memo(
       carouselRef.current?.scrollPrev();
     };
 
+
+
     const scrollNext = () => {
       carouselRef.current?.scrollNext();
     };
 
     if (channels.length === 0) return null;
-
+        console.log("Rendering ChannelRow with channels:", channels);
     return (
       <section className="mb-8">
         <div className="flex items-center justify-between mb-4 px-4">

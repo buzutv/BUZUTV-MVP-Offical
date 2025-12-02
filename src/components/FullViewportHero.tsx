@@ -9,13 +9,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
-import { ArrowLeft, ArrowRight, EllipsisVertical, Info, Play } from "lucide-react";
+import { ArrowLeft, ArrowRight, Info, Play } from "lucide-react";
 import ContentModal from "./ContentModal";
 import FullscreenPlayer from "./FullscreenPlayer";
 import ChannelCard from "./ChannelCard";
 import BrandButton from "./ui/BrandButton";
 import { Channel } from "@/data/mockMovies";
-import { Button } from "./ui/button";
+
 
 export interface HeroCarouselItem {
   id: string;

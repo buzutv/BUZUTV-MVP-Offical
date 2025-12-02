@@ -15,6 +15,7 @@ import { Textarea } from "./ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import usePlaylists from "@/hooks/usePlaylists";
+import { toast } from "sonner";
 
 export interface ContentCardProps {
   item: Movie | any;
@@ -133,19 +134,31 @@ const ContentCard = ({
 
 
   const handleAddtoPlaylist = useCallback(async (id) => {
-    const { data, error } = await supabase.from('playlist_items').insert([
-      {
-        id: crypto.randomUUID(),
-        playlist_id: id,
-        position: 0,
-        content_id: actualItem.id
+    try {
+      const { error } = await supabase.from('playlist_items').insert([
+        {
+          id: crypto.randomUUID(),
+          playlist_id: id,
+          position: 0,
+          content_id: actualItem.id
+        }
+      ]);
+  
+      if(!error){
+        toast.success("Movie Succesfully added to playlist!");
       }
-    ]);
+      else{
+        throw(error)
+      }
+      
 
-    if (error) {
-      console.error('Error adding to playlist:', error);
-    } else {
-      console.log('Item added to playlist:', data);
+    }
+    catch(error) {
+      // const errorMessage = error.message;
+      console.log("Error adding to playlist:", error);
+      if(error.message.includes('duplicate key value violates unique constraint')) {
+        toast.error("This Movie is already in the selected playlist.");
+      }
     }
   }, [actualItem]);
 
