@@ -1,12 +1,10 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
-import {
-  X,
-  SkipBack,
-  SkipForward,
-} from "lucide-react";
+import { X } from "lucide-react";
 import { getYouTubeEmbedUrl } from "@/utils/youtubeUtils";
 import { supabase } from "../integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import SearchBar from "./SearchBar";
 
 interface FullscreenPlayerProps {
   isOpen: boolean;
@@ -42,17 +40,23 @@ const FullscreenPlayer = ({
 }: FullscreenPlayerProps) => {
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerInstanceRef = useRef<any>(null);
-  const currentVideoIdRef = useRef<string | null>(null); // Track current video ID
+  const currentVideoIdRef = useRef<string | null>(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
-  // Remove currentTime state if not used for UI rendering to improve performance
   const [duration, setDuration] = useState(0);
   const [movies, setMovies] = useState<any[]>([]);
   const [lastPausedTime, setLastPausedTime] = useState<number | null>(null);
   const [videoEnded, setVideoEnded] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const [videoRestricted, setVideoRestricted] = useState(false);
-
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const currentMovie = movies[0];
+  const [selectedGenre, setSelectedGenre] = useState<string>("All");
+  const [selectedYear, setSelectedYear] = useState<string>("All");
+  const [selectedType, setSelectedType] = useState<string>("All");
+  const [relatedContent, setRelatedContent] = useState<any[]>([]);
+  const navigate = useNavigate()
   // Refs to hold latest values for callbacks to avoid dependency cycles
   const moviesRef = useRef(movies);
   const durationRef = useRef(duration);
@@ -80,11 +84,41 @@ const FullscreenPlayer = ({
 
     if (videoUrl) {
       fetchMovies();
-      // Reset duration and lastPausedTime when URL changes
       setDuration(0);
       setLastPausedTime(null);
     }
   }, [videoUrl]);
+
+  // Fetch related content
+  useEffect(() => {
+    async function fetchRelatedContent() {
+      if (!currentMovie) return;
+
+      let query = supabase
+        .from("content")
+        .select("*")
+        .neq("id", currentMovie.id)
+        .limit(12);
+
+      // Apply filters
+      if (selectedGenre !== "All") {
+        query = query.eq("genre", selectedGenre);
+      }
+      if (selectedYear !== "All") {
+        query = query.eq("year", parseInt(selectedYear));
+      }
+      if (selectedType !== "All") {
+        query = query.eq("type", selectedType);
+      }
+
+      const { data, error } = await query;
+      if (!error && data) {
+        setRelatedContent(data);
+      }
+    }
+
+    fetchRelatedContent();
+  }, [currentMovie, selectedGenre, selectedYear, selectedType]);
 
   // Fetch last paused time and check if completed
   useEffect(() => {
@@ -104,7 +138,6 @@ const FullscreenPlayer = ({
         if (error || !data) {
           setLastPausedTime(0);
         } else {
-          // If completed, start over, otherwise resume
           setLastPausedTime(data.completed ? 0 : (data.last_position || 0));
         }
       } catch (err) {
@@ -131,7 +164,7 @@ const FullscreenPlayer = ({
     }
   }, [videoEnded, countdown, hasNext, playlistInfo?.autoPlay, onVideoEnd]);
 
-  // Save watch history helper - strictly internal logic, no dependency issues via refs
+  // Save watch history helper
   const saveWatchHistory = useCallback(async (pausedAt: number, completed: boolean = false) => {
     const currentMovies = moviesRef.current;
     const currentDuration = durationRef.current;
@@ -150,7 +183,7 @@ const FullscreenPlayer = ({
             watch_duration: Math.floor(currentDuration),
             watch_percentage: currentDuration > 0 ? Math.floor((pausedAt / currentDuration) * 100) : 0,
             total_duration: Math.floor(currentDuration),
-            completed: completed || (currentDuration > 0 && pausedAt >= currentDuration - 5), // leeway
+            completed: completed || (currentDuration > 0 && pausedAt >= currentDuration - 5),
           },
           { onConflict: "user_id,movie_id" }
         );
@@ -159,7 +192,7 @@ const FullscreenPlayer = ({
     }
   }, [userId]);
 
-  // 🎮 Controls
+  // Controls
   const handlePlayPause = useCallback(async () => {
     const player = playerInstanceRef.current;
     if (!player || typeof player.getCurrentTime !== 'function') return;
@@ -174,15 +207,23 @@ const FullscreenPlayer = ({
     setIsPlaying(!isPlaying);
   }, [isPlaying, saveWatchHistory]);
 
-  // 🔒 Escape + scroll lock + keyboard shortcuts
+  // Escape + scroll lock + keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = async (event: KeyboardEvent) => {
+      const player = playerInstanceRef.current;
+      
       if (event.key === "Escape" && isOpen) {
         onClose?.();
-      } else if (event.key === "ArrowRight" && hasNext && onNext) {
-        onNext();
-      } else if (event.key === "ArrowLeft" && hasPrevious && onPrevious) {
-        onPrevious();
+      } else if (event.key === "ArrowRight" && player) {
+        // Seek forward 10 seconds
+        event.preventDefault();
+        const currentTime = player.getCurrentTime();
+        player.seekTo(currentTime + 10, true);
+      } else if (event.key === "ArrowLeft" && player) {
+        // Seek backward 10 seconds
+        event.preventDefault();
+        const currentTime = player.getCurrentTime();
+        player.seekTo(Math.max(0, currentTime - 10), true);
       } else if (event.key === " " || event.key === "k") {
         event.preventDefault();
         await handlePlayPause();
@@ -200,11 +241,10 @@ const FullscreenPlayer = ({
       document.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "unset";
     };
-  }, [isOpen, onClose, hasNext, hasPrevious, onNext, onPrevious, handlePlayPause]);
+  }, [isOpen, onClose, handlePlayPause]);
 
-  // 🎥 Initialize YouTube player
+  // Initialize YouTube player
   useEffect(() => {
-    // Only proceed if we have valid data
     if (!isOpen || !videoUrl || lastPausedTime === null) return;
 
     const embedUrl = getYouTubeEmbedUrl(videoUrl);
@@ -213,7 +253,6 @@ const FullscreenPlayer = ({
 
     if (!videoId) return;
 
-    // Load Youtube API if needed
     if (!window.YT) {
       const tag = document.createElement("script");
       tag.src = "https://www.youtube.com/iframe_api";
@@ -221,14 +260,11 @@ const FullscreenPlayer = ({
     }
 
     const initPlayer = () => {
-      // FIX: Prevent reloading if the player exists and the video ID is the same
       if (playerInstanceRef.current) {
         if (currentVideoIdRef.current !== videoId) {
            currentVideoIdRef.current = videoId;
            playerInstanceRef.current.loadVideoById(videoId);
-           // Manually seek since loadVideoById might not support startSeconds perfectly in all contexts
            if (lastPausedTime > 0) {
-             // Small timeout to ensure video is loaded before seeking
              setTimeout(() => {
                try { playerInstanceRef.current?.seekTo(lastPausedTime, true); } catch(e) {}
              }, 100);
@@ -253,11 +289,9 @@ const FullscreenPlayer = ({
             controls: 1,
             rel: 0,
             playsinline: 1,
-            // start: lastPausedTime // Option A: Pass start time here
           },
           events: {
             onReady: (e: any) => {
-              // Option B: Seek on ready
               if (lastPausedTime > 0) {
                 e.target.seekTo(lastPausedTime, true);
               }
@@ -306,7 +340,6 @@ const FullscreenPlayer = ({
         (window as any).onYouTubeIframeAPIReady = initPlayer;
     }
 
-  // DEPENDENCY FIX: Removed 'saveWatchHistory' to prevent loop
   }, [isOpen, videoUrl, lastPausedTime, hasNext, onNext]); 
 
   // Clean up player on unmount
@@ -320,109 +353,286 @@ const FullscreenPlayer = ({
     };
   }, []);
 
+  const handleSearch = async (query: string) => {
+    if (query.trim().length === 0) return [];
+
+    const { data, error } = await supabase
+      .from("content")
+      .select("*")
+      .ilike("title", `%${query}%`)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching search results:", error);
+      return [];
+    }
+    setIsSearching(false);
+    setSearchResults(data || []);
+  };
+
+  const handleResultSelect = (result: any) => {
+    // Navigate to the selected content
+    navigate(`/content/${result.id}`);
+  };
+  // Extract unique values for filters
+  const genres = ["All", "Action", "Comedy", "Drama", "Thriller", "Romance", "Sci-Fi"];
+  const years = ["All", "2024", "2023", "2022", "2021", "2020"];
+  const types = ["All", "movie", "series"];
+
   if (!isOpen) return null;
 
-  return createPortal(
-    <div className="fixed inset-0 z-[9999] bg-black flex flex-col">
-      {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/80 to-transparent p-6 flex items-center justify-between">
-        <div className="flex items-center gap-4 flex-1">
-          <h2 className="text-white text-2xl font-bold">{title}</h2>
-          {playlistInfo && (
-            <div className="text-white/70 text-sm flex items-center gap-2">
-              <span>
-                {playlistInfo.current} of {playlistInfo.total}
-              </span>
-              {playlistInfo.autoPlay && (
-                <span className="bg-blue-500 text-white px-2 py-1 rounded text-xs">
-                  AutoPlay ON
-                </span>
-              )}
+  console.log("Related Content:", relatedContent);
+  return (
+
+
+
+      <div className="fixed inset-0 z-[9999] bg-[#0a0a0a] overflow-y-auto">
+        {/* Close Button */}
+
+        <div
+        className="fixed inset-0 -z-10"
+        style={{
+          background: `
+              linear-gradient(
+                200deg,
+                #311066 0%,   /* very dark violet */
+                #1D0833 20%,  /* deep blackish purple */
+                #120222 45%,  /* near-black violet */
+                black 100%    /* pure black */
+            `,
+        }}
+      ></div>
+      
+        
+
+        {/* Player Section */}
+        <div className="max-w-7xl mx-auto px-4 py-12">
+          <div className="flex justify-center items-center gap-6 mb-4">
+            <div className="flex items-center justify-center gap-4 cursor-pointer flex-1" onClick={() => navigate(-1)}>
+                <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                <p className="text-lg font-semibold text-white">Back</p>
             </div>
-          )}
-        </div>
+            <SearchBar
+                onSearch={handleSearch}
+                onResultSelect={handleResultSelect}
+                results={searchResults}
+                isLoading={isSearching}
+                placeholder="Search to add movies..."
+                // renderResult={renderSearchResult}
+                className="mb-4 flex-3"
+              />
+          </div>
+          <div className="aspect-video w-full bg-black rounded-lg overflow-hidden mb-8 relative">
+            <div ref={playerContainerRef} className="w-full h-full" />
+            
+            {/* Overlays */}
+            {videoRestricted && (
+              <div className="absolute inset-0 bg-black/90 flex items-center justify-center z-40">
+                <div className="text-center">
+                  <div className="text-white text-2xl mb-4">
+                    This video is restricted or unavailable
+                  </div>
+                  {hasNext && (
+                    <div className="text-white/70">
+                      Skipping to next video...
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
-        {/* Playlist navigation */}
-        <div className="flex items-center gap-2">
-          {hasPrevious && onPrevious && (
-            <button
-              onClick={onPrevious}
-              className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-lg transition"
-            >
-              <SkipBack />
-            </button>
-          )}
-          {hasNext && onNext && (
-            <button
-              onClick={onNext}
-              className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-lg transition"
-            >
-              <SkipForward />
-            </button>
-          )}
-        </div>
-
-        <button
-          onClick={onClose}
-          className="ml-4 bg-white/20 hover:bg-white/30 text-white p-2 rounded-lg transition"
-        >
-          <X />
-        </button>
-      </div>
-
-      {/* Player */}
-      <div
-        ref={playerContainerRef}
-        className="w-full h-full"
-      />
-
-      {/* Overlays */}
-      {videoRestricted && (
-        <div className="absolute inset-0 bg-black/90 flex items-center justify-center z-40">
-          <div className="text-center">
-            <div className="text-white text-2xl mb-4">
-              This video is restricted or unavailable
-            </div>
-            {hasNext && (
-              <div className="text-white/70">
-                Skipping to next video...
+            {videoEnded && hasNext && playlistInfo?.autoPlay && !videoRestricted && (
+              <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-40">
+                <div className="text-center">
+                  <div className="text-white text-6xl font-bold mb-4 animate-pulse">
+                    {countdown}
+                  </div>
+                  <div className="text-white text-2xl mb-2">
+                    Playing next video...
+                  </div>
+                  <div className="text-white/70">
+                    {playlistInfo.current + 1} of {playlistInfo.total}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setCountdown(0);
+                      onVideoEnd?.();
+                    }}
+                    className="mt-6 bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition"
+                  >
+                    Play Now
+                  </button>
+                </div>
               </div>
             )}
           </div>
-        </div>
-      )}
 
-      {videoEnded && hasNext && playlistInfo?.autoPlay && !videoRestricted && (
-        <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-40">
-          <div className="text-center">
-            <div className="text-white text-6xl font-bold mb-4 animate-pulse">
-              {countdown}
-            </div>
-            <div className="text-white text-2xl mb-2">
-              Playing next video...
-            </div>
-            <div className="text-white/70">
-              {playlistInfo.current + 1} of {playlistInfo.total}
-            </div>
-            <button
-              onClick={() => {
-                setCountdown(0);
-                onVideoEnd?.();
+          {/* Movie Details Section */}
+          {currentMovie && (
+            <div 
+              className="relative rounded-lg overflow-hidden mb-12 min-h-[300px] min-w-full"
+              style={{
+                backgroundImage: currentMovie.poster_url 
+                  ? `linear-gradient(to right, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.95) 100%), url(${currentMovie.poster_url})`
+                  : `linear-gradient(135deg, #1e293b 0%, #0f172a 100%)`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
               }}
-              className="mt-6 bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition"
             >
-              Play Now
-            </button>
+              <div className="p-8 flex gap-8">
+                {/* Poster */}
+                <div className="flex-shrink-0">
+                  <img 
+                    src={currentMovie.poster_url} 
+                    alt={currentMovie.content_title || currentMovie.title}
+                    className="w-48 h-72 object-cover rounded-lg shadow-2xl"
+                  />
+                </div>
+
+                {/* Details */}
+                <div className="flex-1 text-white">
+                  <h1 className="text-4xl font-bold mb-4">
+                    {currentMovie.content_title || currentMovie.title}
+                  </h1>
+                  
+                  <div className="flex items-center gap-4 mb-6 text-sm">
+                    {currentMovie.year && (
+                      <span className="px-3 py-1 bg-white/10 rounded">{currentMovie.year}</span>
+                    )}
+                    {currentMovie.genre && (
+                      <span className="px-3 py-1 bg-white/10 rounded">{currentMovie.genre}</span>
+                    )}
+                    {currentMovie.type && (
+                      <span className="px-3 py-1 bg-white/10 rounded capitalize">{currentMovie.type}</span>
+                    )}
+                    {currentMovie.duration_minutes && (
+                      <span className="px-3 py-1 bg-white/10 rounded">{currentMovie.duration_minutes} min</span>
+                    )}
+                    {currentMovie.rating && (
+                      <span className="px-3 py-1 bg-yellow-500/20 rounded">⭐ {currentMovie.rating}</span>
+                    )}
+                  </div>
+
+                  {currentMovie.description && (
+                    <p className="text-white/80 text-lg leading-relaxed mb-6 max-w-3xl">
+                      {currentMovie.description}
+                    </p>
+                  )}
+
+                  {currentMovie.episodes && (
+                    <div className="mt-4">
+                      <span className="text-white/60">Episodes: </span>
+                      <span className="text-white font-semibold">{currentMovie.episodes}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Filters Section */}
+          <div className="mb-8">
+            <h2 className="text-white text-2xl font-bold mb-4">More Like This</h2>
+            <div className="flex flex-wrap gap-4">
+              {/* Genre Filter */}
+              <div>
+                <label className="text-white/60 text-sm mb-2 block bg-white/10 rounded-lg px-4 py-2">Genre</label>
+                <select
+                  value={selectedGenre}
+                  onChange={(e) => setSelectedGenre(e.target.value)}
+                  className="text-white px-4 py-2  bg-white/10 rounded-lg px-4 py-2rounded-lg border border-white/20 focus:border-white/40 outline-none"
+                >
+                  {genres.map(genre => (
+                    <option key={genre} value={genre} className="bg-[#1a1a1a]">{genre}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Year Filter */}
+              <div>
+                <label className="text-white/60 text-sm mb-2 block bg-white/10 rounded-lg px-4 py-2">Year</label>
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(e.target.value)}
+                  className="bg-white/10 text-white px-4  bg-white/10 rounded-lg px-4 py-2 py-2 rounded-lg border border-white/20 focus:border-white/40 outline-none"
+                >
+                  {years.map(year => (
+                    <option key={year} value={year} className="bg-[#1a1a1a]">{year}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Type Filter */}
+              <div>
+                <label className="text-white/60 text-sm mb-2 block bg-white/10 rounded-lg px-4 py-2">Type</label>
+                <select
+                  value={selectedType}
+                  onChange={(e) => setSelectedType(e.target.value)}
+                  className="bg-white/10 text-white px-4 py-2 bg-white/10 rounded-lg px-4 py-2 rounded-lg border border-white/20 focus:border-white/40 outline-none"
+                >
+                  {types.map(type => (
+                    <option key={type} value={type} className="bg-[#1a1a1a] capitalize">{type}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Related Content Grid */}
+          <div className="flex flex-wrap gap-2">
+            {relatedContent.map((content) => (
+              <div
+                key={content.id}
+                className="group cursor-pointer flex-1 basis-[250px] max-w-[300px]"
+                onClick={() => {
+                  // Navigate to this content
+                  window.location.href = `/watch/${content.id}`;
+                }}
+              >
+                <div className="relative aspect-[2/3] rounded-lg overflow-hidden mb-3 bg-white/5 h-[50%] w-full">
+                  <img
+                    src={content.poster_url}
+                    alt={content.content_title || content.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <div className="text-white text-sm font-semibold">
+                        {content.content_title || content.title}
+                      </div>
+                      {content.year && (
+                        <div className="text-white/60 text-xs">{content.year}</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-white font-medium truncate">
+                  {content.content_title || content.title}
+                </div>
+                <div className="flex items-center gap-2 text-sm text-white/60 mt-1">
+                  {content.year && <span>{content.year}</span>}
+                  {content.genre && (
+                    <>
+                      <span>•</span>
+                      <span>{content.genre}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      )}
 
-      {/* Keyboard hints */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white/60 text-sm">
-        Space Play/Pause • ←/→ Navigate • Esc Close
+        {/* Keyboard hints */}
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 text-white/40 text-sm bg-black/50 px-4 py-2 rounded-full backdrop-blur-sm">
+          Space: Play/Pause • ← →: Seek ±10s • Esc: Close
+        </div>
       </div>
-    </div>,
-    document.body
+
+
+    // document.body
   );
 };
 

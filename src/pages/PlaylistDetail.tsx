@@ -34,6 +34,9 @@ const PlaylistDetail = () => {
       setHistoryUpdateKey(prev => prev + 1);
   }
 
+
+  console.log("Content in PlaylistDetail:", content)
+
   // Fetch playlist content only when ID changes
   useEffect(() => {
     if (id) fetchSinglePlaylist(id)
@@ -142,7 +145,7 @@ const PlaylistDetail = () => {
       position:0
       // added_at: new Date().toISOString(),
     }));
-    
+
     const { error } = await supabase
       .from("playlist_items")
       .insert(inserts);
