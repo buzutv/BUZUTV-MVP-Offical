@@ -195,34 +195,61 @@ const FullscreenPlayer = ({
     fetchRelatedContent();
   }, [currentMovie, selectedGenre, selectedYear, selectedType]);
 
+  // New Effect to seek after lastPausedTime is updated
+  useEffect(() => {
+    const player = playerInstanceRef.current;
+
+    // Only seek if we have a valid player and a positive time
+    if (player && lastPausedTime !== null && lastPausedTime > 0) {
+      // Check if the player is ready to be manipulated (state 1 is PLAYING, 3 is BUFFERING)
+      // If the player is already playing, we need to explicitly seek
+      const playerState = player.getPlayerState?.();
+
+      // Use a short delay if the player is brand new, to ensure the video itself is loaded
+      const delay = (playerState === -1 || playerState === 5) ? 300 : 0;
+
+      if (delay > 0) {
+        console.log(`Delaying seek to ${lastPausedTime}s for new video load.`);
+      }
+
+      setTimeout(() => {
+        // Use try/catch because calling seekTo on an unready player can throw
+        try {
+          player.seekTo(lastPausedTime, true);
+          player.playVideo(); // Ensure it starts playing after seeking
+          setIsPlaying(true);
+        } catch (e) {
+          console.warn("Failed to seek on player instance:", e);
+        }
+      }, delay);
+    }
+  }, [lastPausedTime]); // <-- Crucially watches lastPausedTime
   // Fetch last paused time and check if completed
   useEffect(() => {
-    if (!isOpen || !actualVideoUrl) return;
+    if (!isOpen || !actualVideoUrl || movies.length === 0) return;
 
     async function fetchWatchHistory() {
-      if (movies.length === 0) return;
-
       try {
         const { data, error } = await supabase
           .from("user_watch_history")
           .select("last_position, completed")
           .eq("user_id", userId)
-          .eq("movie_id", movies[0]?.id)
+          .eq("movie_id", movies[0].id)
           .single();
 
-        if (error || !data) {
-          setLastPausedTime(0);
-        } else {
+        if (!error && data) {
           setLastPausedTime(data.completed ? 0 : (data.last_position || 0));
+        } else {
+          setLastPausedTime(0);
         }
-      } catch (err) {
-        console.error("Error fetching watch history:", err);
+      } catch {
         setLastPausedTime(0);
       }
     }
 
     fetchWatchHistory();
   }, [movies, isOpen, actualVideoUrl, userId]);
+
 
   // Countdown timer when video ends (handles both playlist and episode autoplay)
   useEffect(() => {
@@ -272,7 +299,7 @@ const FullscreenPlayer = ({
     if (!currentMovies[0]?.id) return;
 
     try {
-      await supabase
+      const reponse = await supabase
         .from("user_watch_history")
         .upsert(
           {
@@ -287,6 +314,7 @@ const FullscreenPlayer = ({
           },
           { onConflict: "user_id,movie_id" }
         );
+      console.log("Watch history saved:", reponse, currentMovie);
     } catch (err) {
       console.error("Error saving watch history:", err);
     }
@@ -793,10 +821,19 @@ const FullscreenPlayer = ({
             <div
               key={content.id}
               className="group cursor-pointer flex-1 basis-[250px] max-w-[300px]"
+              // Inside Related Content Grid onClick:
               onClick={() => {
+                // 1. Set the new video URL
                 setActualVideoUrl(content.video_url)
-                // setLastPausedTime(0)
-                setIsPlaying(true)
+
+                // 2. CRUCIAL: Reset the lastPausedTime to null/0 to force the entire
+                // history fetch -> player reload sequence to run for the new movie.
+                setLastPausedTime(null); // Setting to null will pause player initialization until history is fetched.
+                setDuration(0);
+                setVideoEnded(false);
+
+                // 3. Optional: Close the search results if you clicked one.
+                setSearchResults([]);
               }}
             >
               <div className="relative aspect-[2/3] rounded-lg overflow-hidden mb-3 bg-white/5 h-[50%] w-full">
