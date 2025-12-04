@@ -292,7 +292,7 @@ const FullscreenPlayer = ({
   }, [videoEnded, countdown, hasNext, playlistInfo?.autoPlay, onVideoEnd, episodes, currentEpisode]);
 
   // Save watch history helper
-  const saveWatchHistory = useCallback(async (pausedAt: number, completed: boolean = false) => {
+  const saveWatchHistory = async (pausedAt: number, completed: boolean = false) => {
     const currentMovies = moviesRef.current;
     const currentDuration = durationRef.current;
 
@@ -318,7 +318,7 @@ const FullscreenPlayer = ({
     } catch (err) {
       console.error("Error saving watch history:", err);
     }
-  }, [userId]);
+  }
 
   // Controls
   const handlePlayPause = useCallback(async () => {
@@ -339,7 +339,11 @@ const FullscreenPlayer = ({
   useEffect(() => {
     const handleKeyDown = async (event: KeyboardEvent) => {
       const player = playerInstanceRef.current;
-
+      const target = event.target as HTMLElement;
+      const isTyping = target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable;
+      if (isTyping && event.key !== 'Escape') return;
       if (event.key === "Escape" && isOpen) {
         onClose?.();
       } else if (event.key === "ArrowRight" && player) {
@@ -347,11 +351,13 @@ const FullscreenPlayer = ({
         event.preventDefault();
         const currentTime = player.getCurrentTime();
         player.seekTo(currentTime + 10, true);
+        saveWatchHistory(currentTime + 10, false);
       } else if (event.key === "ArrowLeft" && player) {
         // Seek backward 10 seconds
         event.preventDefault();
         const currentTime = player.getCurrentTime();
         player.seekTo(Math.max(0, currentTime - 10), true);
+        saveWatchHistory(currentTime - 10, false);
       } else if (event.key === " " || event.key === "k") {
         event.preventDefault();
         await handlePlayPause();
@@ -438,6 +444,11 @@ const FullscreenPlayer = ({
                 setVideoEnded(false);
               }
 
+              if (e.data === window.YT.PlayerState.BUFFERING) {
+                const seekedTo = player.getCurrentTime();
+                saveWatchHistory(seekedTo, false);
+              }
+
               if (e.data === window.YT.PlayerState.PAUSED) {
                 setIsPlaying(false);
                 saveWatchHistory(player.getCurrentTime(), false);
@@ -500,7 +511,9 @@ const FullscreenPlayer = ({
 
   const handleResultSelect = (result: any) => {
     // Navigate to the selected content
-    navigate(`/content/${result.id}`);
+    // navigate(`/content/${result.id}`);
+    setActualVideoUrl(result.video_url);
+    setIsPlaying(true);
   };
 
   // Extract unique values for filters
@@ -543,7 +556,7 @@ const FullscreenPlayer = ({
             results={searchResults}
             isLoading={isSearching}
             placeholder="Search to add movies..."
-            className="mb-4 flex-3"
+            className="mb-4 flex-3 z-50"
           />
         </div>
 
@@ -828,12 +841,12 @@ const FullscreenPlayer = ({
 
                 // 2. CRUCIAL: Reset the lastPausedTime to null/0 to force the entire
                 // history fetch -> player reload sequence to run for the new movie.
-                setLastPausedTime(null); // Setting to null will pause player initialization until history is fetched.
-                setDuration(0);
-                setVideoEnded(false);
+                // setLastPausedTime(null); // Setting to null will pause player initialization until history is fetched.
+                // setDuration(0);
+                // setVideoEnded(false);
 
                 // 3. Optional: Close the search results if you clicked one.
-                setSearchResults([]);
+                // setSearchResults([]);
               }}
             >
               <div className="relative aspect-[2/3] rounded-lg overflow-hidden mb-3 bg-white/5 h-[50%] w-full">
