@@ -143,20 +143,20 @@ const ContentCard = ({
           content_id: actualItem.id
         }
       ]);
-  
-      if(!error){
+
+      if (!error) {
         toast.success("Movie Succesfully added to playlist!");
       }
-      else{
-        throw(error)
+      else {
+        throw (error)
       }
-      
+
 
     }
-    catch(error) {
+    catch (error) {
       // const errorMessage = error.message;
       console.log("Error adding to playlist:", error);
-      if(error.message.includes('duplicate key value violates unique constraint')) {
+      if (error.message.includes('duplicate key value violates unique constraint')) {
         toast.error("This Movie is already in the selected playlist.");
       }
     }
@@ -296,7 +296,7 @@ const ContentCard = ({
         }}
       >
         {/* ✅ Ellipsis Button in Top-Right Corner - ONLY FOR MOVIES */}
-        {normalizedItem.type === 'movie' && (
+        {(
           <Popover>
             <PopoverTrigger asChild>
               <Button

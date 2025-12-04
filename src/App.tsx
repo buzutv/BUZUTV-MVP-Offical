@@ -57,18 +57,18 @@ function RequireAdmin({ children }: { children: JSX.Element }) {
 // Route change monitor component
 const RouteChangeMonitor = () => {
   const location = useLocation();
-  
+
   useEffect(() => {
     const start = performance.now();
-    
+
     // Monitor when the route change completes
     const timer = setTimeout(() => {
       // Navigation completed
     }, 0);
-    
+
     return () => clearTimeout(timer);
   }, [location]);
-  
+
   return null;
 };
 
@@ -123,10 +123,10 @@ const App = () => {
               <Route path="/admin/edit-movie/:id" element={<RequireAdmin><AdminEditMovie /></RequireAdmin>} />
               <Route path="/admin/edit-channel/:id" element={<RequireAdmin><AdminEditChannel /></RequireAdmin>} />
               <Route path="*" element={<NotFound />} />
-              <Route path="/test" element={<FullscreenPlayer isOpen={true} onClose={() => {}} videoUrl="https://youtu.be/6y9wgK-26Qg?si=yQ_FNCUzAQB6oiPq" title="Test Video" userId="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3" />} />
+              <Route path="/test" element={<FullscreenPlayer isOpen={true} onClose={() => { }} videoUrl="https://youtu.be/6y9wgK-26Qg?si=yQ_FNCUzAQB6oiPq" title="Test Video" userId="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3" />} />
               <Route path="/playlists" element={<PlayList />} />
               <Route path="/playlists/:id" element={<PlaylistDetail />} />
-              <Route path="/watch/:contentId" element={<FullscreenPlayer isOpen={true} onClose={() => {}} videoUrl="https://youtu.be/6y9wgK-26Qg?si=yQ_FNCUzAQB6oiPq" title="Test Video" userId="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3" />} />
+              <Route path="/content/:contentId" element={<FullscreenPlayer isOpen={true} onClose={() => { }} videoUrl="https://youtu.be/6y9wgK-26Qg?si=yQ_FNCUzAQB6oiPq" title="Test Video" userId="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3" />} />
             </Routes>
           </BrowserRouter>
         </AuthProvider>

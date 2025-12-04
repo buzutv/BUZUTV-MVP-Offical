@@ -147,6 +147,8 @@ const usePlaylists = ({ id }: PlaylistHookProps = {}) => {
     return { playlist, items, contents: filtered };
   });
 
+
+  
   const refetch = async (id?:string) => {
     if (id) return fetchSinglePlaylist(id);
     return fetchPlaylists();
