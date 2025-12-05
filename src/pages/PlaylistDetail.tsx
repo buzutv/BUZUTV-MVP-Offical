@@ -474,6 +474,7 @@ const PlaylistDetail = () => {
           title={`${selectedVideo.title} (${currentVideoIndex! + 1}/${content.length})`}
           userId="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3" // Replace with actual user ID from auth
           onVideoEnd={handleVideoEnd}
+          setSelectedVideo={setCurrentVideoIndex}
           // Additional props for playlist navigation
           hasNext={currentVideoIndex! < content.length - 1}
           hasPrevious={currentVideoIndex! > 0}

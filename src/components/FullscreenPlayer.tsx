@@ -1,9 +1,7 @@
-import { useEffect, useRef, useState, useCallback } from "react";
-import { createPortal } from "react-dom";
-import { X } from "lucide-react";
 import { getYouTubeEmbedUrl } from "@/utils/youtubeUtils";
-import { supabase } from "../integrations/supabase/client";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../integrations/supabase/client";
 import SearchBar from "./SearchBar";
 
 // Episode interface
@@ -26,6 +24,7 @@ interface FullscreenPlayerProps {
   userId: string;
   // Playlist props
   onVideoEnd?: () => void;
+  setSelectedVideo?: (video: any) => void;
   hasNext?: boolean;
   hasPrevious?: boolean;
   onNext?: () => void;
@@ -34,7 +33,6 @@ interface FullscreenPlayerProps {
     current: number;
     total: number;
     autoPlay: boolean;
-    // id?:string
   };
 }
 
@@ -44,6 +42,7 @@ const FullscreenPlayer = ({
   videoUrl,
   title,
   userId,
+  setSelectedVideo,
   onVideoEnd,
   hasNext = false,
   hasPrevious = false,
@@ -71,24 +70,21 @@ const FullscreenPlayer = ({
   const [relatedContent, setRelatedContent] = useState<any[]>([]);
   const navigate = useNavigate();
 
-
   // Refs to hold latest values for callbacks to avoid dependency cycles
   const moviesRef = useRef(movies);
   const durationRef = useRef(duration);
+  const currentMovieIdRef = useRef<string | null>(null);
 
   // Episode selection state for series
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [actualVideoUrl, setActualVideoUrl] = useState("");
 
-
-
-  console.log("Actual Video Url", actualVideoUrl)
-  console.log("Related Content", relatedContent)
   // Sync refs with state
   useEffect(() => {
     moviesRef.current = movies;
     durationRef.current = duration;
+    currentMovieIdRef.current = movies[0]?.id || null;
   }, [movies, duration]);
 
   // Parse seasons_data for series content
@@ -160,7 +156,6 @@ const FullscreenPlayer = ({
     if (actualVideoUrl || (typeof videoUrl === 'object' && videoUrl?.id)) {
       fetchMovies();
       setDuration(0);
-      setLastPausedTime(null);
     }
   }, [actualVideoUrl, videoUrl]);
 
@@ -200,31 +195,27 @@ const FullscreenPlayer = ({
     const player = playerInstanceRef.current;
 
     // Only seek if we have a valid player and a positive time
-    if (player && lastPausedTime !== null && lastPausedTime > 0) {
-      // Check if the player is ready to be manipulated (state 1 is PLAYING, 3 is BUFFERING)
-      // If the player is already playing, we need to explicitly seek
+    if (player && lastPausedTime !== null) {
       const playerState = player.getPlayerState?.();
-
-      // Use a short delay if the player is brand new, to ensure the video itself is loaded
-      const delay = (playerState === -1 || playerState === 5) ? 300 : 0;
+      const delay = (playerState === -1 || playerState === 5) ? 500 : 0;
 
       if (delay > 0) {
         console.log(`Delaying seek to ${lastPausedTime}s for new video load.`);
       }
 
       setTimeout(() => {
-        // Use try/catch because calling seekTo on an unready player can throw
         try {
           player.seekTo(lastPausedTime, true);
-          player.playVideo(); // Ensure it starts playing after seeking
+          player.playVideo();
           setIsPlaying(true);
         } catch (e) {
           console.warn("Failed to seek on player instance:", e);
         }
       }, delay);
     }
-  }, [lastPausedTime]); // <-- Crucially watches lastPausedTime
-  // Fetch last paused time and check if completed
+  }, [lastPausedTime]);
+
+
   useEffect(() => {
     if (!isOpen || !actualVideoUrl || movies.length === 0) return;
 
@@ -232,26 +223,28 @@ const FullscreenPlayer = ({
       try {
         const { data, error } = await supabase
           .from("user_watch_history")
-          .select("last_position, completed")
+          .select("*")
           .eq("user_id", userId)
           .eq("movie_id", movies[0].id)
           .single();
-
+        console.log("Watch history data:", data, movies);
         if (!error && data) {
-          setLastPausedTime(data.completed ? 0 : (data.last_position || 0));
+          // If completed, start from beginning (0), otherwise resume from last position
+          setLastPausedTime(data.completed ? 0 : data.last_position);
         } else {
+          // No watch history, start from beginning
           setLastPausedTime(0);
         }
       } catch {
         setLastPausedTime(0);
+        console.log("No watch history found, starting from beginning");
       }
     }
 
     fetchWatchHistory();
   }, [movies, isOpen, actualVideoUrl, userId]);
 
-
-  // Countdown timer when video ends (handles both playlist and episode autoplay)
+  // Countdown timer when video ends
   useEffect(() => {
     const shouldAutoPlay = (hasNext && playlistInfo?.autoPlay) || episodes.length > 0;
 
@@ -271,11 +264,9 @@ const FullscreenPlayer = ({
         );
 
         if (currentIndex !== -1 && currentIndex < episodes.length - 1) {
-          // Play next episode
           const nextEpisode = episodes[currentIndex + 1];
           setCurrentEpisode(nextEpisode);
           setActualVideoUrl(nextEpisode.videoUrl);
-          setLastPausedTime(0);
           setDuration(0);
           setVideoEnded(false);
           setCountdown(5);
@@ -292,19 +283,22 @@ const FullscreenPlayer = ({
   }, [videoEnded, countdown, hasNext, playlistInfo?.autoPlay, onVideoEnd, episodes, currentEpisode]);
 
   // Save watch history helper
-  const saveWatchHistory = async (pausedAt: number, completed: boolean = false) => {
-    const currentMovies = moviesRef.current;
+  const saveWatchHistory = async (pausedAt: number, completed: boolean = false, movieId?: string) => {
+    // Use provided movieId or fall back to current movie
+    const targetMovieId = movieId || currentMovieIdRef.current;
     const currentDuration = durationRef.current;
 
-    if (!currentMovies[0]?.id) return;
+    console.log(`Saving position ${pausedAt} for movieId: ${targetMovieId}`);
+
+    if (!targetMovieId) return;
 
     try {
-      const reponse = await supabase
+      await supabase
         .from("user_watch_history")
         .upsert(
           {
             user_id: userId,
-            movie_id: currentMovies[0]?.id,
+            movie_id: targetMovieId,
             watched_at: new Date().toISOString(),
             last_position: Math.floor(pausedAt),
             watch_duration: Math.floor(currentDuration),
@@ -314,26 +308,23 @@ const FullscreenPlayer = ({
           },
           { onConflict: "user_id,movie_id" }
         );
-      console.log("Watch history saved:", reponse, currentMovie);
     } catch (err) {
       console.error("Error saving watch history:", err);
     }
   }
 
   // Controls
-  const handlePlayPause = useCallback(async () => {
+  const handlePlayPause = async () => {
     const player = playerInstanceRef.current;
-    if (!player || typeof player.getCurrentTime !== 'function') return;
+    if (!player) return;
 
     if (isPlaying) {
       player.pauseVideo();
-      const pausedAt = player.getCurrentTime();
-      await saveWatchHistory(pausedAt, false);
     } else {
       player.playVideo();
     }
     setIsPlaying(!isPlaying);
-  }, [isPlaying, saveWatchHistory]);
+  }
 
   // Escape + scroll lock + keyboard shortcuts
   useEffect(() => {
@@ -347,18 +338,16 @@ const FullscreenPlayer = ({
       if (event.key === "Escape" && isOpen) {
         onClose?.();
       } else if (event.key === "ArrowRight" && player) {
-        // Seek forward 10 seconds
         event.preventDefault();
         const currentTime = player.getCurrentTime();
         player.seekTo(currentTime + 10, true);
         saveWatchHistory(currentTime + 10, false);
       } else if (event.key === "ArrowLeft" && player) {
-        // Seek backward 10 seconds
         event.preventDefault();
         const currentTime = player.getCurrentTime();
         player.seekTo(Math.max(0, currentTime - 10), true);
         saveWatchHistory(currentTime - 10, false);
-      } else if (event.key === " " || event.key === "k") {
+      } else if (event.key === " ") {
         event.preventDefault();
         await handlePlayPause();
       }
@@ -392,6 +381,9 @@ const FullscreenPlayer = ({
       tag.src = "https://www.youtube.com/iframe_api";
       document.body.appendChild(tag);
     }
+
+    // Capture movie ID at initialization time to prevent race conditions when switching movies
+    const playerMovieId = movies[0]?.id;
 
     const initPlayer = () => {
       if (playerInstanceRef.current) {
@@ -444,20 +436,28 @@ const FullscreenPlayer = ({
                 setVideoEnded(false);
               }
 
+              // Only save on buffering if the video has actually started playing
+              // and we're not at the very beginning (to avoid saving position 0 on load)
               if (e.data === window.YT.PlayerState.BUFFERING) {
-                const seekedTo = player.getCurrentTime();
-                saveWatchHistory(seekedTo, false);
+                const currentTime = player.getCurrentTime();
+                if (currentTime > 1 && playerMovieId) {
+                  await saveWatchHistory(currentTime, false, playerMovieId);
+                }
               }
 
               if (e.data === window.YT.PlayerState.PAUSED) {
                 setIsPlaying(false);
-                saveWatchHistory(player.getCurrentTime(), false);
+                if (playerMovieId) {
+                  await saveWatchHistory(player.getCurrentTime(), false, playerMovieId);
+                }
               }
 
               if (e.data === window.YT.PlayerState.ENDED) {
                 setIsPlaying(false);
                 setVideoEnded(true);
-                saveWatchHistory(player.getCurrentTime(), true);
+                if (playerMovieId) {
+                  await saveWatchHistory(player.getCurrentTime(), true, playerMovieId);
+                }
               }
             },
             onError: (e: any) => {
@@ -509,21 +509,37 @@ const FullscreenPlayer = ({
     setSearchResults(data || []);
   };
 
-  const handleResultSelect = (result: any) => {
-    // Navigate to the selected content
-    // navigate(`/content/${result.id}`);
+  const handleResultSelect = async (result: any) => {
+    // Save current video position BEFORE switching
+    const player = playerInstanceRef.current;
+    const currentMovieId = currentMovieIdRef.current;
+    const movie = moviesRef.current[0].id;
+    if (player && currentMovieId) {
+      try {
+        const currentTime = player.getCurrentTime();
+        // Explicitly save with the current movie ID
+        await saveWatchHistory(currentTime, false, movie);
+        currentMovieIdRef.current = result.id;
+        moviesRef.current = [result];
+        console.log(`Saved position ${currentTime} for movie ${movie} before switching from search`);
+      } catch (e) {
+        console.error("Failed to save position before search switch:", e);
+      }
+    }
+
+    // Now switch to new content
+
+    setMovies([result]);
     setActualVideoUrl(result.video_url);
+    setVideoEnded(false);
     setIsPlaying(true);
   };
 
-  // Extract unique values for filters
   const genres = ["All", "Action", "Comedy", "Drama", "Thriller", "Romance", "Sci-Fi"];
   const years = ["All", "2024", "2023", "2022", "2021", "2020"];
   const types = ["All", "movie", "series"];
 
   if (!isOpen) return null;
-
-  console.log("Related Content:", relatedContent);
 
   return (
     <div className="fixed inset-0 z-[9999] bg-[#0a0a0a] overflow-y-auto">
@@ -544,7 +560,7 @@ const FullscreenPlayer = ({
       {/* Player Section */}
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="flex justify-center items-center gap-6 mb-4">
-          <div className="flex items-center justify-center gap-4 cursor-pointer flex-1" onClick={() => navigate("/playlists")}>
+          <div className="flex items-center justify-center gap-4 cursor-pointer flex-1" onClick={() => setSelectedVideo(null)}>
             <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
@@ -555,8 +571,14 @@ const FullscreenPlayer = ({
             onResultSelect={handleResultSelect}
             results={searchResults}
             isLoading={isSearching}
-            placeholder="Search to add movies..."
+            placeholder="Se arch to add movies..."
             className="mb-4 flex-3 z-50"
+          // setMovies={setMovies}
+          // setActualVideoUrl={setActualVideoUrl}
+          // setVideoEnded={setVideoEnded}
+          // setIsPlaying={setIsPlaying}
+          // currentMovieIdRef={currentMovieIdRef}
+          // moviesRef={moviesRef}
           />
         </div>
 
@@ -580,7 +602,6 @@ const FullscreenPlayer = ({
           )}
 
           {videoEnded && !videoRestricted && (
-            // Determine if there's a next episode or playlist item
             (() => {
               const hasNextEpisode = episodes.length > 0 && currentEpisode &&
                 episodes.findIndex(ep =>
@@ -626,7 +647,6 @@ const FullscreenPlayer = ({
                         if (nextEpisode) {
                           setCurrentEpisode(nextEpisode);
                           setActualVideoUrl(nextEpisode.videoUrl);
-                          setLastPausedTime(0);
                           setDuration(0);
                           setVideoEnded(false);
                           setCountdown(5);
@@ -661,8 +681,6 @@ const FullscreenPlayer = ({
                   onClick={() => {
                     setCurrentEpisode(episode);
                     setActualVideoUrl(episode.videoUrl);
-                    // setLastPausedTime(0);
-                    // setDuration(0);
                     setVideoEnded(false);
                   }}
                 >
@@ -834,19 +852,26 @@ const FullscreenPlayer = ({
             <div
               key={content.id}
               className="group cursor-pointer flex-1 basis-[250px] max-w-[300px]"
-              // Inside Related Content Grid onClick:
-              onClick={() => {
-                // 1. Set the new video URL
-                setActualVideoUrl(content.video_url)
+              onClick={async () => {
+                // Save current video position BEFORE switching
+                const player = playerInstanceRef.current;
+                const currentMovieId = currentMovieIdRef.current;
 
-                // 2. CRUCIAL: Reset the lastPausedTime to null/0 to force the entire
-                // history fetch -> player reload sequence to run for the new movie.
-                // setLastPausedTime(null); // Setting to null will pause player initialization until history is fetched.
-                // setDuration(0);
-                // setVideoEnded(false);
+                if (player && currentMovieId) {
+                  try {
+                    const currentTime = player.getCurrentTime();
+                    // Explicitly save with the current movie ID
+                    await saveWatchHistory(currentTime, false, currentMovieId);
+                    console.log(`Saved position ${currentTime} for movie ${currentMovieId} before switching`);
+                  } catch (e) {
+                    console.error("Failed to save position before switch:", e);
+                  }
+                }
 
-                // 3. Optional: Close the search results if you clicked one.
-                // setSearchResults([]);
+                // Now switch to new content
+                setActualVideoUrl(content.video_url);
+                setMovies([content]);
+                setVideoEnded(false);
               }}
             >
               <div className="relative aspect-[2/3] rounded-lg overflow-hidden mb-3 bg-white/5 h-[50%] w-full">
@@ -881,11 +906,6 @@ const FullscreenPlayer = ({
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Keyboard hints */}
-      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 text-white/40 text-sm bg-black/50 px-4 py-2 rounded-full backdrop-blur-sm">
-        Space: Play/Pause • ← →: Seek ±10s • Esc: Close
       </div>
     </div>
   );
