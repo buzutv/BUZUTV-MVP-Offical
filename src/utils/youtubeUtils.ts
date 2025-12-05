@@ -62,23 +62,32 @@ export const getLastPausedTime = async (movieId: string, userId: string): Promis
 }
 
 export async function fetchWatchHistory(userId: string, movieId: string) {
-  try {
-    const { data, error } = await supabase
-      .from("user_watch_history")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("movie_id", movieId)
-      .single();
-    console.log("Watch history data:", data, movies);
-    if (!error && data) {
-      // If completed, start from beginning (0), otherwise resume from last position
-      return data.last_position; 
-    } else {
-      // No watch history, start from beginning
-      return 0;
-    }
-  } catch {
-    return 0;
-    // console.log("No watch history found, starting from beginning");
+
+  const { data, error } = await supabase
+    .from("user_watch_history")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("movie_id", movieId)
+    .single();
+
+  console.log("Watch history data:", data, error);
+  if (error) {
+    console.error("Error fetching watch history:", error);
+    return 0; // Return 0 on error
   }
+
+  if (data) {
+    // If 'completed' is true, start from 0. Otherwise, resume from last_position.
+    return data.completed ? 0 : data.last_position;
+  }
+
+}
+
+
+export async function onReadyVideoLoader(e: any, movieId: string, userId: string) {
+  const last_position = await fetchWatchHistory(userId, movieId)
+
+  console.log("From On Ready Video Loader", movieId)
+  e.target.seekTo(last_position, true); // true = allowSeekAhead
+  e.target.playVideo();
 }

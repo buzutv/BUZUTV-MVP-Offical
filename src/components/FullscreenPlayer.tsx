@@ -192,129 +192,129 @@ const FullscreenPlayer = ({
   }, [currentMovie, selectedGenre, selectedYear, selectedType]);
 
   // New Effect to seek after lastPausedTime is updated
-  useEffect(() => {
-    const player = playerInstanceRef.current;
+  // useEffect(() => {
+  //   const player = playerInstanceRef.current;
 
-    // Only seek if we have a valid player and a positive time
-    if (player && lastPausedTime !== null) {
-      const playerState = player.getPlayerState?.();
-      const delay = (playerState === -1 || playerState === 5) ? 500 : 0;
+  //   // Only seek if we have a valid player and a positive time
+  //   if (player && lastPausedTime !== null) {
+  //     const playerState = player.getPlayerState?.();
+  //     const delay = (playerState === -1 || playerState === 5) ? 500 : 0;
 
-      if (delay > 0) {
-        console.log(`Delaying seek to ${lastPausedTime}s for new video load.`);
-      }
+  //     if (delay > 0) {
+  //       console.log(`Delaying seek to ${lastPausedTime}s for new video load.`);
+  //     }
 
-      setTimeout(() => {
-        try {
-          player.seekTo(lastPausedTime, true);
-          player.playVideo();
-          setIsPlaying(true);
-        } catch (e) {
-          console.warn("Failed to seek on player instance:", e);
-        }
-      }, delay);
-    }
-  }, [lastPausedTime]);
+  //     setTimeout(() => {
+  //       try {
+  //         player.seekTo(lastPausedTime, true);
+  //         player.playVideo();
+  //         setIsPlaying(true);
+  //       } catch (e) {
+  //         console.warn("Failed to seek on player instance:", e);
+  //       }
+  //     }, delay);
+  //   }
+  // }, [lastPausedTime]);
 
 
-  useEffect(() => {
-    if (!isOpen || !actualVideoUrl || movies.length === 0) return;
+  // useEffect(() => {
+  //   if (!isOpen || !actualVideoUrl || movies.length === 0) return;
 
-    async function fetchWatchHistory() {
-      try {
-        const { data, error } = await supabase
-          .from("user_watch_history")
-          .select("*")
-          .eq("user_id", userId)
-          .eq("movie_id", movies[0].id)
-          .single();
-        console.log("Watch history data:", data, movies);
-        if (!error && data) {
-          // If completed, start from beginning (0), otherwise resume from last position
-          setLastPausedTime(data.completed ? 0 : data.last_position);
-        } else {
-          // No watch history, start from beginning
-          setLastPausedTime(0);
-        }
-      } catch {
-        setLastPausedTime(0);
-        console.log("No watch history found, starting from beginning");
-      }
-    }
+  //   async function fetchWatchHistory() {
+  //     try {
+  //       const { data, error } = await supabase
+  //         .from("user_watch_history")
+  //         .select("*")
+  //         .eq("user_id", userId)
+  //         .eq("movie_id", movies[0].id)
+  //         .single();
+  //       console.log("Watch history data:", data, movies);
+  //       if (!error && data) {
+  //         // If completed, start from beginning (0), otherwise resume from last position
+  //         setLastPausedTime(data.completed ? 0 : data.last_position);
+  //       } else {
+  //         // No watch history, start from beginning
+  //         setLastPausedTime(0);
+  //       }
+  //     } catch {
+  //       setLastPausedTime(0);
+  //       console.log("No watch history found, starting from beginning");
+  //     }
+  //   }
 
-    fetchWatchHistory();
-  }, [movies, isOpen, actualVideoUrl, userId]);
+  //   fetchWatchHistory();
+  // }, [movies, isOpen, actualVideoUrl, userId]);
 
   // Countdown timer when video ends
-  useEffect(() => {
-    const shouldAutoPlay = (hasNext && playlistInfo?.autoPlay) || episodes.length > 0;
+  // useEffect(() => {
+  //   const shouldAutoPlay = (hasNext && playlistInfo?.autoPlay) || episodes.length > 0;
 
-    if (videoEnded && shouldAutoPlay && countdown > 0) {
-      const timer = setTimeout(() => {
-        setCountdown(countdown - 1);
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
+  //   if (videoEnded && shouldAutoPlay && countdown > 0) {
+  //     const timer = setTimeout(() => {
+  //       setCountdown(countdown - 1);
+  //     }, 1000);
+  //     return () => clearTimeout(timer);
+  //   }
 
-    if (countdown === 0 && videoEnded) {
-      // Handle episode autoplay
-      if (episodes.length > 0 && currentEpisode) {
-        const currentIndex = episodes.findIndex(
-          ep => ep.episodeNumber === currentEpisode.episodeNumber &&
-            ep.seasonNumber === currentEpisode.seasonNumber
-        );
+  //   if (countdown === 0 && videoEnded) {
+  //     // Handle episode autoplay
+  //     if (episodes.length > 0 && currentEpisode) {
+  //       const currentIndex = episodes.findIndex(
+  //         ep => ep.episodeNumber === currentEpisode.episodeNumber &&
+  //           ep.seasonNumber === currentEpisode.seasonNumber
+  //       );
 
-        if (currentIndex !== -1 && currentIndex < episodes.length - 1) {
-          const nextEpisode = episodes[currentIndex + 1];
-          setCurrentEpisode(nextEpisode);
-          setActualVideoUrl(nextEpisode.videoUrl);
-          setDuration(0);
-          setVideoEnded(false);
-          setCountdown(5);
-          return;
-        }
-      }
+  //       if (currentIndex !== -1 && currentIndex < episodes.length - 1) {
+  //         const nextEpisode = episodes[currentIndex + 1];
+  //         setCurrentEpisode(nextEpisode);
+  //         setActualVideoUrl(nextEpisode.videoUrl);
+  //         setDuration(0);
+  //         setVideoEnded(false);
+  //         setCountdown(5);
+  //         return;
+  //       }
+  //     }
 
-      // Handle playlist autoplay
-      if (hasNext && playlistInfo?.autoPlay) {
-        onVideoEnd?.();
-        setCountdown(5);
-      }
-    }
-  }, [videoEnded, countdown, hasNext, playlistInfo?.autoPlay, onVideoEnd, episodes, currentEpisode]);
+  //     // Handle playlist autoplay
+  //     if (hasNext && playlistInfo?.autoPlay) {
+  //       onVideoEnd?.();
+  //       setCountdown(5);
+  //     }
+  //   }
+  // }, [videoEnded, countdown, hasNext, playlistInfo?.autoPlay, onVideoEnd, episodes, currentEpisode]);
 
 
 
-  // Save watch history helper
-  const saveWatchHistory = async (pausedAt: number, completed: boolean = false, movieId?: string) => {
-    // Use provided movieId or fall back to current movie
-    const targetMovieId = movieId || currentMovieIdRef.current;
-    const currentDuration = durationRef.current;
+  // // Save watch history helper
+  // const saveWatchHistory = async (pausedAt: number, completed: boolean = false, movieId?: string) => {
+  //   // Use provided movieId or fall back to current movie
+  //   const targetMovieId = movieId || currentMovieIdRef.current;
+  //   const currentDuration = durationRef.current;
 
-    console.log(`Saving position ${pausedAt} for movieId: ${targetMovieId}`);
+  //   console.log(`Saving position ${pausedAt} for movieId: ${targetMovieId}`);
 
-    if (!targetMovieId) return;
+  //   if (!targetMovieId) return;
 
-    try {
-      await supabase
-        .from("user_watch_history")
-        .upsert(
-          {
-            user_id: userId,
-            movie_id: targetMovieId,
-            watched_at: new Date().toISOString(),
-            last_position: Math.floor(pausedAt),
-            watch_duration: Math.floor(currentDuration),
-            watch_percentage: currentDuration > 0 ? Math.floor((pausedAt / currentDuration) * 100) : 0,
-            total_duration: Math.floor(currentDuration),
-            completed: completed || (currentDuration > 0 && pausedAt >= currentDuration - 5),
-          },
-          { onConflict: "user_id,movie_id" }
-        );
-    } catch (err) {
-      console.error("Error saving watch history:", err);
-    }
-  }
+  //   try {
+  //     await supabase
+  //       .from("user_watch_history")
+  //       .upsert(
+  //         {
+  //           user_id: userId,
+  //           movie_id: targetMovieId,
+  //           watched_at: new Date().toISOString(),
+  //           last_position: Math.floor(pausedAt),
+  //           watch_duration: Math.floor(currentDuration),
+  //           watch_percentage: currentDuration > 0 ? Math.floor((pausedAt / currentDuration) * 100) : 0,
+  //           total_duration: Math.floor(currentDuration),
+  //           completed: completed || (currentDuration > 0 && pausedAt >= currentDuration - 5),
+  //         },
+  //         { onConflict: "user_id,movie_id" }
+  //       );
+  //   } catch (err) {
+  //     console.error("Error saving watch history:", err);
+  //   }
+  // }
 
   // Controls
   const handlePlayPause = async () => {
@@ -329,163 +329,163 @@ const FullscreenPlayer = ({
     setIsPlaying(!isPlaying);
   }
 
-  // Escape + scroll lock + keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = async (event: KeyboardEvent) => {
-      const player = playerInstanceRef.current;
-      const target = event.target as HTMLElement;
-      const isTyping = target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.isContentEditable;
-      if (isTyping && event.key !== 'Escape') return;
-      if (event.key === "Escape" && isOpen) {
-        onClose?.();
-      } else if (event.key === "ArrowRight" && player) {
-        event.preventDefault();
-        const currentTime = player.getCurrentTime();
-        player.seekTo(currentTime + 10, true);
-        saveWatchHistory(currentTime + 10, false);
-      } else if (event.key === "ArrowLeft" && player) {
-        event.preventDefault();
-        const currentTime = player.getCurrentTime();
-        player.seekTo(Math.max(0, currentTime - 10), true);
-        saveWatchHistory(currentTime - 10, false);
-      } else if (event.key === " ") {
-        event.preventDefault();
-        await handlePlayPause();
-      }
-    };
+  // // Escape + scroll lock + keyboard shortcuts
+  // useEffect(() => {
+  //   const handleKeyDown = async (event: KeyboardEvent) => {
+  //     const player = playerInstanceRef.current;
+  //     const target = event.target as HTMLElement;
+  //     const isTyping = target.tagName === 'INPUT' ||
+  //       target.tagName === 'TEXTAREA' ||
+  //       target.isContentEditable;
+  //     if (isTyping && event.key !== 'Escape') return;
+  //     if (event.key === "Escape" && isOpen) {
+  //       onClose?.();
+  //     } else if (event.key === "ArrowRight" && player) {
+  //       event.preventDefault();
+  //       const currentTime = player.getCurrentTime();
+  //       player.seekTo(currentTime + 10, true);
+  //       saveWatchHistory(currentTime + 10, false);
+  //     } else if (event.key === "ArrowLeft" && player) {
+  //       event.preventDefault();
+  //       const currentTime = player.getCurrentTime();
+  //       player.seekTo(Math.max(0, currentTime - 10), true);
+  //       saveWatchHistory(currentTime - 10, false);
+  //     } else if (event.key === " ") {
+  //       event.preventDefault();
+  //       await handlePlayPause();
+  //     }
+  //   };
 
-    if (isOpen) {
-      document.addEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
+  //   if (isOpen) {
+  //     document.addEventListener("keydown", handleKeyDown);
+  //     document.body.style.overflow = "hidden";
+  //   } else {
+  //     document.body.style.overflow = "unset";
+  //   }
 
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen, onClose, handlePlayPause]);
+  //   return () => {
+  //     document.removeEventListener("keydown", handleKeyDown);
+  //     document.body.style.overflow = "unset";
+  //   };
+  // }, [isOpen, onClose, handlePlayPause]);
 
 
 
   // Initialize YouTube player
-  useEffect(() => {
-    if (!isOpen || !actualVideoUrl || lastPausedTime === null) return;
+  // useEffect(() => {
+  //   if (!isOpen || !actualVideoUrl || lastPausedTime === null) return;
 
-    const embedUrl = getYouTubeEmbedUrl(actualVideoUrl);
-    const videoIdMatch = embedUrl?.match(/embed\/([^?]+)/);
-    const videoId = videoIdMatch ? videoIdMatch[1] : null;
+  //   const embedUrl = getYouTubeEmbedUrl(actualVideoUrl);
+  //   const videoIdMatch = embedUrl?.match(/embed\/([^?]+)/);
+  //   const videoId = videoIdMatch ? videoIdMatch[1] : null;
 
 
-    if (!videoId) return;
+  //   if (!videoId) return;
 
-    if (!window.YT) {
-      const tag = document.createElement("script");
-      tag.src = "https://www.youtube.com/iframe_api";
-      document.body.appendChild(tag);
-    }
+  //   if (!window.YT) {
+  //     const tag = document.createElement("script");
+  //     tag.src = "https://www.youtube.com/iframe_api";
+  //     document.body.appendChild(tag);
+  //   }
 
-    // Capture movie ID at initialization time to prevent race conditions when switching movies
-    const playerMovieId = movies[0]?.id;
+  //   // Capture movie ID at initialization time to prevent race conditions when switching movies
+  //   const playerMovieId = movies[0]?.id;
 
-    const initPlayer = () => {
-      if (playerInstanceRef.current) {
-        if (currentVideoIdRef.current !== videoId) {
-          currentVideoIdRef.current = videoId;
-          playerInstanceRef.current.loadVideoById(videoId);
-          if (lastPausedTime > 0) {
-            setTimeout(() => {
-              try { playerInstanceRef.current?.seekTo(lastPausedTime, true); } catch (e) { }
-            }, 100);
-          }
-        }
-        setVideoEnded(false);
-        setVideoRestricted(false);
-        setCountdown(5);
-        return;
-      }
+  //   const initPlayer = () => {
+  //     if (playerInstanceRef.current) {
+  //       if (currentVideoIdRef.current !== videoId) {
+  //         currentVideoIdRef.current = videoId;
+  //         playerInstanceRef.current.loadVideoById(videoId);
+  //         if (lastPausedTime > 0) {
+  //           setTimeout(() => {
+  //             try { playerInstanceRef.current?.seekTo(lastPausedTime, true); } catch (e) { }
+  //           }, 100);
+  //         }
+  //       }
+  //       setVideoEnded(false);
+  //       setVideoRestricted(false);
+  //       setCountdown(5);
+  //       return;
+  //     }
 
-      currentVideoIdRef.current = videoId;
+  //     currentVideoIdRef.current = videoId;
 
-      playerInstanceRef.current = new window.YT.Player(
-        playerContainerRef.current,
-        {
-          videoId,
-          width: "100%",
-          height: "100%",
-          playerVars: {
-            autoplay: 1,
-            controls: 1,
-            rel: 0,
-            playsinline: 1,
-          },
-          events: {
-            onReady: (e: any) => {
-              if (lastPausedTime > 0) {
-                e.target.seekTo(lastPausedTime, true);
-              }
-              e.target.playVideo();
-              setIsPlaying(true);
-              const dur = e.target.getDuration();
-              if (dur) setDuration(dur);
-            },
-            onStateChange: async (e: any) => {
-              const player = e.target;
+  //     playerInstanceRef.current = new window.YT.Player(
+  //       playerContainerRef.current,
+  //       {
+  //         videoId,
+  //         width: "100%",
+  //         height: "100%",
+  //         playerVars: {
+  //           autoplay: 1,
+  //           controls: 1,
+  //           rel: 0,
+  //           playsinline: 1,
+  //         },
+  //         events: {
+  //           onReady: (e: any) => {
+  //             if (lastPausedTime > 0) {
+  //               e.target.seekTo(lastPausedTime, true);
+  //             }
+  //             e.target.playVideo();
+  //             setIsPlaying(true);
+  //             const dur = e.target.getDuration();
+  //             if (dur) setDuration(dur);
+  //           },
+  //           onStateChange: async (e: any) => {
+  //             const player = e.target;
 
-              if (e.data === window.YT.PlayerState.PLAYING) {
-                setIsPlaying(true);
-                const dur = player.getDuration();
-                if (dur) setDuration(dur);
-                setVideoEnded(false);
-              }
+  //             if (e.data === window.YT.PlayerState.PLAYING) {
+  //               setIsPlaying(true);
+  //               const dur = player.getDuration();
+  //               if (dur) setDuration(dur);
+  //               setVideoEnded(false);
+  //             }
 
-              // Only save on buffering if the video has actually started playing
-              // and we're not at the very beginning (to avoid saving position 0 on load)
-              if (e.data === window.YT.PlayerState.BUFFERING) {
-                const currentTime = player.getCurrentTime();
-                if (currentTime > 1 && playerMovieId) {
-                  await saveWatchHistory(currentTime, false, playerMovieId);
-                }
-              }
+  //             // Only save on buffering if the video has actually started playing
+  //             // and we're not at the very beginning (to avoid saving position 0 on load)
+  //             if (e.data === window.YT.PlayerState.BUFFERING) {
+  //               const currentTime = player.getCurrentTime();
+  //               if (currentTime > 1 && playerMovieId) {
+  //                 await saveWatchHistory(currentTime, false, playerMovieId);
+  //               }
+  //             }
 
-              if (e.data === window.YT.PlayerState.PAUSED) {
-                setIsPlaying(false);
-                if (playerMovieId) {
-                  await saveWatchHistory(player.getCurrentTime(), false, playerMovieId);
-                }
-              }
+  //             if (e.data === window.YT.PlayerState.PAUSED) {
+  //               setIsPlaying(false);
+  //               if (playerMovieId) {
+  //                 await saveWatchHistory(player.getCurrentTime(), false, playerMovieId);
+  //               }
+  //             }
 
-              if (e.data === window.YT.PlayerState.ENDED) {
-                setIsPlaying(false);
-                setVideoEnded(true);
-                if (playerMovieId) {
-                  await saveWatchHistory(player.getCurrentTime(), true, playerMovieId);
-                }
-              }
-            },
-            onError: (e: any) => {
-              if ([100, 101, 150].includes(e.data)) {
-                setVideoRestricted(true);
-                if (hasNext && onNext) {
-                  setTimeout(() => onNext(), 2000);
-                }
-              }
-            },
-          },
-        }
-      );
-    };
+  //             if (e.data === window.YT.PlayerState.ENDED) {
+  //               setIsPlaying(false);
+  //               setVideoEnded(true);
+  //               if (playerMovieId) {
+  //                 await saveWatchHistory(player.getCurrentTime(), true, playerMovieId);
+  //               }
+  //             }
+  //           },
+  //           onError: (e: any) => {
+  //             if ([100, 101, 150].includes(e.data)) {
+  //               setVideoRestricted(true);
+  //               if (hasNext && onNext) {
+  //                 setTimeout(() => onNext(), 2000);
+  //               }
+  //             }
+  //           },
+  //         },
+  //       }
+  //     );
+  //   };
 
-    if (window.YT && window.YT.Player) {
-      initPlayer();
-    } else {
-      (window as any).onYouTubeIframeAPIReady = initPlayer;
-    }
+  //   if (window.YT && window.YT.Player) {
+  //     initPlayer();
+  //   } else {
+  //     (window as any).onYouTubeIframeAPIReady = initPlayer;
+  //   }
 
-  }, [isOpen, actualVideoUrl, lastPausedTime, hasNext, onNext]);
+  // }, [isOpen, actualVideoUrl, lastPausedTime, hasNext, onNext]);
 
   // Clean up player on unmount
   // useEffect(() => {
@@ -515,33 +515,33 @@ const FullscreenPlayer = ({
     setSearchResults(data || []);
   };
 
-  const handleResultSelect = async (result: any) => {
-    // Save current video position BEFORE switching
-    const player = playerInstanceRef.current;
-    const currentMovieId = currentMovieIdRef.current;
+  // const handleResultSelect = async (result: any) => {
+  //   // Save current video position BEFORE switching
+  //   const player = playerInstanceRef.current;
+  //   const currentMovieId = currentMovieIdRef.current;
 
-    console.log("Current movie ID:", moviesRef.current);
-    const movie = moviesRef.current[0].id;
-    if (player && currentMovieId) {
-      try {
-        const currentTime = player.getCurrentTime();
-        // Explicitly save with the current movie ID
-        await saveWatchHistory(currentTime, false, movie);
-        currentMovieIdRef.current = result.id;
-        moviesRef.current = [result];
+  //   console.log("Current movie ID:", moviesRef.current);
+  //   const movie = moviesRef.current[0].id;
+  //   if (player && currentMovieId) {
+  //     try {
+  //       const currentTime = player.getCurrentTime();
+  //       // Explicitly save with the current movie ID
+  //       await saveWatchHistory(currentTime, false, movie);
+  //       currentMovieIdRef.current = result.id;
+  //       moviesRef.current = [result];
 
-      } catch (e) {
-        console.error("Failed to save position before search switch:", e);
-      }
-    }
+  //     } catch (e) {
+  //       console.error("Failed to save position before search switch:", e);
+  //     }
+  //   }
 
-    // Now switch to new content
+  //   // Now switch to new content
 
-    setMovies([result]);
-    setActualVideoUrl(result.video_url);
-    setVideoEnded(false);
-    setIsPlaying(true);
-  };
+  //   setMovies([result]);
+  //   setActualVideoUrl(result.video_url);
+  //   setVideoEnded(false);
+  //   setIsPlaying(true);
+  // };
 
   const genres = ["All", "Action", "Comedy", "Drama", "Thriller", "Romance", "Sci-Fi"];
   const years = ["All", "2024", "2023", "2022", "2021", "2020"];
@@ -576,18 +576,25 @@ const FullscreenPlayer = ({
           </div>
           <SearchBar
             onSearch={handleSearch}
-            onResultSelect={handleResultSelect}
+            onResultSelect={setActualVideoUrl}
             results={searchResults}
             isLoading={isSearching}
             placeholder="Search to add movies..."
             className="mb-4 flex-3 z-50"
-
+            setActualVideoUrl={setActualVideoUrl}
+            setMovieid={setMovieid}
           />
         </div>
 
         <div className="aspect-video w-full bg-black rounded-lg overflow-hidden mb-8 relative">
-          <div ref={playerContainerRef} className="w-full h-full" />
+          {/* <div ref={playerContainerRef} className="w-full h-full" /> */}
+          <VideoPlayer
+            videoId={actualVideoUrl}
+            // last_position={lastPausedTime}
+            movieId={movieid}
+            userid="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
 
+          />
           {/* Overlays */}
           {videoRestricted && (
             <div className="absolute inset-0 bg-black/90 flex items-center justify-center z-40">
@@ -738,13 +745,7 @@ const FullscreenPlayer = ({
           </div>
         )}
 
-        <VideoPlayer
-          videoId={actualVideoUrl}
-          // last_position={lastPausedTime}
-          movieId={movieid}
-          userid="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
 
-        />
         {/* Movie Details Section */}
         {currentMovie && (
           <div

@@ -1,25 +1,30 @@
 import { useState } from 'react';
 import { Search, X } from 'lucide-react';
+import { fetchWatchHistory } from '@/utils/youtubeUtils';
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
-  onResultSelect?: (result: any) => void;
+  // onResultSelect?: (result: any) => void;
   results?: any[];
   placeholder?: string;
   isLoading?: boolean;
   renderResult?: (result: any, onSelect: () => void) => React.ReactNode;
   showResults?: boolean;
   className?: string;
+  setActualVideoUrl?: (url: string) => void;
+  setMovieid?: (movie: any) => void;
 
 }
 
 const SearchBar = ({
   onSearch,
-  onResultSelect,
+  // onResultSelect,
   results = [],
   placeholder = "Search...",
   isLoading = false,
   renderResult,
+  setActualVideoUrl,
+  setMovieid,
   showResults = true,
   className = "",
 }: SearchBarProps) => {
@@ -37,11 +42,15 @@ const SearchBar = ({
     onSearch("");
   };
 
-  const handleResultClick = (result: any) => {
+  const handleResultClick = async (result: any) => {
     console.log("Search Result", result);
-
-    onResultSelect?.(result);
-    setIsFocused(false);
+    // setActualVideoUrl(result.video_url);
+    // // onResultSelect?.(result);
+    // setIsFocused(false);
+    // const history = await fetchWatchHistory("03fa9a91-4281-4bd4-9e60-4da2ba72b0f3", result.id);
+    console.log("History one", history);
+    setMovieid(result.id);
+    setActualVideoUrl(result.video_url);
   };
 
   const showDropdown = isFocused && query.trim().length > 0 && showResults;

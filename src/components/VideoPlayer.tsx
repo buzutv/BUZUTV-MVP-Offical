@@ -1,23 +1,23 @@
-import React, { useEffect, useRef,useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { supabase } from "../integrations/supabase/client";
-import { getYouTubeEmbedUrl,fetchWatchHistory } from "@/utils/youtubeUtils";
+import { getYouTubeEmbedUrl, fetchWatchHistory, onReadyVideoLoader } from "@/utils/youtubeUtils";
 
 interface VideoPlayerProps {
   videoId: string;
-//   last_position: number;
+  //   last_position: number;
   movieId: string;
   userid: string;
 }
 
 const VideoPlayer: React.FC<VideoPlayerProps> = ({
   videoId,
-//   last_position,
+  //   last_position,
   movieId,
   userid
 }) => {
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerInstanceRef = useRef<any>(null);
-   const [lastPosition, setLastPosition] = useState<number>(0)
+  const [lastPosition, setLastPosition] = useState<number>(0)
   const getVideoId = (inputVideoId: string) => {
     if (!inputVideoId) return null;
     const embedUrl = getYouTubeEmbedUrl(inputVideoId);
@@ -25,7 +25,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     return videoIdMatch ? videoIdMatch[1] : null;
   };
 
-  async function saveWatchHistory(userid: string, movieId: string, videoId: string, currentTime: number) {
+  async function saveWatchHistory(userid: string, movieId: string, videoId: string, currentTime: number, completed: boolean) {
     await supabase
       .from("user_watch_history")
       .upsert(
@@ -34,28 +34,29 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           movie_id: movieId,
           watched_at: new Date().toISOString(),
           last_position: Math.floor(currentTime),
+          completed: completed
         },
         { onConflict: "user_id,movie_id" }
       );
   }
 
-  useEffect(() =>{
-    async function setLast() {
-       const data =  await fetchWatchHistory(userid, movieId)
-       return data
-    }
-    const dataOne = setLast()
+  // useEffect(() => {
+  //   async function setLast() {
+  //     const data = await fetchWatchHistory(userid, movieId)
+  //     return data
+  //   }
+  //   const dataOne = setLast()
 
-    console.log("dataOne", dataOne)
-  },[userid, movieId])
+  //   console.log("dataOne", dataOne)
+  // }, [userid, movieId])
   useEffect(() => {
     if (!videoId || !movieId) return;
 
     const loadPlayer = async () => {
       const vid = getVideoId(videoId);
-      const last =  await fetchWatchHistory(userid, movieId)
-      console.log("stop", last)
-      setLastPosition(last)
+      // const last = await fetchWatchHistory(userid, movieId)
+      // console.log("stop", last)
+      // setLastPosition(last)
       // Destroy existing player
       if (playerInstanceRef.current) {
         playerInstanceRef.current.destroy();
@@ -76,14 +77,20 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           videoId: vid,
           playerVars: { autoplay: 1, controls: 1 },
           events: {
-            onReady: async (e: any) => {
-              e.target.seekTo( lastPosition, true); // true = allowSeekAhead
-              e.target.playVideo();
-            },
+            onReady: (e: any) => onReadyVideoLoader(e, movieId, "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"),
             onStateChange: async (e: any) => {
               if (e.data === window.YT.PlayerState.PAUSED || e.data === window.YT.PlayerState.ENDED) {
-                await saveWatchHistory(userid, movieId, videoId, e.target.getCurrentTime());
+                await saveWatchHistory(userid, movieId, videoId, e.target.getCurrentTime(), true);
               }
+              if (e.data === window.YT.PlayerState.PAUSED) {
+                await saveWatchHistory(userid, movieId, videoId, e.target.getCurrentTime(), false);
+              }
+              // if (e.data === window.YT.PlayerState.BUFFERING) {
+              //   const currentTime = e.target.getCurrentTime();
+              //   if (currentTime > 1) {
+              //     await saveWatchHistory(userid, movieId, videoId, e.target.getCurrentTime(), false);
+              //   }
+              // }
             },
           },
         });
