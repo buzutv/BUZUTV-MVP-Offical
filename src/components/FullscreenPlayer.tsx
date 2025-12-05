@@ -1,8 +1,9 @@
-import { getYouTubeEmbedUrl } from "@/utils/youtubeUtils";
+import { fetchWatchHistory, getYouTubeEmbedUrl } from "@/utils/youtubeUtils";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client";
 import SearchBar from "./SearchBar";
+import VideoPlayer from "./VideoPlayer";
 
 // Episode interface
 interface Episode {
@@ -53,7 +54,7 @@ const FullscreenPlayer = ({
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerInstanceRef = useRef<any>(null);
   const currentVideoIdRef = useRef<string | null>(null);
-
+  const [movieid, setMovieid] = useState<string>("")
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [movies, setMovies] = useState<any[]>([]);
@@ -69,7 +70,7 @@ const FullscreenPlayer = ({
   const [selectedType, setSelectedType] = useState<string>("All");
   const [relatedContent, setRelatedContent] = useState<any[]>([]);
   const navigate = useNavigate();
-
+  const [video_id, setVideoId] = useState<string>("");
   // Refs to hold latest values for callbacks to avoid dependency cycles
   const moviesRef = useRef(movies);
   const durationRef = useRef(duration);
@@ -282,6 +283,8 @@ const FullscreenPlayer = ({
     }
   }, [videoEnded, countdown, hasNext, playlistInfo?.autoPlay, onVideoEnd, episodes, currentEpisode]);
 
+
+
   // Save watch history helper
   const saveWatchHistory = async (pausedAt: number, completed: boolean = false, movieId?: string) => {
     // Use provided movieId or fall back to current movie
@@ -366,6 +369,8 @@ const FullscreenPlayer = ({
     };
   }, [isOpen, onClose, handlePlayPause]);
 
+
+
   // Initialize YouTube player
   useEffect(() => {
     if (!isOpen || !actualVideoUrl || lastPausedTime === null) return;
@@ -373,6 +378,7 @@ const FullscreenPlayer = ({
     const embedUrl = getYouTubeEmbedUrl(actualVideoUrl);
     const videoIdMatch = embedUrl?.match(/embed\/([^?]+)/);
     const videoId = videoIdMatch ? videoIdMatch[1] : null;
+
 
     if (!videoId) return;
 
@@ -482,15 +488,15 @@ const FullscreenPlayer = ({
   }, [isOpen, actualVideoUrl, lastPausedTime, hasNext, onNext]);
 
   // Clean up player on unmount
-  useEffect(() => {
-    return () => {
-      if (playerInstanceRef.current && typeof playerInstanceRef.current.destroy === 'function') {
-        playerInstanceRef.current.destroy();
-        playerInstanceRef.current = null;
-        currentVideoIdRef.current = null;
-      }
-    };
-  }, []);
+  // useEffect(() => {
+  //   return () => {
+  //     if (playerInstanceRef.current && typeof playerInstanceRef.current.destroy === 'function') {
+  //       playerInstanceRef.current.destroy();
+  //       playerInstanceRef.current = null;
+  //       currentVideoIdRef.current = null;
+  //     }
+  //   };
+  // }, []);
 
   const handleSearch = async (query: string) => {
     if (query.trim().length === 0) return [];
@@ -513,6 +519,8 @@ const FullscreenPlayer = ({
     // Save current video position BEFORE switching
     const player = playerInstanceRef.current;
     const currentMovieId = currentMovieIdRef.current;
+
+    console.log("Current movie ID:", moviesRef.current);
     const movie = moviesRef.current[0].id;
     if (player && currentMovieId) {
       try {
@@ -521,7 +529,7 @@ const FullscreenPlayer = ({
         await saveWatchHistory(currentTime, false, movie);
         currentMovieIdRef.current = result.id;
         moviesRef.current = [result];
-        console.log(`Saved position ${currentTime} for movie ${movie} before switching from search`);
+
       } catch (e) {
         console.error("Failed to save position before search switch:", e);
       }
@@ -571,14 +579,9 @@ const FullscreenPlayer = ({
             onResultSelect={handleResultSelect}
             results={searchResults}
             isLoading={isSearching}
-            placeholder="Se arch to add movies..."
+            placeholder="Search to add movies..."
             className="mb-4 flex-3 z-50"
-          // setMovies={setMovies}
-          // setActualVideoUrl={setActualVideoUrl}
-          // setVideoEnded={setVideoEnded}
-          // setIsPlaying={setIsPlaying}
-          // currentMovieIdRef={currentMovieIdRef}
-          // moviesRef={moviesRef}
+
           />
         </div>
 
@@ -735,6 +738,13 @@ const FullscreenPlayer = ({
           </div>
         )}
 
+        <VideoPlayer
+          videoId={actualVideoUrl}
+          // last_position={lastPausedTime}
+          movieId={movieid}
+          userid="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
+
+        />
         {/* Movie Details Section */}
         {currentMovie && (
           <div
@@ -852,22 +862,28 @@ const FullscreenPlayer = ({
             <div
               key={content.id}
               className="group cursor-pointer flex-1 basis-[250px] max-w-[300px]"
-              onClick={async () => {
+              onClick={() => {
                 // Save current video position BEFORE switching
-                const player = playerInstanceRef.current;
-                const currentMovieId = currentMovieIdRef.current;
+                // getId(actualVideoUrl)
+                // const movieId = content.id
+                // const userId = "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
 
-                if (player && currentMovieId) {
-                  try {
-                    const currentTime = player.getCurrentTime();
-                    // Explicitly save with the current movie ID
-                    await saveWatchHistory(currentTime, false, currentMovieId);
-                    console.log(`Saved position ${currentTime} for movie ${currentMovieId} before switching`);
-                  } catch (e) {
-                    console.error("Failed to save position before switch:", e);
-                  }
-                }
 
+
+                // const player = playerInstanceRef.current;
+                // const currentMovieId = currentMovieIdRef.current;
+
+                // if (player && currentMovieId) {
+                //   try {
+                //     const currentTime = player.getCurrentTime();
+                //     // Explicitly save with the current movie ID
+                //     await saveWatchHistory(currentTime, false, currentMovieId);
+                //     console.log(`Saved position ${currentTime} for movie ${currentMovieId} before switching`);
+                //   } catch (e) {
+                //     console.error("Failed to save position before switch:", e);
+                //   }
+                // }
+                setMovieid(content.id)
                 // Now switch to new content
                 setActualVideoUrl(content.video_url);
                 setMovies([content]);

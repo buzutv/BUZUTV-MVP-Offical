@@ -10,12 +10,7 @@ interface SearchBarProps {
   renderResult?: (result: any, onSelect: () => void) => React.ReactNode;
   showResults?: boolean;
   className?: string;
-  setMovies: (movies: any) => void;
-  setActualVideoUrl: (videoUrl: string) => void;
-  setVideoEnded: (videoEnded: boolean) => void;
-  setIsPlaying: (isPlaying: boolean) => void;
-  currentMovieIdRef: React.MutableRefObject<string | null>;
-  moviesRef: React.MutableRefObject<any[]>;
+
 }
 
 const SearchBar = ({
@@ -27,12 +22,7 @@ const SearchBar = ({
   renderResult,
   showResults = true,
   className = "",
-  setMovies,
-  setActualVideoUrl,
-  setVideoEnded,
-  currentMovieIdRef,
-  moviesRef,
-  setIsPlaying }: SearchBarProps) => {
+}: SearchBarProps) => {
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
 
@@ -91,9 +81,9 @@ const SearchBar = ({
           ) : results.length > 0 ? (
             <div className="py-2">
               {results.map((result) => {
-                // if (renderResult) {
-                //   return renderResult(result, () => handleResultClick(result));
-                // }
+                if (renderResult) {
+                  return renderResult(result, () => handleResultClick(result));
+                }
                 // Default result renderer
                 return (
                   <div
