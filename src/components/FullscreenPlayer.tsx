@@ -30,6 +30,7 @@ interface FullscreenPlayerProps {
   hasPrevious?: boolean;
   onNext?: () => void;
   onPrevious?: () => void;
+  movieId: string;
   playlistInfo?: {
     current: number;
     total: number;
@@ -45,6 +46,7 @@ const FullscreenPlayer = ({
   userId,
   setSelectedVideo,
   onVideoEnd,
+  movieId,
   hasNext = false,
   hasPrevious = false,
   onNext,
@@ -54,7 +56,7 @@ const FullscreenPlayer = ({
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerInstanceRef = useRef<any>(null);
   const currentVideoIdRef = useRef<string | null>(null);
-  const [movieid, setMovieid] = useState<string>("")
+  const [movieid, setMovieid] = useState<string>(movieId)
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [movies, setMovies] = useState<any[]>([]);
@@ -87,6 +89,8 @@ const FullscreenPlayer = ({
     durationRef.current = duration;
     currentMovieIdRef.current = movies[0]?.id || null;
   }, [movies, duration]);
+
+
 
   // Parse seasons_data for series content
   useEffect(() => {

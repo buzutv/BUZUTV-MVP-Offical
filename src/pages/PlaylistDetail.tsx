@@ -476,6 +476,7 @@ const PlaylistDetail = () => {
           onVideoEnd={handleVideoEnd}
           setSelectedVideo={setCurrentVideoIndex}
           // Additional props for playlist navigation
+          movieId={selectedVideo.id}
           hasNext={currentVideoIndex! < content.length - 1}
           hasPrevious={currentVideoIndex! > 0}
           onNext={handleNext}
