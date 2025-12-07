@@ -1,9 +1,10 @@
 import { fetchWatchHistory, getYouTubeEmbedUrl } from "@/utils/youtubeUtils";
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client";
 import SearchBar from "./SearchBar";
 import VideoPlayer from "./VideoPlayer";
+import usePlaylists from "@/hooks/usePlaylists";
 
 // Episode interface
 interface Episode {
@@ -55,6 +56,7 @@ const FullscreenPlayer = ({
 }: FullscreenPlayerProps) => {
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerInstanceRef = useRef<any>(null);
+  const playerRef = useRef<HTMLDivElement>()
   const currentVideoIdRef = useRef<string | null>(null);
   const [movieid, setMovieid] = useState<string>(movieId)
   const [isPlaying, setIsPlaying] = useState(false);
@@ -82,7 +84,9 @@ const FullscreenPlayer = ({
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [actualVideoUrl, setActualVideoUrl] = useState("");
-
+  const id = useParams()
+  const { fetchSinglePlaylist } = usePlaylists()
+  const [playlists, setPlaylists] = useState<any[]>([])
   // Sync refs with state
   useEffect(() => {
     moviesRef.current = movies;
@@ -90,7 +94,15 @@ const FullscreenPlayer = ({
     currentMovieIdRef.current = movies[0]?.id || null;
   }, [movies, duration]);
 
-
+  useEffect(() => {
+    if (id) {
+      async function fetchData() {
+        const scopedData = await fetchSinglePlaylist(id.id)
+        setPlaylists(scopedData)
+      }
+      fetchData()
+    }
+  }, [id])
 
   // Parse seasons_data for series content
   useEffect(() => {
@@ -175,26 +187,39 @@ const FullscreenPlayer = ({
         .neq("id", currentMovie.id)
         .limit(12);
 
-      // Apply filters
-      if (selectedGenre !== "All") {
-        query = query.eq("genre", selectedGenre);
-      }
-      if (selectedYear !== "All") {
-        query = query.eq("year", parseInt(selectedYear));
-      }
-      if (selectedType !== "All") {
-        query = query.eq("type", selectedType);
-      }
+      if (selectedGenre !== "All") query = query.eq("genre", selectedGenre);
+      if (selectedYear !== "All") query = query.eq("year", parseInt(selectedYear));
+      if (selectedType !== "All") query = query.eq("type", selectedType);
 
       const { data, error } = await query;
-      if (!error && data) {
-        setRelatedContent(data);
-      }
+      if (error || !data) return;
+
+      console.log("One", data)
+      // Fetch watch history for all items in parallel
+      const dataWithHistory = await Promise.all(
+        data.map(async (item) => {
+          const history = await fetchWatchHistory(
+            "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3",
+            item?.id
+          );
+
+          console.log("Effect", item)
+          return {
+            ...item,
+            watch_percentage: history.watch_percentage,
+            last_position: history.last_position,
+            completed: history.completed
+          };
+        })
+      );
+
+      setRelatedContent(dataWithHistory);
     }
 
     fetchRelatedContent();
   }, [currentMovie, selectedGenre, selectedYear, selectedType]);
 
+  console.log("Related Content", relatedContent);
   // New Effect to seek after lastPausedTime is updated
   // useEffect(() => {
   //   const player = playerInstanceRef.current;
@@ -518,6 +543,14 @@ const FullscreenPlayer = ({
     setIsSearching(false);
     setSearchResults(data || []);
   };
+  const handleRelatedClick = (id: string) => {
+    setVideoId(id);
+
+    setTimeout(() => {
+      playerRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 50);
+  };
+
 
   // const handleResultSelect = async (result: any) => {
   //   // Save current video position BEFORE switching
@@ -592,13 +625,18 @@ const FullscreenPlayer = ({
 
         <div className="aspect-video w-full bg-black rounded-lg overflow-hidden mb-8 relative">
           {/* <div ref={playerContainerRef} className="w-full h-full" /> */}
-          <VideoPlayer
-            videoId={actualVideoUrl}
-            // last_position={lastPausedTime}
-            movieId={movieid}
-            userid="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
+          <div ref={playerRef} className="h-full w-full">
+            <VideoPlayer
+              videoId={actualVideoUrl}
+              // last_position={lastPausedTime}
+              setActualVideoUrl={setActualVideoUrl}
+              playlistItems={playlists}
+              movieId={movieid}
+              userid="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
 
-          />
+            />
+
+          </div>
           {/* Overlays */}
           {videoRestricted && (
             <div className="absolute inset-0 bg-black/90 flex items-center justify-center z-40">
@@ -874,7 +912,7 @@ const FullscreenPlayer = ({
                 // const userId = "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
 
 
-
+                handleRelatedClick(content.id)
                 // const player = playerInstanceRef.current;
                 // const currentMovieId = currentMovieIdRef.current;
 
@@ -912,6 +950,10 @@ const FullscreenPlayer = ({
                   </div>
                 </div>
               </div>
+              <div
+                className="h-[0.175rem] bg-red-900"
+                style={{ width: `${content?.watch_percentage}%` }}
+              ></div>
               <div className="text-white font-medium truncate">
                 {content.content_title || content.title}
               </div>

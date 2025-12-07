@@ -8,6 +8,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { useContent } from '@/hooks/useContent'
 import usePlaylists from '@/hooks/usePlaylists'
 import { supabase } from '@/integrations/supabase/client'
+import { fetchWatchHistory } from '@/utils/youtubeUtils'
 import { Dialog, DialogContent } from '@radix-ui/react-dialog'
 import { Plus, Trash } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -26,7 +27,7 @@ const PlaylistDetail = () => {
   const [historyUpdateKey, setHistoryUpdateKey] = useState(0)
   const [search, setSearch] = useState("")
   const [searchResults, setSearchResults] = useState([])
-  console.log("Content in PlaylistDetail:", searchResults)
+  console.log("Content in PlaylistDetail:", user_watch_history)
   const [selectedMovies, setSelectedMovies] = useState<string[]>([]);
   // Function to be passed to the player to trigger a re-fetch of history
   const triggerHistoryRefresh = () => {
@@ -51,42 +52,32 @@ const PlaylistDetail = () => {
         // --- NOTE: You MUST replace this hardcoded user_id with the actual authenticated user's ID ---
         const USER_ID = "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3";
 
-        const fetchWatchHistoryPromises = Promise.all(
+
+        const dataWithHistory = await Promise.all(
           content.map(async (item) => {
-            const { data: historyData, error: historyError } = await supabase
-              .from("user_watch_history")
-              .select("*")
-              .eq("user_id", USER_ID)
-              .eq("movie_id", item.id)
-              .maybeSingle(); // Use maybeSingle to get a single object or null
-
-            if (historyError) {
-              console.log("Error fetching watch history:", historyError);
-              return null;
-            }
-
-            const history = historyData || {}; // Use empty object if no history found
+            const history = await fetchWatchHistory(
+              USER_ID,
+              item?.id
+            );
 
             return {
               ...item,
-              last_position: history.last_position || 0,
-              watch_duration: history.watch_duration || 0,
-              watch_percentage: history.watch_percentage || 0,
-              total_duration: history.total_duration || 0,
-              completed: history.completed || false,
+              watch_percentage: history.watch_percentage,
+              last_position: history.last_position,
+              completed: history.completed
             };
           })
         );
 
-        const data = await fetchWatchHistoryPromises
+        // fetchWatchHistoryPromises
         // Filter out any null entries if an error occurred in the map
-        setUserWatchHistory(data.filter(item => item !== null))
+        setUserWatchHistory(dataWithHistory)
       }
-    }
 
+    }
     loadWatchHistory()
   }, [content.length, historyUpdateKey]) // 4. ADDED historyUpdateKey dependency
-
+  console.log("Content in PlaylistDetail:", user_watch_history)
 
   // Get the currently selected video
   const selectedVideo = currentVideoIndex !== null ? content[currentVideoIndex] : null

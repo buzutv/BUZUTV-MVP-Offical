@@ -78,7 +78,7 @@ export async function fetchWatchHistory(userId: string, movieId: string) {
 
   if (data) {
     // If 'completed' is true, start from 0. Otherwise, resume from last_position.
-    return data.completed ? 0 : data.last_position;
+    return data;
   }
 
 }
@@ -87,7 +87,26 @@ export async function fetchWatchHistory(userId: string, movieId: string) {
 export async function onReadyVideoLoader(e: any, movieId: string, userId: string) {
   const last_position = await fetchWatchHistory(userId, movieId)
 
-  console.log("From On Ready Video Loader", movieId)
-  e.target.seekTo(last_position, true); // true = allowSeekAhead
-  e.target.playVideo();
+  if (last_position.completed) {
+    // If movie was completed, reset to beginning
+    e.target.seekTo(0, true);
+    e.target.playVideo();
+
+    // Mark as not completed since they're watching again
+    await supabase
+      .from('user_watch_history')
+      .upsert({
+        completed: false,
+        last_position: 0,
+        watch_percentage: 0,
+        watched_at: new Date().toISOString()
+      }, { onConflict: "user_id,movie_id" })
+      .eq('user_id', userId)
+      .eq('movie_id', movieId);
+  } else {
+    // If not completed, resume from last position
+    console.log("From On Ready Video Loader", movieId)
+    e.target.seekTo(last_position.last_position || 0, true);
+    e.target.playVideo();
+  }
 }

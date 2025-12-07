@@ -231,11 +231,10 @@ const ChannelModal = ({ isOpen, onClose, channel }: ChannelModalProps) => {
                       </DialogTitle>
                       <button
                         onClick={handleToggleFavorite}
-                        className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black ${
-                          isChannelFavorite
-                            ? "bg-green-600 text-white hover:bg-green-500 focus:ring-green-500"
-                            : "bg-white/10 text-white backdrop-blur-sm hover:bg-white/20 focus:ring-white"
-                        }`}
+                        className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black ${isChannelFavorite
+                          ? "bg-green-600 text-white hover:bg-green-500 focus:ring-green-500"
+                          : "bg-white/10 text-white backdrop-blur-sm hover:bg-white/20 focus:ring-white"
+                          }`}
                         aria-label={
                           isChannelFavorite
                             ? "Remove from favorites"

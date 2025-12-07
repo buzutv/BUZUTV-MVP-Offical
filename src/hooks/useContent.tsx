@@ -33,6 +33,7 @@ const fetchContentData = async (): Promise<Content[]> => {
     .select("*")
     .order("created_at", { ascending: false });
 
+
   if (error) {
     console.error("❌ [useContent] Error fetching content:", error);
     toast.error("Failed to load content");
@@ -50,17 +51,18 @@ const fetchContentData = async (): Promise<Content[]> => {
 };
 
 
+
 const searchContentData = async (query: string): Promise<Content[]> => {
   const { data, error } = await supabase
     .from("content")
     .select("*")
     .ilike("title", `%${query}%`)
-    .order("created_at", { ascending: false }); 
-    if (error) {
-      console.error("❌ [useContent] Error searching content:", error);
-      toast.error("Failed to search content");
-      throw error;
-    }
+    .order("created_at", { ascending: false });
+  if (error) {
+    console.error("❌ [useContent] Error searching content:", error);
+    toast.error("Failed to search content");
+    throw error;
+  }
   return data || [];
 
 }

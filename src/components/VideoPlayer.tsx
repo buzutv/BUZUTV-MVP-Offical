@@ -1,10 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import { supabase } from "../integrations/supabase/client";
 import { getYouTubeEmbedUrl, fetchWatchHistory, onReadyVideoLoader } from "@/utils/youtubeUtils";
+import { eventNames } from "process";
 
 interface VideoPlayerProps {
   videoId: string;
   //   last_position: number;
+  setActualVideoUrl?: (videoId: string) => void;
+  playlistItems?: object[];
   movieId: string;
   userid: string;
 }
@@ -12,12 +15,15 @@ interface VideoPlayerProps {
 const VideoPlayer: React.FC<VideoPlayerProps> = ({
   videoId,
   //   last_position,
+  playlistItems,
   movieId,
   userid
 }) => {
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerInstanceRef = useRef<any>(null);
+  const movieIdRef = useRef<string>(movieId);
   const [lastPosition, setLastPosition] = useState<number>(0)
+  const currentIndexRef = useRef(0)
   const getVideoId = (inputVideoId: string) => {
     if (!inputVideoId) return null;
     const embedUrl = getYouTubeEmbedUrl(inputVideoId);
@@ -26,6 +32,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   };
 
   async function saveWatchHistory(userid: string, movieId: string, videoId: string, currentTime: number, completed: boolean) {
+    console.log("Movie Id", movieId)
+
     await supabase
       .from("user_watch_history")
       .upsert(
@@ -33,7 +41,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           user_id: userid,
           movie_id: movieId,
           watched_at: new Date().toISOString(),
-          last_position: Math.floor(currentTime),
+          last_position: completed ? 0 : Math.floor(currentTime),
+          watch_percentage: completed ? 100 : Math.floor((currentTime / playerInstanceRef.current.getDuration()) * 100),
           completed: completed
         },
         { onConflict: "user_id,movie_id" }
@@ -85,12 +94,43 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
               if (e.data === window.YT.PlayerState.PAUSED) {
                 await saveWatchHistory(userid, movieId, videoId, e.target.getCurrentTime(), false);
               }
-              // if (e.data === window.YT.PlayerState.BUFFERING) {
-              //   const currentTime = e.target.getCurrentTime();
-              //   if (currentTime > 1) {
-              //     await saveWatchHistory(userid, movieId, videoId, e.target.getCurrentTime(), false);
-              //   }
-              // }
+              if (e.data === window.YT.PlayerState.BUFFERING) {
+                const currentTime = e.target.getCurrentTime();
+                if (currentTime > 1) {
+                  await saveWatchHistory(userid, movieId, videoId, e.target.getCurrentTime(), false);
+                }
+              }
+              if (e.data === window.YT.PlayerState.ENDED) {
+                await saveWatchHistory(userid, movieId, videoId, e.target.getCurrentTime(), true);
+                console.log("Movie is ended Play next movie if playlist or series", playlistItems)
+                // Auto-play next video
+
+                if (playlistItems && playlistItems?.contents?.length > 0) {
+                  // Find current video index
+                  const currentIndex = playlistItems?.contents.findIndex((item: any) => item.id === movieIdRef.current);
+
+                  // Check if there's a next video
+                  if (currentIndex !== -1 && currentIndex < playlistItems.contents.length - 1) {
+                    const nextVideo = playlistItems.contents[currentIndex + 1];
+                    const nextVideoId = getVideoId(nextVideo.video_url);
+
+                    if (nextVideoId && playerInstanceRef.current) {
+                      // Update refs
+                      movieIdRef.current = nextVideo.id;
+                      currentIndexRef.current = currentIndex + 1;
+
+                      // Fetch watch history for next video
+                      const history = await fetchWatchHistory(userid, nextVideo.id);
+
+                      // Load next video
+                      playerInstanceRef.current.loadVideoById({
+                        videoId: nextVideoId,
+                        startSeconds: history?.last_position || 0,
+                      });
+                    }
+                  }
+                }
+              }
             },
           },
         });
@@ -113,10 +153,52 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     };
   }, [videoId, movieId, userid]);
 
+  const playNext = async () => {
+    if (!playlistItems || currentIndexRef.current >= playlistItems.contents.length - 1) return;
+
+    currentIndexRef.current += 1;
+    const nextVideo = playlistItems.contents[currentIndexRef.current];
+    const videoId = getVideoId(nextVideo.video_url);
+
+    if (videoId && playerInstanceRef.current) {
+      // Fetch last paused time for this user & video
+      const lastPosition = await fetchWatchHistory(userid, nextVideo.id)
+      console.log("Last Postion", lastPosition.last_position)
+      playerInstanceRef.current.loadVideoById({
+        videoId,
+        startSeconds: lastPosition?.last_position,
+      });
+    }
+  };
+
+  const playPrevious = async () => {
+    if (!playlistItems || currentIndexRef.current <= 0) return;
+
+    currentIndexRef.current -= 1;
+    const prevVideo = playlistItems.contents[currentIndexRef.current];
+    const videoId = getVideoId(prevVideo.video_url);
+
+    if (videoId && playerInstanceRef.current) {
+      const lastPosition = await fetchWatchHistory(userid, prevVideo.id);
+      playerInstanceRef.current.loadVideoById({
+        videoId,
+        startSeconds: lastPosition?.last_position || 0,
+      });
+    }
+  };
 
 
-
-  return <div ref={playerContainerRef} className="w-full h-full" />;
+  return (
+    <>
+      <div ref={playerContainerRef} className="w-full h-full relative" />
+      <button onClick={playNext} className="absolute top-1/2 right-[55px] transform translate-x-1/2 w-[150px] h-[150px] transparent  -translate-y-1/2 border-3 border-red-700 
+        p-4 rounded-full hover:bg-slate-100 transition-colors 
+      ">Next</button>
+      <button onClick={playPrevious} className="absolute top-1/2 -left-[50px] transform translate-x-1/2 w-[150px] h-[150px] transparent  -translate-y-1/2 border-3 border-red-700 
+        p-4 rounded-full hover:bg-slate-100 transition-colors   
+      ">Previous</button>
+    </>
+  )
 };
 
 export default VideoPlayer;
