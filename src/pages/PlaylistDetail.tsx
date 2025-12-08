@@ -27,7 +27,6 @@ const PlaylistDetail = () => {
   const [historyUpdateKey, setHistoryUpdateKey] = useState(0)
   const [search, setSearch] = useState("")
   const [searchResults, setSearchResults] = useState([])
-  console.log("Content in PlaylistDetail:", user_watch_history)
   const [selectedMovies, setSelectedMovies] = useState<string[]>([]);
   // Function to be passed to the player to trigger a re-fetch of history
   const triggerHistoryRefresh = () => {
@@ -36,7 +35,6 @@ const PlaylistDetail = () => {
   }
 
 
-  console.log("Content in PlaylistDetail:", content)
 
   // Fetch playlist content only when ID changes
   useEffect(() => {
@@ -60,11 +58,12 @@ const PlaylistDetail = () => {
               item?.id
             );
 
+            console.log("History", history)
             return {
               ...item,
-              watch_percentage: history.watch_percentage,
-              last_position: history.last_position,
-              completed: history.completed
+              watch_percentage: history ? history.watch_percentage : 0,
+              last_position: history ? history?.last_position : history,
+              completed: history ? history?.completed : false
             };
           })
         );
@@ -478,6 +477,7 @@ const PlaylistDetail = () => {
             autoPlay: isAutoPlay,
             // id:selectedVideo.id
           }}
+          onWatchHistoryUpdate={triggerHistoryRefresh}
         />
       )}
 
