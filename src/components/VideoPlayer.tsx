@@ -9,6 +9,8 @@ interface VideoPlayerProps {
   playlistItems?: object[];
   movieId: string;
   userid: string;
+  setFinal?: (any) => void;
+
   onWatchHistoryUpdate?: () => void;
 }
 
@@ -16,6 +18,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   videoId,
   playlistItems,
   movieId,
+  setFinal,
   userid
 }) => {
   const playerContainerRef = useRef<HTMLDivElement>(null);
@@ -36,6 +39,17 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     return videoIdMatch ? videoIdMatch[1] : null;
   };
 
+
+  // console.log("final state", final)
+
+  useEffect(() => {
+    async function fetchandSet() {
+      const value = await fetchWatchHistory(userid, movieId);
+      setFinal(value?.last_position)
+
+    }
+    fetchandSet()
+  }, [])
   // Check if navigation buttons should be enabled
   const hasNextVideo = playlistItems?.contents && currentIndex < playlistItems.contents.length - 1;
   const hasPreviousVideo = playlistItems?.contents && currentIndex > 0;
@@ -111,6 +125,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
               if (e.data === window.YT.PlayerState.BUFFERING) {
                 const currentTime = e.target.getCurrentTime();
                 if (currentTime > 1) {
+                  setFinal(e.target.getCurrentTime());
                   await saveWatchHistory(userid, movieId, videoId, e.target.getCurrentTime(), false);
                 }
               }
