@@ -1,26 +1,28 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useImperativeHandle, forwardRef, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
-import { getYouTubeEmbedUrl, fetchWatchHistory, onReadyVideoLoader } from "@/utils/youtubeUtils";
+import { getYouTubeEmbedUrl, onReadyVideoLoader, fetchWatchHistory, saveWatchHistory } from "@/utils/youtubeUtils";
 
 interface VideoPlayerProps {
   videoId: string;
   setActualVideoUrl?: (videoId: string) => void;
   playlistItems?: object[];
   movieId: string;
+  type: string;
   userid: string;
   setFinal?: (any) => void;
-
   onWatchHistoryUpdate?: () => void;
 }
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({
+const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   videoId,
   playlistItems,
+
   movieId,
   setFinal,
+  type,
   userid
-}) => {
+}, ref) => {
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerInstanceRef = useRef<any>(null);
   const movieIdRef = useRef<string>(movieId);
@@ -32,6 +34,13 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const [videoRestricted, setVideoRestricted] = useState(false);
   const countdownRef = useRef<any>(null);
 
+
+  useImperativeHandle(ref, () => ({
+    play: () => playerInstanceRef.current?.playVideo(),
+    pause: () => playerInstanceRef.current?.pauseVideo(),
+    getDuration: () => playerInstanceRef.current?.getDuration(),
+  }));
+
   const getVideoId = (inputVideoId: string) => {
     if (!inputVideoId) return null;
     const embedUrl = getYouTubeEmbedUrl(inputVideoId);
@@ -39,8 +48,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     return videoIdMatch ? videoIdMatch[1] : null;
   };
 
+  console.log("Countdown", countdown, videoEnded, videoRestricted)
 
-  // console.log("final state", final)
 
   useEffect(() => {
     async function fetchandSet() {
@@ -55,23 +64,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const hasPreviousVideo = playlistItems?.contents && currentIndex > 0;
   const hasPlaylist = playlistItems?.contents && playlistItems.contents.length > 1;
 
-  async function saveWatchHistory(userid: string, movieId: string, videoId: string, currentTime: number, completed: boolean) {
-    console.log("Movie Id", movieId);
 
-    await supabase
-      .from("user_watch_history")
-      .upsert(
-        {
-          user_id: userid,
-          movie_id: movieId,
-          watched_at: new Date().toISOString(),
-          last_position: completed ? 0 : Math.floor(currentTime),
-          watch_percentage: completed ? 100 : Math.floor((currentTime / playerInstanceRef.current.getDuration()) * 100),
-          completed: completed
-        },
-        { onConflict: "user_id,movie_id" }
-      );
-  }
+
 
   useEffect(() => {
     if (!videoId || !movieId) return;
@@ -108,25 +102,29 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
             onReady: (e: any) => onReadyVideoLoader(e, movieId, "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"),
             onStateChange: async (e: any) => {
               if (e.data === window.YT.PlayerState.ENDED) {
-                await saveWatchHistory(userid, movieId, videoId, e.target.getCurrentTime(), true);
+
+                await saveWatchHistory(userid, movieId, videoId, e.target.getCurrentTime(), true, playerInstanceRef);
                 console.log("Movie finished. Starting countdown to next video...");
 
                 // Only start countdown if there's a next video
                 if (playlistItems?.contents?.length > 0 && currentIndexRef.current < playlistItems.contents.length - 1) {
+
+                  setVideoEnded(true)
+                  setCountdown(5)
                   startCountdown();
-                  playNext()
+                  // playNext()
                 }
               }
 
               if (e.data === window.YT.PlayerState.PAUSED) {
-                await saveWatchHistory(userid, movieId, videoId, e.target.getCurrentTime(), false);
+                await saveWatchHistory(userid, movieId, videoId, e.target.getCurrentTime(), false, playerInstanceRef);
               }
 
               if (e.data === window.YT.PlayerState.BUFFERING) {
                 const currentTime = e.target.getCurrentTime();
                 if (currentTime > 1) {
                   setFinal(e.target.getCurrentTime());
-                  await saveWatchHistory(userid, movieId, videoId, e.target.getCurrentTime(), false);
+                  await saveWatchHistory(userid, movieId, videoId, e.target.getCurrentTime(), false, playerInstanceRef);
                 }
               }
             },
@@ -164,6 +162,16 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     };
   }, [videoId, movieId, userid]);
 
+  useEffect(() => {
+    return () => {
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+      }
+      setVideoEnded(false);
+    };
+  }, []);
+
+
   const startCountdown = async () => {
     setVideoEnded(true);
     setCountdown(5);
@@ -174,12 +182,17 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           clearInterval(countdownRef.current);
           setVideoEnded(false);
           playNext();
-          return 0;
+          return 5;
         }
         return prev - 1;
       });
     }, 1000);
+
+    // clearInterval(countdownRef.current)
+
   };
+
+  console.log("countdown ref", countdownRef.current)
 
   const playNext = async () => {
     if (!playlistItems?.contents || currentIndexRef.current >= playlistItems.contents.length - 1) {
@@ -259,7 +272,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       )}
 
       {/* Countdown Overlay After Video Ends */}
-      {videoEnded && !videoRestricted && (
+      {videoEnded && countdown > 0 && (
         <div className="absolute inset-0 bg-black/85 backdrop-blur-sm flex items-center justify-center z-40 rounded-lg">
           <div className="text-center flex flex-col items-center bg-black/50 p-12 rounded-2xl">
             <div className="text-white text-8xl font-bold mb-6 animate-pulse">
@@ -295,7 +308,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       </div>
 
       {/* Enhanced Navigation Controls - Only show if playlist exists */}
-      {hasPlaylist && (
+      {type === "series" || hasPlaylist && (
         <>
           {/* Previous Button */}
           <button
@@ -315,6 +328,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           </button>
 
           {/* Next Button */}
+
+
+
           <button
             onClick={playNext}
             disabled={!hasNextVideo}
@@ -331,8 +347,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
             <ChevronRight className={`w-10 h-10 ${hasNextVideo ? '' : 'opacity-50'}`} strokeWidth={2.5} />
           </button>
 
+
+
           {/* Playlist Position Indicator */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 
+          <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 
             bg-black/80 backdrop-blur-md text-white px-6 py-2.5 rounded-full text-base font-semibold shadow-xl border border-white/10">
             <span className="text-blue-400">{currentIndex + 1}</span>
             <span className="text-white/60 mx-2">/</span>
@@ -342,6 +360,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       )}
     </div>
   );
-};
+})
 
 export default VideoPlayer;

@@ -162,6 +162,7 @@ const PlaylistDetail = () => {
   const handleClose = () => {
     setCurrentVideoIndex(null)
     // Refresh history when closing the player, ensuring the progress bar updates immediately
+
     triggerHistoryRefresh();
   }
 
@@ -461,11 +462,13 @@ const PlaylistDetail = () => {
           isOpen={true}
           onClose={handleClose}
           videoUrl={selectedVideo.type === "series" ? selectedVideo : selectedVideo.video_url}
+          type={selectedVideo.type}
           title={`${selectedVideo.title} (${currentVideoIndex! + 1}/${content.length})`}
           userId="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3" // Replace with actual user ID from auth
           onVideoEnd={handleVideoEnd}
           setSelectedVideo={setCurrentVideoIndex}
           // Additional props for playlist navigation
+          // video={selectedVideo}
           movieId={selectedVideo.id}
           hasNext={currentVideoIndex! < content.length - 1}
           hasPrevious={currentVideoIndex! > 0}

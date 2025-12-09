@@ -110,3 +110,22 @@ export async function onReadyVideoLoader(e: any, movieId: string, userId: string
     e.target.playVideo();
   }
 }
+
+
+export async function saveWatchHistory(userid: string, movieId: string, videoId: string, currentTime: number, completed: boolean, ref) {
+  console.log("Movie Id", movieId);
+
+  await supabase
+    .from("user_watch_history")
+    .upsert(
+      {
+        user_id: userid,
+        movie_id: movieId,
+        watched_at: new Date().toISOString(),
+        last_position: completed ? 0 : Math.floor(currentTime),
+        watch_percentage: completed ? 100 : Math.floor((currentTime / ref.current.getDuration()) * 100),
+        completed: completed
+      },
+      { onConflict: "user_id,movie_id" }
+    );
+}
