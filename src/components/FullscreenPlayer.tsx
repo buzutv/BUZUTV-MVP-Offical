@@ -85,6 +85,7 @@ const FullscreenPlayer = ({
   const id = useParams()
   const { fetchSinglePlaylist } = usePlaylists()
   const [playlists, setPlaylists] = useState<any[]>([])
+  const { refetch } = usePlaylists()
   // Sync refs with state
   const parentRef = useRef()
   useEffect(() => {
@@ -268,13 +269,11 @@ const FullscreenPlayer = ({
       }}  >
 
         <div className="w-full x-auto px-4 py-12">
-          <div className="flex justify-center items-center gap-6 mb-4">
+          <div className="flex justify-center items-center gap-4 mb-4">
             <div className="flex items-center justify-center gap-4 cursor-pointer flex-1" onClick={async () => {
               setSelectedVideo(null)
               const value = await saveWatchHistory("03fa9a91-4281-4bd4-9e60-4da2ba72b0f3", movieid, "", final, false, parentRef);
-
               navigate(`/playlists/${playlistRef.current}`)
-
 
             }}>
               <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
@@ -497,32 +496,13 @@ const FullscreenPlayer = ({
           </div>
 
           {/* Related Content Grid */}
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {relatedContent.map((content) => (
               <div
                 key={content.id}
-                className="group cursor-pointer flex-1 basis-[250px] max-w-[300px]"
+                className="cursor-pointer basis-[400px] max-w-[400px]"
                 onClick={() => {
-                  // Save current video position BEFORE switching
-                  // getId(actualVideoUrl)
-                  // const movieId = content.id
-                  // const userId = "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
-
-
                   handleRelatedClick(content.id)
-                  // const player = playerInstanceRef.current;
-                  // const currentMovieId = currentMovieIdRef.current;
-
-                  // if (player && currentMovieId) {
-                  //   try {
-                  //     const currentTime = player.getCurrentTime();
-                  //     // Explicitly save with the current movie ID
-                  //     await saveWatchHistory(currentTime, false, currentMovieId);
-                  //     console.log(`Saved position ${currentTime} for movie ${currentMovieId} before switching`);
-                  //   } catch (e) {
-                  //     console.error("Failed to save position before switch:", e);
-                  //   }
-                  // }
                   setMovieid(content.id)
                   // Now switch to new content
                   setActualVideoUrl(content.video_url);
@@ -530,8 +510,11 @@ const FullscreenPlayer = ({
                   setVideoEnded(false);
                   setPlaylists([])
                 }}
+
+
+
               >
-                <div className="relative aspect-[2/3] rounded-lg overflow-hidden mb-3 bg-white/5 h-[50%] w-full">
+                <div className="relative aspect-square rounded-lg overflow-hidden bg-white/5 h-[50%] w-full">
                   <img
                     src={content.poster_url}
                     alt={content.content_title || content.title}

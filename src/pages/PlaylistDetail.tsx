@@ -28,6 +28,7 @@ const PlaylistDetail = () => {
   const [search, setSearch] = useState("")
   const [searchResults, setSearchResults] = useState([])
   const [selectedMovies, setSelectedMovies] = useState<string[]>([]);
+  // const { refetch } = usePlaylists()
   // Function to be passed to the player to trigger a re-fetch of history
   const triggerHistoryRefresh = () => {
     console.log("Watch history refresh triggered. Incrementing key.");
@@ -35,11 +36,11 @@ const PlaylistDetail = () => {
   }
 
 
-
   // Fetch playlist content only when ID changes
   useEffect(() => {
     if (id) fetchSinglePlaylist(id)
-  }, [id])
+    refetch()
+  }, [id, user_watch_history, setUserWatchHistory])
 
   // Fetch watch history when content loads OR when historyUpdateKey changes
   useEffect(() => {
@@ -80,7 +81,7 @@ const PlaylistDetail = () => {
 
   // Get the currently selected video
   const selectedVideo = currentVideoIndex !== null ? content[currentVideoIndex] : null
-  console.log("User Watch History in PlaylistDetail:", JSON.stringify(selectedVideo?.seasons_data))
+  // console.log("User Watch History in PlaylistDetail:", JSON.stringify(selectedVideo?.seasons_data))
 
   const handleSearch = async (e) => {
     const value = e.target.value
@@ -243,7 +244,7 @@ const PlaylistDetail = () => {
         }}
       ></div>
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4 cursor-pointer" onClick={() => navigate(-1)}>
+        <div className="flex items-center gap-4 cursor-pointer" onClick={() => navigate('/playlists')}>
           <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
