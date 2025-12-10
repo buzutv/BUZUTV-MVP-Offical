@@ -1,0 +1,2564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ethiopian Movies Platform - YouTube API</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #1a1a1a;
+            color: white;
+        }
+        .movies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .movie-card {
+            background: #333;
+            padding: 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+        }
+        .movie-card:hover {
+            transform: translateY(-5px);
+            background: #444;
+            border-color: #007bff;
+            box-shadow: 0 10px 30px rgba(0,123,255,0.3);
+        }
+        .movie-title {
+            font-size: 18px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .movie-genre {
+            color: #888;
+            font-size: 14px;
+            background: #555;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .movie-date {
+            font-size: 12px;
+            color: #666;
+        }
+        .embed-status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #888;
+        }
+        .embed-status.verified {
+            background: #28a745;
+            box-shadow: 0 0 8px rgba(40, 167, 69, 0.6);
+        }
+        .embed-status.restricted {
+            background: #dc3545;
+            box-shadow: 0 0 8px rgba(220, 53, 69, 0.6);
+        }
+        .embed-status.warning {
+            background: #ffc107;
+            box-shadow: 0 0 8px rgba(255, 193, 7, 0.6);
+        }
+        .embed-status.loading {
+            background: #6c757d;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .modal-content {
+            position: relative;
+            margin: 5% auto;
+            width: 90%;
+            max-width: 900px;
+            background: #2a2a2a;
+            border-radius: 15px;
+            padding: 20px;
+        }
+        .close {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            color: #fff;
+            font-size: 30px;
+            cursor: pointer;
+            z-index: 1001;
+            background: rgba(255,255,255,0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .close:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%;
+            margin-bottom: 20px;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .video-player {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .video-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 18px;
+            z-index: 1;
+            text-align: center;
+        }
+        .video-error {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            background: linear-gradient(45deg, #dc3545, #c82333);
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        .fallback-container {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(45deg, #ff4444, #ff6b6b);
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .fallback-link {
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: bold;
+            display: inline-block;
+            padding: 15px 30px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 25px;
+            transition: all 0.3s;
+        }
+        .fallback-link:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+        .genre-filter {
+            margin-bottom: 20px;
+        }
+        .genre-button {
+            background: #555;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        .genre-button:hover {
+            background: #666;
+            transform: translateY(-2px);
+        }
+        .genre-button.active {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            box-shadow: 0 5px 15px rgba(0,123,255,0.4);
+        }
+        .status {
+            margin: 10px 0;
+            padding: 15px;
+            background: #333;
+            border-radius: 10px;
+            border-left: 5px solid #28a745;
+        }
+        .error-status {
+            border-left-color: #dc3545;
+        }
+        .warning-status {
+            border-left-color: #ffc107;
+        }
+        .debug-info {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #444;
+        }
+        .test-button {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 10px 5px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40,167,69,0.4);
+        }
+        .api-button {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+        }
+        .api-button:hover {
+            box-shadow: 0 5px 15px rgba(0,123,255,0.4);
+        }
+        .play-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .no-movies {
+            text-align: center;
+            padding: 60px 20px;
+            background: #333;
+            border-radius: 15px;
+            border: 2px dashed #666;
+        }
+        .setup-warning {
+            background: #ff6b6b;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+        .setup-warning code {
+            background: rgba(0,0,0,0.3);
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        .api-info {
+            background: #17a2b8;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .error-details {
+            background: #2a2a2a;
+            border: 1px solid #dc3545;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .player-controls {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        .control-button {
+            background: #555;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+        .control-button:hover {
+            background: #666;
+        }
+        .control-button:disabled {
+            background: #333;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+	.recommendation-section {
+	    background: linear-gradient(135deg, #28a745, #20c997);
+	    padding: 25px;
+	    border-radius: 15px;
+	    margin: 25px 0;
+	    border: 2px solid rgba(40,167,69,0.3);
+	}
+
+	.recommendation-header {
+	    display: flex;
+	    justify-content: space-between;
+	    align-items: center;
+	    margin-bottom: 20px;
+	}
+
+	.recommendation-type {
+	    background: rgba(255,255,255,0.2);
+	    padding: 6px 12px;
+	    border-radius: 20px;
+	    font-size: 12px;
+	    font-weight: bold;
+	}
+
+	.movie-card.recommended {
+	    border: 2px solid #28a745;
+	    box-shadow: 0 5px 15px rgba(40,167,69,0.3);
+	    background: linear-gradient(135deg, #333, #2a5234);
+	}
+
+	.movie-card.recommended::before {
+	    content: "⭐ RECOMMENDED";
+	    position: absolute;
+	    top: -8px;
+	    left: 10px;
+	    background: linear-gradient(45deg, #28a745, #20c997);
+	    color: white;
+	    padding: 4px 12px;
+	    border-radius: 12px;
+	    font-size: 10px;
+	    font-weight: bold;
+	    z-index: 1;
+	}
+
+	.recommendation-reason {
+	    font-size: 12px;
+	    color: #ccc;
+	    margin-top: 8px;
+	    font-style: italic;
+	}
+
+	.dismiss-recommendation {
+	    position: absolute;
+	    top: 8px;
+	    right: 8px;
+	    background: rgba(220,53,69,0.8);
+	    color: white;
+	    border: none;
+	    width: 20px;
+	    height: 20px;
+	    border-radius: 50%;
+	    cursor: pointer;
+	    font-size: 12px;
+	    display: none;
+	}
+
+	.movie-card.recommended:hover .dismiss-recommendation {
+	    display: block;
+	}
+    </style>
+</head>
+<body>
+    <h1>🎬 Ethiopian Movies Platform - YouTube API Integration</h1>
+    
+    <div class="status" id="status">Initializing YouTube IFrame API...</div>
+    <!-- Add this after the status div -->
+    <div id="auth-container" class="api-info" style="display: none;">
+    <div id="signed-out-view">
+        <h3>Sign in to get personalized recommendations</h3>
+        <div style="margin: 15px 0;">
+            <input type="email" id="email" placeholder="Email" style="width: 250px; padding: 10px; margin: 5px; border-radius: 5px; border: 1px solid #555; background: #333; color: white;">
+            <br>
+            <input type="password" id="password" placeholder="Password (min 6 chars)" style="width: 250px; padding: 10px; margin: 5px; border-radius: 5px; border: 1px solid #555; background: #333; color: white;">
+            <br>
+            <button class="test-button" onclick="signInWithEmail()">Sign In</button>
+            <button class="test-button" onclick="signUpWithEmail()">Sign Up</button>
+        </div>
+    </div>
+    <div id="signed-in-view" style="display: none;">
+        <h3>Welcome, <span id="user-name"></span>!</h3>
+        <button class="test-button" onclick="signOut()">Sign Out</button>
+    </div>
+  </div>
+    <div id="setup-warning" style="display:none;" class="setup-warning">
+        ⚠️ Please replace <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> in the code with your actual Supabase credentials!
+    </div>
+    
+    <div class="api-info">
+        <strong>🔧 YouTube IFrame API Features:</strong><br>
+        • Better error handling and event monitoring<br>
+        • Detailed embed restriction detection<br>
+        • Player state tracking and controls<br>
+        • Enhanced debugging information
+    </div>
+    
+    <div>
+        <button class="test-button" onclick="testConnection()">Test Connection</button>
+        <button class="test-button" onclick="testMoviesTable()">Test Movies Table</button>
+        <button class="test-button" onclick="addSampleMovies()">Add Sample Movies</button>
+        <button class="test-button api-button" onclick="testYouTubeAPI()">Test YouTube API</button>
+        <button class="test-button api-button" onclick="testEmbedRestrictions()">Test All Videos</button>
+        <button class="test-button" onclick="clearDebug()">Clear Debug</button>
+    </div>
+    
+    <div class="debug-info" id="debug-info">Debug info will appear here...<br>YouTube API Status: Loading...<br><br></div>
+    
+    <div class="genre-filter">
+        <button class="genre-button active" onclick="filterMovies('all')">All Movies</button>
+        <button class="genre-button" onclick="filterMovies('Comedy')">Comedy</button>
+        <button class="genre-button" onclick="filterMovies('Action')">Action</button>
+        <button class="genre-button" onclick="filterMovies('Drama')">Drama</button>
+    </div>
+    <!-- Add this after your genre filter -->
+    <div style="margin: 20px 0;">
+	<button class="test-button" onclick="showMyPlaylists()">📁 My Playlists</button>
+	<button class="test-button" onclick="generateRecommendations()">🎯 Get My Recommendations</button>
+	<button class="test-button" onclick="showContinueWatching()">📺 Continue Watching</button>
+	<button class="test-button" onclick="showTrendingMovies()">🔥 Trending Now</button>
+    </div>
+	<div id="playlists-container" style="display: none;">
+    <!-- Playlists will load here -->
+    </div>
+    <div id="recommendations-container" style="display: none;">
+    <!-- Recommendations will load here -->
+    </div>
+    <!-- Add this after the recommendations-container -->
+    <div id="continue-watching-container" style="display: none;">
+    <!-- Continue watching will load here -->
+    </div>	
+    <div class="movies-grid" id="movies-container">
+        <!-- Movies will be loaded here -->
+    </div>
+    
+    <!-- Video Modal -->
+    <div id="video-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeVideo()">&times;</span>
+            <div id="modal-body">
+                <!-- Content will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Load YouTube IFrame API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+    
+    <script>
+        // ⚠️ REPLACE THESE WITH YOUR ACTUAL SUPABASE CREDENTIALS ⚠️
+        const SUPABASE_URL = 'https://iywnhsljvxmeygdgbekd.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5d25oc2xqdnhtZXlnZGdiZWtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3NzQ0OTEsImV4cCI6MjA3MzM1MDQ5MX0.Qoxiu59tKKjkMh5m-M6qJppiaAnERrMX3rWtbYVMeq4';
+        
+        let supabase;
+        let allMovies = [];
+        let currentGenre = 'all';
+        let embedCache = {};
+        let youTubeAPIReady = false;
+        let currentPlayer = null;
+	let currentUser = null;
+	let isAuthenticated = false;
+        
+
+	// Initialize authentication state
+	async function initAuth() {
+	    try {
+		// Get current session
+		const { data: { session }, error } = await supabase.auth.getSession();
+		
+		if (error) {
+		    log('Auth error:', error);
+		    return;
+		}
+		
+		if (session) {
+		    currentUser = session.user;
+		    isAuthenticated = true;
+		    updateAuthUI(true);
+		    await createUserProfile(currentUser);
+		} else {
+		    updateAuthUI(false);
+		}
+		
+		// Listen for auth changes
+		supabase.auth.onAuthStateChange(async (event, session) => {
+		    log(`Auth event: ${event}`);
+		    
+		    if (session) {
+			currentUser = session.user;
+			isAuthenticated = true;
+			updateAuthUI(true);
+			await createUserProfile(currentUser);
+			await migrateAnonymousData(currentUser.id);
+		    } else {
+			currentUser = null;
+			isAuthenticated = false;
+			updateAuthUI(false);
+		    }
+		});
+		
+	    } catch (error) {
+		log('Auth initialization error:', error);
+	    }
+	}
+
+	// Update authentication UI
+	function updateAuthUI(signedIn) {
+	    const authContainer = document.getElementById('auth-container');
+	    const signedInView = document.getElementById('signed-in-view');
+	    const signedOutView = document.getElementById('signed-out-view');
+	    const userName = document.getElementById('user-name');
+	    
+	    authContainer.style.display = 'block';
+	    
+	    if (signedIn && currentUser) {
+		signedInView.style.display = 'block';
+		signedOutView.style.display = 'none';
+		userName.textContent = currentUser.user_metadata.full_name || currentUser.email;
+		
+		updateStatus(`Welcome ${currentUser.user_metadata.full_name || currentUser.email}!`, 'success');
+	    } else {
+		signedInView.style.display = 'none';
+		signedOutView.style.display = 'block';
+	    }
+	}
+
+	// Sign in with Google
+	async function signInWithGoogle() {
+	    try {
+		const { data, error } = await supabase.auth.signInWithOAuth({
+		    provider: 'google',
+		    options: {
+			redirectTo: window.location.origin
+		    }
+		});
+		
+		if (error) throw error;
+		
+		log('Google sign-in initiated');
+		
+	    } catch (error) {
+		log('Sign-in error:', error);
+		updateStatus('Sign-in failed: ' + error.message, 'error');
+	    }
+	}
+
+	// Sign out
+	async function signOut() {
+	    try {
+		const { error } = await supabase.auth.signOut();
+		if (error) throw error;
+		
+		log('User signed out');
+		updateStatus('Signed out successfully', 'success');
+		
+	    } catch (error) {
+		log('Sign-out error:', error);
+	    }
+	}
+
+	// Create user profile on first sign-in
+	async function createUserProfile(user) {
+	    try {
+		const { data: existingProfile } = await supabase
+		    .from('user_profiles')
+		    .select('*')
+		    .eq('id', user.id)
+		    .single();
+		
+		if (!existingProfile) {
+		    const { error } = await supabase
+			.from('user_profiles')
+			.insert([{
+			    id: user.id,
+			    username: user.user_metadata.full_name?.replace(/\s+/g, '').toLowerCase(),
+			    full_name: user.user_metadata.full_name,
+			    avatar_url: user.user_metadata.avatar_url
+			}]);
+		    
+		    if (error) throw error;
+		    log('User profile created');
+		}
+		
+	    } catch (error) {
+		log('Error creating user profile:', error);
+	    }
+	}
+
+	// Migrate anonymous watch data to authenticated user
+	async function migrateAnonymousData(userId) {
+	    try {
+		// Get anonymous watch progress
+		const { data: anonymousProgress } = await supabase
+		    .from('watch_progress')
+		    .select('*')
+		    .eq('user_session', 'anonymous');
+		
+		if (anonymousProgress?.length > 0) {
+		    // Convert to user watch history
+		    const watchHistoryData = anonymousProgress.map(progress => ({
+			user_id: userId,
+			movie_id: progress.movie_id,
+			watch_duration: progress.current_time_position || 0,
+			total_duration: progress.duration || 1,
+			last_position: progress.current_time_position || 0,
+			watched_at: progress.updated_at || progress.created_at
+		    }));
+		    
+		    const { error } = await supabase
+			.from('user_watch_history')
+			.insert(watchHistoryData);
+		    
+		    if (error) {
+			log('Migration error (non-critical):', error);
+		    } else {
+			// Clean up anonymous data only if migration succeeded
+			await supabase
+			    .from('watch_progress')
+			    .delete()
+			    .eq('user_session', 'anonymous');
+			
+			log(`Migrated ${anonymousProgress.length} watch records to user account`);
+		    }
+		}
+		
+	    } catch (error) {
+		log('Error migrating anonymous data:', error);
+	    }
+	}
+
+	async function signInWithEmail() {
+	    const email = document.getElementById('email').value.trim();
+	    const password = document.getElementById('password').value;
+	    
+	    if (!email || !password) {
+		alert('Please enter both email and password');
+		return;
+	    }
+	    
+	    try {
+		updateStatus('Signing in...', 'warning');
+		
+		const { data, error } = await supabase.auth.signInWithPassword({
+		    email: email,
+		    password: password
+		});
+		
+		if (error) throw error;
+		
+		log('User signed in successfully:', { email: data.user.email });
+		updateStatus('Signed in successfully!', 'success');
+		
+		// Clear form
+		document.getElementById('email').value = '';
+		document.getElementById('password').value = '';
+		
+	    } catch (error) {
+		log('Sign in error:', error);
+		updateStatus('Sign in failed: ' + error.message, 'error');
+		alert('Sign in failed: ' + error.message);
+	    }
+	}
+
+	async function signUpWithEmail() {
+	    const email = document.getElementById('email').value.trim();
+	    const password = document.getElementById('password').value;
+	    
+	    if (!email || !password) {
+		alert('Please enter both email and password');
+		return;
+	    }
+	    
+	    if (password.length < 6) {
+		alert('Password must be at least 6 characters');
+		return;
+	    }
+	    
+	    try {
+		updateStatus('Creating account...', 'warning');
+		
+		const { data, error } = await supabase.auth.signUp({
+		    email: email,
+		    password: password,
+		    options: {
+			data: {
+			    full_name: email.split('@')[0]
+			}
+		    }
+		});
+		
+		if (error) throw error;
+		
+		log('User signed up successfully:', { email: data.user?.email });
+		
+		updateStatus('Account created successfully!', 'success');
+		
+		// Clear form
+		document.getElementById('email').value = '';
+		document.getElementById('password').value = '';
+		
+	    } catch (error) {
+		log('Sign up error:', error);
+		updateStatus('Sign up failed: ' + error.message, 'error');
+		alert('Sign up failed: ' + error.message);
+	    }
+	}
+        // YouTube API ready callback
+        function onYouTubeIframeAPIReady() {
+            youTubeAPIReady = true;
+            log('✅ YouTube IFrame API loaded and ready!');
+            updateDebugStatus('YouTube API Status: Ready ✅');
+        }
+        
+        function log(message, data = null) {
+            const debugDiv = document.getElementById('debug-info');
+            const timestamp = new Date().toLocaleTimeString();
+            let logEntry = `[${timestamp}] ${message}`;
+            if (data) {
+                logEntry += '\n' + JSON.stringify(data, null, 2);
+            }
+            debugDiv.innerHTML += logEntry + '\n\n';
+            debugDiv.scrollTop = debugDiv.scrollHeight;
+            console.log(message, data);
+        }
+        
+        function updateDebugStatus(message) {
+            const debugDiv = document.getElementById('debug-info');
+            const lines = debugDiv.innerHTML.split('\n');
+            lines[0] = message + '<br>';
+            debugDiv.innerHTML = lines.join('\n');
+        }
+        
+        function clearDebug() {
+            document.getElementById('debug-info').innerHTML = 'Debug cleared...<br>YouTube API Status: ' + (youTubeAPIReady ? 'Ready ✅' : 'Loading...') + '<br><br>';
+        }
+        
+        function updateStatus(message, type = 'success') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = message;
+            statusDiv.className = 'status';
+            if (type === 'error') statusDiv.className += ' error-status';
+            if (type === 'warning') statusDiv.className += ' warning-status';
+        }
+        
+        // Test YouTube API functionality
+        function testYouTubeAPI() {
+            log('🧪 Testing YouTube IFrame API...');
+            
+            if (!youTubeAPIReady) {
+                log('❌ YouTube API not ready yet');
+                updateStatus('❌ YouTube API not loaded', 'error');
+                return;
+            }
+            
+            log('✅ YouTube API is ready for use');
+            log('🔧 API Features Available:', {
+                'Player Creation': 'Yes',
+                'Event Handling': 'Yes',
+                'Error Detection': 'Yes',
+                'State Monitoring': 'Yes'
+            });
+            
+            updateStatus('✅ YouTube API test passed!', 'success');
+        }
+        
+        // Enhanced embed testing with YouTube API
+        async function checkVideoWithAPI(videoId) {
+            return new Promise((resolve) => {
+                if (!youTubeAPIReady) {
+                    log(`⚠️ YouTube API not ready for ${videoId}`);
+                    resolve({ embeddable: false, error: 'API_NOT_READY' });
+                    return;
+                }
+                
+                log(`🔍 Testing video ${videoId} with YouTube API...`);
+                
+                // Create a temporary hidden container
+                const testContainer = document.createElement('div');
+                testContainer.style.width = '1px';
+                testContainer.style.height = '1px';
+                testContainer.style.opacity = '0';
+                testContainer.style.position = 'absolute';
+                testContainer.style.left = '-9999px';
+                testContainer.id = `test-player-${videoId}`;
+                document.body.appendChild(testContainer);
+                
+                let resolved = false;
+                const timeout = setTimeout(() => {
+                    if (!resolved) {
+                        resolved = true;
+                        cleanup();
+                        resolve({ embeddable: false, error: 'TIMEOUT' });
+                    }
+                }, 10000); // 10 second timeout
+                
+                function cleanup() {
+                    clearTimeout(timeout);
+                    if (testContainer && testContainer.parentNode) {
+                        testContainer.parentNode.removeChild(testContainer);
+                    }
+                }
+                
+                try {
+                    const player = new YT.Player(testContainer.id, {
+                        height: '1',
+                        width: '1',
+                        videoId: videoId,
+                        playerVars: {
+                            autoplay: 0,
+                            controls: 0,
+                            modestbranding: 1,
+                            rel: 0
+                        },
+                        events: {
+                            onReady: (event) => {
+                                if (!resolved) {
+                                    resolved = true;
+                                    log(`✅ Video ${videoId} - Player ready, video is embeddable`);
+                                    cleanup();
+                                    resolve({ 
+                                        embeddable: true, 
+                                        error: null,
+                                        playerState: 'READY'
+                                    });
+                                }
+                            },
+                            onError: (event) => {
+                                if (!resolved) {
+                                    resolved = true;
+                                    const errorCode = event.data;
+                                    let errorType = 'UNKNOWN';
+                                    let errorMessage = 'Unknown error';
+                                    
+                                    switch (errorCode) {
+                                        case 2:
+                                            errorType = 'INVALID_PARAMETER';
+                                            errorMessage = 'Invalid video ID';
+                                            break;
+                                        case 5:
+                                            errorType = 'HTML5_ERROR';
+                                            errorMessage = 'HTML5 player error';
+                                            break;
+                                        case 100:
+                                            errorType = 'VIDEO_NOT_FOUND';
+                                            errorMessage = 'Video not found or private';
+                                            break;
+                                        case 101:
+                                        case 150:
+                                            errorType = 'EMBED_RESTRICTED';
+                                            errorMessage = 'Embedding not allowed by video owner';
+                                            break;
+                                    }
+                                    
+                                    log(`❌ Video ${videoId} - Error ${errorCode}: ${errorMessage}`);
+                                    cleanup();
+                                    resolve({ 
+                                        embeddable: false, 
+                                        error: errorType,
+                                        errorCode: errorCode,
+                                        errorMessage: errorMessage
+                                    });
+                                }
+                            },
+                            onStateChange: (event) => {
+                                // Additional state monitoring if needed
+                                const state = event.data;
+                                const stateNames = {
+                                    '-1': 'UNSTARTED',
+                                    '0': 'ENDED',
+                                    '1': 'PLAYING',
+                                    '2': 'PAUSED',
+                                    '3': 'BUFFERING',
+                                    '5': 'CUED'
+                                };
+                                log(`📺 Video ${videoId} state: ${stateNames[state] || state}`);
+                            }
+                        }
+                    });
+                } catch (error) {
+                    if (!resolved) {
+                        resolved = true;
+                        log(`❌ Video ${videoId} - Exception:`, error);
+                        cleanup();
+                        resolve({ 
+                            embeddable: false, 
+                            error: 'EXCEPTION',
+                            errorMessage: error.message
+                        });
+                    }
+                }
+            });
+        }
+        
+        // Test embed restrictions for all videos
+        async function testEmbedRestrictions() {
+            if (!youTubeAPIReady) {
+                log('❌ YouTube API not ready for testing');
+                updateStatus('❌ YouTube API not ready', 'error');
+                return;
+            }
+            
+            log('🧪 Testing embed restrictions using YouTube API...');
+            
+            const testVideos = [
+                { id: 'vLgX0t9otiI', title: 'Working Video 1' },
+                { id: 'qGMHPfaDDbw', title: 'Working Video 2' },
+                { id: 'EFxMJLQ6d6E', title: 'Restricted Video (Yewendoch Guday)' },
+                { id: 'invalid123', title: 'Invalid Video ID' }
+            ];
+            
+            updateStatus('🔍 Testing videos...', 'warning');
+            
+            for (const video of testVideos) {
+                const result = await checkVideoWithAPI(video.id);
+                embedCache[video.id] = result;
+                
+                log(`📊 ${video.title} (${video.id}):`, {
+                    embeddable: result.embeddable,
+                    error: result.error,
+                    errorCode: result.errorCode,
+                    errorMessage: result.errorMessage
+                });
+            }
+            
+            updateStatus('✅ Embed testing complete - check debug log', 'success');
+            
+            // Update movie card statuses
+            updateMovieStatuses();
+        }
+        
+        // Update status indicators on movie cards
+        function updateMovieStatuses() {
+            allMovies.forEach(movie => {
+                const videoId = extractYouTubeId(movie.youtube_url);
+                if (videoId && embedCache[videoId]) {
+                    const statusEl = document.getElementById(`status-${videoId}`);
+                    if (statusEl) {
+                        const result = embedCache[videoId];
+                        statusEl.className = result.embeddable ? 'embed-status verified' : 'embed-status restricted';
+                    }
+                }
+            });
+        }
+        
+        // Initialize the app
+        async function initApp() {
+            try {
+                log('🚀 Initializing app...');
+                
+                // Check if credentials are set
+                if (SUPABASE_URL.includes('YOUR-PROJECT') || SUPABASE_ANON_KEY.includes('YOUR-ANON')) {
+                    document.getElementById('setup-warning').style.display = 'block';
+                    throw new Error('Please replace SUPABASE_URL and SUPABASE_ANON_KEY with your actual credentials!');
+                }
+                
+                log('📡 Creating Supabase client...');
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                log('✅ Supabase client created');
+              	await initAuth();  
+                await loadMovies();
+                updateStatus('✅ Connected! Movies loaded successfully.', 'success');
+                log('🎉 App initialization complete!');
+                
+                // Wait for YouTube API if not ready
+                if (!youTubeAPIReady) {
+                    updateStatus('⏳ Waiting for YouTube API...', 'warning');
+                }
+                
+            } catch (error) {
+                updateStatus('❌ Error: ' + error.message, 'error');
+                log('💥 Initialization error:', error);
+            }
+        }
+        
+        // Test connection to Supabase
+        async function testConnection() {
+            try {
+                log('🧪 Testing Supabase connection...');
+                
+                if (!supabase) {
+                    if (SUPABASE_URL.includes('YOUR-PROJECT')) {
+                        throw new Error('Please set your credentials first!');
+                    }
+                    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                }
+                
+                const { data, error } = await supabase.from('movies').select('count');
+                
+                if (error) throw error;
+                
+                log('✅ Connection test successful!', { response: data });
+                updateStatus('✅ Connection test passed!', 'success');
+                
+            } catch (error) {
+                log('❌ Connection test failed:', error);
+                updateStatus('❌ Connection test failed: ' + error.message, 'error');
+            }
+        }
+        
+        // Test movies table structure
+        async function testMoviesTable() {
+            try {
+                log('🧪 Testing movies table...');
+                
+                if (!supabase) {
+                    throw new Error('Supabase not initialized');
+                }
+                
+                const { data, error } = await supabase
+                    .from('movies')
+                    .select('*')
+                    .limit(1);
+                
+                if (error) throw error;
+                
+                log('✅ Movies table test successful!', { 
+                    recordCount: data ? data.length : 0,
+                    sampleRecord: data && data[0] ? data[0] : 'No records found',
+                    expectedFields: ['created_at', 'title', 'genre', 'youtube_url']
+                });
+                
+                updateStatus('✅ Table structure verified!', 'success');
+                
+            } catch (error) {
+                log('❌ Movies table test failed:', error);
+                updateStatus('❌ Table test failed: ' + error.message, 'error');
+            }
+        }
+        
+        // Add sample movies with different videos
+        async function addSampleMovies() {
+            try {
+                log('🧪 Adding sample movies...');
+                
+                if (!supabase) {
+                    throw new Error('Supabase not initialized');
+                }
+                
+                const sampleMovies = [
+                    {
+                        title: 'Sample Movie 1 (Should Work)',
+                        genre: 'Drama',
+                        youtube_url: 'https://www.youtube.com/watch?v=vLgX0t9otiI'
+                    },
+                    {
+                        title: 'Sample Movie 2 (Should Work)',
+                        genre: 'Comedy',
+                        youtube_url: 'https://youtu.be/qGMHPfaDDbw'
+                    },
+                    {
+                        title: 'Yewendoch Guday 1 (May Be Restricted)',
+                        genre: 'Comedy',
+                        youtube_url: 'https://youtu.be/EFxMJLQ6d6E'
+                    },
+                    {
+                        title: 'Invalid Video Test',
+                        genre: 'Action',
+                        youtube_url: 'https://youtu.be/invalid123'
+                    }
+                ];
+                
+                const { data, error } = await supabase
+                    .from('movies')
+                    .insert(sampleMovies)
+                    .select();
+                
+                if (error) throw error;
+                
+                log('✅ Sample movies added successfully!', { movies: data });
+                await loadMovies();
+                updateStatus('✅ Sample movies added!', 'success');
+                
+            } catch (error) {
+                log('❌ Failed to add sample movies:', error);
+                updateStatus('❌ Failed to add movies: ' + error.message, 'error');
+            }
+        }
+        
+        // Load movies from Supabase
+	// Replace your loadMovies function with this:
+	async function loadMovies() {
+	    try {
+		log('📥 Loading movies from database...');
+		
+		if (!supabase) {
+		    throw new Error('Supabase not initialized');
+		}
+		
+		const { data: movies, error } = await supabase
+		    .from('movies')
+		    .select('*')
+		    .order('created_at', { ascending: false });
+		
+		if (error) {
+		    throw new Error('Failed to load movies: ' + error.message);
+		}
+		
+		allMovies = movies || [];
+		
+		// Load watch progress for all movies
+		const watchProgressData = await loadAllWatchProgress();
+		
+		log('📊 Movies loaded:', {
+		    count: allMovies.length,
+		    progressRecords: Object.keys(watchProgressData).length
+		});
+		
+		displayMovies(allMovies, watchProgressData);
+		
+		// Auto-test embed status if YouTube API is ready
+		if (youTubeAPIReady && allMovies.length > 0) {
+		    setTimeout(() => {
+			log('🔄 Auto-testing embed status for loaded movies...');
+			testLoadedMovies();
+		    }, 1000);
+		}
+		
+	    } catch (error) {
+		log('💥 Error loading movies:', error);
+		throw error;
+	    }
+	}
+        // Test embed status for currently loaded movies
+        async function testLoadedMovies() {
+            for (const movie of allMovies) {
+                const videoId = extractYouTubeId(movie.youtube_url);
+                if (videoId && !embedCache[videoId]) {
+                    const statusEl = document.getElementById(`status-${videoId}`);
+                    if (statusEl) {
+                        statusEl.className = 'embed-status loading';
+                    }
+                    
+                    const result = await checkVideoWithAPI(videoId);
+                    embedCache[videoId] = result;
+                    
+                    if (statusEl) {
+                        statusEl.className = result.embeddable ? 'embed-status verified' : 'embed-status restricted';
+                    }
+                }
+            }
+        }
+	// Show add to playlist modal
+	async function showAddToPlaylist(movieId, movieTitle) {
+	    // Load user's playlists
+	    const { data: playlists, error } = await supabase
+		.from('playlists')
+		.select('*')
+		.eq('created_by', 'anonymous')
+		.order('created_at', { ascending: false });
+	    
+	    const modalBody = document.getElementById('modal-body');
+	    const playlistOptions = playlists?.map(p => 
+		`<option value="${p.id}">${p.title}</option>`
+	    ).join('') || '';
+	    
+	    modalBody.innerHTML = `
+		<h2>Add "${movieTitle}" to Playlist</h2>
+		<div style="margin: 20px 0;">
+		    <select id="playlist-select" style="width: 100%; padding: 10px; margin: 10px 0;">
+			<option value="">Select a playlist...</option>
+			${playlistOptions}
+			<option value="new">+ Create New Playlist</option>
+		    </select>
+		    <input type="text" id="new-playlist-name" placeholder="New playlist name..." 
+			   style="width: 100%; padding: 10px; margin: 10px 0; display: none;">
+		    <button onclick="addToPlaylist(${movieId})" 
+			    style="background: #28a745; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer;">
+			Add to Playlist
+		    </button>
+		</div>
+	    `;
+	    
+	    document.getElementById('video-modal').style.display = 'block';
+	    
+	    // Show/hide new playlist input
+	    document.getElementById('playlist-select').addEventListener('change', (e) => {
+		const newInput = document.getElementById('new-playlist-name');
+		newInput.style.display = e.target.value === 'new' ? 'block' : 'none';
+	    });
+	}
+
+	// Add movie to playlist
+	async function addToPlaylist(movieId) {
+	    const select = document.getElementById('playlist-select');
+	    const newNameInput = document.getElementById('new-playlist-name');
+	    
+	    let playlistId = select.value;
+	    
+	    // Create new playlist if needed
+	    if (playlistId === 'new') {
+		const playlistName = newNameInput.value.trim();
+		if (!playlistName) {
+		    alert('Please enter a playlist name');
+		    return;
+		}
+		
+		const { data, error } = await supabase
+		    .from('playlists')
+		    .insert([{ title: playlistName, created_by: 'anonymous' }])
+		    .select()
+		    .single();
+		    
+		if (error) {
+		    alert('Error creating playlist');
+		    return;
+		}
+		
+		playlistId = data.id;
+	    }
+	    
+	    if (!playlistId) {
+		alert('Please select a playlist');
+		return;
+	    }
+	    
+	    // Get next position in playlist
+	    const { data: lastItem } = await supabase
+		.from('playlist_items')
+		.select('position')
+		.eq('playlist_id', playlistId)
+		.order('position', { ascending: false })
+		.limit(1)
+		.single();
+	    
+	    const nextPosition = (lastItem?.position || 0) + 1;
+	    
+	    // Add to playlist
+	    const { error } = await supabase
+		.from('playlist_items')
+		.insert([{
+		    playlist_id: playlistId,
+		    movie_id: movieId,
+		    position: nextPosition
+		}]);
+	    
+	    if (error) {
+		alert('Error adding to playlist');
+		return;
+	    }
+	    
+	    alert('Added to playlist!');
+	    closeVideo();
+	}
+        // Show user's playlists
+	async function showMyPlaylists() {
+	    const container = document.getElementById('playlists-container');
+	    
+	    const { data: playlists, error } = await supabase
+		.from('playlists')
+		.select(`
+		    *,
+		    playlist_items(
+			id,
+			position,
+			movies(id, title, genre, youtube_url)
+		    )
+		`)
+		.eq('created_by', 'anonymous')
+		.order('created_at', { ascending: false });
+	    
+	    if (!playlists?.length) {
+		container.innerHTML = '<p>No playlists yet. Add movies to create your first playlist!</p>';
+		container.style.display = 'block';
+		return;
+	    }
+	    
+	    container.innerHTML = playlists.map(playlist => `
+		<div style="background: #333; padding: 20px; border-radius: 10px; margin: 10px 0;">
+		    <h3>${playlist.title} (${playlist.playlist_items.length} movies)</h3>
+		    <button onclick="playPlaylist(${playlist.id})" 
+			    style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin: 5px; cursor: pointer;">
+			▶️ Play Playlist
+		    </button>
+		    <div style="margin-top: 10px; font-size: 14px;">
+			${playlist.playlist_items
+			    .sort((a, b) => a.position - b.position)
+			    .map((item, index) => `${index + 1}. ${item.movies.title}`)
+			    .join('<br>')}
+		    </div>
+		</div>
+	    `).join('');
+	    
+	    container.style.display = 'block';
+	}
+
+	// Play entire playlist with auto-continue
+	async function playPlaylist(playlistId) {
+	     log(`🎵 Starting playlist ${playlistId}`);
+	     const { data: items, error } = await supabase
+		.from('playlist_items')
+		.select(`
+		    position,
+		    movies(id, title, youtube_url, genre)
+		`)
+		.eq('playlist_id', playlistId)
+		.order('position', { ascending: true });
+	    
+	    if (!items?.length) return;
+	    
+	    // Store playlist context globally
+	     window.currentPlaylistItems = items;
+	    window.currentPlaylistIndex = 0;
+	    window.currentPlaylistId = playlistId;
+	    
+	    // Play first video - let playVideo handle resume logic
+	    const firstMovie = items[0].movies;
+	    const videoId = extractYouTubeId(firstMovie.youtube_url);
+	    log(`🎵 Playing first video from playlist: ${firstMovie.title} (${videoId})`);
+	    // This should trigger normal resume behavior
+	    await playVideo(firstMovie.youtube_url, firstMovie.title, videoId, firstMovie.id);
+	}    
+        // Display movies in the grid
+        // Replace your displayMovies function with this:
+	function displayMovies(movies, progressData = {}) {
+	    const container = document.getElementById('movies-container');
+	    
+	    if (movies.length === 0) {
+		container.innerHTML = `
+		    <div class="no-movies">
+			<h3>🎬 No Movies Found</h3>
+			<p>Click "Add Sample Movies" to create test movies.</p>
+		    </div>
+		`;
+		return;
+	    }
+	    
+	    container.innerHTML = movies.map(movie => {
+		const videoId = extractYouTubeId(movie.youtube_url);
+		const progress = progressData[videoId];
+		
+		let progressBar = '';
+		if (progress) {
+		    const statusText = progress.completed ? 'Completed ✓' : `${Math.round(progress.percentage)}% watched`;
+		    progressBar = `
+			<div style="background: #333; height: 4px; border-radius: 2px; margin: 8px 0; overflow: hidden;">
+			    <div style="background: ${progress.completed ? '#28a745' : '#007bff'}; height: 100%; width: ${Math.round(progress.percentage)}%; transition: width 0.3s;"></div>
+			</div>
+			<div style="font-size: 11px; color: ${progress.completed ? '#28a745' : '#888'};">
+			    ${statusText}
+			</div>
+		    `;
+		}
+		
+		return `
+		    <div class="movie-card">
+			<div class="embed-status loading" id="status-${videoId}"></div>
+			<div class="play-icon" onclick="playVideo('${movie.youtube_url}', '${escapeHtml(movie.title)}', '${videoId}', ${movie.id})">▶️</div>
+			<div class="movie-title">${escapeHtml(movie.title)}</div>
+			<div class="movie-genre">${escapeHtml(movie.genre)}</div>
+			${progressBar}
+			<div class="movie-date">
+			    Added: ${new Date(movie.created_at).toLocaleDateString()}
+			</div>
+			<button onclick="showAddToPlaylist(${movie.id}, '${escapeHtml(movie.title)}')" 
+				style="background: #007bff; color: white; border: none; padding: 6px 12px; border-radius: 4px; margin-top: 8px; cursor: pointer;">
+			    + Add to Playlist
+			</button>
+		    </div>
+		`;
+	    }).join('');
+	}
+        
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Filter movies by genre
+        async function filterMovies(genre) {
+	    currentGenre = genre;
+	    
+	    // Update active button
+	    document.querySelectorAll('.genre-button').forEach(btn => {
+		btn.classList.remove('active');
+	    });
+	    event.target.classList.add('active');
+	     
+	    // Filter movies
+	    const filteredMovies = genre === 'all' 
+		? allMovies 
+		: allMovies.filter(movie => movie.genre === genre);
+	    
+	    // CRITICAL: Load progress data for filtered display
+	    const watchProgressData = await loadAllWatchProgress();
+	    
+	    displayMovies(filteredMovies, watchProgressData);
+	    log(`Filtered movies by: ${genre}`, { count: filteredMovies.length });
+	}   
+        // Extract YouTube video ID from various URL formats
+        function extractYouTubeId(url) {
+            if (!url) return null;
+            
+            const patterns = [
+                /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+                /youtube\.com\/watch\?.*v=([^&\n?#]+)/
+            ];
+            
+            for (let pattern of patterns) {
+                const match = url.match(pattern);
+                if (match) return match[1];
+            }
+            
+            return null;
+        }
+        
+        // Enhanced video player with YouTube API
+        async function playVideo(youtubeUrl, title, videoId, movieId) {
+            if (!youtubeUrl) {
+                alert('No video URL available for this movie');
+                return;
+            }
+            
+            log('🎬 Opening video player for:', { title, url: youtubeUrl, videoId });
+            
+            if (!videoId) {
+                videoId = extractYouTubeId(youtubeUrl);
+            }
+            
+            if (!videoId) {
+                showError('Invalid video URL format', youtubeUrl, title);
+                return;
+            }
+            
+            const modalBody = document.getElementById('modal-body');
+            
+            // Show loading state
+            modalBody.innerHTML = `
+                <h2 style="color: white; margin-bottom: 20px;">${escapeHtml(title)}</h2>
+                <div class="video-container">
+                    <div class="video-loading">
+                        <div>🔄 Loading video...</div>
+                        <div style="font-size: 14px; margin-top: 10px;">Testing embed restrictions with YouTube API</div>
+                    </div>
+                    <div id="player-container" class="video-player"></div>
+                </div>
+                <div class="player-controls">
+                    <button class="control-button" onclick="playerControl('play')" disabled>▶️ Play</button>
+                    <button class="control-button" onclick="playerControl('pause')" disabled>⏸️ Pause</button>
+                    <button class="control-button" onclick="playerControl('stop')" disabled>⏹️ Stop</button>
+                    <button class="control-button" onclick="playerControl('mute')" disabled>🔇 Mute</button>
+                    <button class="control-button" onclick="playerControl('unmute')" disabled>🔊 Unmute</button>
+                </div>
+                <div id="player-info" style="background: #333; padding: 10px; border-radius: 5px; margin: 10px 0; font-family: monospace; font-size: 12px;">
+                    Player Status: Initializing...
+                </div>
+            `;
+            
+            document.getElementById('video-modal').style.display = 'block';
+            
+            if (!youTubeAPIReady) {
+                showError('YouTube API not ready', 'Please wait for the YouTube API to load and try again.', title);
+                return;
+            }
+            
+            // Check cached result first
+            if (embedCache[videoId] && !embedCache[videoId].embeddable) {
+                const result = embedCache[videoId];
+                showError(
+                    `Video Embedding Restricted (${result.errorCode})`, 
+                    result.errorMessage || 'This video cannot be embedded.', 
+                    title, 
+                    youtubeUrl,
+                    result
+                );
+                return;
+            }
+            
+            createYouTubePlayer(videoId, title, youtubeUrl, movieId);
+        }
+
+        // Replace the watch progress section with this Supabase version:
+
+	// Save progress to Supabase
+	// Save progress to Supabase (handles both authenticated and anonymous users)
+		// Get saved progress from Supabase
+			// Replace your getWatchProgress function with this corrected version:
+				// Load all progress data for movie cards
+
+	async function saveWatchProgress(videoId, currentTime, duration, movieId = null) {
+	    if (!supabase) return;
+	    
+	    try {
+		const percentage = Math.floor((currentTime / duration) * 100);
+		
+		if (currentUser) {
+		    const watchData = {
+			user_id: currentUser.id,
+			movie_id: movieId,
+			watch_duration: Math.floor(currentTime),
+			total_duration: Math.floor(duration),
+			last_position: Math.floor(currentTime)
+		    };
+		    
+		    // Use UPSERT to either insert or update - this prevents duplicates
+		    const { error } = await supabase
+			.from('user_watch_history')
+			.upsert(watchData, {
+			    onConflict: 'user_id,movie_id'
+			});
+		    
+		    if (error) throw error;
+		    log(`Progress upserted to user_watch_history for ${videoId}: ${Math.floor(currentTime)}s (${percentage}%)`);
+		    
+		} else {
+		    // For anonymous users - use watch_progress table
+		    const progressData = {
+			video_id: videoId,
+			current_time_position: Math.floor(currentTime),
+			duration: Math.floor(duration),
+			percentage: percentage,
+			completed: percentage >= 95,
+			user_session: 'anonymous',
+			movie_id: movieId
+		    };
+		    
+		    const { error } = await supabase
+			.from('watch_progress')
+			.upsert(progressData, {
+			    onConflict: 'video_id,user_session'
+			});
+		    
+		    if (error) throw error;
+		    log(`Progress upserted to watch_progress for ${videoId}: ${Math.floor(currentTime)}s (${percentage}%)`);
+		}
+		
+	    } catch (error) {
+		log('Error saving progress:', error);
+	    }
+	}
+	
+	async function getWatchProgress(videoId) {
+	    if (!supabase) return null;
+	    
+	    try {
+		log(`🔍 Looking for progress for video ${videoId}, user: ${currentUser ? currentUser.id : 'anonymous'}`);
+		
+		if (currentUser) {
+		    // For authenticated users - find movie by extracting videoId from all movies
+		    const { data: allMovies } = await supabase
+			.from('movies')
+			.select('id, youtube_url');
+		    
+		    log(`📚 Found ${allMovies?.length || 0} movies in database`);
+		    
+		    // Find the movie with matching videoId
+		    const movie = allMovies?.find(m => extractYouTubeId(m.youtube_url) === videoId);
+		    
+		    log(`🎯 Found movie for videoId ${videoId}:`, movie);
+		    
+		    if (!movie) {
+			log(`❌ No movie found for videoId: ${videoId}`);
+			return null;
+		    }
+		    
+		    const { data, error } = await supabase
+			.from('user_watch_history')
+			.select('*')
+			.eq('user_id', currentUser.id)
+			.eq('movie_id', movie.id)
+			.single();
+		    
+		    log(`📊 Watch history query result for movie ${movie.id}:`, { data, error });
+		    
+		    if (error && error.code !== 'PGRST116') {
+			throw error;
+		    }
+		    
+		    if (data) {
+			const progress = {
+			    current_time_position: data.last_position,
+			    percentage: Math.round(data.watch_percentage),
+			    completed: data.completed
+			};
+			log(`✅ Returning progress for ${videoId}:`, progress);
+			return progress;
+		    }
+		    
+		} else {
+		    // For anonymous users - get from watch_progress
+		    const { data, error } = await supabase
+			.from('watch_progress')
+			.select('*')
+			.eq('video_id', videoId)
+			.eq('user_session', 'anonymous')
+			.single();
+		    
+		    log(`📊 Anonymous watch progress result:`, { data, error });
+		    
+		    if (error && error.code !== 'PGRST116') {
+			throw error;
+		    }
+		    
+		    if (data) {
+			log(`✅ Returning anonymous progress for ${videoId}:`, data);
+			return data;
+		    }
+		}
+		
+		log(`❌ No progress found for ${videoId}`);
+		return null;
+		
+	    } catch (error) {
+		log('Error fetching progress:', error);
+		return null;
+	    }
+	}
+		// Load all progress data for movie cards
+	async function loadAllWatchProgress() {
+	    if (!supabase) return {};
+	    
+	    try {
+		if (currentUser) {
+		    // For authenticated users - get from user_watch_history
+		    const { data, error } = await supabase
+			.from('user_watch_history')
+			.select(`
+			    *,
+			    movies(youtube_url)
+			`)
+			.eq('user_id', currentUser.id);
+		    
+		    if (error) throw error;
+		    
+		    const progressLookup = {};
+		    data.forEach(entry => {
+			if (entry.movies && entry.movies.youtube_url) {
+			    const videoId = extractYouTubeId(entry.movies.youtube_url);
+			    if (videoId) {
+				progressLookup[videoId] = {
+				    percentage: entry.watch_percentage,
+				    completed: entry.completed,
+				    current_time_position: entry.last_position
+				};
+				log(`Progress loaded for ${videoId}: ${entry.watch_percentage}% at position ${entry.last_position}`);			
+			    }
+			}
+		    });
+		    
+		    log(`Loaded ${data.length} user watch history records`);
+		    return progressLookup;
+		    
+		} else {
+		    // For anonymous users - get from watch_progress
+		    const { data, error } = await supabase
+			.from('watch_progress')
+			.select('*')
+			.eq('user_session', 'anonymous');
+		    
+		    if (error) throw error;
+		    
+		    const progressLookup = {};
+		    data.forEach(progress => {
+			progressLookup[progress.video_id] = progress;
+		    });
+		    
+		    log(`Loaded ${data.length} anonymous watch progress records`);
+		    return progressLookup;
+		}
+		
+	    } catch (error) {
+		log('Error loading watch progress:', error);
+		return {};
+	    }
+	}	
+	// Check if video should resume
+	function shouldResume(progress) {
+	    if (!progress) return false;
+	    return progress.current_time_position > 30 && progress.percentage < 95;
+	}
+        
+        // Create YouTube player with enhanced error handling
+        async function createYouTubePlayer(videoId, title, originalUrl, movieId) {
+    	    try {
+        	log(`📺 Creating YouTube player for video: ${videoId}`);
+        
+        // Check for saved progress from Supabase
+		const savedProgress = await getWatchProgress(videoId);
+		log(`🔄 Retrieved saved progress:`, savedProgress);
+		let startTime = 0;
+		
+		if (shouldResume(savedProgress)) {
+		    startTime = savedProgress.current_time_position;
+		    log(`🔄 Resuming from ${startTime}s (${savedProgress.percentage}% watched)`);
+		    
+		    // Show resume notification
+		    updatePlayerInfo(`Resuming from ${Math.floor(startTime/60)}:${(startTime%60).toString().padStart(2,'0')} (${savedProgress.percentage}% watched)`, 'warning');
+		} else {
+			log(`⏭️ Not resuming - shouldResume returned false for:`, savedProgress);		
+		}
+		window.currentMovieId = movieId;	
+		// Store movieId for saving progress
+		currentPlayer = new YT.Player('player-container', {
+		    height: '100%',
+		    width: '100%',
+		    videoId: videoId,
+		    playerVars: {
+			autoplay: 1,
+			controls: 1,
+			modestbranding: 1,
+			rel: 0,
+			playsinline: 1,
+			start: startTime
+		    },
+		    events: {
+			onReady: onPlayerReady,
+			onStateChange: (event) => onPlayerStateChange(event, movieId),
+			onError: (event) => onPlayerError(event, title, originalUrl, videoId)
+		    }
+		});
+		
+	    } catch (error) {
+		log('❌ Exception creating player:', error);
+		showError('Player Creation Failed', error.message, title, originalUrl);
+	    }
+	}
+	// Generate personalized recommendations
+	async function generateRecommendations() {
+	    if (!currentUser) {
+		alert('Please sign in to get personalized recommendations');
+		return;
+	    }
+	    const { data: hasHistory } = await supabase
+		.from('user_watch_history')
+		.select('id')
+		.eq('user_id', currentUser.id)
+		.limit(1)
+		.single();
+	    
+	    if (!hasHistory) {
+		document.getElementById('recommendations-container').innerHTML = `
+		    <div class="recommendation-section">
+			<h3>Watch some movies first!</h3>
+			<p>We need to learn your preferences before we can recommend movies. Start watching to get personalized suggestions.</p>
+		    </div>
+		`;
+		document.getElementById('recommendations-container').style.display = 'block';
+		return;
+	    } 
+	    try {
+		updateStatus('Generating your personalized recommendations...', 'warning');
+		log('🎯 Generating recommendations for user:', currentUser.id);
+		
+		// Clear existing recommendations first
+		await clearUserRecommendations(currentUser.id);
+		
+		// Generate different types of recommendations
+		await generateGenreBasedRecommendations(currentUser.id);
+		await generatePopularRecommendations(currentUser.id);
+		await generateSimilarUserRecommendations(currentUser.id);
+		
+		// Display recommendations
+		await displayRecommendations();
+		
+		updateStatus('✅ Recommendations generated!', 'success');
+		
+	    } catch (error) {
+		log('❌ Error generating recommendations:', error);
+		updateStatus('Failed to generate recommendations: ' + error.message, 'error');
+	    }
+	}
+
+	// Clear existing recommendations for user
+	async function clearUserRecommendations(userId) {
+	    const { error } = await supabase
+		.from('recommendations')
+		.delete()
+		.eq('user_id', userId);
+		
+	    if (error) throw error;
+	    log('🧹 Cleared old recommendations');
+	}
+
+	// Generate genre-based recommendations
+	async function generateGenreBasedRecommendations(userId) {
+	    // Get user's watch history to understand preferences
+	    const { data: watchHistory, error } = await supabase
+		.from('user_watch_history')
+		.select(`
+		    *,
+		    movies(id, title, genre)
+		`)
+		.eq('user_id', userId)
+		.gte('watch_percentage', 50); // Only consider movies they actually watched
+	    
+	    if (error) throw error;
+	    
+	    if (!watchHistory?.length) {
+		log('⚠️ No watch history found for genre recommendations');
+		return;
+	    }
+	    
+	    // Calculate genre preferences
+	    const genreScores = {};
+	    watchHistory.forEach(entry => {
+		if (entry.movies) {
+		    const genre = entry.movies.genre;
+		    if (!genreScores[genre]) genreScores[genre] = { total: 0, count: 0 };
+		    genreScores[genre].total += entry.watch_percentage;
+		    genreScores[genre].count += 1;
+		}
+	    });
+	    
+	    // Get average scores per genre
+	    const sortedGenres = Object.entries(genreScores)
+		.map(([genre, data]) => ({
+		    genre,
+		    avgScore: data.total / data.count,
+		    watchCount: data.count
+		}))
+		.sort((a, b) => b.avgScore - a.avgScore);
+	    
+	    log('📊 User genre preferences:', sortedGenres);
+	    
+	    // Get unwatched movies from top 2 favorite genres
+	    const topGenres = sortedGenres.slice(0, 2).map(g => g.genre);
+	    const watchedMovieIds = watchHistory.map(h => h.movie_id);
+	    
+	    const { data: genreMovies, error: genreError } = await supabase
+		.from('movies')
+		.select('*')
+		.in('genre', topGenres)
+		.not('id', 'in', `(${watchedMovieIds.join(',') || '0'})`)
+		.order('view_count', { ascending: false })
+		.limit(5);
+	    
+	    if (genreError) throw genreError;
+	    
+	    // Insert genre-based recommendations
+	    if (genreMovies?.length) {
+		const recommendations = genreMovies.map(movie => ({
+		    user_id: userId,
+		    movie_id: movie.id,
+		    recommendation_type: 'genre_based',
+		    confidence_score: 0.8,
+		    reason: `You love ${movie.genre} movies! Based on your ${sortedGenres.find(g => g.genre === movie.genre)?.watchCount || 0} ${movie.genre} watches.`
+		}));
+		
+		const { error: insertError } = await supabase
+		    .from('recommendations')
+		    .insert(recommendations);
+		    
+		if (insertError) throw insertError;
+		log(`✅ Generated ${recommendations.length} genre-based recommendations`);
+	    }
+	}
+
+	// Generate popular recommendations
+	async function generatePopularRecommendations(userId) {
+	    // Get user's watched movies to exclude them
+	    const { data: watchHistory } = await supabase
+		.from('user_watch_history')
+		.select('movie_id')
+		.eq('user_id', userId);
+		
+	    const watchedIds = watchHistory?.map(h => h.movie_id) || [];
+	    
+	    // Get popular unwatched movies
+	    const { data: popularMovies, error } = await supabase
+		.from('movies')
+		.select('*')
+		.not('id', 'in', watchedIds.length ? `(${watchedIds.join(',')})` : '(0)')
+		.order('view_count', { ascending: false })
+		.limit(3);
+	    
+	    if (error) throw error;
+	    
+	    if (popularMovies?.length) {
+		const recommendations = popularMovies.map(movie => ({
+		    user_id: userId,
+		    movie_id: movie.id,
+		    recommendation_type: 'popular',
+		    confidence_score: 0.6,
+		    reason: `Popular choice! ${movie.view_count || 0} views`
+		}));
+		
+		const { error: insertError } = await supabase
+		    .from('recommendations')
+		    .insert(recommendations);
+		    
+		if (insertError) throw insertError;
+		log(`✅ Generated ${recommendations.length} popular recommendations`);
+	    }
+	}
+
+	// Generate recommendations based on similar users
+	async function generateSimilarUserRecommendations(userId) {
+	    // Get current user's favorite genres
+	    const { data: userHistory } = await supabase
+		.from('user_watch_history')
+		.select(`
+		    movies(genre)
+		`)
+		.eq('user_id', userId)
+		.gte('watch_percentage', 70);
+	    
+	    if (!userHistory?.length) return;
+	    
+	    const userGenres = [...new Set(userHistory.map(h => h.movies?.genre).filter(Boolean))];
+	    
+	    // Find users with similar genre preferences
+	    const { data: similarUsers } = await supabase
+		.from('user_watch_history')
+		.select(`
+		    user_id,
+		    movies(genre)
+		`)
+		.neq('user_id', userId)
+		.gte('watch_percentage', 70)
+		.limit(100);
+	    
+	    if (!similarUsers?.length) return;
+	    
+	    // Calculate similarity scores
+	    const userSimilarity = {};
+	    similarUsers.forEach(entry => {
+		const otherUserId = entry.user_id;
+		const genre = entry.movies?.genre;
+		
+		if (genre && userGenres.includes(genre)) {
+		    if (!userSimilarity[otherUserId]) userSimilarity[otherUserId] = 0;
+		    userSimilarity[otherUserId] += 1;
+		}
+	    });
+	    
+	    // Get top similar user
+	    const topSimilarUser = Object.entries(userSimilarity)
+		.sort(([,a], [,b]) => b - a)[0];
+	    
+	    if (!topSimilarUser) return;
+	    
+	    const [similarUserId, similarity] = topSimilarUser;
+	    
+	    // Get movies watched by similar user but not by current user
+	    const { data: currentUserMovies } = await supabase
+		.from('user_watch_history')
+		.select('movie_id')
+		.eq('user_id', userId);
+		
+	    const currentUserMovieIds = currentUserMovies?.map(h => h.movie_id) || [];
+	    
+	    const { data: similarUserMovies } = await supabase
+		.from('user_watch_history')
+		.select(`
+		    movie_id,
+		    movies(*)
+		`)
+		.eq('user_id', similarUserId)
+		.gte('watch_percentage', 80)
+		.not('movie_id', 'in', currentUserMovieIds.length ? `(${currentUserMovieIds.join(',')})` : '(0)')
+		.limit(2);
+	    
+	    if (similarUserMovies?.length) {
+		const recommendations = similarUserMovies.map(entry => ({
+		    user_id: userId,
+		    movie_id: entry.movie_id,
+		    recommendation_type: 'similar_users',
+		    confidence_score: Math.min(similarity / 5, 0.9),
+		    reason: `Users with similar taste loved this ${entry.movies.genre} movie`
+		}));
+		
+		const { error: insertError } = await supabase
+		    .from('recommendations')
+		    .insert(recommendations);
+		    
+		if (insertError) throw insertError;
+		log(`✅ Generated ${recommendations.length} similar-user recommendations`);
+	    }
+	}
+
+	// Display all recommendations
+	async function displayRecommendations() {
+	    if (!currentUser) return;
+	    
+	    const { data: recommendations, error } = await supabase
+		.from('recommendations')
+		.select(`
+		    *,
+		    movies(*)
+		`)
+		.eq('user_id', currentUser.id)
+		.eq('dismissed', false)
+		.order('confidence_score', { ascending: false });
+	    
+	    if (error) throw error;
+	    
+	    const container = document.getElementById('recommendations-container');
+	    
+	    if (!recommendations?.length) {
+		container.innerHTML = `
+		    <div class="recommendation-section">
+			<h3>🎯 No Recommendations Yet</h3>
+			<p>Watch some movies to get personalized recommendations!</p>
+		    </div>
+		`;
+		container.style.display = 'block';
+		return;
+	    }
+	    
+	    // Group recommendations by type
+	    const groupedRecs = recommendations.reduce((groups, rec) => {
+		const type = rec.recommendation_type;
+		if (!groups[type]) groups[type] = [];
+		groups[type].push(rec);
+		return groups;
+	    }, {});
+	    
+	    const typeLabels = {
+		'genre_based': 'Based on Your Preferences',
+		'popular': 'Trending Movies',
+		'similar_users': 'Users Like You Watched'
+	    };
+	    
+	    let html = '<h2>🎯 Your Personalized Recommendations</h2>';
+	    
+	    Object.entries(groupedRecs).forEach(([type, recs]) => {
+		html += `
+		    <div class="recommendation-section">
+			<div class="recommendation-header">
+			    <h3>${typeLabels[type] || type}</h3>
+			    <span class="recommendation-type">${recs.length} suggestions</span>
+			</div>
+			<div class="movies-grid">
+			    ${recs.map(rec => {
+				const movie = rec.movies;
+				const videoId = extractYouTubeId(movie.youtube_url);
+				return `
+				    <div class="movie-card recommended" onclick="playVideo('${movie.youtube_url}', '${escapeHtml(movie.title)}', '${videoId}', ${movie.id})">
+					<button class="dismiss-recommendation" onclick="dismissRecommendation(${rec.id}, event)" title="Not interested">×</button>
+					<div class="embed-status loading" id="status-${videoId}"></div>
+					<div class="play-icon">▶️</div>
+					<div class="movie-title">${escapeHtml(movie.title)}</div>
+					<div class="movie-genre">${escapeHtml(movie.genre)}</div>
+					<div class="recommendation-reason">${rec.reason}</div>
+					<div class="movie-date">
+					    Added: ${new Date(movie.created_at).toLocaleDateString()}
+					</div>
+				    </div>
+				`;
+			    }).join('')}
+			</div>
+		    </div>
+		`;
+	    });
+	    
+	    container.innerHTML = html;
+	    container.style.display = 'block';
+	    
+	    log(`📺 Displayed ${recommendations.length} recommendations`);
+	}
+
+	// Dismiss a recommendation
+	async function dismissRecommendation(recommendationId, event) {
+	    event.stopPropagation();
+	    
+	    const { error } = await supabase
+		.from('recommendations')
+		.update({ dismissed: true })
+		.eq('id', recommendationId);
+	    
+	    if (error) {
+		log('❌ Error dismissing recommendation:', error);
+		return;
+	    }
+	    
+	    // Remove from UI
+	    event.target.closest('.movie-card').style.display = 'none';
+	    log('👋 Recommendation dismissed');
+	}
+
+	// Show continue watching section
+	async function showContinueWatching() {
+	    if (!currentUser) {
+		alert('Please sign in to see your continue watching list');
+		return;
+	    }
+	    
+	    const { data: continueWatching, error } = await supabase
+		.from('user_watch_history')
+		.select(`
+		    *,
+		    movies(*)
+		`)
+		.eq('user_id', currentUser.id)
+		.eq('completed', false)
+		.gte('watch_percentage', 10) // Only show if watched at least 10%
+		.order('updated_at', { ascending: false })
+		.limit(8);
+	    
+	    if (error) {
+		log('❌ Error fetching continue watching:', error);
+		return;
+	    }
+	    
+	    const container = document.getElementById('continue-watching-container');
+	    
+	    if (!continueWatching?.length) {
+		container.innerHTML = `
+		    <div class="recommendation-section">
+			<h3>📺 Continue Watching</h3>
+			<p>No movies in progress. Start watching to see them here!</p>
+		    </div>
+		`;
+	    } else {
+		container.innerHTML = `
+		    <div class="recommendation-section">
+			<div class="recommendation-header">
+			    <h3>📺 Continue Watching</h3>
+			    <span class="recommendation-type">${continueWatching.length} in progress</span>
+			</div>
+			<div class="movies-grid">
+			    ${continueWatching.map(entry => {
+				const movie = entry.movies;
+				const videoId = extractYouTubeId(movie.youtube_url);
+				const minutes = Math.floor(entry.last_position / 60);
+				const seconds = entry.last_position % 60;
+				return `
+				    <div class="movie-card" onclick="playVideo('${movie.youtube_url}', '${escapeHtml(movie.title)}', '${videoId}', ${movie.id})">
+					<div class="embed-status loading" id="status-${videoId}"></div>
+					<div class="play-icon">▶️</div>
+					<div class="movie-title">${escapeHtml(movie.title)}</div>
+					<div class="movie-genre">${escapeHtml(movie.genre)}</div>
+					<div style="background: #007bff; height: 4px; border-radius: 2px; margin: 8px 0; overflow: hidden;">
+					    <div style="background: #28a745; height: 100%; width: ${entry.watch_percentage}%; transition: width 0.3s;"></div>
+					</div>
+					<div style="font-size: 11px; color: #28a745;">
+					    ${Math.round(entry.watch_percentage)}% watched - Resume at ${minutes}:${seconds.toString().padStart(2,'0')}
+					</div>
+					<div class="movie-date">
+					    Last watched: ${new Date(entry.updated_at).toLocaleDateString()}
+					</div>
+				    </div>
+				`;
+			    }).join('')}
+			</div>
+		    </div>
+		`;
+	    }
+	    
+	    container.style.display = 'block';
+	    log(`📺 Displayed ${continueWatching.length} continue watching items`);
+	}
+
+	// Show trending movies
+	async function showTrendingMovies() {
+	    const { data: trendingMovies, error } = await supabase
+		.from('movies')
+		.select('*')
+		.order('view_count', { ascending: false })
+		.limit(12);
+	    
+	    if (error) {
+		log('❌ Error fetching trending movies:', error);
+		return;
+	    }
+	    
+	    const container = document.getElementById('recommendations-container');
+	    
+	    container.innerHTML = `
+		<div class="recommendation-section">
+		    <div class="recommendation-header">
+			<h3>🔥 Trending Movies</h3>
+			<span class="recommendation-type">Most watched</span>
+		    </div>
+		    <div class="movies-grid">
+			${trendingMovies.map(movie => {
+			    const videoId = extractYouTubeId(movie.youtube_url);
+			    return `
+				<div class="movie-card" onclick="playVideo('${movie.youtube_url}', '${escapeHtml(movie.title)}', '${videoId}', ${movie.id})">
+				    <div class="embed-status loading" id="status-${videoId}"></div>
+				    <div class="play-icon">▶️</div>
+				    <div class="movie-title">${escapeHtml(movie.title)}</div>
+				    <div class="movie-genre">${escapeHtml(movie.genre)}</div>
+				    <div style="font-size: 12px; color: #ffc107; margin: 8px 0;">
+					🔥 ${movie.view_count || 0} views
+				    </div>
+				    <div class="movie-date">
+					Added: ${new Date(movie.created_at).toLocaleDateString()}
+				    </div>
+				</div>
+			    `;
+			}).join('')}
+		    </div>
+		</div>
+	    `;
+	    
+	    container.style.display = 'block';
+	    log(`🔥 Displayed ${trendingMovies.length} trending movies`);
+	}
+
+	// Update the existing saveWatchProgress function to increment view counts
+	// Add this after your existing saveWatchProgress function
+	async function incrementMovieViewCount(movieId) {
+	    if (!movieId || !supabase) return;
+	    
+	    try {
+		const { error } = await supabase.rpc('increment_movie_view_count', {
+		    movie_id_param: movieId
+		});
+		
+		if (error) throw error;
+		log(`📈 View count incremented for movie ${movieId}`);
+		
+	    } catch (error) {
+		log('⚠️ Error incrementing view count:', error);
+	    }
+	}
+        
+        // Player ready event
+        function onPlayerReady(event) {
+            log('✅ YouTube player ready');
+            updatePlayerInfo('Player ready - Video loaded successfully!', 'success');
+            
+	    if (window.currentMovieId) {
+		incrementMovieViewCount(window.currentMovieId);
+	    }
+            // Enable controls
+            document.querySelectorAll('.control-button').forEach(btn => {
+                btn.disabled = false;
+            });
+            
+            // Hide loading message
+            const loadingDiv = document.querySelector('.video-loading');
+            if (loadingDiv) {
+                loadingDiv.style.display = 'none';
+            }
+        }
+        
+        // Player state change event
+        function onPlayerStateChange(event, movieId = null) {
+	    const state = event.data;
+	    const stateNames = {
+		'-1': 'UNSTARTED',
+		'0': 'ENDED',
+		'1': 'PLAYING',
+		'2': 'PAUSED',
+		'3': 'BUFFERING',
+		'5': 'CUED'
+	    };
+	    
+	    const stateName = stateNames[state] || `UNKNOWN(${state})`;
+	    log(`📺 Player state changed: ${stateName}`);
+	    updatePlayerInfo(`Player State: ${stateName}`, 'info');
+	    
+	     // THIS IS THE CRITICAL PART - Save progress when paused or ended
+	    if (currentPlayer && (state === 2 || state === 0)) { // PAUSED or ENDED
+		try {
+		    const currentTime = currentPlayer.getCurrentTime();
+		    const duration = currentPlayer.getDuration();
+		    const videoData = currentPlayer.getVideoData();
+		    
+		    if (currentTime > 0 && duration > 0 && videoData.video_id) {
+			saveWatchProgress(videoData.video_id, currentTime, duration, movieId);
+			log(`💾 Progress saved: ${Math.floor(currentTime)}s of ${Math.floor(duration)}s`);
+		    }
+		} catch (error) {
+		    log('⚠️ Error saving progress:', error);
+		}
+	    }
+	    if (state === 0 && movieId) { // VIDEO ENDED
+		    log('🎬 Video ended - checking for playlist...');
+	    // Check if we're in a playlist
+		    if (window.currentPlaylistItems && window.currentPlaylistIndex !== undefined) {
+			const nextIndex = window.currentPlaylistIndex + 1;
+			
+			if (nextIndex < window.currentPlaylistItems.length) {
+			    const nextMovie = window.currentPlaylistItems[nextIndex].movies;
+			    log(`🎯 Next video: ${nextMovie.title}`); 
+			    setTimeout(() => {
+				log('⏰ Starting countdown...');
+				let countdown = 5;
+				let countdownInterval;
+				
+				function updateCountdown() {
+				    log(`⏳ Countdown: ${countdown}`);
+				    if (countdown > 0) {
+					const modalTitle = document.querySelector('.modal-content h2');
+					if (modalTitle) {
+						modalTitle.innerHTML = `Next: "${nextMovie.title}" in ${countdown} seconds`;
+						modalTitle.style.color = '#ffc107';	
+					}
+					updatePlayerInfo(
+					    `Up next: "${nextMovie.title}" in ${countdown} seconds... (Press any key to skip)`, 
+					    'warning'
+					);
+					countdown--;
+				    } else {
+					const modalTitle = document.querySelector('.modal-content h2');
+					if (modalTitle) {
+						modalTitle.style.color = 'white';
+					}
+					log('🚀 Advancing to next video...');			
+					clearInterval(countdownInterval);
+					window.currentPlaylistIndex = nextIndex;
+					const videoId = extractYouTubeId(nextMovie.youtube_url);
+					if (currentPlayer && typeof currentPlayer.destroy === 'function') {
+						try {
+						    currentPlayer.destroy();
+						    log('🗑️ Previous player destroyed for playlist advance');
+						} catch (error) {
+						    log('⚠️ Error destroying previous player:', error);
+						}
+					}
+				    	currentPlayer = null;	
+					//currentPlayer.loadVideoById(videoId);
+					window.currentMovieId = nextMovie.id;
+					createYouTubePlayer(videoId, nextMovie.title, nextMovie.youtube_url, nextMovie.id);		
+					updatePlayerInfo(`Now playing: ${nextMovie.title}`, 'success');
+					document.removeEventListener('keydown', skipHandler);
+				    }
+				}
+				
+				// Allow user to skip countdown
+				const skipHandler = function(event) {
+				    log('⏩ User skipped countdown');		
+				    clearInterval(countdownInterval);
+				    document.removeEventListener('keydown', skipHandler);
+				    
+				    window.currentPlaylistIndex = nextIndex;
+				    const videoId = extractYouTubeId(nextMovie.youtube_url);
+				    //currentPlayer.loadVideoById(videoId);
+				    if (currentPlayer && typeof currentPlayer.destroy === 'function') {
+						try {
+						    currentPlayer.destroy();
+						    log('🗑️ Previous player destroyed for playlist advance');
+						} catch (error) {
+						    log('⚠️ Error destroying previous player:', error);
+						}
+				    }
+				    currentPlayer = null;	
+
+				    window.currentMovieId = nextMovie.id;
+				    createYouTubePlayer(videoId, nextMovie.title, nextMovie.youtube_url, nextMovie.id);
+
+				    updatePlayerInfo(`Skipped to: ${nextMovie.title}`, 'info');
+				};
+				
+				// Start countdown
+				updateCountdown();
+				countdownInterval = setInterval(updateCountdown, 1000);
+				document.addEventListener('keydown', skipHandler);
+				
+			    }, 500); // 500ms delay   			    
+			} else {
+			    updatePlayerInfo('Playlist finished!', 'success');
+			}
+		    }
+	    }
+	}
+        // Enhanced player error handling
+        function onPlayerError(event, title, originalUrl, videoId) {
+            const errorCode = event.data;
+            let errorType = 'UNKNOWN';
+            let errorMessage = 'Unknown error occurred';
+            let canRetry = false;
+            
+            switch (errorCode) {
+                case 2:
+                    errorType = 'INVALID_PARAMETER';
+                    errorMessage = 'The video ID is invalid or malformed';
+                    break;
+                case 5:
+                    errorType = 'HTML5_PLAYER_ERROR';
+                    errorMessage = 'HTML5 player encountered an error';
+                    canRetry = true;
+                    break;
+                case 100:
+                    errorType = 'VIDEO_NOT_FOUND';
+                    errorMessage = 'Video not found, removed, or set to private';
+                    break;
+                case 101:
+                    errorType = 'EMBED_NOT_ALLOWED_OWNER';
+                    errorMessage = 'Video owner has restricted embedding on other websites';
+                    break;
+                case 150:
+                    errorType = 'EMBED_NOT_ALLOWED_OWNER_DUPLICATE';
+                    errorMessage = 'Video owner has restricted embedding (same as 101)';
+                    break;
+            }
+            
+            log(`❌ YouTube Player Error ${errorCode}: ${errorMessage}`, {
+                videoId,
+                errorType,
+                canRetry
+            });
+            
+            // Cache the error result
+            embedCache[videoId] = {
+                embeddable: false,
+                error: errorType,
+                errorCode: errorCode,
+                errorMessage: errorMessage
+            };
+            
+            // Update movie card status
+            const statusEl = document.getElementById(`status-${videoId}`);
+            if (statusEl) {
+                statusEl.className = 'embed-status restricted';
+            }
+            
+            showError(`${errorType} (Error ${errorCode})`, errorMessage, title, originalUrl, {
+                errorCode,
+                errorType,
+                canRetry,
+                videoId
+            });
+        }
+        
+        // Show error with detailed information
+        function showError(errorTitle, errorMessage, movieTitle, originalUrl, additionalInfo = null) {
+            const modalBody = document.getElementById('modal-body');
+            
+            modalBody.innerHTML = `
+                <h2 style="color: white; margin-bottom: 20px;">${escapeHtml(movieTitle)}</h2>
+                <div class="video-error">
+                    <h3>❌ ${errorTitle}</h3>
+                    <p>${errorMessage}</p>
+                </div>
+                
+                ${additionalInfo ? `
+                <div class="error-details">
+                    <strong>Technical Details:</strong><br>
+                    ${JSON.stringify(additionalInfo, null, 2)}
+                </div>
+                ` : ''}
+                
+                <div class="fallback-container">
+                    <p style="margin: 0 0 15px 0; font-size: 16px;">
+                        📺 Watch this video directly on YouTube:
+                    </p>
+                    <a href="${originalUrl}" target="_blank" class="fallback-link">
+                        🎬 Open in YouTube
+                    </a>
+                </div>
+                
+                <div style="background: #2a2a2a; padding: 15px; border-radius: 8px; margin: 15px 0; font-size: 14px;">
+                    <strong>💡 Understanding YouTube Embed Restrictions:</strong><br>
+                    • <strong>Error 101/150:</strong> Video owner disabled embedding<br>
+                    • <strong>Error 100:</strong> Video is private, deleted, or doesn't exist<br>
+                    • <strong>Error 2:</strong> Invalid video ID format<br>
+                    • <strong>Error 5:</strong> Temporary player issue (may work later)
+                </div>
+            `;
+        }
+        
+        // Update player info display
+        function updatePlayerInfo(message, type = 'info') {
+            const infoDiv = document.getElementById('player-info');
+            if (infoDiv) {
+                const colors = {
+                    'success': '#28a745',
+                    'error': '#dc3545',
+                    'warning': '#ffc107',
+                    'info': '#17a2b8'
+                };
+                
+                infoDiv.innerHTML = message;
+                infoDiv.style.borderLeft = `4px solid ${colors[type] || colors.info}`;
+            }
+        }
+        
+        // Player controls
+        function playerControl(action) {
+            if (!currentPlayer) {
+                log('❌ No active player');
+                return;
+            }
+            
+            try {
+                switch (action) {
+                    case 'play':
+                        currentPlayer.playVideo();
+                        log('▶️ Play command sent');
+                        break;
+                    case 'pause':
+                        currentPlayer.pauseVideo();
+                        log('⏸️ Pause command sent');
+                        break;
+                    case 'stop':
+                        currentPlayer.stopVideo();
+                        log('⏹️ Stop command sent');
+                        break;
+                    case 'mute':
+                        currentPlayer.mute();
+                        log('🔇 Mute command sent');
+                        break;
+                    case 'unmute':
+                        currentPlayer.unMute();
+                        log('🔊 Unmute command sent');
+                        break;
+                }
+            } catch (error) {
+                log(`❌ Player control error (${action}):`, error);
+                updatePlayerInfo(`Control Error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Close video modal
+        function closeVideo() {
+            log('🚪 Closing video modal');
+            
+            // Stop and destroy current player
+            if (currentPlayer && typeof currentPlayer.destroy === 'function') {
+                try {
+                    currentPlayer.destroy();
+                    log('🗑️ Player destroyed');
+                } catch (error) {
+                    log('⚠️ Error destroying player:', error);
+                }
+            }
+            currentPlayer = null;
+            
+            document.getElementById('video-modal').style.display = 'none';
+            document.getElementById('modal-body').innerHTML = '';
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('video-modal');
+            if (event.target == modal) {
+                closeVideo();
+            }
+        }
+        
+        // Start the app
+        log('🌟 Starting Ethiopian Movies App with YouTube API...');
+        initApp();
+    </script>
+</body>
+</html>
