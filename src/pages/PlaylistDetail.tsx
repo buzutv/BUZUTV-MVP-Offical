@@ -28,6 +28,8 @@ const PlaylistDetail = () => {
   const [search, setSearch] = useState("")
   const [searchResults, setSearchResults] = useState([])
   const [selectedMovies, setSelectedMovies] = useState<string[]>([]);
+  const [selectedVideo, setselectedVideo] = useState(null)
+
   // const { refetch } = usePlaylists()
   // Function to be passed to the player to trigger a re-fetch of history
   const triggerHistoryRefresh = () => {
@@ -36,17 +38,25 @@ const PlaylistDetail = () => {
   }
 
 
+  console.log("Selected Video State", selectedVideo)
+  // console.log("Selected Video State", user_watch_history[0])
+
+
   // Fetch playlist content only when ID changes
   useEffect(() => {
     if (id) fetchSinglePlaylist(id)
     refetch()
   }, [id, user_watch_history, setUserWatchHistory])
 
+  // useEffect(() => {
+  //   setselectedVideo(currentVideoIndex !== null ? content[currentVideoIndex] : null)
+  // }, [currentVideoIndex])
+
   // Fetch watch history when content loads OR when historyUpdateKey changes
   useEffect(() => {
     async function loadWatchHistory() {
       if (content.length > 0) {
-        console.log("Content loaded in PlaylistDetail. Fetching history...");
+        console.log("Content loaded in PlaylistDetail. Fetching history...", content);
 
         // --- NOTE: You MUST replace this hardcoded user_id with the actual authenticated user's ID ---
         const USER_ID = "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3";
@@ -59,12 +69,12 @@ const PlaylistDetail = () => {
               item?.id
             );
 
-            console.log("History", history)
+            console.log("History", history?.last_position)
             return {
               ...item,
               watch_percentage: history ? history.watch_percentage : 0,
-              last_position: history ? history?.last_position : history,
-              completed: history ? history?.completed : false
+              last_position: history?.last_position,
+              completed: history?.completed
             };
           })
         );
@@ -72,6 +82,8 @@ const PlaylistDetail = () => {
         // fetchWatchHistoryPromises
         // Filter out any null entries if an error occurred in the map
         setUserWatchHistory(dataWithHistory)
+
+        console.log("User Watch History in PlaylistDetail:", dataWithHistory[0].last_position)
       }
 
     }
@@ -80,7 +92,7 @@ const PlaylistDetail = () => {
   console.log("Content in PlaylistDetail:", user_watch_history)
 
   // Get the currently selected video
-  const selectedVideo = currentVideoIndex !== null ? content[currentVideoIndex] : null
+
   // console.log("User Watch History in PlaylistDetail:", JSON.stringify(selectedVideo?.seasons_data))
 
   const handleSearch = async (e) => {
@@ -223,6 +235,11 @@ const PlaylistDetail = () => {
   };
 
 
+  const CloseModal = () => {
+    handleVideoEnd()
+    setselectedVideo
+  }
+
   // Use history data if available, otherwise use raw content (for safety during loading)
   const displayItems = user_watch_history.length > 0 ? user_watch_history : content;
   const isLoading = content.length > 0 && user_watch_history.length === 0;
@@ -322,10 +339,10 @@ const PlaylistDetail = () => {
               {/* Submit Button */}
               <button
                 onClick={handleSubmitMovies}
-                disabled={selectedMovies.length === 0}
+                disabled={selectedMovies?.length === 0}
                 className="fixed bottom-6 right-6 px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/80 shadow-lg transition"
               >
-                Add Selected ({selectedMovies.length})
+                Add Selected ({selectedMovies?.length})
               </button>
             </DialogContent>
           </Dialog>
@@ -394,7 +411,11 @@ const PlaylistDetail = () => {
             key={item.id}
             className={`z-10 w-full cursor-pointer rounded-xl overflow-hidden shadow-md hover:shadow-lg transition bg-white-900 text-zinc-900 border-2 ${currentVideoIndex === index ? 'border-primary ring-2 ring-primary/50' : 'border-transparent'
               }`}
-            onClick={() => setCurrentVideoIndex(index)}
+            onClick={() => {
+              setCurrentVideoIndex(index)
+              setselectedVideo(item)
+              // triggerHistoryRefresh()
+            }}
           >
             <div className="relative">
               <img
@@ -417,12 +438,12 @@ const PlaylistDetail = () => {
               </div>
 
               {/* Currently playing indicator */}
-              {currentVideoIndex === index && (
+              {/* {currentVideoIndex === index && (
                 <div className="absolute top-2 right-2 bg-primary text-primary-foreground px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
                   <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
                   Playing
                 </div>
-              )}
+              )} */}
 
               {/* Episode number badge */}
               <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs font-semibold">
@@ -467,7 +488,7 @@ const PlaylistDetail = () => {
           title={`${selectedVideo.title} (${currentVideoIndex! + 1}/${content.length})`}
           userId="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3" // Replace with actual user ID from auth
           onVideoEnd={handleVideoEnd}
-          setSelectedVideo={setCurrentVideoIndex}
+          setSelectedVideo={setselectedVideo}
           // Additional props for playlist navigation
           // video={selectedVideo}
           movieId={selectedVideo.id}

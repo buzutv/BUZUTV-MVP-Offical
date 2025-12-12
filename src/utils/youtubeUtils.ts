@@ -86,8 +86,8 @@ export async function fetchWatchHistory(userId: string, movieId: string) {
 
 export async function onReadyVideoLoader(e: any, movieId: string, userId: string) {
   const last_position = await fetchWatchHistory(userId, movieId)
-
-  if (last_position.completed) {
+  console.log("Last position", last_position.watch_percentage)
+  if (last_position.completed || last_position.watch_percentage >= 99) {
     // If movie was completed, reset to beginning
     e.target.seekTo(0, true);
     e.target.playVideo();
@@ -127,5 +127,8 @@ export async function saveWatchHistory(userid: string, movieId: string, videoId:
         completed: completed
       },
       { onConflict: "user_id,movie_id" }
-    );
+    )
+
+
+
 }
