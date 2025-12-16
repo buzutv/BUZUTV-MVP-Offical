@@ -10,6 +10,7 @@ import usePlaylists from '@/hooks/usePlaylists'
 import { supabase } from '@/integrations/supabase/client'
 import { fetchWatchHistory } from '@/utils/youtubeUtils'
 import { Dialog, DialogContent } from '@radix-ui/react-dialog'
+import { dataTagSymbol } from '@tanstack/react-query'
 import { Plus, Trash } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -28,6 +29,7 @@ const PlaylistDetail = () => {
   const [search, setSearch] = useState("")
   const [searchResults, setSearchResults] = useState([])
   const [selectedMovies, setSelectedMovies] = useState<string[]>([]);
+  const [index, setIndex] = useState<number | null>(null);
   // const { refetch } = usePlaylists()
   // Function to be passed to the player to trigger a re-fetch of history
   const triggerHistoryRefresh = () => {
@@ -39,7 +41,16 @@ const PlaylistDetail = () => {
   // Fetch playlist content only when ID changes
   useEffect(() => {
     if (id) fetchSinglePlaylist(id)
-    refetch()
+    refetch(id)
+
+    async function fetchRPC() {
+      const { data, error } = await supabase.rpc('generate_all_recommendations', {
+      user_id_param: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
+      });
+      return data
+  }
+  fetchRPC().then(data => console.log("Here is RPC Data",data))
+  // console.log("Here is RPC Data",data)
   }, [id, user_watch_history, setUserWatchHistory])
 
   // Fetch watch history when content loads OR when historyUpdateKey changes
@@ -76,13 +87,19 @@ const PlaylistDetail = () => {
 
     }
     loadWatchHistory()
-  }, [content.length, historyUpdateKey]) // 4. ADDED historyUpdateKey dependency
+    refetch(id)
+  }, [content.length, historyUpdateKey, content]) // 4. ADDED historyUpdateKey dependency
   console.log("Content in PlaylistDetail:", user_watch_history)
 
   // Get the currently selected video
-  const selectedVideo = currentVideoIndex !== null ? content[currentVideoIndex] : null
+ // Fixed Line
+ const displayItems = user_watch_history.length > 0 ? user_watch_history : content;
+  const selectedVideo = currentVideoIndex !== null 
+    ? (user_watch_history.length > 0 ? user_watch_history[currentVideoIndex] : content[currentVideoIndex]) 
+    : null
   // console.log("User Watch History in PlaylistDetail:", JSON.stringify(selectedVideo?.seasons_data))
 
+  console.log("Selected Video in PlaylistDetail:", selectedVideo) 
   const handleSearch = async (e) => {
     const value = e.target.value
     setSearch(value)
@@ -224,7 +241,11 @@ const PlaylistDetail = () => {
 
 
   // Use history data if available, otherwise use raw content (for safety during loading)
-  const displayItems = user_watch_history.length > 0 ? user_watch_history : content;
+ // Move this line up (before selectedVideo definition)
+
+
+// Use it here
+// const selectedVideo = currentVideoIndex !== null ? displayItems[currentVideoIndex] : null;
   const isLoading = content.length > 0 && user_watch_history.length === 0;
 
 
@@ -394,7 +415,11 @@ const PlaylistDetail = () => {
             key={item.id}
             className={`z-10 w-full cursor-pointer rounded-xl overflow-hidden shadow-md hover:shadow-lg transition bg-white-900 text-zinc-900 border-2 ${currentVideoIndex === index ? 'border-primary ring-2 ring-primary/50' : 'border-transparent'
               }`}
-            onClick={() => setCurrentVideoIndex(index)}
+            onClick={() => {
+              setCurrentVideoIndex(index)
+              setIndex(index)
+            }
+            }
           >
             <div className="relative">
               <img
@@ -476,9 +501,11 @@ const PlaylistDetail = () => {
           onNext={handleNext}
           onPrevious={handlePrevious}
           playlistInfo={{
-            current: currentVideoIndex! + 1,
+            current: index + 1,
+            setIndex:setIndex,
             total: content.length,
             autoPlay: isAutoPlay,
+            totalMovies: user_watch_history.length
             // id:selectedVideo.id
           }}
           onWatchHistoryUpdate={triggerHistoryRefresh}

@@ -1,14 +1,15 @@
 import React, { useEffect, useImperativeHandle, forwardRef, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-// import { supabase } from "../integrations/supabase/client"; // Uncomment if needed locally
 import { getYouTubeEmbedUrl, onReadyVideoLoader, fetchWatchHistory, saveWatchHistory } from "@/utils/youtubeUtils";
 
 interface VideoPlayerProps {
   videoId: string;
   setActualVideoUrl?: (videoId: string) => void;
+  setCurrentMovie?: (movie: any) => void;
   playlistItems?: any; // relaxed type for flexibility
   movieId: string;
   type: string;
+  playlistInfo?: any;
   userid: string;
   setFinal?: (any: any) => void;
   onWatchHistoryUpdate?: () => void;
@@ -17,15 +18,17 @@ interface VideoPlayerProps {
 const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   videoId,
   playlistItems,
+  setCurrentMovie,
   movieId,
   setFinal,
   type,
-  userid
+  userid,
+  playlistInfo
+
 }, ref) => {
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerInstanceRef = useRef<any>(null);
   const movieIdRef = useRef<string>(movieId);
-  
   // REFS: Use refs for data accessed inside Event Listeners to avoid stale closures
   const playlistRef = useRef(playlistItems);
   const currentIndexRef = useRef(0);
@@ -36,10 +39,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   const [videoEnded, setVideoEnded] = useState(false);
   const [videoRestricted, setVideoRestricted] = useState(false);
 
+  console.log("Playlist info", playlistItems)
   // Sync refs with props whenever they change
   useEffect(() => {
     playlistRef.current = playlistItems;
   }, [playlistItems]);
+
+  useEffect(() =>{
+    currentIndexRef.current = playlistInfo.current
+  },[playlistInfo.index])
 
   useEffect(() => {
     movieIdRef.current = movieId;
@@ -100,14 +108,14 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
     clearCountdownTimer();
     setVideoEnded(false);
     setVideoRestricted(false);
-
+    
     // Update index
     currentIndexRef.current += 1;
     setCurrentIndex(currentIndexRef.current);
-
+    // if(playlistInfo.index < currentList.length -1) playlistInfo.setIndex(index  => index + 1);
     const nextVideo = currentList[currentIndexRef.current];
     const nextVideoId = getVideoId(nextVideo.video_url);
-
+    setCurrentMovie(nextVideo)
     // Update Movie ID ref for history tracking
     movieIdRef.current = nextVideo.id;
 
@@ -125,7 +133,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
 
   const playPrevious = async () => {
     const currentList = playlistRef.current?.contents;
-
+    console.log("Current List", currentList)
     if (!currentList || currentIndexRef.current <= 0) {
       console.log("No previous video available");
       return;
@@ -137,10 +145,11 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
 
     currentIndexRef.current -= 1;
     setCurrentIndex(currentIndexRef.current);
+    if(playlistInfo.index > 0) playlistInfo.setIndex(index  => index - 1);
 
     const prevVideo = currentList[currentIndexRef.current];
     const prevVideoId = getVideoId(prevVideo.video_url);
-
+    setCurrentMovie(prevVideo)
     movieIdRef.current = prevVideo.id;
 
     if (prevVideoId && playerInstanceRef.current) {
@@ -199,15 +208,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
               if (e.data === window.YT.PlayerState.ENDED) {
                 // Save history
                 await saveWatchHistory(userid, movieIdRef.current, videoId, e.target.getCurrentTime(), true, playerInstanceRef);
-                
+
                 console.log("Movie finished. Checking for next video...");
 
                 // CHECK: Use REF data for checking next video availability
                 if (currentList && currentList.length > 0 && currentIndexRef.current < currentList.length - 1) {
-                   console.log("Next video found. Starting countdown.");
-                   startCountdown();
+                  console.log("Next video found. Starting countdown.");
+                  startCountdown();
                 } else {
-                   console.log("Playlist finished.");
+                  console.log("Playlist finished.");
                 }
               }
 
@@ -344,9 +353,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
 
           <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 
             bg-black/80 backdrop-blur-md text-white px-6 py-2.5 rounded-full text-base font-semibold shadow-xl border border-white/10">
-            <span className="text-blue-400">{currentIndex + 1}</span>
+            <span className="text-blue-400">{currentIndexRef?.current}</span>
             <span className="text-white/60 mx-2">/</span>
-            <span className="text-white/90">{playlistItems?.contents?.length || 0}</span>
+            <span className="text-white/90">{playlistInfo?.totalMovies}</span>
           </div>
         </>
       )}

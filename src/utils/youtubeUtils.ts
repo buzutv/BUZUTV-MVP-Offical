@@ -86,8 +86,8 @@ export async function fetchWatchHistory(userId: string, movieId: string) {
 
 export async function onReadyVideoLoader(e: any, movieId: string, userId: string) {
   const last_position = await fetchWatchHistory(userId, movieId)
-
-  if (last_position.completed) {
+  console.log("Last position", last_position.watch_percentage)
+  if (last_position.completed || last_position.watch_percentage >= 99) {
     // If movie was completed, reset to beginning
     e.target.seekTo(0, true);
     e.target.playVideo();
@@ -113,19 +113,49 @@ export async function onReadyVideoLoader(e: any, movieId: string, userId: string
 
 
 export async function saveWatchHistory(userid: string, movieId: string, videoId: string, currentTime: number, completed: boolean, ref) {
+  console.log("=== SAVE WATCH HISTORY START ===");
   console.log("Movie Id", movieId);
+  console.log("User Id", userid);
+  console.log("Current Time", currentTime);
 
-  await supabase
+  const watchPercentage = completed ? 100 : Math.floor((currentTime / ref.current.getDuration()) * 100);
+  console.log("Watch Percentage", watchPercentage);
+
+  // First, try to UPDATE (this preserves view_counted)
+  const { data: updateResult, error: updateError } = await supabase
     .from("user_watch_history")
-    .upsert(
-      {
+    .update({
+      watched_at: new Date().toISOString(),
+      last_position: completed ? 0 : Math.floor(currentTime),
+      watch_percentage: watchPercentage,
+      completed: completed
+      // DON'T touch view_counted - it stays as is!
+    })
+    .eq("user_id", userid)
+    .eq("movie_id", movieId)
+    .select();
+
+  // If no rows were updated (doesn't exist), INSERT it
+  if (!updateResult || updateResult.length === 0) {
+    const { data, error } = await supabase
+      .from("user_watch_history")
+      .insert({
         user_id: userid,
         movie_id: movieId,
         watched_at: new Date().toISOString(),
         last_position: completed ? 0 : Math.floor(currentTime),
-        watch_percentage: completed ? 100 : Math.floor((currentTime / ref.current.getDuration()) * 100),
+        watch_percentage: watchPercentage,
         completed: completed
-      },
-      { onConflict: "user_id,movie_id" }
-    );
+        // view_counted defaults to FALSE, trigger will handle it
+      })
+      .select();
+    
+    console.log("Insert result:", data);
+    console.log("Insert error:", error);
+  } else {
+    console.log("Update result:", updateResult);
+    console.log("Update error:", updateError);
+  }
+
+  console.log("=== SAVE WATCH HISTORY END ===");
 }

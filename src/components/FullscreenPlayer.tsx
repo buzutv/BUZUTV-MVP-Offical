@@ -35,8 +35,10 @@ interface FullscreenPlayerProps {
   movieId: string;
   playlistInfo?: {
     current: number;
+    setIndex: (index: number) => void;
     total: number;
     autoPlay: boolean;
+    totalMovies: number;
   };
 }
 
@@ -65,11 +67,12 @@ const FullscreenPlayer = ({
   const [videoEnded, setVideoEnded] = useState(false)
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const currentMovie = movies[0];
+  // const currentMovie = movies[0];
   const [selectedGenre, setSelectedGenre] = useState<string>("All");
   const [selectedYear, setSelectedYear] = useState<string>("All");
   const [selectedType, setSelectedType] = useState<string>("All");
   const [relatedContent, setRelatedContent] = useState<any[]>([]);
+  const [currentMovie, setCurrentMovie] = useState<any>(null);
   const navigate = useNavigate();
   const [final, setFinal] = useState(0);
   const [video_id, setVideoId] = useState<string>("");
@@ -92,10 +95,10 @@ const FullscreenPlayer = ({
     moviesRef.current = movies;
     durationRef.current = duration;
     currentMovieIdRef.current = movies[0]?.id || null;
-
+    setCurrentMovie(movies[0])
   }, [movies, duration]);
 
-  console.log("parentRef", parentRef)
+  console.log("parentRef", currentMovie)
   // console.log("final in fullscreeplayer", video)
   useEffect(() => {
     if (id) {
@@ -152,6 +155,13 @@ const FullscreenPlayer = ({
           .select("*")
           .eq("id", videoUrl.id);
 
+        // const {data:seasonsData} = await supabase
+        // .from("seasons")
+        // .select("*")
+        // .eq("content_uuid", videoUrl.id)
+
+
+        // console.log("Seasons Data", seasonsData)
         if (error) {
           console.error("Error fetching movies:", error);
         } else {
@@ -272,8 +282,6 @@ const FullscreenPlayer = ({
           <div className="flex justify-center items-center gap-4 mb-4">
             <div className="flex items-center justify-center gap-4 cursor-pointer flex-1" onClick={async () => {
               setSelectedVideo(null)
-              const value = await saveWatchHistory("03fa9a91-4281-4bd4-9e60-4da2ba72b0f3", movieid, "", final, false, parentRef);
-              navigate(`/playlists/${playlistRef.current}`)
 
             }}>
               <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
@@ -299,12 +307,14 @@ const FullscreenPlayer = ({
               <VideoPlayer
                 videoId={actualVideoUrl}
                 // last_position={lastPausedTime}
+                setCurrentMovie={setCurrentMovie}
                 type={type}
                 setFinal={setFinal}
                 setActualVideoUrl={setActualVideoUrl}
                 playlistItems={playlists}
                 movieId={movieid}
                 userid="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
+                playlistInfo={playlistInfo}
                 ref={parentRef}
               />
 
