@@ -159,3 +159,39 @@ export async function saveWatchHistory(userid: string, movieId: string, videoId:
 
   console.log("=== SAVE WATCH HISTORY END ===");
 }
+
+
+export async function fetchSeriesSeasons(contentUuid: string) {
+  const { data, error } = await supabase
+    .from("seasons")
+    .select("*")
+    .eq("content_id", contentUuid)
+    .order("season_number", { ascending: true })
+
+  // console.log("Fetched seasons data",data)
+  if (error) {
+    console.error("Error fetching seasons:", error);
+    return [];
+  }
+
+  const seasons = data || [];
+  for (const season of seasons) {
+    const { data: episodesData, error: episodesError } = await supabase
+      .from("episodes")
+      .select("*")
+      .eq("season_id", season.id)
+      .order("episode_number", { ascending: true });
+
+    
+    if (episodesError) {
+      console.error("Error fetching episodes for season", season.id, ":", episodesError);
+      season.episodes = [];
+    } else {
+      season.episodes = episodesData || [];
+    }
+  }
+
+  return seasons;
+
+
+}

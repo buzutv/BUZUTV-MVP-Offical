@@ -88,7 +88,7 @@ const PlaylistDetail = () => {
     }
     loadWatchHistory()
     refetch(id)
-  }, [content.length, historyUpdateKey, content]) // 4. ADDED historyUpdateKey dependency
+  }, [content.length, historyUpdateKey]) // 4. ADDED historyUpdateKey dependency
   console.log("Content in PlaylistDetail:", user_watch_history)
 
   // Get the currently selected video

@@ -5,6 +5,7 @@ import ContentCard from "@/components/ContentCard";
 import FullscreenPlayer from "@/components/FullscreenPlayer";
 import React, { useState } from "react";
 import { useContent } from "@/hooks/useContent";
+import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
 
 const MovieDetail = () => {
   const { id } = useParams();
@@ -131,7 +132,7 @@ const MovieDetail = () => {
             {/* Video Preview Section */}
             <div className="aspect-video bg-gray-800 rounded-lg overflow-hidden mb-8 relative group">
               <img
-                src={movie.posterUrl}
+                src={getOptimizedImageUrl(movie.posterUrl, 400)}
                 alt={movie.title}
                 className="w-full h-full object-cover"
               />

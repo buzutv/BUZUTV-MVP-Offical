@@ -3,7 +3,7 @@ import { Channel } from "@/data/mockMovies";
 import React from "react";
 import { useUserChannelFavorites } from "@/hooks/useUserChannelFavorites";
 import { Button } from "./ui/button";
-
+import {getOptimizedImageUrl}  from '../utils/youtubeUtils';
 interface ChannelCardProps {
   channel: Channel;
 }
@@ -64,7 +64,7 @@ const ChannelCard = ({ channel }: ChannelCardProps) => {
             {/* Bottom always-visible row */}
             <div className="flex items-center gap-3 transition-opacity duration-300 group-hover:opacity-0">
               <img
-                src={channel.logoUrl}
+                src={getOptimizedImageUrl(channel.logoUrl, 400)}
                 alt={`${channel.name} logo`}
                 className="h-10 w-10 flex-shrink-0 rounded-lg border-2 border-white/20 bg-black/50 object-contain p-1 shadow-md"
               />

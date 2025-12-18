@@ -8,6 +8,7 @@ import { useMockContent } from "@/hooks/useMockContent";
 import { supabase } from "@/integrations/supabase/client";
 import { genres } from "@/data/mockMovies";
 import { Spinner } from "@/components/ui/spinner";
+import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
 
 const AdminMovies = () => {
   const { movies: mockMovies, isLoading } = useMockContent();
@@ -267,7 +268,7 @@ const AdminMovies = () => {
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-3">
                           <img
-                            src={movie.posterUrl}
+                            src={getOptimizedImageUrl(movie.posterUrl, 400)}
                             alt={movie.title}
                             className="w-12 h-16 object-cover rounded"
                           />

@@ -1,10 +1,11 @@
-import { fetchWatchHistory, getYouTubeEmbedUrl, saveWatchHistory } from "@/utils/youtubeUtils";
+import { fetchSeriesSeasons, fetchWatchHistory, getYouTubeEmbedUrl, saveWatchHistory } from "@/utils/youtubeUtils";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client";
 import SearchBar from "./SearchBar";
 import VideoPlayer from "./VideoPlayer";
 import usePlaylists from "@/hooks/usePlaylists";
+
 // Episode interface
 interface Episode {
   title: string;
@@ -113,11 +114,15 @@ const FullscreenPlayer = ({
 
   // Parse seasons_data for series content
   useEffect(() => {
+
+    async function parseSeasonsData() {
     if (typeof videoUrl === 'object' && videoUrl?.type === 'series' && videoUrl?.seasons_data) {
       try {
         const seasonsData = JSON.parse(videoUrl.seasons_data);
         const allEpisodes: Episode[] = [];
-
+        console.log("Selected Video URl", videoUrl)
+        const seasons = await fetchSeriesSeasons(videoUrl.id)
+        console.log("Seasons Content fetched", seasons)
         seasonsData.forEach((season: any) => {
           season.episodes?.forEach((episode: any) => {
             allEpisodes.push({
@@ -143,6 +148,9 @@ const FullscreenPlayer = ({
       setCurrentEpisode(null);
       setActualVideoUrl(videoUrl);
     }
+  }
+
+  parseSeasonsData()
   }, [videoUrl]);
 
   // Fetch movie data from Supabase

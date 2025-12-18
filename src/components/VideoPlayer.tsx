@@ -39,7 +39,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   const [videoEnded, setVideoEnded] = useState(false);
   const [videoRestricted, setVideoRestricted] = useState(false);
 
-  console.log("Playlist info", playlistItems)
+  // console.log("Playlist info", playlistItems)
   // Sync refs with props whenever they change
   useEffect(() => {
     playlistRef.current = playlistItems;
