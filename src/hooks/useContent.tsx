@@ -34,6 +34,8 @@ const fetchContentData = async (): Promise<Content[]> => {
     .order("created_at", { ascending: false });
 
 
+
+
   if (error) {
     console.error("❌ [useContent] Error fetching content:", error);
     toast.error("Failed to load content");

@@ -11,6 +11,7 @@ import { Content, useContent } from "@/hooks/useContent";
 import { Channel, useChannels } from "@/hooks/useChannels";
 import { useMoreLikeThis } from "@/hooks/useMoreLikeThis";
 import SeriesPlayer from "@/components/SeriesPlayer";
+import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
 
 // Type guards to safely access properties
 const isMovie = (item: Movie | Content): item is Movie => {
@@ -394,7 +395,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
                 {/* Background Image */}
                 <div className="absolute inset-0">
                   <img
-                    src={normalizedItem.posterUrl}
+                    src={getOptimizedImageUrl(normalizedItem.posterUrl, 400)}
                     alt={normalizedItem.title}
                     className="w-full h-full object-cover"
                   />
@@ -496,7 +497,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
 
                     {channel?.logo_url && (
                       <img
-                        src={channel.logo_url}
+                        src={getOptimizedImageUrl(channel.logo_url, 400)}
                         alt={channel.name}
                         className="w-8 h-8 object-contain rounded"
                       />

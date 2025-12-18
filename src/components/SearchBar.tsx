@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Search, X } from 'lucide-react';
-import { fetchWatchHistory } from '@/utils/youtubeUtils';
+import { fetchWatchHistory, getOptimizedImageUrl } from '@/utils/youtubeUtils';
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
@@ -103,7 +103,7 @@ const SearchBar = ({
                     <div className="flex items-center gap-3">
                       {result.poster_url && (
                         <img
-                          src={result.poster_url}
+                          src={getOptimizedImageUrl(result.poster_url, 400)}
                           alt={result.title || result.content_title}
                           className="w-12 h-16 object-cover rounded"
                         />

@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Circle, Plus, RefreshCcw, Trash2 } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
+import { getOptimizedImageUrl } from "@/utils/youtubeUtils"
 
 type PlaylistToDelete = {
     id: string;
@@ -256,7 +257,7 @@ const PlayList = () => {
                                         previews.map((item, i) => (
                                             <img
                                                 key={item.id}
-                                                src={item.poster_url ?? "https://placehold.co/350x300/334155/ffffff?text=Video+Asset"}
+                                                src={getOptimizedImageUrl(item.poster_url ?? "https://placehold.co/350x300/334155/ffffff?text=Video+Asset", 400)}
                                                 className={`absolute left-0 w-full h-[300px] rounded-xl shadow-lg object-cover 
                                                     transition-all duration-300
                                                     ${i === 0 ? "z-30 top-0 scale-105" : ""}

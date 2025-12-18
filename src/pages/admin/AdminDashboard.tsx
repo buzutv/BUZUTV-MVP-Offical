@@ -5,6 +5,7 @@ import { genres } from "@/data/mockMovies";
 import { Film, Tv, Users, TrendingUp, PlayCircle, Calendar } from "lucide-react";
 import BulkImportUpload from "@/components/admin/BulkImportUpload";
 import { Spinner } from "@/components/ui/spinner";
+import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
 
 const AdminDashboard = () => {
   const { movies: mockMovies, channels, isLoading } = useMockContent();
@@ -176,7 +177,7 @@ const AdminDashboard = () => {
               {channels.slice(0, 6).map((channel) => (
                 <div key={channel.id} className="flex items-center space-x-4 p-3 bg-gray-700 rounded-lg">
                   <img
-                    src={channel.logoUrl}
+                    src={getOptimizedImageUrl(channel.logoUrl,400)}
                     alt={channel.name}
                     className="w-12 h-12 object-cover rounded"
                   />

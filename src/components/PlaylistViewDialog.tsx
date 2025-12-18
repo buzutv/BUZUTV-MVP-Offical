@@ -1,5 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
 
 const PlaylistDialog = ({ playlist, items }) => {
   return (
@@ -18,7 +19,7 @@ const PlaylistDialog = ({ playlist, items }) => {
             >
               {/* Thumbnail */}
               <img 
-                src={movie.poster_url}
+                src={getOptimizedImageUrl(movie.poster_url, 400)}
                 alt={movie.title}
                 className="w-full h-48 object-cover"
               />

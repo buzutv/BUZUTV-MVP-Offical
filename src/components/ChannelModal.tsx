@@ -12,6 +12,7 @@ import ContentCard from "@/components/ContentCard";
 import { useContent } from "@/hooks/useContent";
 import { useUserChannelFavorites } from "@/hooks/useUserChannelFavorites";
 import { Movie } from "@/data/mockMovies";
+import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
 
 interface Channel {
   id: string;
@@ -219,7 +220,7 @@ const ChannelModal = ({ isOpen, onClose, channel }: ChannelModalProps) => {
                 <div className="flex items-center space-x-4 flex-1">
                   {(channel.logo_url || channel.logoUrl) && (
                     <img
-                      src={channel.logo_url || channel.logoUrl}
+                      src={getOptimizedImageUrl(channel.logo_url || channel.logoUrl, 400)}
                       alt={channel.name}
                       className="w-12 h-12 object-contain rounded"
                     />

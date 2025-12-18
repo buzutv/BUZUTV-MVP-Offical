@@ -16,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import usePlaylists from "@/hooks/usePlaylists";
 import { toast } from "sonner";
+import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
 
 export interface ContentCardProps {
   item: Movie | any;
@@ -390,7 +391,7 @@ const ContentCard = ({
           <div className="relative overflow-hidden transition-all duration-300">
             <div className="w-full h-full">
               <img
-                src={normalizedItem.posterUrl}
+                src={getOptimizedImageUrl(normalizedItem.posterUrl, 400)}
                 alt={`${normalizedItem.title} poster`}
                 className="w-full h-full rounded-lg object-cover transform transition-transform duration-300 hover:scale-[1.1]"
                 loading="lazy"

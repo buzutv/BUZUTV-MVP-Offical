@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Upload, X, Image } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { getOptimizedImageUrl } from '@/utils/youtubeUtils';
 
 interface ImageUploadProps {
   label: string;
@@ -95,7 +96,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         <div className="space-y-2">
           <div className="relative group">
             <img
-              src={value}
+              src={getOptimizedImageUrl(value, 400)}
               alt={label}
               className="w-full h-32 object-cover rounded-lg border border-gray-600"
             />

@@ -192,6 +192,42 @@ export async function fetchSeriesSeasons(contentUuid: string) {
   }
 
   return seasons;
+}
 
 
+export const getOptimizedImageUrl = (
+  url: string | null | undefined, 
+  width: number = 400
+): string => {
+  if (!url) return '';
+  
+  if (!url.includes('supabase.co/storage/v1/object/public/')) {
+    return url;
+  }
+  
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}width=${width}&quality=80&resize=contain`;
+};
+
+
+export const getRecommendedMovies = async (user_id) => {
+  const { data, error } = await supabase.rpc('generate_all_recommendations', {
+      user_id_param: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
+      });
+
+  if (error){
+    console.error("Error fetching recommended movies:", error);
+    return [];
+  }
+  const recommendedMovies = [];
+  for (const item of data){
+    const contentItem = await supabase
+      .from("content")
+      .select("*")
+      .eq("id", item.rec_content_id)
+      .single();
+    item.details = contentItem.data;
+    recommendedMovies.push(item);
+  }
+  return recommendedMovies
 }

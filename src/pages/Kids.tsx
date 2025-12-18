@@ -10,6 +10,7 @@ import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
 import FullscreenPlayer from "@/components/FullscreenPlayer";
+import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
 
 const Kids = () => {
   const { kidsContent, isLoading } = useAppContent();
@@ -180,7 +181,7 @@ const Kids = () => {
                             </div>
                             {/* Poster Image */}
                             <img
-                              src={movie.posterUrl}
+                              src={getOptimizedImageUrl(movie.posterUrl, 400)}
                               alt={movie.title}
                               className="w-16 h-20 object-cover rounded-lg mr-3 flex-shrink-0 border-2 border-white/50"
                             />

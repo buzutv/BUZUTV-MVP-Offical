@@ -19,6 +19,7 @@ import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
 import FullscreenPlayer from "@/components/FullscreenPlayer";
 import { Spinner } from "@/components/ui/spinner";
+import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
 
 const Series = () => {
   const { seriesContent, isLoading, content } = useAppContent();
@@ -201,7 +202,7 @@ const Series = () => {
                             </div>
                             {/* Poster Image */}
                             <img
-                              src={show.posterUrl}
+                              src={getOptimizedImageUrl(show.posterUrl, 400)}
                               alt={show.title}
                               className="w-16 h-20 object-cover rounded-lg mr-3 flex-shrink-0 border-1 border-brand-500/10 shadow-lg"
                             />

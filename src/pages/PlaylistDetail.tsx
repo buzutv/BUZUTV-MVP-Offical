@@ -8,7 +8,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { useContent } from '@/hooks/useContent'
 import usePlaylists from '@/hooks/usePlaylists'
 import { supabase } from '@/integrations/supabase/client'
-import { fetchWatchHistory } from '@/utils/youtubeUtils'
+import { fetchWatchHistory, getOptimizedImageUrl } from '@/utils/youtubeUtils'
 import { Dialog, DialogContent } from '@radix-ui/react-dialog'
 import { dataTagSymbol } from '@tanstack/react-query'
 import { Plus, Trash } from 'lucide-react'
@@ -44,12 +44,24 @@ const PlaylistDetail = () => {
     refetch(id)
 
     async function fetchRPC() {
+
       const { data, error } = await supabase.rpc('generate_all_recommendations', {
       user_id_param: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
       });
+
+      const { data:playlist } = await supabase
+          .from("playlists")
+          .select(`
+            *,
+            playlist_items (
+              content (*)
+            )
+          `)
+      console.log("Here is Playlist Data",playlist)
       return data
-  }
-  fetchRPC().then(data => console.log("Here is RPC Data",data))
+    }
+    fetchRPC().then(data => console.log("Here is RPC Data",data))
+   
   // console.log("Here is RPC Data",data)
   }, [id, user_watch_history, setUserWatchHistory])
 
@@ -423,7 +435,7 @@ const PlaylistDetail = () => {
           >
             <div className="relative">
               <img
-                src={item.poster_url}
+                src={getOptimizedImageUrl(item.poster_url, 400)}
                 alt={item.title}
                 className="w-full h-48 object-cover"
               />

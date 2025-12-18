@@ -144,6 +144,21 @@ const usePlaylists = ({ id }: PlaylistHookProps = {}) => {
       setContent(filtered);
       setPlaylists([{ ...playlist, items: filtered }]);
 
+
+      const {data, error} = await supabase
+          .from("playlists")
+          .select(`
+            *,
+            playlist_items (
+              content (*)
+            )
+          `)
+          .eq("id", id)
+          .single()
+
+    console.log("Filtered playlist fetch:", data);
+
+
       return { playlist, items, contents: filtered };
     });
 
@@ -156,14 +171,9 @@ const usePlaylists = ({ id }: PlaylistHookProps = {}) => {
 
 
 
-  // const {
-  //     data: playlistContent,
-  //     isLoading,
-  //     error,
-  //     refetch,
-  //   } = useContentCache("playlists", fetchPlaylists, []);
 
 
+ 
   useEffect(() => {
     async function loadPlaylists() {
       if (id) {

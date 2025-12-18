@@ -1,10 +1,19 @@
-import { fetchSeriesSeasons, fetchWatchHistory, getYouTubeEmbedUrl, saveWatchHistory } from "@/utils/youtubeUtils";
+import { fetchSeriesSeasons, fetchWatchHistory, getOptimizedImageUrl, getRecommendedMovies, getYouTubeEmbedUrl, saveWatchHistory } from "@/utils/youtubeUtils";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client";
 import SearchBar from "./SearchBar";
 import VideoPlayer from "./VideoPlayer";
 import usePlaylists from "@/hooks/usePlaylists";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 // Episode interface
 interface Episode {
@@ -90,6 +99,7 @@ const FullscreenPlayer = ({
   const { fetchSinglePlaylist } = usePlaylists()
   const [playlists, setPlaylists] = useState<any[]>([])
   const { refetch } = usePlaylists()
+  const [recommended, setRecommended] = useState<any[]>([])
   // Sync refs with state
   const parentRef = useRef()
   useEffect(() => {
@@ -234,6 +244,10 @@ const FullscreenPlayer = ({
       );
 
       setRelatedContent(dataWithHistory);
+
+      const recommend = await getRecommendedMovies("03fa9a91-4281-4bd4-9e60-4da2ba72b0f3");
+      console.log("Here are the recommendations", recommend)
+      setRecommended(recommend)
     }
 
     fetchRelatedContent();
@@ -330,7 +344,6 @@ const FullscreenPlayer = ({
             </div>
             {/* Overlays */}
           </div>
-
           {/* Episode Selection for Series */}
           {episodes.length > 0 && (
             <div className="mb-8">
@@ -418,7 +431,7 @@ const FullscreenPlayer = ({
                 {/* Poster */}
                 <div className="flex-shrink-0">
                   <img
-                    src={currentMovie.poster_url}
+                    src={getOptimizedImageUrl(currentMovie.poster_url, 400)}
                     alt={currentMovie.content_title || currentMovie.title}
                     className="w-48 h-72 object-cover rounded-lg shadow-2xl"
                   />
@@ -468,13 +481,94 @@ const FullscreenPlayer = ({
           {/* Filters Section */}
           <div className="mb-8">
             <h2 className="text-white text-2xl font-bold mb-4">More Like This</h2>
+            <div className="mt-6 mb-6">
+                <h2 className="mb-4 inline-block rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-white/70 backdrop-blur">
+                  Recommended For You
+                </h2>
+                {
+                  recommended.length === 0 ? (<div className="flex flex-wrap gap-5">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="w-[200px]">
+                        <div className="relative aspect-square overflow-hidden rounded-xl bg-white/5 shadow-md">
+                          {/* Image skeleton */}
+                          <div className="h-full w-full animate-pulse bg-gradient-to-br from-white/10 via-white/5 to-white/10" />
+
+                          {/* Text skeleton */}
+                          <div className="absolute bottom-0 left-0 right-0 p-3">
+                            <div className="mb-2 h-3 w-3/4 rounded bg-white/20 animate-pulse" />
+                            <div className="h-2 w-1/3 rounded bg-white/10 animate-pulse" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>) 
+                  :(
+                    <div className="flex flex-wrap gap-5">
+                      {recommended.map((rec) => (
+                        <div
+                          key={rec.id}
+                          onClick={() => {
+                                handleRelatedClick(rec?.details?.id)
+                                setMovieid(rec?.details?.id)
+                                // Now switch to new content
+                                setActualVideoUrl(rec?.details?.video_url);
+                                setMovies([rec?.details]);
+                                setVideoEnded(false);
+                                setPlaylists([])
+                              }}
+                          className="group w-[200px] cursor-pointer"
+                        >
+                          <div className="relative aspect-square overflow-hidden rounded-xl bg-white/5 shadow-md transition-all duration-300 hover:shadow-xl">
+                            <img
+                              src={getOptimizedImageUrl(rec?.details?.poster_url, 400)}
+                              alt={rec.content_title || rec.title}
+                              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            />
+
+                            {/* Overlay */}
+                            <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                              <div className="p-3">
+                                <p className="text-sm font-semibold text-white leading-tight">
+                                  {rec.content_title || rec.title}
+                                </p>
+                                {rec.year && (
+                                  <p className="text-xs text-white/60">{rec.year}</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                }
+                  
+
+            </div>
+
             <div className="flex flex-wrap gap-4">
               {/* Genre Filter */}
+               <Select onValueChange={(e) => setSelectedGenre(e.target.value)}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Select a Genre" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {/* <SelectGroup> */}
+                        
+                        {genres.map(genre => (
+                          // <SelectLabel>Genres</SelectLabel>
+                         <SelectItem value={genre}>{genre}</SelectItem>
+                      ))}
+                      {/* </SelectGroup> */}
+                    </SelectContent>
+                </Select>
               <div>
                 <label className="text-white/60 text-sm mb-2 block bg-white/10 rounded-lg px-4 py-2">Genre</label>
                 <select
                   value={selectedGenre}
                   onChange={(e) => setSelectedGenre(e.target.value)}
+                  aria-placeholder="Select Genre"
+                  
                   className="text-white px-4 py-2 bg-white/10 rounded-lg border border-white/20 focus:border-white/40 outline-none"
                 >
                   {genres.map(genre => (
@@ -511,14 +605,15 @@ const FullscreenPlayer = ({
                 </select>
               </div>
             </div>
-          </div>
+                </div>
+                
 
           {/* Related Content Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {relatedContent.map((content) => (
               <div
                 key={content.id}
-                className="cursor-pointer basis-[400px] max-w-[400px]"
+                className="cursor-pointer basis-[350px] max-w-[350px]"
                 onClick={() => {
                   handleRelatedClick(content.id)
                   setMovieid(content.id)
@@ -534,7 +629,7 @@ const FullscreenPlayer = ({
               >
                 <div className="relative aspect-square rounded-lg overflow-hidden bg-white/5 h-[50%] w-full">
                   <img
-                    src={content.poster_url}
+                    src={getOptimizedImageUrl(content.poster_url, 400)}
                     alt={content.content_title || content.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />

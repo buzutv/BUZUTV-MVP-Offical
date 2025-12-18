@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { useAdminChannels } from "@/hooks/useAdminChannels";
 import { supabase } from "@/integrations/supabase/client";
+import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
 
 const AdminChannels = () => {
   const { channels, isLoading, refetch } = useAdminChannels();
@@ -172,7 +173,7 @@ const AdminChannels = () => {
                 
                 <div className="flex items-center space-x-4 mb-4">
                   <img
-                    src={channel.logo_url || '/placeholder.svg'}
+                    src={getOptimizedImageUrl(channel.logo_url) || '/placeholder.svg'}
                     alt={channel.name}
                     className="w-16 h-16 object-cover rounded-lg"
                   />

@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Check, ChevronDown, Search } from 'lucide-react';
 import { useAdminChannels } from '@/hooks/useAdminChannels';
+import { getOptimizedImageUrl } from '@/utils/youtubeUtils';
 
 interface ChannelSearchSelectProps {
   value?: string;
@@ -110,7 +111,7 @@ const ChannelSearchSelect: React.FC<ChannelSearchSelectProps> = ({
                   <div className="flex items-center flex-1">
                     {channel.logo_url && (
                       <img
-                        src={channel.logo_url}
+                        src={getOptimizedImageUrl(channel.logo_url, 400)}
                         alt={channel.name}
                         className="w-6 h-6 rounded mr-3 object-cover"
                       />
