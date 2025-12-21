@@ -1,4 +1,4 @@
-import React, { useEffect, useImperativeHandle, forwardRef, useRef, useState } from "react";
+import React, { useEffect, useImperativeHandle, forwardRef, useRef, useState, memo, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getYouTubeEmbedUrl, onReadyVideoLoader, fetchWatchHistory, saveWatchHistory } from "@/utils/youtubeUtils";
 
@@ -6,13 +6,12 @@ interface VideoPlayerProps {
   videoId: string;
   setActualVideoUrl?: (videoId: string) => void;
   setCurrentMovie?: (movie: any) => void;
-  playlistItems?: any; // relaxed type for flexibility
+  playlistItems?: any;
   movieId: string;
   type: string;
   playlistInfo?: any;
   userid: string;
   setFinal?: (any: any) => void;
-  onWatchHistoryUpdate?: () => void;
 }
 
 const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
@@ -24,12 +23,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   type,
   userid,
   playlistInfo
-
 }, ref) => {
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerInstanceRef = useRef<any>(null);
   const movieIdRef = useRef<string>(movieId);
-  // REFS: Use refs for data accessed inside Event Listeners to avoid stale closures
   const playlistRef = useRef(playlistItems);
   const currentIndexRef = useRef(0);
   const countdownRef = useRef<any>(null);
@@ -39,19 +36,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   const [videoEnded, setVideoEnded] = useState(false);
   const [videoRestricted, setVideoRestricted] = useState(false);
 
-  // console.log("Playlist info", playlistItems)
-  // Sync refs with props whenever they change
-  useEffect(() => {
-    playlistRef.current = playlistItems;
-  }, [playlistItems]);
-
-  useEffect(() =>{
-    currentIndexRef.current = playlistInfo.current
-  },[playlistInfo.index])
-
-  useEffect(() => {
-    movieIdRef.current = movieId;
-  }, [movieId]);
+  // Sync refs
+  useEffect(() => { playlistRef.current = playlistItems; }, [playlistItems]);
+  useEffect(() => { currentIndexRef.current = playlistInfo?.current || 0; }, [playlistInfo]);
+  useEffect(() => { movieIdRef.current = movieId; }, [movieId]);
 
   useImperativeHandle(ref, () => ({
     play: () => playerInstanceRef.current?.playVideo(),
@@ -59,14 +47,146 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
     getDuration: () => playerInstanceRef.current?.getDuration(),
   }));
 
-  const getVideoId = (inputVideoId: string) => {
+  // --- FIXED ID EXTRACTION ---
+  const getVideoId = useCallback((inputVideoId: string) => {
     if (!inputVideoId) return null;
-    const embedUrl = getYouTubeEmbedUrl(inputVideoId);
-    const videoIdMatch = embedUrl?.match(/embed\/([^?]+)/);
-    return videoIdMatch ? videoIdMatch[1] : null;
+    try {
+        // If it's already just an ID (no slashes), return it
+        if (!inputVideoId.includes("/")) return inputVideoId;
+
+        const embedUrl = getYouTubeEmbedUrl(inputVideoId);
+        const videoIdMatch = embedUrl?.match(/embed\/([^?]+)/);
+        return videoIdMatch ? videoIdMatch[1] : null;
+    } catch (e) {
+        return null;
+    }
+  }, []);
+
+  // --- 1. INITIALIZE PLAYER ---
+  useEffect(() => {
+    // GUARD: If no videoId is passed yet, do not attempt to load anything
+    if (!videoId) return;
+
+    if (!window.YT) {
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      document.body.appendChild(tag);
+    }
+
+    const initPlayer = () => {
+      if (playerInstanceRef.current) return;
+      
+      const vid = getVideoId(videoId);
+      
+      // GUARD: If extraction failed or ID is invalid, STOP here to prevent crash
+      if (!vid) {
+          console.warn("VideoPlayer: Attempted to init with invalid ID", videoId);
+          return;
+      }
+
+      playerInstanceRef.current = new window.YT.Player(playerContainerRef.current, {
+        height: "100%",
+        width: "100%",
+        videoId: vid,
+        playerVars: {
+          autoplay: 1,
+          controls: 1,
+          rel: 0,
+          showinfo: 0,
+          modestbranding: 1
+        },
+        events: {
+          onReady: (e: any) => onReadyVideoLoader(e, movieIdRef.current, userid),
+          onStateChange: handlePlayerStateChange,
+          onError: handlePlayerError,
+        },
+      });
+    };
+
+    if (window.YT && window.YT.Player) {
+      initPlayer();
+    } else {
+      (window as any).onYouTubeIframeAPIReady = initPlayer;
+    }
+
+    // Cleanup on unmount
+    return () => {
+       // We do NOT destroy the player here on props change, only on component unmount
+       // But if the component is actually unmounting, we clean up.
+    };
+  }, []); // Intentionally empty dependency to run only on mount
+
+  // --- 2. HANDLE VIDEO CHANGES (Smooth Transition) ---
+  useEffect(() => {
+    // If videoId changes, we update the existing player instead of re-creating it
+    const vid = getVideoId(videoId);
+
+    if (playerInstanceRef.current && vid) {
+       try {
+           // Only load if it's actually different to prevent restarting
+           const currentUrl = playerInstanceRef.current.getVideoUrl();
+           // YouTube URL check isn't always perfect, so we just load if we have a valid ID
+           playerInstanceRef.current.loadVideoById(vid);
+       } catch (e) {
+           console.error("Error loading new video into existing player", e);
+       }
+    } else if (!playerInstanceRef.current && vid && window.YT && window.YT.Player) {
+        // Fallback: If player wasn't ready on mount (due to missing ID), try init again
+        // This handles the case where videoId was null initially but populated later
+        const initLazy = () => {
+            playerInstanceRef.current = new window.YT.Player(playerContainerRef.current, {
+                height: "100%",
+                width: "100%",
+                videoId: vid,
+                playerVars: { autoplay: 1, controls: 1, rel: 0, showinfo: 0, modestbranding: 1 },
+                events: {
+                  onReady: (e: any) => onReadyVideoLoader(e, movieIdRef.current, userid),
+                  onStateChange: handlePlayerStateChange,
+                  onError: handlePlayerError,
+                },
+            });
+        }
+        initLazy();
+    }
+  }, [videoId]);
+
+
+  // --- HELPER FUNCTIONS ---
+
+  const handlePlayerStateChange = async (e: any) => {
+      if (e.data === window.YT.PlayerState.ENDED) {
+        await saveWatchHistory(userid, movieIdRef.current, videoId, e.target.getCurrentTime(), true, playerInstanceRef);
+        
+        const currentList = playlistRef.current?.contents;
+        if (currentList && currentList.length > 0 && currentIndexRef.current < currentList.length - 1) {
+          startCountdown();
+        }
+      }
+
+      if (e.data === window.YT.PlayerState.PAUSED) {
+        await saveWatchHistory(userid, movieIdRef.current, videoId, e.target.getCurrentTime(), false, playerInstanceRef);
+      }
+
+      if (e.data === window.YT.PlayerState.BUFFERING) {
+        const currentTime = e.target.getCurrentTime();
+        if (currentTime > 1 && setFinal) {
+          setFinal(currentTime);
+          await saveWatchHistory(userid, movieIdRef.current, videoId, currentTime, false, playerInstanceRef);
+        }
+      }
   };
 
-  // --- ROBUST COUNTDOWN LOGIC ---
+  const handlePlayerError = (err: any) => {
+      console.log("YT Error:", err.data);
+      if (err.data === 150 || err.data === 101) {
+        setVideoRestricted(true);
+        const currentList = playlistRef.current?.contents;
+        if (currentList && currentList.length > 0 && currentIndexRef.current < currentList.length - 1) {
+          startCountdown();
+        }
+      }
+  };
+
   const clearCountdownTimer = () => {
     if (countdownRef.current) {
       clearInterval(countdownRef.current);
@@ -75,19 +195,16 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   };
 
   const startCountdown = () => {
-    // 1. Always clear existing timer first to prevent duplicates
     clearCountdownTimer();
-
     setVideoEnded(true);
     setCountdown(5);
 
     countdownRef.current = setInterval(() => {
       setCountdown((prev) => {
-        // If we hit 1 (about to go to 0), trigger next
         if (prev <= 1) {
           clearCountdownTimer();
           setVideoEnded(false);
-          playNext(); // Trigger navigation
+          playNext();
           return 0;
         }
         return prev - 1;
@@ -96,48 +213,23 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   };
 
   const playNext = async () => {
-    // Access the LATEST playlist data via ref
     const currentList = playlistRef.current?.contents;
+    if (!currentList || currentIndexRef.current >= currentList.length - 1) return;
 
-    if (!currentList || currentIndexRef.current >= currentList.length - 1) {
-      console.log("No next video available");
-      return;
-    }
-
-    // Stop any running countdowns immediately
     clearCountdownTimer();
     setVideoEnded(false);
     setVideoRestricted(false);
     
-    // Update index
     currentIndexRef.current += 1;
     setCurrentIndex(currentIndexRef.current);
-    // if(playlistInfo.index < currentList.length -1) playlistInfo.setIndex(index  => index + 1);
+    
     const nextVideo = currentList[currentIndexRef.current];
-    const nextVideoId = getVideoId(nextVideo.video_url);
-    setCurrentMovie(nextVideo)
-    // Update Movie ID ref for history tracking
-    movieIdRef.current = nextVideo.id;
-
-    // Load history for next video
-    const history = await fetchWatchHistory(userid, nextVideo.id);
-
-    // Load the video into the existing player
-    if (playerInstanceRef.current && nextVideoId) {
-      playerInstanceRef.current.loadVideoById({
-        videoId: nextVideoId,
-        startSeconds: history?.last_position || 0,
-      });
-    }
+    if(setCurrentMovie) setCurrentMovie(nextVideo);
   };
 
   const playPrevious = async () => {
     const currentList = playlistRef.current?.contents;
-    console.log("Current List", currentList)
-    if (!currentList || currentIndexRef.current <= 0) {
-      console.log("No previous video available");
-      return;
-    }
+    if (!currentList || currentIndexRef.current <= 0) return;
 
     clearCountdownTimer();
     setVideoEnded(false);
@@ -145,131 +237,25 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
 
     currentIndexRef.current -= 1;
     setCurrentIndex(currentIndexRef.current);
-    if(playlistInfo.index > 0) playlistInfo.setIndex(index  => index - 1);
 
     const prevVideo = currentList[currentIndexRef.current];
-    const prevVideoId = getVideoId(prevVideo.video_url);
-    setCurrentMovie(prevVideo)
-    movieIdRef.current = prevVideo.id;
-
-    if (prevVideoId && playerInstanceRef.current) {
-      const history = await fetchWatchHistory(userid, prevVideo.id);
-      playerInstanceRef.current.loadVideoById({
-        videoId: prevVideoId,
-        startSeconds: history?.last_position || 0,
-      });
-    }
+    if(setCurrentMovie) setCurrentMovie(prevVideo);
   };
 
-  // Initial Fetch Effect
-  useEffect(() => {
-    async function fetchandSet() {
-      const value = await fetchWatchHistory(userid, movieId);
-      if (setFinal) setFinal(value?.last_position);
-    }
-    fetchandSet();
-  }, []);
-
-  // Player Load Effect
-  useEffect(() => {
-    if (!videoId || !movieId) return;
-
-    const loadPlayer = async () => {
-      const vid = getVideoId(videoId);
-
-      if (playerInstanceRef.current) {
-        playerInstanceRef.current.destroy();
-        playerInstanceRef.current = null;
-      }
-
-      if (!window.YT) {
-        const tag = document.createElement("script");
-        tag.src = "https://www.youtube.com/iframe_api";
-        document.body.appendChild(tag);
-      }
-
-      const init = () => {
-        playerInstanceRef.current = new window.YT.Player(playerContainerRef.current, {
-          height: "390",
-          width: "640",
-          videoId: vid,
-          playerVars: {
-            autoplay: 1,
-            controls: 1,
-            rel: 0,
-            showinfo: 0,
-            modestbranding: 1
-          },
-          events: {
-            onReady: (e: any) => onReadyVideoLoader(e, movieId, "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"),
-            onStateChange: async (e: any) => {
-              const currentList = playlistRef.current?.contents;
-
-              if (e.data === window.YT.PlayerState.ENDED) {
-                // Save history
-                await saveWatchHistory(userid, movieIdRef.current, videoId, e.target.getCurrentTime(), true, playerInstanceRef);
-
-                console.log("Movie finished. Checking for next video...");
-
-                // CHECK: Use REF data for checking next video availability
-                if (currentList && currentList.length > 0 && currentIndexRef.current < currentList.length - 1) {
-                  console.log("Next video found. Starting countdown.");
-                  startCountdown();
-                } else {
-                  console.log("Playlist finished.");
-                }
-              }
-
-              if (e.data === window.YT.PlayerState.PAUSED) {
-                await saveWatchHistory(userid, movieIdRef.current, videoId, e.target.getCurrentTime(), false, playerInstanceRef);
-              }
-
-              if (e.data === window.YT.PlayerState.BUFFERING) {
-                const currentTime = e.target.getCurrentTime();
-                if (currentTime > 1 && setFinal) {
-                  setFinal(currentTime);
-                  await saveWatchHistory(userid, movieIdRef.current, videoId, currentTime, false, playerInstanceRef);
-                }
-              }
-            },
-            onError: (err: any) => {
-              console.log("YT Error:", err.data);
-              if (err.data === 150 || err.data === 101) {
-                setVideoRestricted(true);
-                // Check Ref for playlist length before skipping
-                const currentList = playlistRef.current?.contents;
-                if (currentList && currentList.length > 0 && currentIndexRef.current < currentList.length - 1) {
-                  startCountdown();
-                }
-              }
-            },
-          },
-        });
-      };
-
-      if (window.YT && window.YT.Player) {
-        init();
-      } else {
-        (window as any).onYouTubeIframeAPIReady = init;
-      }
-    };
-
-    loadPlayer();
-
-    // CLEANUP
-    return () => {
-      if (playerInstanceRef.current) {
-        playerInstanceRef.current.destroy();
-        playerInstanceRef.current = null;
-      }
-      clearCountdownTimer(); // Clear timer on unmount
-    };
-  }, [videoId, movieId, userid]); // Note: playlistItems is intentionally NOT here to avoid reloading player on list update
-
-  // Helper vars for UI
   const hasNextVideo = playlistItems?.contents && currentIndex < playlistItems.contents.length - 1;
   const hasPreviousVideo = playlistItems?.contents && currentIndex > 0;
   const hasPlaylist = playlistItems?.contents && playlistItems.contents.length > 1;
+
+  // Cleanup on true unmount
+  useEffect(() => {
+      return () => {
+          if (playerInstanceRef.current) {
+              try { playerInstanceRef.current.destroy(); } catch(e){}
+              playerInstanceRef.current = null;
+          }
+          clearCountdownTimer();
+      }
+  }, [])
 
   return (
     <div className="relative w-full h-full">
@@ -317,11 +303,11 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
 
       {/* Player Container */}
       <div className="w-full h-full relative rounded-lg overflow-hidden bg-black">
-        <div ref={playerContainerRef} id="yt-player" className="w-full h-full" />
+        <div ref={playerContainerRef} className="w-full h-full" />
       </div>
 
-      {/* Controls */}
-      {(type === "series" || hasPlaylist) && (
+       {/* Controls */}
+       {(type === "series" || hasPlaylist) && (
         <>
           <button
             onClick={playPrevious}
@@ -353,14 +339,22 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
 
           <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 
             bg-black/80 backdrop-blur-md text-white px-6 py-2.5 rounded-full text-base font-semibold shadow-xl border border-white/10">
-            <span className="text-blue-400">{currentIndexRef?.current}</span>
+            <span className="text-blue-400">{currentIndex + 1}</span> 
             <span className="text-white/60 mx-2">/</span>
-            <span className="text-white/90">{playlistInfo?.totalMovies}</span>
+            <span className="text-white/90">{playlistItems?.contents?.length || playlistInfo?.totalMovies}</span>
           </div>
         </>
-      )}
+       )}
     </div>
   );
 });
 
-export default VideoPlayer;
+function propsAreEqual(prev: VideoPlayerProps, next: VideoPlayerProps) {
+  return (
+    prev.videoId === next.videoId && 
+    prev.movieId === next.movieId &&
+    prev.playlistInfo?.current === next.playlistInfo?.current
+  );
+}
+
+export default memo(VideoPlayer, propsAreEqual);

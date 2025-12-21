@@ -211,23 +211,51 @@ export const getOptimizedImageUrl = (
 
 
 export const getRecommendedMovies = async (user_id) => {
+  // 1. Fetch recommendations from RPC
   const { data, error } = await supabase.rpc('generate_all_recommendations', {
-      user_id_param: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
-      });
+    user_id_param: user_id
+  });
 
-  if (error){
+  if (error) {
     console.error("Error fetching recommended movies:", error);
-    return [];
+    return {}; // Return empty object on error
   }
-  const recommendedMovies = [];
-  for (const item of data){
-    const contentItem = await supabase
-      .from("content")
-      .select("*")
-      .eq("id", item.rec_content_id)
-      .single();
-    item.details = contentItem.data;
-    recommendedMovies.push(item);
-  }
-  return recommendedMovies
-}
+
+  // 2. Fetch details for all items in parallel (Optimization)
+  const enrichedMovies = await Promise.all(
+    data.map(async (item) => {
+      // NOTE: Your JSON shows 'content_id', but your old code used 'rec_content_id'.
+      // Ensure you use the correct field name here. I am using 'content_id' based on your JSON.
+      const targetId = item.content_id || item.rec_content_id;
+
+      const { data: contentDetails } = await supabase
+        .from("content")
+        .select("*")
+        .eq("id", targetId)
+        .single();
+
+      return {
+        ...item,
+        details: contentDetails
+      };
+    })
+  );
+
+  // 3. Classify (Group) by recommendation_type
+  const classifiedMovies = enrichedMovies.reduce((acc, movie) => {
+    // Get the type, e.g., "genre_based" or "popular"
+    const type = movie.recommendation_type || 'other';
+
+    // If this category doesn't exist in the accumulator yet, create it
+    if (!acc[type]) {
+      acc[type] = [];
+    }
+
+    // Push the movie into the correct category
+    acc[type].push(movie);
+    return acc;
+  }, {});
+
+  console.log("Classified Recommended Movies", classifiedMovies);
+  return classifiedMovies;
+};
