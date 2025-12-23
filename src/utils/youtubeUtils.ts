@@ -85,6 +85,7 @@ export async function fetchWatchHistory(userId: string, movieId: string) {
 
 
 export async function onReadyVideoLoader(e: any, movieId: string, userId: string) {
+   console.log("CURRENT MOVIE ID IN EVENT:", movieId);
   const last_position = await fetchWatchHistory(userId, movieId)
   console.log("Last position", last_position.watch_percentage)
   if (last_position.completed || last_position.watch_percentage >= 99) {
@@ -122,21 +123,9 @@ export async function saveWatchHistory(userid: string, movieId: string, videoId:
   console.log("Watch Percentage", watchPercentage);
 
   // First, try to UPDATE (this preserves view_counted)
-  const { data: updateResult, error: updateError } = await supabase
-    .from("user_watch_history")
-    .update({
-      watched_at: new Date().toISOString(),
-      last_position: completed ? 0 : Math.floor(currentTime),
-      watch_percentage: watchPercentage,
-      completed: completed
-      // DON'T touch view_counted - it stays as is!
-    })
-    .eq("user_id", userid)
-    .eq("movie_id", movieId)
-    .select();
-
+ 
   // If no rows were updated (doesn't exist), INSERT it
-  if (!updateResult || updateResult.length === 0) {
+  // if (!updateResult || updateResult.length === 0) {
     const { data, error } = await supabase
       .from("user_watch_history")
       .insert({
@@ -149,16 +138,37 @@ export async function saveWatchHistory(userid: string, movieId: string, videoId:
         // view_counted defaults to FALSE, trigger will handle it
       })
       .select();
-    
-    console.log("Insert result:", data);
-    console.log("Insert error:", error);
-  } else {
-    console.log("Update result:", updateResult);
-    console.log("Update error:", updateError);
-  }
+      console.log("Insert result:", data);
+     console.log("Insert error:", error);
+ 
+    if(error) {
+       const { data: updateResult, error: updateError } = await supabase
+        .from("user_watch_history")
+        .update({
+          watched_at: new Date().toISOString(),
+          last_position: completed ? 0 : Math.floor(currentTime),
+          watch_percentage: watchPercentage,
+          completed: completed
+          // DON'T touch view_counted - it stays as is!
+        })
+        .eq("user_id", userid)
+        .eq("movie_id", movieId)
+        .select();
 
-  console.log("=== SAVE WATCH HISTORY END ===");
-}
+        if(updateError) {
+          console.log("Update result:", updateResult);
+          console.log("Update error:", updateError);
+        }
+
+    }
+    else {
+        console.log("Update successful:", data);
+
+    
+    }
+  }
+  // console.log("=== SAVE WATCH HISTORY END ===");
+  // }
 
 
 export async function fetchSeriesSeasons(contentUuid: string) {
@@ -182,7 +192,22 @@ export async function fetchSeriesSeasons(contentUuid: string) {
       .eq("season_id", season.id)
       .order("episode_number", { ascending: true });
 
+    // const {data: episodeContentData, error: episodeContentError} = await supabase
+    //   .from("content")
+    //   .select("*")
+    //   .in("video_url", episodesData?.map(ep => ep.video_url));
     
+    // if(episodeContentError) {
+    //   console.error("Error fetching episode content data for season", season.id, ":", episodeContentError);
+    // }
+
+    const seasonVideoUrls = episodesData?.map(ep => ep.video_url);
+    // const {data: episodeContentData, error: episodeContentError} = await supabase
+    //   .from("content")
+    //   .select("*")
+    //   .in("video_url", seasonVideoUrls || []);
+
+    // console.log("Episode content data for season", season.id, ":", episodeContentData, episodeContentError);
     if (episodesError) {
       console.error("Error fetching episodes for season", season.id, ":", episodesError);
       season.episodes = [];
@@ -244,7 +269,7 @@ export const getRecommendedMovies = async (user_id) => {
   // 3. Classify (Group) by recommendation_type
   const classifiedMovies = enrichedMovies.reduce((acc, movie) => {
     // Get the type, e.g., "genre_based" or "popular"
-    const type = movie.recommendation_type || 'other';
+    const type = movie.rec_type || 'other';
 
     // If this category doesn't exist in the accumulator yet, create it
     if (!acc[type]) {

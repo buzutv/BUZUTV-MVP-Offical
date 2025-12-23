@@ -145,18 +145,18 @@ const usePlaylists = ({ id }: PlaylistHookProps = {}) => {
       setPlaylists([{ ...playlist, items: filtered }]);
 
 
-      const {data, error} = await supabase
-          .from("playlists")
-          .select(`
-            *,
-            playlist_items (
-              content (*)
-            )
-          `)
-          .eq("id", id)
-          .single()
+    //   const {data, error} = await supabase
+    //       .from("playlists")
+    //       .select(`
+    //         *,
+    //         playlist_items (
+    //           content (*)
+    //         )
+    //       `)
+    //       .eq("id", id)
+    //       .single()
 
-    console.log("Filtered playlist fetch:", data);
+    // console.log("Filtered playlist fetch:", data);
 
 
       return { playlist, items, contents: filtered };

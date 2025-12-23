@@ -8,6 +8,7 @@ interface VideoPlayerProps {
   setCurrentMovie?: (movie: any) => void;
   playlistItems?: any;
   movieId: string;
+  episodeId: string;
   type: string;
   playlistInfo?: any;
   userid: string;
@@ -19,14 +20,19 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   playlistItems,
   setCurrentMovie,
   movieId,
+  episodeId,
   setFinal,
   type,
   userid,
   playlistInfo
+  
 }, ref) => {
+
+
+  
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerInstanceRef = useRef<any>(null);
-  const movieIdRef = useRef<string>(movieId);
+  const movieIdRef = useRef<string>(movieId || episodeId);
   const playlistRef = useRef(playlistItems);
   const currentIndexRef = useRef(0);
   const countdownRef = useRef<any>(null);
@@ -37,9 +43,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   const [videoRestricted, setVideoRestricted] = useState(false);
 
   // Sync refs
-  useEffect(() => { playlistRef.current = playlistItems; }, [playlistItems]);
-  useEffect(() => { currentIndexRef.current = playlistInfo?.current || 0; }, [playlistInfo]);
-  useEffect(() => { movieIdRef.current = movieId; }, [movieId]);
+  useEffect(() => { playlistRef.current = playlistItems; }, [playlistItems,videoId]);
+  useEffect(() => { currentIndexRef.current = playlistInfo?.current || 0; }, [playlistInfo,videoId]);
+  useEffect(() => { movieIdRef.current = movieId || episodeId; }, [movieId || episodeId]);
 
   useImperativeHandle(ref, () => ({
     play: () => playerInstanceRef.current?.playVideo(),
@@ -77,7 +83,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
       if (playerInstanceRef.current) return;
       
       const vid = getVideoId(videoId);
-      
+      console.log("Initializing YouTube Player with ID:", vid);
       // GUARD: If extraction failed or ID is invalid, STOP here to prevent crash
       if (!vid) {
           console.warn("VideoPlayer: Attempted to init with invalid ID", videoId);
@@ -96,6 +102,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
           modestbranding: 1
         },
         events: {
+         
           onReady: (e: any) => onReadyVideoLoader(e, movieIdRef.current, userid),
           onStateChange: handlePlayerStateChange,
           onError: handlePlayerError,
@@ -154,6 +161,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   // --- HELPER FUNCTIONS ---
 
   const handlePlayerStateChange = async (e: any) => {
+    
       if (e.data === window.YT.PlayerState.ENDED) {
         await saveWatchHistory(userid, movieIdRef.current, videoId, e.target.getCurrentTime(), true, playerInstanceRef);
         

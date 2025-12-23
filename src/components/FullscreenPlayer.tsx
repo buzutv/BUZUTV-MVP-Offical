@@ -6,15 +6,15 @@ import SearchBar from "./SearchBar";
 import VideoPlayer from "./VideoPlayer";
 import usePlaylists from "@/hooks/usePlaylists";
 // import {memo} from 'react'
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+// import {
+//   Select,
+//   SelectContent,
+//   SelectGroup,
+//   SelectItem,
+//   SelectLabel,
+//   SelectTrigger,
+//   SelectValue,
+// } from "@/components/ui/select"
 import RecommendedSection from "./RecommendedSection";
 
 // Episode interface
@@ -100,7 +100,7 @@ const FullscreenPlayer = ({
   const id = useParams()
   const { fetchSinglePlaylist } = usePlaylists()
   const [playlists, setPlaylists] = useState<any[]>([])
-  const { refetch } = usePlaylists()
+  // const { refetch } = usePlaylists()
   const [recommended, setRecommended] = useState<any[]>([])
   const [seasons, setSeasons] = useState<any[]>([]);
   const [selectedSeasonId, setSelectedSeasonId] = useState<string>("");
@@ -121,8 +121,7 @@ const FullscreenPlayer = ({
     }
   }, [movies])
 
-  console.log("parentRef", currentMovie)
-  // console.log("final in fullscreeplayer", video)
+  
   useEffect(() => {
     if (id) {
       async function fetchData() {
@@ -153,6 +152,7 @@ useEffect(() => {
           if (firstSeason.episodes?.length > 0) {
             const firstEpisode = firstSeason.episodes[0];
             setCurrentEpisode(firstEpisode);
+            setMovieid(firstEpisode.id)
             setActualVideoUrl(firstEpisode.video_url || firstEpisode.videoUrl);
           }
         }
@@ -176,26 +176,26 @@ console.log("Current Season Episodes", currentSeasonEpisodes)
   useEffect(() => {
     async function fetchMovies() {
             // For series, query by ID instead of video_url
-      // if (typeof videoUrl === 'object' && videoUrl?.id) {
-      //   const { data, error } = await supabase
-      //     .from("content")
-      //     .select("*")
-      //     .eq("id", videoUrl.id);
+      if (typeof videoUrl === 'object' && videoUrl?.id) {
+        const { data, error } = await supabase
+          .from("content")
+          .select("*")
+          .eq("id", videoUrl.id);
 
-      //   // const {data:seasonsData} = await supabase
-      //   // .from("seasons")
-      //   // .select("*")
-      //   // .eq("content_uuid", videoUrl.id)
+        const {data:seasonsData} = await supabase
+        .from("seasons")
+        .select("*")
+        .eq("content_uuid", videoUrl.id)
 
 
-      //   // console.log("Seasons Data", seasonsData)
-      //   if (error) {
-      //     console.error("Error fetching movies:", error);
-      //   } else {
-      //     setMovies(data || []);
-      //   }
-      //   return;
-      // }
+        console.log("Seasons Data", seasonsData)
+        if (error) {
+          console.error("Error fetching movies:", error);
+        } else {
+          setMovies(data || []);
+        }
+        return;
+      }
 
       // For regular movies, use actualVideoUrl
       const queryUrl = actualVideoUrl || videoUrl;
@@ -218,50 +218,59 @@ console.log("Current Season Episodes", currentSeasonEpisodes)
   }, [actualVideoUrl, videoUrl]);
 
   // Fetch related content
-  useEffect(() => {
-    async function fetchRelatedContent() {
-      if (!currentMovie) return;
+// 1. OPTIMIZED FETCH (N+1 Fix)
+useEffect(() => {
+  async function fetchRelatedContent() {
+    if (!currentMovie?.id) return;
 
-      let query = supabase
-        .from("content")
-        .select("*")
-        .neq("id", currentMovie.id)
-        .limit(12);
+    // Build the query
+    let query = supabase
+      .from("content")
+      .select("id, title, poster_url, year, genre, type") // Only select what you need
+      .neq("id", currentMovie.id)
+      .limit(12);
 
-      if (selectedGenre !== "All") query = query.eq("genre", selectedGenre);
-      if (selectedYear !== "All") query = query.eq("year", parseInt(selectedYear));
-      if (selectedType !== "All") query = query.eq("type", selectedType);
+    if (selectedGenre !== "All") query = query.eq("genre", selectedGenre);
+    if (selectedYear !== "All") query = query.eq("year", parseInt(selectedYear));
+    if (selectedType !== "All") query = query.eq("type", selectedType);
 
-      const { data, error } = await query;
-      if (error || !data) return;
+    const { data: relatedData } = await query;
+    if (!relatedData) return;
 
-      // Fetch watch history for all items in parallel
-      const dataWithHistory = await Promise.all(
-        data.map(async (item) => {
-          const history = await fetchWatchHistory(
-            "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3",
-            item?.id
-          );
+    // BATCH CALL: Get all history for these 12 items at once
+    const contentIds = relatedData.map(item => item.id);
+    const { data: historyData } = await supabase
+      .from("user_content_progress")
+      .select("content_id, watch_percentage, last_position, completed")
+      .eq("user_id", "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3")
+      .in("content_id", contentIds);
 
-          return {
-            ...item,
-            watch_percentage: history.watch_percentage,
-            last_position: history.last_position,
-            completed: history.completed
-          };
-        })
-      );
+    // Merge history back into the related content locally
+    const merged = relatedData.map(item => {
+      const h = historyData?.find(hist => hist.content_id === item.id);
+      return {
+        ...item,
+        watch_percentage: h?.watch_percentage || 0,
+        last_position: h?.last_position || 0,
+        completed: h?.completed || false
+      };
+    });
 
-      setRelatedContent(dataWithHistory);
+    setRelatedContent(merged);
+  }
 
+  fetchRelatedContent();
+}, [selectedGenre, selectedYear, selectedType, currentMovie?.id]);
+
+
+  useEffect(() =>{
+      async function fetchRecommendations() {
       const recommend = await getRecommendedMovies("03fa9a91-4281-4bd4-9e60-4da2ba72b0f3");
-   
+
       setRecommended(recommend)
-    }
-
-    fetchRelatedContent();
-  }, [currentMovie, selectedGenre, selectedYear, selectedType]);
-
+      }
+      fetchRecommendations();
+  },[])
   console.log("Related Content", recommended);
 
 
@@ -335,6 +344,8 @@ console.log("Current Season Episodes", currentSeasonEpisodes)
           <div className="aspect-video w-full bg-black rounded-lg overflow-hidden mb-8 relative">
             {/* <div ref={playerContainerRef} className="w-full h-full" /> */}
             <div ref={playerRef} className="h-[90%] w-full">
+              {
+                actualVideoUrl && 
               <VideoPlayer
                 videoId={actualVideoUrl}
                 // last_position={lastPausedTime}
@@ -344,17 +355,18 @@ console.log("Current Season Episodes", currentSeasonEpisodes)
                 setActualVideoUrl={setActualVideoUrl}
                 playlistItems={playlists}
                 movieId={movieid}
+                episodeId={currentEpisode?.id} 
                 userid="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
                 playlistInfo={playlistInfo}
                 ref={parentRef}
               />
+              }
 
 
             </div>
             {/* Overlays */}
           </div>
-          {/* Episode Selection for Series */}
-          {/* Episode Selection for Series */}
+ 
                 {seasons.length > 0 && (
                   <div className="mb-8">
                     <div className="flex items-center justify-between mb-4">

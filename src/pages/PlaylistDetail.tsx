@@ -106,9 +106,9 @@ const PlaylistDetail = () => {
   // Get the currently selected video
  // Fixed Line
  const displayItems = user_watch_history.length > 0 ? user_watch_history : content;
-  const selectedVideo = currentVideoIndex !== null 
-    ? (user_watch_history.length > 0 ? user_watch_history[currentVideoIndex] : content[currentVideoIndex]) 
-    : null
+ const selectedVideo = currentVideoIndex !== null 
+  ? (user_watch_history[currentVideoIndex] || content[currentVideoIndex]) 
+  : null;
   // console.log("User Watch History in PlaylistDetail:", JSON.stringify(selectedVideo?.seasons_data))
 
   console.log("Selected Video in PlaylistDetail:", selectedVideo) 
