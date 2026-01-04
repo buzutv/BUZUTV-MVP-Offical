@@ -5,54 +5,12 @@ import { supabase } from "../integrations/supabase/client";
 import SearchBar from "./SearchBar";
 import VideoPlayer from "./VideoPlayer";
 import usePlaylists from "@/hooks/usePlaylists";
-// import {memo} from 'react'
-// import {
-//   Select,
-//   SelectContent,
-//   SelectGroup,
-//   SelectItem,
-//   SelectLabel,
-//   SelectTrigger,
-//   SelectValue,
-// } from "@/components/ui/select"
 import RecommendedSection from "./RecommendedSection";
+import { useLazyGetRecommendationsWtihContentEmbeddedQuery, useLazyGetUserRecommendationsQuery } from "@/store/recommendationSlice";
 
-// Episode interface
-interface Episode {
-  title: string;
-  description: string;
-  episodeNumber: number;
-  videoUrl: string;
-  poster_url?: string;
-  airDate?: string;
-  rating?: string;
-  seasonNumber?: number;
-}
-
-interface FullscreenPlayerProps {
-  isOpen: boolean;
-  onClose?: () => void;
-  videoUrl: string | any; // Can be a string for movies or object for series
-  title: string;
-  userId: string;
-  // Playlist props
-  type: string;
-  onVideoEnd?: () => void;
-  setSelectedVideo?: (video: any) => void;
-  hasNext?: boolean;
-  hasPrevious?: boolean;
-  onNext?: () => void;
-  onPrevious?: () => void;
-  // video?: any;
-  movieId: string;
-  playlistInfo?: {
-    current: number;
-    setIndex: (index: number) => void;
-    total: number;
-    autoPlay: boolean;
-    totalMovies: number;
-  };
-}
+import { Episode, FullscreenPlayerProps } from "@/types";
+import MovieDetailSection from "./MovieDetailSection";
+import { useLazyGetContentWithWatchHistoryFiltersQuery } from "@/store/contentSlice";
 
 const FullscreenPlayer = ({
   isOpen,
@@ -61,9 +19,11 @@ const FullscreenPlayer = ({
   title,
   userId,
   type,
+  season,
   setSelectedVideo,
   onVideoEnd,
   movieId,
+  poster_url,
   // video,
   hasNext = false,
   hasPrevious = false,
@@ -96,18 +56,19 @@ const FullscreenPlayer = ({
   // Episode selection state for series
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
-  const [actualVideoUrl, setActualVideoUrl] = useState("");
+  const [actualVideoUrl, setActualVideoUrl] = useState(videoUrl);
   const id = useParams()
-  const { fetchSinglePlaylist } = usePlaylists()
+  const { triggerPlaylistWithItemsById } = usePlaylists()
   const [playlists, setPlaylists] = useState<any[]>([])
   // const { refetch } = usePlaylists()
   const [recommended, setRecommended] = useState<any[]>([])
-  const [seasons, setSeasons] = useState<any[]>([]);
+  // const [seasons, setSeasons] = useState<any[]>([]);
   const [selectedSeasonId, setSelectedSeasonId] = useState<string>("");
   // Sync refs with state
   const parentRef = useRef()
-
-
+  // const navigate = useNavigate();
+  const [triggerRecommendations, resultRecommendations ] = useLazyGetRecommendationsWtihContentEmbeddedQuery();
+  const [triggerRelatedContent, resultRelatedContent ] = useLazyGetContentWithWatchHistoryFiltersQuery();
   // const MemoizedVideoPlayer = memo(VideoPlayer);
   useEffect(() => {
     moviesRef.current = movies;
@@ -119,110 +80,59 @@ const FullscreenPlayer = ({
     if(movies[0] && movies[0].id !== currentMovie?.id) {
         setCurrentMovie(movies[0]);
     }
+
+ 
   }, [movies])
-
-  
   useEffect(() => {
-    if (id) {
-      async function fetchData() {
-        const scopedData = await fetchSinglePlaylist(id.id)
-        setPlaylists(scopedData)
-        playlistRef.current = id.id
-      }
-      fetchData()
-    }
-  }, [id])
-
-  // Parse seasons_data for series content
-
-
-useEffect(() => {
-  async function parseSeasonsData() {
-    if (typeof videoUrl === 'object' && videoUrl?.type === 'series') {
-      try {
-        // Fetch all seasons for this content
-        const seasonsData = await fetchSeriesSeasons(videoUrl.id);
-        setSeasons(seasonsData);
-
-        if (seasonsData.length > 0) {
-          // Default to first season and its first episode
-          const firstSeason = seasonsData[0];
-          setSelectedSeasonId(firstSeason.id);
-          
-          if (firstSeason.episodes?.length > 0) {
-            const firstEpisode = firstSeason.episodes[0];
-            setCurrentEpisode(firstEpisode);
-            setMovieid(firstEpisode.id)
-            setActualVideoUrl(firstEpisode.video_url || firstEpisode.videoUrl);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching series data:', error);
-      }
-    } else if (typeof videoUrl === 'string') {
-      setSeasons([]);
-      setActualVideoUrl(videoUrl);
+  if (type === 'series' && season && season.length > 0 && !selectedSeasonId) {
+    const firstSeason = season[0];
+    const firstEpisode = firstSeason.episodes?.[0];
+    if (firstEpisode) {
+      setSelectedSeasonId(firstSeason.id);
+      setCurrentEpisode(firstEpisode); // Set the full object
+      setMovieid(firstEpisode.id);
+      setActualVideoUrl(firstEpisode.video_url || firstEpisode.videoUrl);
+      setMovies([firstEpisode]); 
     }
   }
-  parseSeasonsData();
-}, [videoUrl]);
+}, [type, season]);
+  console.log("current Episode:", currentEpisode);  
 
 
 
 // Derived state: Get episodes for the currently selected season
-const currentSeasonEpisodes = seasons.find(s => s.id === selectedSeasonId)?.episodes || [];
-console.log("Current Season Episodes", currentSeasonEpisodes)
+const currentSeasonEpisodes  = season?.length > 0  && season?.find(s => s.id === selectedSeasonId)?.episodes || [];
+// console.log("Current Season Episodes", currentSeasonEpisodes)
   // Fetch movie data from Supabase
-  useEffect(() => {
-    async function fetchMovies() {
-            // For series, query by ID instead of video_url
-      if (typeof videoUrl === 'object' && videoUrl?.id) {
-        const { data, error } = await supabase
-          .from("content")
-          .select("*")
-          .eq("id", videoUrl.id);
+useEffect(() => {
+  async function fetchMovies() {
+    // If it's a series and we already have the episode in 'movies' state, 
+    // don't fetch from the "content" table (series episodes are usually in the "episodes" or "seasons" data)
+    if (type === 'series') return; 
 
-        const {data:seasonsData} = await supabase
-        .from("seasons")
-        .select("*")
-        .eq("content_uuid", videoUrl.id)
+    const queryUrl = actualVideoUrl || videoUrl;
+    if (!queryUrl || typeof queryUrl === 'object') return;
 
+    const { data, error } = await supabase
+      .from("content")
+      .select("*")
+      .eq("video_url", queryUrl);
 
-        console.log("Seasons Data", seasonsData)
-        if (error) {
-          console.error("Error fetching movies:", error);
-        } else {
-          setMovies(data || []);
-        }
-        return;
-      }
-
-      // For regular movies, use actualVideoUrl
-      const queryUrl = actualVideoUrl || videoUrl;
-      const { data, error } = await supabase
-        .from("content")
-        .select("*")
-        .eq("video_url", queryUrl);
-
-      if (error) {
-        console.error("Error fetching movies:", error);
-      } else {
-        setMovies(data || []);
-      }
+    if (!error && data) {
+      setMovies(data);
     }
+  }
 
-    if (actualVideoUrl) {
-      fetchMovies();
-      setDuration(0);
-    }
-  }, [actualVideoUrl, videoUrl]);
+  fetchMovies();
+}, [actualVideoUrl, type]); // Remove videoUrl from dependencies if actualVideoUrl is derived from it
 
   // Fetch related content
 // 1. OPTIMIZED FETCH (N+1 Fix)
 useEffect(() => {
   async function fetchRelatedContent() {
     if (!currentMovie?.id) return;
-
+    const found = await triggerRelatedContent({ userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3", genre: null, year: '2012', type: null });
+    console.log("Related Content found",found)
     // Build the query
     let query = supabase
       .from("content")
@@ -263,16 +173,26 @@ useEffect(() => {
 }, [selectedGenre, selectedYear, selectedType, currentMovie?.id]);
 
 
+console.log("Current Movie in FullscreenPlayer:", currentMovie);
+console.log("Related Content in FullscreenPlayer:", relatedContent);
+console.log("Movies in FullscreenPlayer:", movies);
+console.log("Actual Video URL in FullscreenPlayer:", actualVideoUrl);
+console.log("Video URL prop in FullscreenPlayer:", videoUrl);
+console.log("Seasons in FullscreenPlayer:", season);
+
   useEffect(() =>{
       async function fetchRecommendations() {
-      const recommend = await getRecommendedMovies("03fa9a91-4281-4bd4-9e60-4da2ba72b0f3");
+      const recommend = await triggerRecommendations({userId:"03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"});
 
-      setRecommended(recommend)
+      setRecommended(recommend?.data)
       }
       fetchRecommendations();
   },[])
-  console.log("Related Content", recommended);
 
+
+
+  console.log("Recommended Movies:", recommended);
+  
 
   const handleSearch = async (query: string) => {
     if (query.trim().length === 0) return [];
@@ -322,7 +242,7 @@ useEffect(() => {
           <div className="flex justify-center items-center gap-4 mb-4">
             <div className="flex items-center justify-center gap-4 cursor-pointer flex-1" onClick={async () => {
               setSelectedVideo(null)
-
+              // navigate(-1)
             }}>
               <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -346,20 +266,20 @@ useEffect(() => {
             <div ref={playerRef} className="h-[90%] w-full">
               {
                 actualVideoUrl && 
-              <VideoPlayer
-                videoId={actualVideoUrl}
-                // last_position={lastPausedTime}
-                setCurrentMovie={setCurrentMovie}
-                type={type}
-                setFinal={setFinal}
-                setActualVideoUrl={setActualVideoUrl}
-                playlistItems={playlists}
-                movieId={movieid}
-                episodeId={currentEpisode?.id} 
-                userid="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
-                playlistInfo={playlistInfo}
-                ref={parentRef}
-              />
+                  <VideoPlayer
+                    videoId={actualVideoUrl}
+                    // last_position={lastPausedTime}
+                    setCurrentMovie={setCurrentMovie}
+                    type={type}
+                    setFinal={setFinal}
+                    setActualVideoUrl={setActualVideoUrl}
+                    playlistItems={playlists}
+                    movieId={movieId}
+                    episodeId={currentEpisode?.id} 
+                    userid="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
+                    playlistInfo={playlistInfo}
+                    ref={parentRef}
+                  />
               }
 
 
@@ -367,158 +287,100 @@ useEffect(() => {
             {/* Overlays */}
           </div>
  
-                {seasons.length > 0 && (
-                  <div className="mb-8">
-                    <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-white text-2xl font-bold">Episodes</h2>
-                      
-                      {/* Season Dropdown */}
-                      <div className="flex items-center gap-3">
-                        <span className="text-white/60 text-sm">Season:</span>
-                        <select
-                          value={selectedSeasonId}
-                          onChange={(e) => setSelectedSeasonId(e.target.value)}
-                          className="bg-white/10 text-white px-4 py-2 rounded-lg border border-white/20 outline-none focus:border-blue-500 transition-colors cursor-pointer"
-                        >
-                          {seasons.map((season) => (
-                            <option key={season.id} value={season.id} className="bg-[#1a1a1a]">
-                              {season.title || `Season ${season.season_number}`}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* Episode Grid/List */}
-                    <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
-                      {currentSeasonEpisodes.map((episode: any) => (
-                        <div
-                          key={episode.id}
-                          className={`flex-shrink-0 w-80 cursor-pointer group snap-start transition-all duration-300 ${
-                            currentEpisode?.id === episode.id
-                              ? 'ring-2 ring-blue-500'
-                              : 'hover:ring-2 hover:ring-white/30'
+                {season?.length > 0 && (
+              <div className="mb-8">
+                <div className="flex flex-col items-center mb-8">
+                 
+                  
+                  {/* Centered Season Tabs */}
+                  <div className="flex flex-wrap justify-center gap-2 p-1 bg-white/5 rounded-xl border border-white/10">
+                    {season.map((season) => {
+                      const isActive = selectedSeasonId === season.id;
+                      return (
+                        <button
+                          key={season.id}
+                          onClick={() => setSelectedSeasonId(season.id)}
+                          className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                            isActive 
+                              ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' 
+                              : 'text-white/60 hover:text-white hover:bg-white/10'
                           }`}
-                          onClick={() => {
-                            setCurrentEpisode(episode);
-                            setActualVideoUrl(episode.video_url || episode.videoUrl);
-                            setVideoEnded(false);
-                            setMovieid(episode.id)
-                            // Scroll to player
-                            setMovies([episode])
-                            playerRef.current?.scrollIntoView({ behavior: "smooth" });
-                          }}
                         >
-                          <div className="bg-white/5 rounded-lg overflow-hidden">
-                            <div className="relative aspect-video bg-slate-900">
-                              <img
-                                src={episode.thumbnail_url || videoUrl.poster_url || "/placeholder.jpg"}
-                                alt={episode.title}
-                                className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                              />
-                              {currentEpisode?.id === episode.id && (
-                                <div className="absolute inset-0 bg-blue-600/20 flex items-center justify-center">
-                                  <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded shadow-lg">
-                                    Now Playing
-                                  </div>
-                                </div>
-                              )}
-                              {/* Play Icon Overlay */}
-                              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
-                                <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                                </svg>
+                          {season.title || `Season ${season.season_number}`}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <h2 className="text-white text-2xl font-bold mb-6">Episodes</h2>
+                {/* Episode Grid/List */}
+                <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+                  {currentSeasonEpisodes.map((episode: any) => (
+                    <div
+                      key={episode.id}
+                      className={`flex-shrink-0 w-80 cursor-pointer group snap-start transition-all duration-300 ${
+                        currentEpisode?.id === episode.id
+                          ? 'ring-2 ring-blue-500'
+                          : 'hover:ring-2 hover:ring-white/30'
+                      }`}
+                      onClick={() => {
+                        setCurrentEpisode(episode);
+                        setActualVideoUrl(episode.video_url || episode.videoUrl);
+                        setVideoEnded(false);
+                        setMovieid(episode?.id)
+                        setMovies([episode])
+                        playerRef.current?.scrollIntoView({ behavior: "smooth" });
+                      }}
+                    >
+                      <div className="bg-white/5 rounded-lg overflow-hidden">
+                        <div className="relative aspect-video bg-slate-900">
+                          <img
+                            src={poster_url}
+                            alt={episode.title}
+                            className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                          />
+                          {currentEpisode?.id === episode.id && (
+                            <div className="absolute inset-0 bg-blue-600/20 flex items-center justify-center">
+                              <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded shadow-lg">
+                                Now Playing
                               </div>
                             </div>
-                            
-                            <div className="p-4">
-                              <div className="text-blue-400 text-xs font-bold uppercase tracking-wider mb-1">
-                                Episode {episode.episode_number}
-                              </div>
-                              <h3 className="text-white font-semibold mb-2 line-clamp-1">
-                                {episode.title}
-                              </h3>
-                              {episode.description && (
-                                <p className="text-white/60 text-sm line-clamp-2">
-                                  {episode.description}
-                                </p>
-                              )}
-                            </div>
+                          )}
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                            <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                            </svg>
                           </div>
                         </div>
-                      ))}
+                        
+                        <div className="p-4">
+                          <div className="text-blue-400 text-xs font-bold uppercase tracking-wider mb-1">
+                            Episode {episode.episode_number}
+                          </div>
+                          <h3 className="text-white font-semibold mb-2 line-clamp-1">
+                            {episode.title}
+                          </h3>
+                          {episode.description && (
+                            <p className="text-white/60 text-sm line-clamp-2">
+                              {episode.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                )}
-
-          {/* Movie Details Section */}
-          {currentMovie && (
-            <div
-              className="relative rounded-lg overflow-hidden mb-12 min-h-[300px] min-w-full"
-              style={{
-                backgroundImage: currentMovie.poster_url
-                  ? `linear-gradient(to right, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.95) 100%), url(${currentMovie.poster_url})`
-                  : `linear-gradient(135deg, #1e293b 0%, #0f172a 100%)`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }}
-            >
-              <div className="p-8 flex gap-8">
-                {/* Poster */}
-                <div className="flex-shrink-0">
-                  <img
-                    src={getOptimizedImageUrl(currentMovie.poster_url, 400)}
-                    alt={currentMovie.content_title || currentMovie.title}
-                    className="w-48 h-72 object-cover rounded-lg shadow-2xl"
-                  />
-                </div>
-
-                {/* Details */}
-                <div className="flex-1 text-white">
-                  <h1 className="text-4xl font-bold mb-4">
-                    {currentMovie.content_title || currentMovie.title}
-                  </h1>
-
-                  <div className="flex items-center gap-4 mb-6 text-sm">
-                    {currentMovie.year && (
-                      <span className="px-3 py-1 bg-white/10 rounded">{currentMovie.year}</span>
-                    )}
-                    {currentMovie.genre && (
-                      <span className="px-3 py-1 bg-white/10 rounded">{currentMovie.genre}</span>
-                    )}
-                    {currentMovie.type && (
-                      <span className="px-3 py-1 bg-white/10 rounded capitalize">{currentMovie.type}</span>
-                    )}
-                    {currentMovie.duration_minutes && (
-                      <span className="px-3 py-1 bg-white/10 rounded">{currentMovie.duration_minutes} min</span>
-                    )}
-                    {currentMovie.rating && (
-                      <span className="px-3 py-1 bg-yellow-500/20 rounded">⭐ {currentMovie.rating}</span>
-                    )}
-                  </div>
-
-                  {currentMovie.description && (
-                    <p className="text-white/80 text-lg leading-relaxed mb-6 max-w-3xl">
-                      {currentMovie.description}
-                    </p>
-                  )}
-
-                  {currentMovie.episodes && (
-                    <div className="mt-4">
-                      <span className="text-white/60">Episodes: </span>
-                      <span className="text-white font-semibold">{currentMovie.episodes}</span>
-                    </div>
-                  )}
+                  ))}
                 </div>
               </div>
-            </div>
-          )}
+                                )}
+
+          {/* Movie Details Section */}
+        <MovieDetailSection />
 
           {/* Filters Section */}
           <div className="mb-8">
             // In your Parent Page/Component
                 <RecommendedSection 
-                    recommended={recommended} // The object { genre_based: [...], popular: [...] }
+                    // recommended={recommended} // The object { genre_based: [...], popular: [...] }
                     handleRelatedClick={handleRelatedClick}
                     setMovieid={setMovieid}
                     setActualVideoUrl={setActualVideoUrl}
@@ -530,21 +392,7 @@ useEffect(() => {
 
             <h2 className="text-white text-2xl font-bold mb-4">More Like This</h2>
             <div className="flex flex-wrap gap-4">
-              {/* Genre Filter */}
-               {/* <Select onValueChange={(e) => setSelectedGenre(e.target.value)}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select a Genre" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {/* <SelectGroup> */}
-                        
-                        {/* {genres.map(genre => (
-                          // <SelectLabel>Genres</SelectLabel>
-                         <SelectItem value={genre}>{genre}</SelectItem>
-                      ))} */}
-                      {/* </SelectGroup> */}
-                    {/* </SelectContent> */}
-              
+
               <div>
                 <label className="text-white/60 text-sm mb-2 block bg-white/10 rounded-lg px-4 py-2">Genre</label>
                 <select
@@ -592,7 +440,7 @@ useEffect(() => {
                 
 
           {/* Related Content Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 lg:grid-cols-4 xl:grid-cols-5">
             {relatedContent.map((content) => (
               <div
                 key={content.id}

@@ -113,62 +113,62 @@ export async function onReadyVideoLoader(e: any, movieId: string, userId: string
 }
 
 
-export async function saveWatchHistory(userid: string, movieId: string, videoId: string, currentTime: number, completed: boolean, ref) {
-  console.log("=== SAVE WATCH HISTORY START ===");
-  console.log("Movie Id", movieId);
-  console.log("User Id", userid);
-  console.log("Current Time", currentTime);
-
-  const watchPercentage = completed ? 100 : Math.floor((currentTime / ref.current.getDuration()) * 100);
-  console.log("Watch Percentage", watchPercentage);
-
-  // First, try to UPDATE (this preserves view_counted)
+export async function saveWatchHistory(
+  userId: string,
+  movieId: string,
+  episodeId?: string,
+  videoId: string,
+  currentTime: number,
+  completed: boolean,
+  ref: any,
+  type?: "series" | string,
  
-  // If no rows were updated (doesn't exist), INSERT it
-  // if (!updateResult || updateResult.length === 0) {
-    const { data, error } = await supabase
+) {
+  const duration = ref.current?.getDuration?.() || 1;
+  const watchPercentage = completed
+    ? 100
+    : Math.floor((currentTime / duration) * 100);
+
+  const isSeries = type === "series";
+
+  const payload = {
+    user_id: userId,
+    movie_id: isSeries ? episodeId ?? null : null,
+    episode_id:  isSeries && episodeId ? null : movieId,
+    watched_at: new Date().toISOString(),
+    last_position: completed ? 0 : Math.floor(currentTime),
+    watch_percentage: watchPercentage,
+    completed: completed,
+  };
+
+  const match = {
+    user_id: userId,
+    ...(isSeries
+      ? episodeId
+        ? { episode_id: episodeId }
+        : { movie_id: movieId }
+      : { movie_id: movieId }),
+  };
+
+  // Try update first
+  const { data: updated, error: updateError } = await supabase
+    .from("user_watch_history")
+    .update(payload)
+    .match(match)
+    .select();
+
+  // If not found → insert
+  if (updateError || !updated || updated.length === 0) {
+    const { error: insertError } = await supabase
       .from("user_watch_history")
-      .insert({
-        user_id: userid,
-        movie_id: movieId,
-        watched_at: new Date().toISOString(),
-        last_position: completed ? 0 : Math.floor(currentTime),
-        watch_percentage: watchPercentage,
-        completed: completed
-        // view_counted defaults to FALSE, trigger will handle it
-      })
-      .select();
-      console.log("Insert result:", data);
-     console.log("Insert error:", error);
- 
-    if(error) {
-       const { data: updateResult, error: updateError } = await supabase
-        .from("user_watch_history")
-        .update({
-          watched_at: new Date().toISOString(),
-          last_position: completed ? 0 : Math.floor(currentTime),
-          watch_percentage: watchPercentage,
-          completed: completed
-          // DON'T touch view_counted - it stays as is!
-        })
-        .eq("user_id", userid)
-        .eq("movie_id", movieId)
-        .select();
+      .insert(payload);
 
-        if(updateError) {
-          console.log("Update result:", updateResult);
-          console.log("Update error:", updateError);
-        }
-
-    }
-    else {
-        console.log("Update successful:", data);
-
-    
+    if (insertError) {
+      console.error("Insert failed:", insertError);
     }
   }
-  // console.log("=== SAVE WATCH HISTORY END ===");
-  // }
+}
+
 
 
 export async function fetchSeriesSeasons(contentUuid: string) {
@@ -219,6 +219,12 @@ export async function fetchSeriesSeasons(contentUuid: string) {
   return seasons;
 }
 
+
+// export async function fetchWatchHistory(userId: string, movieId: string) {
+
+
+
+// }
 
 export const getOptimizedImageUrl = (
   url: string | null | undefined, 

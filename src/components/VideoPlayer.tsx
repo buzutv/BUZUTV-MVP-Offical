@@ -17,6 +17,7 @@ interface VideoPlayerProps {
 
 const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   videoId,
+
   playlistItems,
   setCurrentMovie,
   movieId,
@@ -32,7 +33,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerInstanceRef = useRef<any>(null);
-  const movieIdRef = useRef<string>(movieId || episodeId);
+  const movieIdRef = useRef<string>(movieId);
+  const episodeIdRef = useRef<string>(episodeId);
   const playlistRef = useRef(playlistItems);
   const currentIndexRef = useRef(0);
   const countdownRef = useRef<any>(null);
@@ -45,8 +47,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   // Sync refs
   useEffect(() => { playlistRef.current = playlistItems; }, [playlistItems,videoId]);
   useEffect(() => { currentIndexRef.current = playlistInfo?.current || 0; }, [playlistInfo,videoId]);
-  useEffect(() => { movieIdRef.current = movieId || episodeId; }, [movieId || episodeId]);
-
+  useEffect(() => {  movieIdRef.current = movieId }, [movieId]);
+  useEffect(() => {  episodeIdRef.current = episodeId }, [episodeId]);
+  console.log("Video Player Rendered with Video ID:", movieId, movieIdRef.current, episodeIdRef.current);
   useImperativeHandle(ref, () => ({
     play: () => playerInstanceRef.current?.playVideo(),
     pause: () => playerInstanceRef.current?.pauseVideo(),
@@ -163,7 +166,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   const handlePlayerStateChange = async (e: any) => {
     
       if (e.data === window.YT.PlayerState.ENDED) {
-        await saveWatchHistory(userid, movieIdRef.current, videoId, e.target.getCurrentTime(), true, playerInstanceRef);
+        await saveWatchHistory(userid, movieIdRef.current, episodeIdRef.current, videoId, e.target.getCurrentTime(), true, playerInstanceRef,type);
         
         const currentList = playlistRef.current?.contents;
         if (currentList && currentList.length > 0 && currentIndexRef.current < currentList.length - 1) {
@@ -172,14 +175,14 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
       }
 
       if (e.data === window.YT.PlayerState.PAUSED) {
-        await saveWatchHistory(userid, movieIdRef.current, videoId, e.target.getCurrentTime(), false, playerInstanceRef);
+        await saveWatchHistory(userid, movieId,episodeId, videoId, e.target.getCurrentTime(), false, playerInstanceRef,type);
       }
 
       if (e.data === window.YT.PlayerState.BUFFERING) {
         const currentTime = e.target.getCurrentTime();
         if (currentTime > 1 && setFinal) {
           setFinal(currentTime);
-          await saveWatchHistory(userid, movieIdRef.current, videoId, currentTime, false, playerInstanceRef);
+          await saveWatchHistory(userid, movieId, episodeId, videoId, currentTime, false,type, playerInstanceRef,type);
         }
       }
   };

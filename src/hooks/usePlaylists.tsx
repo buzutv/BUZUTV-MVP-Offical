@@ -2,6 +2,9 @@ import { supabase } from "@/integrations/supabase/client"
 import { useEffect, useState } from "react";
 import { useContentCache } from "./useContentCache";
 import { set } from "date-fns";
+import { useGetPlaylistsByUserQuery, useGetPlaylistsWithItemsQuery, useLazyGetPlaylistByIdQuery, useLazyGetPlaylistsWithItemsByIdQuery } from "@/store/playlistSlice";
+import { useSupabaseAuth } from "./useSupabaseAuth";
+import { useGetContentQuery } from "@/store/contentSlice";
 
 interface PlaylistHookProps {
   id?: string;
@@ -13,189 +16,38 @@ const usePlaylists = ({ id }: PlaylistHookProps = {}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState(null);
+  const {user} = useSupabaseAuth();
+  const { data:contentData, isLoading: contentLoading } = useGetContentQuery()
 
-  const fetchPlaylists = async () => {
-    // 1. Fetch all playlists
-    setIsFetching(true);
-    setIsLoading(true);
-    setError(null);
-    const { data, error } = await supabase.from('playlists').select('*');
-    const playlistWithItems = [];
-
-    // We remove contentDataforItems declaration from here.
-
-    if (error) {
-      console.log("Error fetching playlists:", error);
-      setError(error);
-      setIsFetching(false);
-      setIsLoading(false);
-      return { data, error };
-    }
-
-    // 2. Loop through each playlist
-    for (const pl of data || []) {
-      // 3. IMPORTANT FIX: Initialize contentDataforItems *inside* the loop
-      // This ensures a fresh array for each playlist.
-      const contentDataforItems = []
-
-      // 4. Fetch items for the current playlist
-      const { data: items, error: itemsError } = await supabase
-        .from('playlist_items')
-        .select('*')
-        .eq('playlist_id', pl.id);
-
-      if (itemsError) {
-        console.log("Error fetching playlist items:", itemsError);
-        setError(itemsError);
-        setIsFetching(false);
-        setIsLoading(false);
-        continue;
-      }
-
-      // 5. Fetch content details for each item
-      for (const item of items) {
-        const { data: contentData, error: contentError } = await supabase
-          .from('content')
-          .select('*')
-          .eq('id', item.content_id)
-          .single();
-
-        if (contentError) {
-          console.log("Error fetching content:", contentError);
-          setError(contentError);
-          setIsFetching(false);
-          setIsLoading(false);
-          continue;
-        }
-        // 6. Push content into the *current* playlist's items array
-        contentDataforItems.push(contentData);
-      }
-
-      // 7. Push the complete, correctly scoped playlist object
-      playlistWithItems.push({
-        ...pl,
-        items: contentDataforItems // This now contains only the content for 'pl'
-      });
-
-    }
-
-    setPlaylists(playlistWithItems);
-    setIsFetching(false);
-    setIsLoading(false);
-
-    return { data, error };
-  }
-
-  const run = async (fn: () => Promise<any>) => {
-    setIsFetching(true);
-    if (!playlists.length) setIsLoading(true);
-    setError(null);
-
-    try {
-      return await fn();
-    } catch (err: any) {
-      setError(err);
-      return null;
-    } finally {
-      setIsFetching(false);
-      setIsLoading(false);
-    }
-  };
+  const {data: playlist,isLoading:playlistLoading , refetch} = useGetPlaylistsByUserQuery("03fa9a91-4281-4bd4-9e60-4da2ba72b0f3",{
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+    refetchOnMountOrArgChange: true,
+  })
 
 
-  const fetchSinglePlaylist = async (id: string) =>
-    run(async () => {
-      const { data: playlist, error: playlistError } = await supabase
-        .from("playlists")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-      if (playlistError) throw playlistError;
-
-      const { data: items, error: itemsError } = await supabase
-        .from("playlist_items")
-        .select("*")
-        .eq("playlist_id", id);
-
-      if (itemsError) throw itemsError;
-
-      const contents = await Promise.all(
-        items.map(async (movie) => {
-          const { data, error } = await supabase
-            .from("content")
-            .select("*")
-            .eq("id", movie.content_id)
-            .single();
-
-          if (error) return null;
-
-          return {
-            ...data,
-            title: playlist.title,
-            content_title: data.title,
-            description: playlist.description,
-          };
-        })
-      );
-
-      const filtered = contents.filter(Boolean);
-
-      setContent(filtered);
-      setPlaylists([{ ...playlist, items: filtered }]);
-
-
-    //   const {data, error} = await supabase
-    //       .from("playlists")
-    //       .select(`
-    //         *,
-    //         playlist_items (
-    //           content (*)
-    //         )
-    //       `)
-    //       .eq("id", id)
-    //       .single()
-
-    // console.log("Filtered playlist fetch:", data);
-
-
-      return { playlist, items, contents: filtered };
-    });
-
-
-
-  const refetch = async (id?: string) => {
-    if (id) return fetchSinglePlaylist(id);
-    return fetchPlaylists();
-  };
-
-
-
-
-
- 
-  useEffect(() => {
-    async function loadPlaylists() {
-      if (id) {
-        await fetchSinglePlaylist(id);
-        return;
-      }
-      await fetchPlaylists();
-    }
-    loadPlaylists();
-  }, [])
-
-  console.log("Playlists in usePlaylists hook:", playlists);
+  const {data: playlistWithItems,isLoading:playlistWithItemsLoading, refetch:refetchPlaylistWithItems} = useGetPlaylistsWithItemsQuery("03fa9a91-4281-4bd4-9e60-4da2ba72b0f3",{
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+    refetchOnMountOrArgChange: true,
+  })
+  const [triggerPlaylistById] = useLazyGetPlaylistByIdQuery();
+  const [triggerPlaylistWithItemsById,triggerResult] = useLazyGetPlaylistsWithItemsByIdQuery();
+  
+  console.log("Playlist from RTK Query:", playlistWithItems, "Loading:", playlistLoading);
 
   return {
-    fetchPlaylists,
-    fetchSinglePlaylist,
-    playlists: playlists,
-    content: content,
+    playlistWithItems,
+    playlist,
+    content: contentData,
     isLoading,
     isFetching,
     error,
-    refetch
+    refetch,
+    refetchPlaylistWithItems,
+    triggerPlaylistById,
+    triggerPlaylistWithItemsById,
+    triggerResult
   }
 }
 

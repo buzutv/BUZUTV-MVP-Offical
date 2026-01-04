@@ -1,3 +1,4 @@
+import ContentModal from '@/components/ContentModal'
 import FullscreenPlayer from '@/components/FullscreenPlayer'
 import SearchOverlay from '@/components/SearchOverlay'
 import { Button } from '@/components/ui/button'
@@ -8,16 +9,20 @@ import { Spinner } from '@/components/ui/spinner'
 import { useContent } from '@/hooks/useContent'
 import usePlaylists from '@/hooks/usePlaylists'
 import { supabase } from '@/integrations/supabase/client'
-import { fetchWatchHistory, getOptimizedImageUrl } from '@/utils/youtubeUtils'
+import { openScreenPlayer } from '@/store/screenPlayerSlice'
+import { useGetSeasonWithEpisodesQuery, useLazyGetSeasonWithEpisodesQuery } from '@/store/seasonSlice'
+import { fetchSeriesSeasons, fetchWatchHistory, getOptimizedImageUrl } from '@/utils/youtubeUtils'
 import { Dialog, DialogContent } from '@radix-ui/react-dialog'
-import { dataTagSymbol } from '@tanstack/react-query'
+// import { dataTagSymbol } from '@tanstack/react-query'
 import { Plus, Trash } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useDispatch } from 'react-redux'
 import { useNavigate, useParams } from 'react-router-dom'
-
+// import { Content } from 'vaul'
+// import { Recommendation } from '@/types'
 const PlaylistDetail = () => {
   const { id } = useParams()
-  const { content, fetchSinglePlaylist, refetch } = usePlaylists()
+  const {  playlistWithItems,triggerPlaylistById, triggerPlaylistWithItemsById,triggerResult,refetch } = usePlaylists()
   const { searchContentData } = useContent()
   const [currentVideoIndex, setCurrentVideoIndex] = useState<number | null>(null)
   const [isAutoPlay, setIsAutoPlay] = useState(true) // Toggle autoplay
@@ -26,27 +31,38 @@ const PlaylistDetail = () => {
   const [openDialog, setOpenDialog] = useState(false)
   // 1. NEW STATE: Key to manually trigger a history re-fetch
   const [historyUpdateKey, setHistoryUpdateKey] = useState(0)
+  const [content, setContent] = useState<any[]>([])
   const [search, setSearch] = useState("")
   const [searchResults, setSearchResults] = useState([])
   const [selectedMovies, setSelectedMovies] = useState<string[]>([]);
   const [index, setIndex] = useState<number | null>(null);
   // const { refetch } = usePlaylists()
   // Function to be passed to the player to trigger a re-fetch of history
+  const [seasons, setSeasons] = useState<any[]>([]);
   const triggerHistoryRefresh = () => {
     console.log("Watch history refresh triggered. Incrementing key.");
     setHistoryUpdateKey(prev => prev + 1);
   }
+  const [triggerGetSeasonWithEpisodes,resultGetSeasonWithEpisodes] = useLazyGetSeasonWithEpisodesQuery()
+  const dispatch = useDispatch();
 
 
-  // Fetch playlist content only when ID changes
+  useEffect(() =>{
+    const contentfromPlaylist = playlistWithItems?.find(playlist => playlist.id === id)?.playlist_items?.map(item => item.content) || [];
+    console.log("Content from Playlist Effect:", contentfromPlaylist);
+    setContent(contentfromPlaylist);
+  },[id])
+ 
+
   useEffect(() => {
-    if (id) fetchSinglePlaylist(id)
-    refetch(id)
+    
+    if (id) triggerPlaylistWithItemsById({ userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3", playlist_id: id })
+
 
     async function fetchRPC() {
 
       const { data, error } = await supabase.rpc('generate_all_recommendations', {
-      user_id_param: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
+        user_id_param: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
       });
 
       const { data:playlist } = await supabase
@@ -100,18 +116,44 @@ const PlaylistDetail = () => {
     }
     loadWatchHistory()
     refetch(id)
-  }, [content.length, historyUpdateKey]) // 4. ADDED historyUpdateKey dependency
+  }, [content?.length, historyUpdateKey]) // 4. ADDED historyUpdateKey dependency
   console.log("Content in PlaylistDetail:", user_watch_history)
 
+  
   // Get the currently selected video
  // Fixed Line
  const displayItems = user_watch_history.length > 0 ? user_watch_history : content;
  const selectedVideo = currentVideoIndex !== null 
   ? (user_watch_history[currentVideoIndex] || content[currentVideoIndex]) 
   : null;
+
+
+
+
+  useEffect(() => {
+    async function fetchAndSetSeasonsData() {
+      if (selectedVideo && selectedVideo.type === 'series') {
+        const seasonsData = await fetchSeriesSeasons(selectedVideo.id);
+        console.log("Fetched seasons data for series:", selectedVideo);
+        if (seasonsData) {
+          // Update local seasons state
+          setSeasons(seasonsData);
+        }
+        else{
+          setSeasons([]);
+          // setMovieId(selectedVideo?.id);
+        }
+      }
+
+    }
+      fetchAndSetSeasonsData();
+  },[selectedVideo?.id])
   // console.log("User Watch History in PlaylistDetail:", JSON.stringify(selectedVideo?.seasons_data))
 
-  console.log("Selected Video in PlaylistDetail:", selectedVideo) 
+  console.log("Selected Video in PlaylistDetail:", seasons) 
+
+
+   console.log('Selected Video', selectedVideo)
   const handleSearch = async (e) => {
     const value = e.target.value
     setSearch(value)
@@ -253,12 +295,13 @@ const PlaylistDetail = () => {
 
 
   // Use history data if available, otherwise use raw content (for safety during loading)
- // Move this line up (before selectedVideo definition)
+ // Move this line up (before selectedVideo definition)398
+
 
 
 // Use it here
 // const selectedVideo = currentVideoIndex !== null ? displayItems[currentVideoIndex] : null;
-  const isLoading = content.length > 0 && user_watch_history.length === 0;
+  const isLoading = content?.length > 0 && user_watch_history?.length === 0;
 
 
   return (
@@ -367,7 +410,7 @@ const PlaylistDetail = () => {
 
 
           {/* Play All Button */}
-          {content.length > 0 && (
+          {content?.length > 0 && (
             <button
               onClick={playPlaylist}
               className="flex items-center gap-2 px-6 py-3 bg-white  rounded-lg hover:bg-foreground/90 hover:text-white transition font-semibold shadow-lg"
@@ -430,6 +473,12 @@ const PlaylistDetail = () => {
             onClick={() => {
               setCurrentVideoIndex(index)
               setIndex(index)
+              dispatch(openScreenPlayer({
+                isOpen: true,
+                contentItems: displayItems,
+                startIndex: index,
+                selectedVideo:item
+              }))
             }
             }
           >
@@ -472,7 +521,7 @@ const PlaylistDetail = () => {
             ></div>
 
             <div className="p-3 bg-muted-forground/10">
-              <p className="font-semibold text-sm line-clamp-1 text-muted-foreground">{item.content_title}</p>
+              <p className="font-semibold text-sm line-clamp-1 text-muted-foreground">{item.content_title || item.title}</p>
               <p className="text-xs text-muted-foreground mt-1">
                 {item.year || "—"} • {item.type}
               </p>
@@ -494,35 +543,53 @@ const PlaylistDetail = () => {
         ))}
       </div>
 
-      {/* Render player with auto-play capability */}
-      {selectedVideo && (
-        <FullscreenPlayer
-          isOpen={true}
-          onClose={handleClose}
-          videoUrl={selectedVideo.type === "series" ? selectedVideo : selectedVideo.video_url}
-          type={selectedVideo.type}
-          title={`${selectedVideo.title} (${currentVideoIndex! + 1}/${content.length})`}
-          userId="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3" // Replace with actual user ID from auth
-          onVideoEnd={handleVideoEnd}
-          setSelectedVideo={setCurrentVideoIndex}
-          // Additional props for playlist navigation
-          // video={selectedVideo}
-          movieId={selectedVideo.id}
-          hasNext={currentVideoIndex! < content.length - 1}
-          hasPrevious={currentVideoIndex! > 0}
-          onNext={handleNext}
-          onPrevious={handlePrevious}
-          playlistInfo={{
-            current: index + 1,
-            setIndex:setIndex,
-            total: content.length,
-            autoPlay: isAutoPlay,
-            totalMovies: user_watch_history.length
-            // id:selectedVideo.id
-          }}
-          onWatchHistoryUpdate={triggerHistoryRefresh}
-        />
-      )}
+
+        {selectedVideo && (
+          selectedVideo.type === 'series' ? (
+            <ContentModal 
+                isOpen={true}
+                onClose={handleClose}
+                item={selectedVideo}
+                variant="series"
+                seasons={seasons}
+                movieId={selectedVideo?.id}
+                // Pass these so the modal can navigate the playlist
+                hasNext={currentVideoIndex! < displayItems.length - 1}
+                hasPrevious={currentVideoIndex! > 0}
+                onNext={handleNext} 
+                onPrevious={handlePrevious}
+                playlistInfo={{
+                  current: currentVideoIndex! + 1,
+                  total: displayItems.length
+                }}
+              />
+          ) : (
+            <FullscreenPlayer
+              isOpen={true}
+              onClose={handleClose}
+              videoUrl={selectedVideo?.video_url}
+              type={selectedVideo?.type}
+              title={`${selectedVideo?.title} (${currentVideoIndex! + 1}/${content.length})`}
+              userId="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
+              onVideoEnd={handleVideoEnd}
+              setSelectedVideo={setCurrentVideoIndex}
+              movieId={selectedVideo?.id}
+              hasNext={currentVideoIndex! < content?.length - 1}
+              hasPrevious={currentVideoIndex! > 0}
+              onNext={handleNext}
+              onPrevious={handlePrevious}
+              playlistInfo={{
+                current: (index ?? 0) + 1,
+                setIndex: setIndex,
+                total: content?.length,
+                autoPlay: isAutoPlay,
+                totalMovies: user_watch_history?.length
+              }}
+              onWatchHistoryUpdate={triggerHistoryRefresh}
+            />
+          )
+        )}
+      {/* {selectedVideo && } */}
 
     </div>
   )

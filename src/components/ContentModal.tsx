@@ -11,12 +11,14 @@ import { Content, useContent } from "@/hooks/useContent";
 import { Channel, useChannels } from "@/hooks/useChannels";
 import { useMoreLikeThis } from "@/hooks/useMoreLikeThis";
 import SeriesPlayer from "@/components/SeriesPlayer";
-import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
+import { fetchSeriesSeasons, getOptimizedImageUrl } from "@/utils/youtubeUtils";
+import FullscreenPlayer from "./FullscreenPlayer";
 
 // Type guards to safely access properties
 const isMovie = (item: Movie | Content): item is Movie => {
   return "youtubeId" in item;
 };
+
 
 const isContent = (item: Movie | Content): item is Content => {
   return "video_url" in item;
@@ -78,6 +80,7 @@ export interface ContentModalProps {
   channel?: Channel; // Channel information
   seasons?: Season[]; // Season data for series
   customBackground?: string; // Custom background styling
+  movieId,
   // Deprecated props - kept for backward compatibility but ignored
   isSaved?: boolean;
   onSave?: () => void;
@@ -86,6 +89,14 @@ export interface ContentModalProps {
   onOpenRelatedItem?: (item: Movie | Content) => void;
   skipContentFiltering?: boolean;
   allowNestedModals?: boolean;
+  hasNext?: boolean;
+  hasPrevious?: boolean;
+  onNext?: () => void;
+  onPrevious?: () => void;
+  playlistInfo?: {
+    current: number;
+    total: number;
+  };
 }
 
 const ContentModal: React.FC<ContentModalProps> = ({
@@ -97,6 +108,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
   autoDetectKids = true,
   onPlayEpisode,
   videoUrl,
+  movieId,
   contentItem,
   channel,
   seasons = [],
@@ -113,10 +125,12 @@ const ContentModal: React.FC<ContentModalProps> = ({
   // State for switching items within the modal
   const [currentItem, setCurrentItem] = useState<Movie | Content>(item);
 
+
   // SeriesPlayer state
   const [isSeriesPlayerOpen, setIsSeriesPlayerOpen] = useState(false);
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [currentSeasonNumber, setCurrentSeasonNumber] = useState<number>(1);
+
 
   const { favoriteIds, addToFavorites, removeFromFavorites } =
     useUserFavorites();
@@ -133,6 +147,9 @@ const ContentModal: React.FC<ContentModalProps> = ({
     setCurrentItem(item);
   }, [item]);
 
+  
+
+  console.log("Seasons passed to ContentModal:", seasons);
   // Dynamic favorite status based on current item
   const isCurrentItemSaved = favoriteIds.includes(currentItem.id);
 
@@ -167,13 +184,13 @@ const ContentModal: React.FC<ContentModalProps> = ({
   // Normalize item to work with both Movie interface and backend items
   const normalizedItem = React.useMemo(
     () => ({
-      id: currentItem.id,
-      title: currentItem.title,
+      id: currentItem?.id,
+      title: currentItem?.title,
       posterUrl: getPosterUrl(currentItem),
-      type: currentItem.type || "movie",
-      genre: currentItem.genre,
-      year: currentItem.year,
-      rating: currentItem.rating,
+      type: currentItem?.type || "movie",
+      genre: currentItem?.genre,
+      year: currentItem?.year,
+      rating: currentItem?.rating,
       channelId: getChannelId(currentItem),
       isKids: getIsKids(currentItem),
       duration: getDuration(currentItem),
@@ -196,7 +213,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
   // Get display text for duration/seasons
   const getDurationOrSeasonsText = () => {
     if (contentType === "series") {
-      const seasonCount = seasonsData.length;
+      const seasonCount = seasons.length;
       if (seasonCount > 0) {
         return seasonCount === 1 ? "1 Season" : `${seasonCount} Seasons`;
       }
@@ -274,7 +291,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
   };
 
   const seasonsData = getSeasonsData();
-
+  console.log("Seasons Data in ContentModal:", currentContentItem);
   // Get current video URL from the current content item
   const currentVideoUrl = React.useMemo(() => {
     return (
@@ -301,17 +318,51 @@ const ContentModal: React.FC<ContentModalProps> = ({
     }
   };
 
+  const hasNext = ():boolean => {
+    return !!(seasons && currentEpisode ? (
+      seasons.some(season => 
+        season.episodes.some(episode => 
+          episode.season_number > currentSeasonNumber || 
+          (episode.season_number === currentSeasonNumber && episode.episode_number > currentEpisode.episode_number)
+        )
+      )
+    ) : false); 
+  }
+
+  const onNext = () => {
+    if (!seasons || !currentEpisode) return;
+    for (let i = 0; i < seasons.length; i++) {
+      const season = seasons[i];
+      for (let j = 0; j < season.episodes.length; j++) {
+        const episode = season.episodes[j];
+        if (episode.id === currentEpisode.id) {
+          // Found current episode
+          if (j + 1 < season.episodes.length) {
+            // Next episode in the same season
+            setCurrentEpisode(season.episodes[j + 1]);
+            return;
+          } else if (i + 1 < seasons.length) {
+            // First episode of the next season
+            setCurrentEpisode(seasons[i + 1].episodes[0]);
+            setCurrentSeasonNumber(seasons[i + 1].season_number);
+            return;
+          } 
+        }
+      }
+    }
+  }
+
   const handlePlayFirstEpisode = () => {
-    const firstEpisode = seasonsData[0]?.episodes[0];
-    if (firstEpisode && seasonsData.length > 0) {
+    const firstEpisode = seasons[0]?.episodes[0];
+    if (firstEpisode && seasons.length > 0) {
       setCurrentEpisode(firstEpisode);
-      setCurrentSeasonNumber(seasonsData[0].season_number);
+      setCurrentSeasonNumber(seasons[0].season_number);
       setIsSeriesPlayerOpen(true);
     }
   };
 
   const handlePlayEpisode = (episode: Episode, seasonNumber: number) => {
-    if (episode.video_url && seasonsData.length > 0) {
+    if (episode.video_url && seasons.length > 0) {
       setCurrentEpisode(episode);
       setCurrentSeasonNumber(seasonNumber);
       setIsSeriesPlayerOpen(true);
@@ -376,7 +427,10 @@ const ContentModal: React.FC<ContentModalProps> = ({
       };
 
   return (
+    // <div className="w-full h-screen fixed inset-0 z-[90]">
     <>
+    
+
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent
           onInteractOutside={(e) => {
@@ -517,7 +571,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
                   <div className="mb-8">
                     <Tabs defaultValue="season-1" className="w-full">
                       <TabsList
-                        className={`grid w-full grid-cols-auto bg-transparent transition-all duration-300 group ${effectiveKidsMode ? "" : ""}`}
+                        className={`flex flex-row gap-2 w-full bg-transparent transition-all duration-300 group ${effectiveKidsMode ? "" : ""}`}
                       >
                         {seasonsData.map((season) => (
                           <TabsTrigger
@@ -601,18 +655,47 @@ const ContentModal: React.FC<ContentModalProps> = ({
         </DialogContent>
       </Dialog>
 
+
+
       {/* SeriesPlayer for series content */}
-      {isSeriesPlayerOpen && currentEpisode && (
-        <SeriesPlayer
-          isOpen={isSeriesPlayerOpen}
-          onClose={handleCloseSeriesPlayer}
-          seriesTitle={normalizedItem.title}
-          seasons={seasonsData}
-          currentEpisode={currentEpisode}
-          currentSeason={currentSeasonNumber}
-        />
+ 
+     
+
+       {/* SeriesPlayer for series content */}
+      {currentEpisode && seasons && (
+        <div className="bg-black fixed inset-0 z-[99999] bg-black flex flex-col pointer-events-auto">
+          <FullscreenPlayer
+            isOpen={true}
+            onClose={handleCloseSeriesPlayer}
+            videoUrl={currentEpisode?.video_url}
+            type="series"
+            title={currentEpisode.title}
+            userId="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
+            poster_url = {currentContentItem?.poster_url || normalizedItem.posterUrl}
+            // logic for when an episode finishes
+            onVideoEnd={() => {
+              // 1. Check if there is another episode in this series
+              // 2. If no more episodes, trigger the PLAYLIST'S onNext
+              if (onNext) {
+                handleCloseSeriesPlayer();
+                onNext();
+              }
+            }}
+            movieId={movieId}
+            // Pass playlist navigation through to the player
+            hasNext={hasNext()} 
+            onNext={onNext}
+            onPrevious={() => {}}
+            season={seasons}
+          />
+        </div>
       )}
+
+
+
+        
     </>
+    // </div>
   );
 };
 

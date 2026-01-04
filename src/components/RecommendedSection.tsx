@@ -1,38 +1,67 @@
-import React from 'react';
+import React, { useEffect, useMemo } from "react";
+import { useLazyGetRecommendationsWtihContentEmbeddedQuery } from "@/store/recommendationSlice";
 
-// Helper to make section titles look nice
-const sectionTitles = {
+// Section title helper
+const sectionTitles: Record<string, string> = {
   genre_based: "Because you watched similar genres",
   popular: "Trending & Popular",
   history_based: "Pick up where you left off",
-  default: "Recommended For You"
+  default: "Recommended For You",
 };
 
-const RecommendedSection = ({ recommended, handleRelatedClick, setMovieid, setActualVideoUrl, setMovies, setVideoEnded, setPlaylists, getOptimizedImageUrl }) => {
+type RecommendedSectionProps = {
+  handleRelatedClick: (id: string) => void;
+  setMovieid: (id: string) => void;
+  setActualVideoUrl: (url: string) => void;
+  setMovies: (movies: any[]) => void;
+  setVideoEnded: (v: boolean) => void;
+  setPlaylists: (v: any[]) => void;
+  getOptimizedImageUrl: (url: string | null, size: number) => string;
+};
 
-  // 1. Loading State (If recommended object is empty or null)
-  const isLoading = !recommended || Object.keys(recommended).length === 0;
+const RecommendedSection: React.FC<RecommendedSectionProps> = ({
+  handleRelatedClick,
+  setMovieid,
+  setActualVideoUrl,
+  setMovies,
+  setVideoEnded,
+  setPlaylists,
+  getOptimizedImageUrl,
+}) => {
+  const [triggerRecommendations, { data, isFetching }] =
+    useLazyGetRecommendationsWtihContentEmbeddedQuery();
 
-  if (isLoading) {
+  useEffect(() => {
+    triggerRecommendations({
+      userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3",
+    });
+  }, []);
+
+  // 🔹 Group recommendations by recommendation_type
+  const groupedRecommendations = useMemo(() => {
+    if (!data) return {};
+
+    return data.reduce((acc: any, rec: any) => {
+      const key = rec.recommendation_type || "default";
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(rec);
+      return acc;
+    }, {});
+  }, [data]);
+
+  // 🔹 Loading skeleton
+  if (isFetching || !data) {
     return (
       <div className="mt-8 mb-8">
-        {/* Render 2 rows of skeletons to simulate categories */}
-        {[1, 2].map((section) => (
-          <div key={section} className="mb-10">
-             {/* Title Skeleton */}
+        {[1, 2].map((i) => (
+          <div key={i} className="mb-10">
             <div className="mb-4 h-8 w-48 rounded-full bg-white/10 animate-pulse" />
-
-            {/* Grid Skeleton - Matching new grid layout */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="w-full">
-                  {/* Image part */}
-                  <div className="relative aspect-square rounded-lg overflow-hidden bg-white/5 shadow-md mb-2">
-                    <div className="h-full w-full animate-pulse bg-gradient-to-br from-white/10 via-white/5 to-white/10" />
-                  </div>
-                  {/* Text parts below */}
-                   <div className="h-4 w-3/4 rounded bg-white/10 animate-pulse mb-2" />
-                   <div className="h-3 w-1/2 rounded bg-white/5 animate-pulse" />
+              {Array.from({ length: 5 }).map((_, j) => (
+                <div key={j}>
+                  <div className="aspect-square rounded-lg bg-white/10 animate-pulse mb-2" />
+                  <div className="h-4 w-3/4 bg-white/10 rounded mb-1 animate-pulse" />
+                  <div className="h-3 w-1/2 bg-white/5 rounded animate-pulse" />
                 </div>
               ))}
             </div>
@@ -42,87 +71,65 @@ const RecommendedSection = ({ recommended, handleRelatedClick, setMovieid, setAc
     );
   }
 
-  // 2. Data State (Loop through the object keys)
+  // 🔹 Render data
   return (
     <div className="mt-8 mb-8">
-      {Object.entries(recommended).map(([key, movies]) => {
-        // Skip rendering a section if it has no movies
-        if (!movies || movies.length === 0) return null;
+      {Object.entries(groupedRecommendations).map(([key, recs]: any) => {
+        if (!recs.length) return null;
 
         return (
           <div key={key} className="mb-12">
-            {/* Section Title */}
-            <h2 className="mb-6 inline-block rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-white/90 backdrop-blur capitalize shadow-sm">
-              {sectionTitles[key] || key.replace('_', ' ')}
+            <h2 className="mb-6 inline-block rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-white/90 backdrop-blur capitalize">
+              {sectionTitles[key] || sectionTitles.default}
             </h2>
 
-            {/* Movie Grid - Using the new grid definition */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-              {movies.map((rec) => {
-                // We rely on rec.details for the actual content info
-                const content = rec.details;
-                if (!content) return null; // Safety check
+              {recs.map((rec: any) => {
+                const content = rec.content;
+                if (!content) return null;
 
                 return (
-                <div
-                  key={content.id}
-                  // Added 'group' class here for hover effects on children
-                  className="group cursor-pointer w-full"
-                  onClick={() => {
-                    handleRelatedClick(content.id);
-                    setMovieid(content.id);
-                    setActualVideoUrl(content.video_url);
-                    setMovies([content]);
-                    setVideoEnded(false);
-                    setPlaylists([]);
-                  }}
-                >
-                  {/* Image Container */}
-                  <div className="relative aspect-square rounded-lg overflow-hidden bg-white/5 w-full  h-1/2 relative">
-                    <img
-                      src={getOptimizedImageUrl(content.poster_url, 400)}
-                      alt={content.content_title || content.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      loading="lazy"
-                    />
-                    {/* Dark Overlay on hover */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <div className="absolute bottom-0 left-0 right-0 p-4">
-                        {/* Optional: Add info text inside overlay like the example if desired */}
-                         {/* <div className="text-white text-sm font-semibold truncate">
-                           {content.content_title || content.title}
-                         </div> */}
-                      </div>
+                  <div
+                    key={rec.id}
+                    className="group cursor-pointer"
+                    onClick={() => {
+                      handleRelatedClick(content.id);
+                      setMovieid(content.id);
+                      setActualVideoUrl(content.video_url);
+                      setMovies([content]);
+                      setVideoEnded(false);
+                      setPlaylists([]);
+                    }}
+                  >
+                    {/* Poster */}
+                    <div className="relative aspect-square rounded-lg overflow-hidden bg-white/5">
+                      <img
+                        src={getOptimizedImageUrl(content.poster_url, 400)}
+                        alt={content.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
-                  </div>
 
-                  {/* Watch Progress Bar */}
-                  <div className="mt-2 h-[0.2rem] bg-white/10 rounded-full overflow-hidden">
-                     <div
-                       className="h-full bg-red-600 rounded-full"
-                       // Use optional chaining and fallback to 0 if watch_percentage is missing
-                       style={{ width: `${content?.watch_percentage || 0}%` }}
-                     ></div>
-                  </div>
-
-
-                  {/* Bottom Text Info */}
-                  <div className="mt-3">
-                      <div className="text-white font-medium truncate text-base leading-tight">
-                        {content.content_title || content.title}
+                    {/* Meta */}
+                    <div className="mt-3">
+                      <div className="text-white font-medium truncate">
+                        {content.title}
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-white/60 mt-1.5 font-medium">
+                      <div className="flex items-center gap-2 text-sm text-white/60 mt-1">
                         {content.year && <span>{content.year}</span>}
                         {content.genre && (
                           <>
-                            <span className="text-white/40">•</span>
+                            <span>•</span>
                             <span className="truncate">{content.genre}</span>
                           </>
                         )}
                       </div>
+                    </div>
                   </div>
-                </div>
-              )})}
+                );
+              })}
             </div>
           </div>
         );

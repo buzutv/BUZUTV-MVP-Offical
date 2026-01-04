@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useContentCache } from "@/hooks/useContentCache";
+import { useGetContentWithWatchHistoryQuery } from "@/store/contentSlice";
 
 export interface Content {
   id: string;
@@ -76,8 +77,14 @@ export const useContent = () => {
     refetch,
   } = useContentCache("content", fetchContentData, []);
 
+  const {data: contentWithWatchHistory, isLoading: isContentWithWatchHistoryLoading, refetch: refetchContentWithWatchHistory} = useGetContentWithWatchHistoryQuery("03fa9a91-4281-4bd4-9e60-4da2ba72b0f3", {
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+    refetchOnMountOrArgChange: true,
+  })
   return {
     content: content || [],
+    contentWithWatchHistory,
     isLoading,
     error,
     refetch,
