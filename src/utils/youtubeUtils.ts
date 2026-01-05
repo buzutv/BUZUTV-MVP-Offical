@@ -62,7 +62,7 @@ export const getLastPausedTime = async (movieId: string, userId: string): Promis
 }
 
 export async function fetchWatchHistory(userId: string, movieId: string) {
-
+  console.log("Fetching watch history for user:", userId, "movie:", movieId);
   const { data, error } = await supabase
     .from("user_watch_history")
     .select("*")
@@ -86,9 +86,9 @@ export async function fetchWatchHistory(userId: string, movieId: string) {
 
 export async function onReadyVideoLoader(e: any, movieId: string, userId: string) {
    console.log("CURRENT MOVIE ID IN EVENT:", movieId);
-  const last_position = await fetchWatchHistory(userId, movieId)
-  console.log("Last position", last_position.watch_percentage)
-  if (last_position.completed || last_position.watch_percentage >= 99) {
+  // const last_position = await fetchWatchHistory(userId, movieId.id)
+  console.log("Last position", movieId.last_position, movieId.watch_percentage, movieId.completed);
+  if (movieId.completed || movieId.watch_percentage >= 99) {
     // If movie was completed, reset to beginning
     e.target.seekTo(0, true);
     e.target.playVideo();
@@ -107,7 +107,7 @@ export async function onReadyVideoLoader(e: any, movieId: string, userId: string
   } else {
     // If not completed, resume from last position
     console.log("From On Ready Video Loader", movieId)
-    e.target.seekTo(last_position.last_position || 0, true);
+    e.target.seekTo(movieId?.last_position, true);
     e.target.playVideo();
   }
 }
@@ -125,16 +125,17 @@ export async function saveWatchHistory(
  
 ) {
   const duration = ref.current?.getDuration?.() || 1;
+  const current  = ref.current?.getCurrentTime?.() || 0;
   const watchPercentage = completed
     ? 100
-    : Math.floor((currentTime / duration) * 100);
+    : Math.floor((current / duration) * 100);
 
   const isSeries = type === "series";
 
   const payload = {
     user_id: userId,
-    movie_id: isSeries ? episodeId ?? null : null,
-    episode_id:  isSeries && episodeId ? null : movieId,
+    movie_id:movieId,
+    episode_id:  null,
     watched_at: new Date().toISOString(),
     last_position: completed ? 0 : Math.floor(currentTime),
     watch_percentage: watchPercentage,

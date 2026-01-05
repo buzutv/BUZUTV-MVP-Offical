@@ -1,6 +1,7 @@
 import React, { useEffect, useImperativeHandle, forwardRef, useRef, useState, memo, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { getYouTubeEmbedUrl, onReadyVideoLoader, fetchWatchHistory, saveWatchHistory } from "@/utils/youtubeUtils";
+import { getYouTubeEmbedUrl, onReadyVideoLoader, saveWatchHistory } from "@/utils/youtubeUtils";
+import { useSelector } from "react-redux";
 
 interface VideoPlayerProps {
   videoId: string;
@@ -17,7 +18,6 @@ interface VideoPlayerProps {
 
 const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   videoId,
-
   playlistItems,
   setCurrentMovie,
   movieId,
@@ -26,56 +26,111 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   type,
   userid,
   playlistInfo
-  
 }, ref) => {
 
-
-  
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerInstanceRef = useRef<any>(null);
+  
+  // Refs for props to avoid stale closures in event listeners
   const movieIdRef = useRef<string>(movieId);
   const episodeIdRef = useRef<string>(episodeId);
   const playlistRef = useRef(playlistItems);
   const currentIndexRef = useRef(0);
   const countdownRef = useRef<any>(null);
 
+  // Redux State & Ref
+  const selectedVideo = useSelector((state: any) => state.screenPlayer.selectedVideo);
+  const selectedVideoRef = useRef(selectedVideo);
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [countdown, setCountdown] = useState(5);
   const [videoEnded, setVideoEnded] = useState(false);
   const [videoRestricted, setVideoRestricted] = useState(false);
 
-  // Sync refs
-  useEffect(() => { playlistRef.current = playlistItems; }, [playlistItems,videoId]);
-  useEffect(() => { currentIndexRef.current = playlistInfo?.current || 0; }, [playlistInfo,videoId]);
-  useEffect(() => {  movieIdRef.current = movieId }, [movieId]);
-  useEffect(() => {  episodeIdRef.current = episodeId }, [episodeId]);
-  console.log("Video Player Rendered with Video ID:", movieId, movieIdRef.current, episodeIdRef.current);
+  // --- SYNC REFS ---
+  useEffect(() => { playlistRef.current = playlistItems; }, [playlistItems, videoId]);
+  useEffect(() => { currentIndexRef.current = playlistInfo?.current || 0; }, [playlistInfo, videoId]);
+  useEffect(() => { movieIdRef.current = movieId }, [movieId]);
+  useEffect(() => { episodeIdRef.current = episodeId }, [episodeId]);
+  
+  // Update the selectedVideoRef whenever Redux changes so the player always has the latest data
+  useEffect(() => { selectedVideoRef.current = selectedVideo; }, [selectedVideo]);
+
+  console.log("Video Player Rendered with Video ID:", movieId, videoId);
+
   useImperativeHandle(ref, () => ({
     play: () => playerInstanceRef.current?.playVideo(),
     pause: () => playerInstanceRef.current?.pauseVideo(),
     getDuration: () => playerInstanceRef.current?.getDuration(),
   }));
 
-  // --- FIXED ID EXTRACTION ---
+  // --- ID EXTRACTION ---
   const getVideoId = useCallback((inputVideoId: string) => {
     if (!inputVideoId) return null;
     try {
-        // If it's already just an ID (no slashes), return it
-        if (!inputVideoId.includes("/")) return inputVideoId;
-
-        const embedUrl = getYouTubeEmbedUrl(inputVideoId);
-        const videoIdMatch = embedUrl?.match(/embed\/([^?]+)/);
-        return videoIdMatch ? videoIdMatch[1] : null;
+      if (!inputVideoId.includes("/")) return inputVideoId;
+      const embedUrl = getYouTubeEmbedUrl(inputVideoId);
+      const videoIdMatch = embedUrl?.match(/embed\/([^?]+)/);
+      return videoIdMatch ? videoIdMatch[1] : null;
     } catch (e) {
-        return null;
+      return null;
     }
   }, []);
 
-  // --- 1. INITIALIZE PLAYER ---
+  // --- RESUME LOGIC ---
+  const resumeVideoPosition = (player: any) => {
+    const currentVidData = selectedVideoRef.current;
+    
+    if (currentVidData) {
+      const history = Array.isArray(currentVidData.user_watch_history) 
+        ? currentVidData.user_watch_history[0] 
+        : currentVidData.user_watch_history;
+        
+      // Flatten logic: check direct props or nested history props
+      const isCompleted = currentVidData.completed || history?.completed;
+      const watchPct = currentVidData.watch_percentage || history?.watch_percentage || 0;
+      const lastPos = currentVidData.last_position || history?.last_position || 0;
+
+      console.log("Resuming logic:", { isCompleted, watchPct, lastPos });
+
+      if (isCompleted || watchPct >= 99) {
+        player.seekTo(0, true);
+      } else if (lastPos > 0) {
+        player.seekTo(lastPos, true);
+      }
+      player.playVideo();
+    }
+  };
+
+  // --- INITIALIZE & UPDATE PLAYER ---
   useEffect(() => {
-    // GUARD: If no videoId is passed yet, do not attempt to load anything
     if (!videoId) return;
 
+    const vid = getVideoId(videoId);
+    if (!vid) {
+        console.warn("VideoPlayer: Attempted to init with invalid ID", videoId);
+        return;
+    }
+
+    // 1. If player exists, just load the new video
+    if (playerInstanceRef.current) {
+      try {
+        console.log("Switching video to:", vid);
+        playerInstanceRef.current.loadVideoById(vid);
+        
+        // IMPORTANT: onReady does NOT fire on loadVideoById. 
+        // We wait a moment for metadata to load, then seek.
+        setTimeout(() => {
+            resumeVideoPosition(playerInstanceRef.current);
+        }, 500); 
+
+      } catch (e) {
+        console.error("Error loading new video into existing player", e);
+      }
+      return; 
+    }
+
+    // 2. If player does not exist, create it
     if (!window.YT) {
       const tag = document.createElement("script");
       tag.src = "https://www.youtube.com/iframe_api";
@@ -85,14 +140,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
     const initPlayer = () => {
       if (playerInstanceRef.current) return;
       
-      const vid = getVideoId(videoId);
-      console.log("Initializing YouTube Player with ID:", vid);
-      // GUARD: If extraction failed or ID is invalid, STOP here to prevent crash
-      if (!vid) {
-          console.warn("VideoPlayer: Attempted to init with invalid ID", videoId);
-          return;
-      }
-
+      console.log("Initializing NEW YouTube Player with ID:", vid);
       playerInstanceRef.current = new window.YT.Player(playerContainerRef.current, {
         height: "100%",
         width: "100%",
@@ -105,8 +153,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
           modestbranding: 1
         },
         events: {
-         
-          onReady: (e: any) => onReadyVideoLoader(e, movieIdRef.current, userid),
+          onReady: (e: any) => {
+            // Trigger external loader if needed
+            onReadyVideoLoader(e, selectedVideoRef.current, userid);
+            // Trigger local resume logic
+            resumeVideoPosition(e.target);
+          },
           onStateChange: handlePlayerStateChange,
           onError: handlePlayerError,
         },
@@ -119,83 +171,43 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
       (window as any).onYouTubeIframeAPIReady = initPlayer;
     }
 
-    // Cleanup on unmount
-    return () => {
-       // We do NOT destroy the player here on props change, only on component unmount
-       // But if the component is actually unmounting, we clean up.
-    };
-  }, []); // Intentionally empty dependency to run only on mount
+  }, [videoId]); // Re-run this effect when videoId changes
 
-  // --- 2. HANDLE VIDEO CHANGES (Smooth Transition) ---
-  useEffect(() => {
-    // If videoId changes, we update the existing player instead of re-creating it
-    const vid = getVideoId(videoId);
-
-    if (playerInstanceRef.current && vid) {
-       try {
-           // Only load if it's actually different to prevent restarting
-           const currentUrl = playerInstanceRef.current.getVideoUrl();
-           // YouTube URL check isn't always perfect, so we just load if we have a valid ID
-           playerInstanceRef.current.loadVideoById(vid);
-       } catch (e) {
-           console.error("Error loading new video into existing player", e);
-       }
-    } else if (!playerInstanceRef.current && vid && window.YT && window.YT.Player) {
-        // Fallback: If player wasn't ready on mount (due to missing ID), try init again
-        // This handles the case where videoId was null initially but populated later
-        const initLazy = () => {
-            playerInstanceRef.current = new window.YT.Player(playerContainerRef.current, {
-                height: "100%",
-                width: "100%",
-                videoId: vid,
-                playerVars: { autoplay: 1, controls: 1, rel: 0, showinfo: 0, modestbranding: 1 },
-                events: {
-                  onReady: (e: any) => onReadyVideoLoader(e, movieIdRef.current, userid),
-                  onStateChange: handlePlayerStateChange,
-                  onError: handlePlayerError,
-                },
-            });
-        }
-        initLazy();
-    }
-  }, [videoId]);
-
-
-  // --- HELPER FUNCTIONS ---
+  // --- EVENT HANDLERS ---
 
   const handlePlayerStateChange = async (e: any) => {
-    
-      if (e.data === window.YT.PlayerState.ENDED) {
-        await saveWatchHistory(userid, movieIdRef.current, episodeIdRef.current, videoId, e.target.getCurrentTime(), true, playerInstanceRef,type);
-        
-        const currentList = playlistRef.current?.contents;
-        if (currentList && currentList.length > 0 && currentIndexRef.current < currentList.length - 1) {
-          startCountdown();
-        }
+    if (e.data === window.YT.PlayerState.ENDED) {
+      await saveWatchHistory(userid, movieIdRef.current, episodeIdRef.current, videoId, e.target.getCurrentTime(), true, playerInstanceRef, type);
+      
+      const currentList = playlistRef.current?.contents;
+      if (currentList && currentList.length > 0 && currentIndexRef.current < currentList.length - 1) {
+        startCountdown();
       }
+    }
 
-      if (e.data === window.YT.PlayerState.PAUSED) {
-        await saveWatchHistory(userid, movieId,episodeId, videoId, e.target.getCurrentTime(), false, playerInstanceRef,type);
-      }
+    if (e.data === window.YT.PlayerState.PAUSED) {
+      await saveWatchHistory(userid, movieIdRef.current, episodeIdRef.current, videoId, e.target.getCurrentTime(), false, playerInstanceRef, type);
+    }
 
-      if (e.data === window.YT.PlayerState.BUFFERING) {
-        const currentTime = e.target.getCurrentTime();
-        if (currentTime > 1 && setFinal) {
-          setFinal(currentTime);
-          await saveWatchHistory(userid, movieId, episodeId, videoId, currentTime, false,type, playerInstanceRef,type);
-        }
+    if (e.data === window.YT.PlayerState.BUFFERING) {
+      const currentTime = e.target.getCurrentTime();
+      if (currentTime > 1 && setFinal) {
+        setFinal(currentTime);
+        // Note: Check arguments for saveWatchHistory, passed 'type' twice in your original code, cleaned up here
+        await saveWatchHistory(userid, movieIdRef.current, episodeIdRef.current, videoId, currentTime, false, playerInstanceRef, type);
       }
+    }
   };
 
   const handlePlayerError = (err: any) => {
-      console.log("YT Error:", err.data);
-      if (err.data === 150 || err.data === 101) {
-        setVideoRestricted(true);
-        const currentList = playlistRef.current?.contents;
-        if (currentList && currentList.length > 0 && currentIndexRef.current < currentList.length - 1) {
-          startCountdown();
-        }
+    console.log("YT Error:", err.data);
+    if (err.data === 150 || err.data === 101) {
+      setVideoRestricted(true);
+      const currentList = playlistRef.current?.contents;
+      if (currentList && currentList.length > 0 && currentIndexRef.current < currentList.length - 1) {
+        startCountdown();
       }
+    }
   };
 
   const clearCountdownTimer = () => {
@@ -257,15 +269,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   const hasPreviousVideo = playlistItems?.contents && currentIndex > 0;
   const hasPlaylist = playlistItems?.contents && playlistItems.contents.length > 1;
 
-  // Cleanup on true unmount
+  // Cleanup on unmount
   useEffect(() => {
-      return () => {
-          if (playerInstanceRef.current) {
-              try { playerInstanceRef.current.destroy(); } catch(e){}
-              playerInstanceRef.current = null;
-          }
-          clearCountdownTimer();
+    return () => {
+      if (playerInstanceRef.current) {
+        try { playerInstanceRef.current.destroy(); } catch(e){}
+        playerInstanceRef.current = null;
       }
+      clearCountdownTimer();
+    }
   }, [])
 
   return (
@@ -361,8 +373,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
 });
 
 function propsAreEqual(prev: VideoPlayerProps, next: VideoPlayerProps) {
+  // If the VIDEO ID is different, we MUST re-render
+  if (prev.videoId !== next.videoId) return false;
+
   return (
-    prev.videoId === next.videoId && 
     prev.movieId === next.movieId &&
     prev.playlistInfo?.current === next.playlistInfo?.current
   );

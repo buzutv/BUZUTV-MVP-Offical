@@ -11,6 +11,8 @@ import { useLazyGetRecommendationsWtihContentEmbeddedQuery, useLazyGetUserRecomm
 import { Episode, FullscreenPlayerProps } from "@/types";
 import MovieDetailSection from "./MovieDetailSection";
 import { useLazyGetContentWithWatchHistoryFiltersQuery } from "@/store/contentSlice";
+import RelatedContent from "./RelatedContent";
+import { useSelector } from "react-redux";
 
 const FullscreenPlayer = ({
   isOpen,
@@ -69,6 +71,10 @@ const FullscreenPlayer = ({
   // const navigate = useNavigate();
   const [triggerRecommendations, resultRecommendations ] = useLazyGetRecommendationsWtihContentEmbeddedQuery();
   const [triggerRelatedContent, resultRelatedContent ] = useLazyGetContentWithWatchHistoryFiltersQuery();
+  const selectedContent = useSelector((state:any) => state.screenPlayer.selectedVideo);
+
+
+  console.log("Selected Content from Redux in FullscreenPlayer:", selectedContent);
   // const MemoizedVideoPlayer = memo(VideoPlayer);
   useEffect(() => {
     moviesRef.current = movies;
@@ -150,14 +156,14 @@ useEffect(() => {
     // BATCH CALL: Get all history for these 12 items at once
     const contentIds = relatedData.map(item => item.id);
     const { data: historyData } = await supabase
-      .from("user_content_progress")
-      .select("content_id, watch_percentage, last_position, completed")
+      .from("user_watch_history")
+      .select("id, movie_id, watch_percentage, last_position, completed")
       .eq("user_id", "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3")
-      .in("content_id", contentIds);
+      .in("movie_id", contentIds);
 
     // Merge history back into the related content locally
     const merged = relatedData.map(item => {
-      const h = historyData?.find(hist => hist.content_id === item.id);
+      const h = historyData?.find(hist => hist.movie_id === item.id);
       return {
         ...item,
         watch_percentage: h?.watch_percentage || 0,
@@ -267,14 +273,14 @@ console.log("Seasons in FullscreenPlayer:", season);
               {
                 actualVideoUrl && 
                   <VideoPlayer
-                    videoId={actualVideoUrl}
+                    videoId={selectedContent?.video_url}
                     // last_position={lastPausedTime}
                     setCurrentMovie={setCurrentMovie}
                     type={type}
                     setFinal={setFinal}
                     setActualVideoUrl={setActualVideoUrl}
                     playlistItems={playlists}
-                    movieId={movieId}
+                    movieId={selectedContent?.id}
                     episodeId={currentEpisode?.id} 
                     userid="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
                     playlistInfo={playlistInfo}
@@ -440,60 +446,15 @@ console.log("Seasons in FullscreenPlayer:", season);
                 
 
           {/* Related Content Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 lg:grid-cols-4 xl:grid-cols-5">
-            {relatedContent.map((content) => (
-              <div
-                key={content.id}
-                className="cursor-pointer basis-[350px] max-w-[350px]"
-                onClick={() => {
-                  handleRelatedClick(content.id)
-                  setMovieid(content.id)
-                  // Now switch to new content
-                  setActualVideoUrl(content.video_url);
-                  setMovies([content]);
-                  setVideoEnded(false);
-                  setPlaylists([])
-                }}
-
-
-
-              >
-                <div className="relative aspect-square rounded-lg overflow-hidden bg-white/5 h-[50%] w-full">
-                  <img
-                    src={getOptimizedImageUrl(content.poster_url, 400)}
-                    alt={content.content_title || content.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <div className="text-white text-sm font-semibold">
-                        {content.content_title || content.title}
-                      </div>
-                      {content.year && (
-                        <div className="text-white/60 text-xs">{content.year}</div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div
-                  className="h-[0.175rem] bg-red-900"
-                  style={{ width: `${content?.watch_percentage}%` }}
-                ></div>
-                <div className="text-white font-medium truncate">
-                  {content.content_title || content.title}
-                </div>
-                <div className="flex items-center gap-2 text-sm text-white/60 mt-1">
-                  {content.year && <span>{content.year}</span>}
-                  {content.genre && (
-                    <>
-                      <span>•</span>
-                      <span>{content.genre}</span>
-                    </>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+          <RelatedContent
+            handleRelatedClick={handleRelatedClick}
+            setMovieid={setMovieid}
+            setActualVideoUrl={setActualVideoUrl}
+            setMovies={setMovies}
+            setVideoEnded={setVideoEnded}
+            setPlaylists={setPlaylists}
+            // relatedContent={relatedContent}
+          />
         </div>
       </div>
     </div>

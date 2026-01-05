@@ -110,6 +110,12 @@ export interface Season {
   updated_at?: string | null;
 }
 
+export interface RelatedContentFilterProps {
+  genre?: string;
+  year?: number;
+  type?: string;
+}
+
 
 // features/userWatchHistory/userWatchHistory.types.ts
 export interface UserWatchHistory {
