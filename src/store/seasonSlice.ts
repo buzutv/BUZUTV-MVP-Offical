@@ -15,12 +15,29 @@ export const seasonSlice = supabaseApi.injectEndpoints({
       providesTags: (_r, _e, id) => [{ type: 'seasons', id }],
     }),
 
-    getSeasonWithEpisodes: builder.query<Season, string>({
-      query: (id) =>
-        `seasons?content_id=eq.${id}&order=season_number.asc&select=*,episodes(*)`,
-      transformResponse: (res: Season[]) => res[0],
-      providesTags: (_r, _e, id) => [{ type: 'seasons', id }],
-    }),
+   getSeasonWithEpisodes: builder.query<Season[],{ contentId: string; userId: string }>({
+        query: ({ contentId, userId }) =>
+          `seasons?content_id=eq.${contentId}&order=season_number.asc&select=*,episodes(*,user_watch_history(*))&episodes.user_watch_history.user_id=eq.${userId}`,
+          transformResponse: (res: any[]) =>
+          res.map((season) => ({
+            ...season,
+            episodes: season.episodes.map((ep: any) => {
+              const [history] = ep.user_watch_history ?? [];
+              return {
+                ...ep,
+                watch_percentage: history?.watch_percentage ?? 0,
+                last_position: history?.last_position ?? 0,
+                completed: history?.completed ?? false,
+                user_watch_history: undefined, // optional cleanup
+              };
+            }),
+          })),
+
+        providesTags: (_r, _e, { contentId }) => [
+          { type: "seasons", id: contentId },
+        ],
+      }),
+
     createSeason: builder.mutation<
       Season,
       Pick<Season, 'content_id' | 'season_number' | 'title' | 'release_date'>

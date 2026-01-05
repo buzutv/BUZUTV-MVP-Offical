@@ -12,7 +12,8 @@ import { Episode, FullscreenPlayerProps } from "@/types";
 import MovieDetailSection from "./MovieDetailSection";
 import { useLazyGetContentWithWatchHistoryFiltersQuery, useLazyGetPlaylistContentWithWatchHistoryQuery } from "@/store/contentSlice";
 import RelatedContent from "./RelatedContent";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { openScreenPlayer } from "@/store/screenPlayerSlice";
 
 const FullscreenPlayer = ({
   isOpen,
@@ -68,6 +69,7 @@ const FullscreenPlayer = ({
   const [selectedSeasonId, setSelectedSeasonId] = useState<string>("");
   // Sync refs with state
   const parentRef = useRef()
+  const dispatch = useDispatch();
   // const navigate = useNavigate();
   const [triggerRecommendations, resultRecommendations ] = useLazyGetRecommendationsWtihContentEmbeddedQuery();
   const [triggerRelatedContent, resultRelatedContent ] = useLazyGetContentWithWatchHistoryFiltersQuery();
@@ -338,6 +340,10 @@ console.log("Seasons in FullscreenPlayer:", season);
                         setMovieid(episode?.id)
                         setMovies([episode])
                         playerRef.current?.scrollIntoView({ behavior: "smooth" });
+                         dispatch(openScreenPlayer({
+                                      isOpen: true,
+                                      selectedVideo: episode  
+                                    }))
                       }}
                     >
                       <div className="bg-white/5 rounded-lg overflow-hidden">

@@ -13,6 +13,9 @@ import { useMoreLikeThis } from "@/hooks/useMoreLikeThis";
 import SeriesPlayer from "@/components/SeriesPlayer";
 import { fetchSeriesSeasons, getOptimizedImageUrl } from "@/utils/youtubeUtils";
 import FullscreenPlayer from "./FullscreenPlayer";
+import { useGetSeasonWithEpisodesQuery } from "@/store/seasonSlice";
+import { openScreenPlayer } from "@/store/screenPlayerSlice";
+import { useDispatch } from "react-redux";
 
 // Type guards to safely access properties
 const isMovie = (item: Movie | Content): item is Movie => {
@@ -131,12 +134,21 @@ const ContentModal: React.FC<ContentModalProps> = ({
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [currentSeasonNumber, setCurrentSeasonNumber] = useState<number>(1);
 
-
+  const dispatch = useDispatch();
   const { favoriteIds, addToFavorites, removeFromFavorites } =
     useUserFavorites();
   const { content } = useContent();
   const { channels } = useChannels();
 
+  const {data:seasonWithEpisode, error, refetch} = useGetSeasonWithEpisodesQuery({contentId:movieId,userId:"03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"}, {
+    skip:!movieId,
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus:true,
+    refetchOnReconnect:true
+  })
+
+
+  console.log("Fetched season with episodes:", seasonWithEpisode);
   // Always find current backend content item dynamically
   const currentContentItem = React.useMemo(() => {
     return content.find((c) => c.id === currentItem.id);
@@ -353,6 +365,10 @@ const ContentModal: React.FC<ContentModalProps> = ({
   }
 
   const handlePlayFirstEpisode = () => {
+    dispatch(openScreenPlayer({
+              isOpen: true,
+              selectedVideo: seasonWithEpisode[0]?.episodes[0]    
+            }))
     const firstEpisode = seasons[0]?.episodes[0];
     if (firstEpisode && seasons.length > 0) {
       setCurrentEpisode(firstEpisode);
@@ -426,11 +442,39 @@ const ContentModal: React.FC<ContentModalProps> = ({
         heartBorder: "border-brand-500/50 hover:border-brand-500",
       };
 
-  return (
-    // <div className="w-full h-screen fixed inset-0 z-[90]">
-    <>
-    
 
+
+   
+      if (isSeriesPlayerOpen && currentEpisode && seasons) {
+    return (
+      <div className="fixed inset-0 z-[99999] bg-black">
+        <FullscreenPlayer
+          isOpen={true}
+          onClose={handleCloseSeriesPlayer} // This returns us to the Modal
+          videoUrl={currentEpisode?.video_url}
+          type="series"
+          title={currentEpisode.title}
+          userId="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
+          poster_url={currentContentItem?.poster_url || normalizedItem.posterUrl}
+          
+          // Your Series Logic
+          onVideoEnd={() => {
+            if (hasNext()) {
+              onNext(); // Plays next episode
+            } else {
+              handleCloseSeriesPlayer(); // Goes back to modal if finished
+            }
+          }}
+          movieId={movieId}
+          hasNext={hasNext()}
+          onNext={onNext}
+          onPrevious={() => {}}
+          season={seasonWithEpisode}
+        />
+      </div>
+    );
+  }
+return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent
           onInteractOutside={(e) => {
@@ -472,9 +516,11 @@ const ContentModal: React.FC<ContentModalProps> = ({
                   <div className="flex items-center space-x-4 mb-4">
                     <BrandButton
                       onClick={
+                        
                         contentType === "series"
                           ? handlePlayFirstEpisode
                           : handlePlayMovie
+                          
                       }
                       disabled={
                         !currentVideoUrl &&
@@ -490,6 +536,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
                           ? "!bg-gray-600 !text-gray-400 !cursor-not-allowed !hover:bg-gray-600 !hover:-translate-y-0"
                           : ""
                       }
+                      
                     >
                       <Play className="w-6 h-6 fill-current" />
                       <span>Play</span>
@@ -573,7 +620,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
                       <TabsList
                         className={`flex flex-row gap-2 w-full bg-transparent transition-all duration-300 group ${effectiveKidsMode ? "" : ""}`}
                       >
-                        {seasonsData.map((season) => (
+                        {seasonWithEpisode?.map((season) => (
                           <TabsTrigger
                             key={`season-${season.season_number}`}
                             value={`season-${season.season_number}`}
@@ -588,7 +635,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
                         ))}
                       </TabsList>
 
-                      {seasonsData.map((season) => (
+                      {seasonWithEpisode?.map((season) => (
                         <TabsContent
                           key={`season-${season.season_number}`}
                           value={`season-${season.season_number}`}
@@ -626,6 +673,13 @@ const ContentModal: React.FC<ContentModalProps> = ({
                                     episode,
                                     season.season_number,
                                   );
+                                   dispatch(openScreenPlayer({
+                                          isOpen: true,
+                                          // contentItems: displayItems,
+                                          // startIndex: idx,
+                                          selectedVideo: episode,
+                                          // playlistId:id
+                                        }))
                                 }}
                                 className="ml-3 p-2 rounded-full transition-colors bg-white/10 hover:bg-white/20 text-white flex-shrink-0"
                                 aria-label={`Play ${episode.title}`}
@@ -654,16 +708,9 @@ const ContentModal: React.FC<ContentModalProps> = ({
           </ScrollArea>
         </DialogContent>
       </Dialog>
-
-
-
-      {/* SeriesPlayer for series content */}
- 
-     
-
-       {/* SeriesPlayer for series content */}
-      {currentEpisode && seasons && (
-        <div className="bg-black fixed inset-0 z-[99999] bg-black flex flex-col pointer-events-auto">
+)
+      {/* {currentEpisode && seasons && (
+        <div className="bg-black fixed inset-0 z-[99999] bg-black flex flex-col">
           <FullscreenPlayer
             isOpen={true}
             onClose={handleCloseSeriesPlayer}
@@ -689,14 +736,14 @@ const ContentModal: React.FC<ContentModalProps> = ({
             season={seasons}
           />
         </div>
-      )}
+      )} */}
 
 
 
         
-    </>
-    // </div>
-  );
+    
+
+  
 };
 
 export default ContentModal;

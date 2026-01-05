@@ -40,7 +40,7 @@ const PlaylistDetail = () => {
   const dispatch = useDispatch();
   
   const [triggerGetContentWithWatchHistory,result] = useLazyGetPlaylistContentWithWatchHistoryQuery()
-  const [triggerGetSeasonWithEpisodes] = useLazyGetSeasonWithEpisodesQuery()
+  // const [triggerGetSeasonWithEpisodes] = useLazyGetSeasonWithEpisodesQuery()
   const { refetch } = usePlaylistDetail(
     content.length ? content.map(c => c.id) : undefined
   );
