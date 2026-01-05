@@ -1,160 +1,132 @@
 import ContentModal from '@/components/ContentModal'
 import FullscreenPlayer from '@/components/FullscreenPlayer'
-import SearchOverlay from '@/components/SearchOverlay'
-import { Button } from '@/components/ui/button'
-import { DialogTrigger } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from '@/components/ui/sonner'
-import { Spinner } from '@/components/ui/spinner'
 import { useContent } from '@/hooks/useContent'
+import { usePlaylistDetail } from '@/hooks/usePlaylistDetail'
 import usePlaylists from '@/hooks/usePlaylists'
 import { supabase } from '@/integrations/supabase/client'
+import { useLazyGetPlaylistContentWithWatchHistoryQuery } from '@/store/contentSlice'
 import { openScreenPlayer } from '@/store/screenPlayerSlice'
-import { useGetSeasonWithEpisodesQuery, useLazyGetSeasonWithEpisodesQuery } from '@/store/seasonSlice'
-import { fetchSeriesSeasons, fetchWatchHistory, getOptimizedImageUrl } from '@/utils/youtubeUtils'
+import { useLazyGetSeasonWithEpisodesQuery } from '@/store/seasonSlice'
+import { fetchSeriesSeasons, getOptimizedImageUrl } from '@/utils/youtubeUtils'
 import { Dialog, DialogContent } from '@radix-ui/react-dialog'
-// import { dataTagSymbol } from '@tanstack/react-query'
 import { Plus, Trash } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { useNavigate, useParams } from 'react-router-dom'
-// import { Content } from 'vaul'
-// import { Recommendation } from '@/types'
+
 const PlaylistDetail = () => {
   const { id } = useParams()
-  const {  playlistWithItems,triggerPlaylistById, triggerPlaylistWithItemsById,triggerResult,refetch } = usePlaylists()
+  // Ensure triggerPlaylistWithItemsById is destructured here
+  const { playlistWithItems, triggerPlaylistWithItemsById } = usePlaylists()
   const { searchContentData } = useContent()
+  
   const [currentVideoIndex, setCurrentVideoIndex] = useState<number | null>(null)
-  const [isAutoPlay, setIsAutoPlay] = useState(true) // Toggle autoplay
+  const [isAutoPlay, setIsAutoPlay] = useState(true)
   const [user_watch_history, setUserWatchHistory] = useState<any[]>([])
   const navigate = useNavigate()
   const [openDialog, setOpenDialog] = useState(false)
-  // 1. NEW STATE: Key to manually trigger a history re-fetch
+  
+  // Key to manually trigger a history re-fetch
   const [historyUpdateKey, setHistoryUpdateKey] = useState(0)
   const [content, setContent] = useState<any[]>([])
   const [search, setSearch] = useState("")
-  const [searchResults, setSearchResults] = useState([])
+  const [searchResults, setSearchResults] = useState<any[]>([])
   const [selectedMovies, setSelectedMovies] = useState<string[]>([]);
   const [index, setIndex] = useState<number | null>(null);
-  // const { refetch } = usePlaylists()
-  // Function to be passed to the player to trigger a re-fetch of history
+  
   const [seasons, setSeasons] = useState<any[]>([]);
+  const dispatch = useDispatch();
+  
+  const [triggerGetContentWithWatchHistory,result] = useLazyGetPlaylistContentWithWatchHistoryQuery()
+  const [triggerGetSeasonWithEpisodes] = useLazyGetSeasonWithEpisodesQuery()
+  const { refetch } = usePlaylistDetail(
+    content.length ? content.map(c => c.id) : undefined
+  );
+  // --- HARDCODED USER ID (From your original code) ---
+  const USER_ID = "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3";
+
+  // 1. FIXED: Added 'playlistWithItems' to dependencies so UI updates when data is refetched
+  useEffect(() => {
+    const contentfromPlaylist = playlistWithItems?.find(playlist => playlist.id === id)?.playlist_items?.map(item => item.content) || [];
+    dispatch(openScreenPlayer({
+      playlistInfo: content.map(item => item.id),
+      playlistId: id || null
+    }))
+    setContent(contentfromPlaylist);
+  }, [id, playlistWithItems])
+
+  useEffect(() => {
+    if (id) triggerPlaylistWithItemsById({ userId: USER_ID, playlist_id: id })
+
+    async function fetchRPC() {
+      const { data } = await supabase.rpc('generate_all_recommendations', {
+        user_id_param: USER_ID
+      });
+      return data
+    }
+    fetchRPC().then(data => console.log("Here is RPC Data", data))
+  }, [id])
+
+  // Function to increment key and force re-run of history logic
   const triggerHistoryRefresh = () => {
     console.log("Watch history refresh triggered. Incrementing key.");
     setHistoryUpdateKey(prev => prev + 1);
   }
-  const [triggerGetSeasonWithEpisodes,resultGetSeasonWithEpisodes] = useLazyGetSeasonWithEpisodesQuery()
-  const dispatch = useDispatch();
-
-
-  useEffect(() =>{
-    const contentfromPlaylist = playlistWithItems?.find(playlist => playlist.id === id)?.playlist_items?.map(item => item.content) || [];
-    console.log("Content from Playlist Effect:", contentfromPlaylist);
-    setContent(contentfromPlaylist);
-  },[id])
- 
-
-  useEffect(() => {
-    
-    if (id) triggerPlaylistWithItemsById({ userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3", playlist_id: id })
-
-
-    async function fetchRPC() {
-
-      const { data, error } = await supabase.rpc('generate_all_recommendations', {
-        user_id_param: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
-      });
-
-      const { data:playlist } = await supabase
-          .from("playlists")
-          .select(`
-            *,
-            playlist_items (
-              content (*)
-            )
-          `)
-      console.log("Here is Playlist Data",playlist)
-      return data
-    }
-    fetchRPC().then(data => console.log("Here is RPC Data",data))
-   
-  // console.log("Here is RPC Data",data)
-  }, [id, user_watch_history, setUserWatchHistory])
 
   // Fetch watch history when content loads OR when historyUpdateKey changes
   useEffect(() => {
     async function loadWatchHistory() {
       if (content.length > 0) {
-        console.log("Content loaded in PlaylistDetail. Fetching history...");
-
-        // --- NOTE: You MUST replace this hardcoded user_id with the actual authenticated user's ID ---
-        const USER_ID = "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3";
-
-
-        const dataWithHistory = await Promise.all(
-          content.map(async (item) => {
-            const history = await fetchWatchHistory(
-              USER_ID,
-              item?.id
-            );
-
-            console.log("History", history)
-            return {
-              ...item,
-              watch_percentage: history ? history.watch_percentage : 0,
-              last_position: history ? history?.last_position : history,
-              completed: history ? history?.completed : false
-            };
-          })
-        );
-
-        // fetchWatchHistoryPromises
-        // Filter out any null entries if an error occurred in the map
-        setUserWatchHistory(dataWithHistory)
+        const data = await triggerGetContentWithWatchHistory({ 
+          userId: USER_ID, 
+          contentIds: content.map(item => item.id) 
+        }).unwrap()
+        
+        const normalized = data?.map((item) => {
+          const [history] = item.user_watch_history ?? [];
+          return {
+            ...item,
+            watch_percentage: history?.watch_percentage ?? 0,
+            last_position: history?.last_position ?? 0,
+            completed: history?.completed ?? false,
+          }
+        })
+        setUserWatchHistory(normalized)
       }
-
     }
+    
     loadWatchHistory()
-    refetch(id)
-  }, [content?.length, historyUpdateKey]) // 4. ADDED historyUpdateKey dependency
-  console.log("Content in PlaylistDetail:", user_watch_history)
+    // We refetch the playlist wrapper here too
+    refetch()
+  }, [content?.length,content, historyUpdateKey, id])
 
   
-  // Get the currently selected video
- // Fixed Line
- const displayItems = user_watch_history.length > 0 ? user_watch_history : content;
- const selectedVideo = currentVideoIndex !== null 
-  ? (user_watch_history[currentVideoIndex] || content[currentVideoIndex]) 
-  : null;
+  // Logic to determine what to display
+  const displayItems = user_watch_history.length > 0 ? user_watch_history : content;
+  const selectedVideo = currentVideoIndex !== null 
+    ? (user_watch_history[currentVideoIndex] || content[currentVideoIndex]) 
+    : null;
 
-
-
-
+  // Fetch Seasons if Series
   useEffect(() => {
     async function fetchAndSetSeasonsData() {
       if (selectedVideo && selectedVideo.type === 'series') {
         const seasonsData = await fetchSeriesSeasons(selectedVideo.id);
-        console.log("Fetched seasons data for series:", selectedVideo);
         if (seasonsData) {
-          // Update local seasons state
           setSeasons(seasonsData);
-        }
-        else{
+        } else {
           setSeasons([]);
-          // setMovieId(selectedVideo?.id);
         }
       }
-
     }
-      fetchAndSetSeasonsData();
-  },[selectedVideo?.id])
-  // console.log("User Watch History in PlaylistDetail:", JSON.stringify(selectedVideo?.seasons_data))
+    fetchAndSetSeasonsData();
+  }, [selectedVideo?.id])
 
-  console.log("Selected Video in PlaylistDetail:", seasons) 
+  // --- HANDLERS ---
 
-
-   console.log('Selected Video', selectedVideo)
-  const handleSearch = async (e) => {
+  const handleSearch = async (e: any) => {
     const value = e.target.value
     setSearch(value)
 
@@ -164,62 +136,27 @@ const PlaylistDetail = () => {
     }
 
     const data = await searchContentData(value)
-
-    console.log("Search results in PlaylistDetail:", data)
     setSearchResults(data || [])
   }
-  // Handle video end - auto-play next video
+
   const handleVideoEnd = () => {
     if (currentVideoIndex === null || !isAutoPlay) return
-
     const nextIndex = currentVideoIndex + 1
 
     if (nextIndex < content.length) {
-      // Play next video automatically
       setCurrentVideoIndex(nextIndex)
     } else {
-      // Playlist finished, close player
       setCurrentVideoIndex(null)
-      // Optional: Show a "Playlist Complete" message or loop back to start
-      // To loop: setCurrentVideoIndex(0)
     }
-    // Refresh history immediately after a video ends (in case 'completed' status updated)
     triggerHistoryRefresh();
   }
 
-  // Handle manual next/previous navigation
   const handleNext = () => {
     if (currentVideoIndex === null) return
     const nextIndex = currentVideoIndex + 1
     if (nextIndex < content.length) {
       setCurrentVideoIndex(nextIndex)
     }
-  }
-
-  const handleMovies = async (movieIds: string[]) => {
-    if (!id) return;
-    console.log("Adding movies to playlist:", movieIds);
-
-    const inserts = movieIds.map((movieId) => ({
-      id: crypto.randomUUID(),
-      playlist_id: id,
-      content_id: movieId,
-      position: 0
-      // added_at: new Date().toISOString(),
-    }));
-
-    const { error } = await supabase
-      .from("playlist_items")
-      .insert(inserts);
-
-    if (error) {
-      console.error("Error adding movies to playlist:", error);
-      return;
-    }
-
-    // Refresh playlist content after adding movies
-    await refetch(id);
-    console.log("Movies added successfully to playlist.");
   }
 
   const handlePrevious = () => {
@@ -230,21 +167,64 @@ const PlaylistDetail = () => {
     }
   }
 
-  // Handle close player
-  const handleClose = () => {
+  // 2. FIXED: Refetch everything when closing the player
+  const handleClose = async () => {
     setCurrentVideoIndex(null)
-    // Refresh history when closing the player, ensuring the progress bar updates immediately
+    
+    // Trigger the playlist fetch from Supabase again
+    if(id) {
+        triggerPlaylistWithItemsById({ userId: USER_ID, playlist_id: id });
+    }
 
+    // Trigger the history specific refresh
     triggerHistoryRefresh();
+    const data = await triggerGetContentWithWatchHistory({ 
+        userId: USER_ID, 
+        contentIds: content.map(item => item.id) 
+      }).unwrap()
+
+    const normalized = data?.map((item) => {
+          const [history] = item.user_watch_history ?? [];
+          return {
+            ...item,
+            watch_percentage: history?.watch_percentage ?? 0,
+            last_position: history?.last_position ?? 0,
+            completed: history?.completed ?? false,
+          }
+        })
+    setUserWatchHistory(normalized)
   }
 
-  // Play entire playlist from start
+  const handleMovies = async (movieIds: string[]) => {
+    if (!id) return;
+    const inserts = movieIds.map((movieId) => ({
+      id: crypto.randomUUID(),
+      playlist_id: id,
+      content_id: movieId,
+      position: 0
+    }));
+
+    const { error } = await supabase
+      .from("playlist_items")
+      .insert(inserts);
+
+    if (error) {
+      console.error("Error adding movies:", error);
+      return;
+    }
+
+    // Refresh after adding
+    if (id) triggerPlaylistWithItemsById({ userId: USER_ID, playlist_id: id });
+    await refetch(id);
+  }
+
   const playPlaylist = () => {
     if (content.length > 0) {
       setCurrentVideoIndex(0)
       setIsAutoPlay(true)
     }
   }
+
   const toggleMovieSelection = (movieId: string) => {
     setSelectedMovies(prev =>
       prev.includes(movieId)
@@ -252,20 +232,20 @@ const PlaylistDetail = () => {
         : [...prev, movieId]
     );
   };
+
   const handleSubmitMovies = async () => {
     if (selectedMovies.length === 0) {
       toast.error("No movies selected!");
       return;
     }
-    // Call your handler to add these movies to the playlist
     await handleMovies(selectedMovies);
     setSelectedMovies([]);
     setOpenDialog(false);
     toast.success("Movies added successfully!");
   };
-  const handleDelete = async (e, item) => {
-    e.stopPropagation(); // prevent opening video
 
+  const handleDelete = async (e: any, item: any) => {
+    e.stopPropagation(); 
     const { error } = await supabase
       .from("playlist_items")
       .delete()
@@ -275,50 +255,30 @@ const PlaylistDetail = () => {
       });
 
     if (!error) {
+      toast.success("Item removed!");
+      // Refetch logic
+      if(id) triggerPlaylistWithItemsById({ userId: USER_ID, playlist_id: id });
       refetch(id);
-      toast.success("Item successfully removed from playlist!");
-    }
-
-
-
-    if (error) {
+    } else {
       console.error("Delete error:", error.message);
       return;
     }
 
-    // Remove from UI state
-    // refetch(id);
-    setUserWatchHistory(prev =>
-      prev.filter(item => item.id !== id)
-    );
+    // Optimistic UI update
+    setUserWatchHistory(prev => prev.filter(i => i.id !== item.id));
+    setContent(prev => prev.filter(i => i.id !== item.id));
   };
-
-
-  // Use history data if available, otherwise use raw content (for safety during loading)
- // Move this line up (before selectedVideo definition)398
-
-
-
-// Use it here
-// const selectedVideo = currentVideoIndex !== null ? displayItems[currentVideoIndex] : null;
-  const isLoading = content?.length > 0 && user_watch_history?.length === 0;
 
 
   return (
     <div className="mt-24 p-10">
-      <div
-        className="fixed inset-0 -z-10"
+      <div className="fixed inset-0 -z-10"
         style={{
-          background: `
-              linear-gradient(
-                200deg,
-                #311066 0%,   /* very dark violet */
-                #1D0833 20%,  /* deep blackish purple */
-                #120222 45%,  /* near-black violet */
-                black 100%    /* pure black */
-            `,
+          background: `linear-gradient(200deg, #311066 0%, #1D0833 20%, #120222 45%, black 100%)`,
         }}
       ></div>
+      
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4 cursor-pointer" onClick={() => navigate('/playlists')}>
           <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
@@ -328,92 +288,69 @@ const PlaylistDetail = () => {
         </div>
 
         <div className='flex gap-4'>
-
-
           <button
-            className="flex items-center gap-2 px-6 py-3 bg-white  rounded-lg hover:bg-foreground/90 hover:text-white transition font-semibold shadow-lg"
+            className="flex items-center gap-2 px-6 py-3 bg-white rounded-lg hover:bg-foreground/90 hover:text-white transition font-semibold shadow-lg"
             onClick={() => setOpenDialog(true)}>
             <Plus className="w-5 h-5" />
             Add More Movies
           </button>
+
           <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-            <DialogContent className="bg-zinc-900 text-white p-6 rounded-xl min-w-[50%] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-40 h-auto overflow-y-auto border-2 border-white/10 overflow-y-scroll">
-              <div
-                className="fixed inset-0 -z-10"
+            <DialogContent className="bg-zinc-900 text-white p-6 rounded-xl min-w-[50%] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-40 h-auto overflow-y-auto border-2 border-white/10 max-h-[85vh]">
+              <div className="fixed inset-0 -z-10"
                 style={{
-                  background: `
-              linear-gradient(
-                200deg,
-                #311066 0%,   /* very dark violet */
-                #1D0833 20%,  /* deep blackish purple */
-                #120222 45%,  /* near-black violet */
-                black 100%    /* pure black */
-            `,
+                  background: `linear-gradient(200deg, #311066 0%, #1D0833 20%, #120222 45%, black 100%)`,
                 }}
               ></div>
               <h2 className="text-xl font-bold mb-4">Add Movies to Playlist</h2>
 
-              {/* Search Input */}
               <input
                 type="text"
                 placeholder="Search movies..."
                 value={search}
-                onChange={(e) => handleSearch(e)}
+                onChange={handleSearch}
                 className="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 mb-4"
               />
 
-              {/* Movie Grid */}
-              <div className="grid grid-cols-3 gap-8 overflow-hidden h-[65vh]">
+              <div className="grid grid-cols-3 gap-8 overflow-y-auto h-[50vh] pr-2">
                 {searchResults.map((movie) => {
                   const isSelected = selectedMovies.includes(movie.id);
                   return (
                     <div
                       key={movie.id}
-                      className={`relative h-48 rounded-xl cursor-pointer overflow-hidden shadow-md transition-transform ${isSelected ? "ring-4 ring-primary/70 scale-105 bg-black opacity-1 border-4 border-white" : "hover:scale-105"
-                        }`}
+                      className={`relative h-48 rounded-xl cursor-pointer overflow-hidden shadow-md transition-transform ${isSelected ? "ring-4 ring-primary/70 scale-105 bg-black opacity-1 border-4 border-white" : "hover:scale-105"}`}
                       style={{
                         backgroundImage: `url(${movie.poster_url || movie.backdrop_url || "/placeholder.jpg"})`,
                         backgroundSize: "cover",
                         backgroundPosition: "center",
-                        opacity: isSelected ? 1 : 0.8,
-                        backgroundColor: isSelected ? "purple" : "transparent"
                       }}
                       onClick={() => toggleMovieSelection(movie.id)}
                     >
-                      {/* Overlay for darkening and info */}
                       <div className="absolute inset-0 bg-black/40 flex flex-col justify-end p-3">
                         <p className="font-bold text-white line-clamp-1">{movie.title}</p>
                         <p className="text-xs text-zinc-300">
                           {movie.year || "—"} • {movie.type || "Unknown"}
                         </p>
-                        {movie.rating && (
-                          <p className="text-xs text-yellow-400 mt-1">⭐ {movie.rating}</p>
-                        )}
                       </div>
                     </div>
                   );
                 })}
               </div>
 
-              {/* Submit Button */}
               <button
                 onClick={handleSubmitMovies}
                 disabled={selectedMovies.length === 0}
-                className="fixed bottom-6 right-6 px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/80 shadow-lg transition"
+                className="w-full mt-6 px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/80 shadow-lg transition"
               >
                 Add Selected ({selectedMovies.length})
               </button>
             </DialogContent>
           </Dialog>
 
-
-
-
-          {/* Play All Button */}
           {content?.length > 0 && (
             <button
               onClick={playPlaylist}
-              className="flex items-center gap-2 px-6 py-3 bg-white  rounded-lg hover:bg-foreground/90 hover:text-white transition font-semibold shadow-lg"
+              className="flex items-center gap-2 px-6 py-3 bg-white rounded-lg hover:bg-foreground/90 hover:text-white transition font-semibold shadow-lg"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
@@ -421,8 +358,6 @@ const PlaylistDetail = () => {
               Play All ({content.length})
             </button>
           )}
-
-
         </div>
       </div>
 
@@ -440,47 +375,41 @@ const PlaylistDetail = () => {
         </label>
       </div>
 
-
-
+      {/* Loading State */}
       <div className='flex items-center gap-8 justify-start w-full'>
-        {user_watch_history.length === 0 && (
+        {user_watch_history.length === 0 && content.length === 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 w-full">
             {Array.from({ length: 10 }).map((_, idx) => (
-              <div
-                key={idx}
-                className="rounded-xl overflow-hidden bg-white/5 backdrop-blur-md border border-white/10 shadow-md"
-              >
-                {/* Poster skeleton */}
+              <div key={idx} className="rounded-xl overflow-hidden bg-white/5 backdrop-blur-md border border-white/10 shadow-md">
                 <Skeleton className="w-full h-48" />
-
-                {/* Text skeletons */}
                 <div className="p-3 space-y-2">
                   <Skeleton className="h-4 w-3/4 bg-muted-foreground" />
                   <Skeleton className="h-3 w-1/2 bg-muted-foreground" />
-                  <Skeleton className="h-3 w-2/3 bg-muted-foreground" />
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Video Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6">
-        {user_watch_history.length > 0 && user_watch_history?.map((item, index) => (
+        {displayItems?.map((item, idx) => (
           <div
             key={item.id}
-            className={`z-10 w-full cursor-pointer rounded-xl overflow-hidden shadow-md hover:shadow-lg transition bg-white-900 text-zinc-900 border-2 ${currentVideoIndex === index ? 'border-primary ring-2 ring-primary/50' : 'border-transparent'
-              }`}
+            className={`z-10 w-full cursor-pointer rounded-xl overflow-hidden shadow-md hover:shadow-lg transition bg-white-900 text-zinc-900 border-2 ${currentVideoIndex === idx ? 'border-primary ring-2 ring-primary/50' : 'border-transparent'}`}
             onClick={() => {
-              setCurrentVideoIndex(index)
-              setIndex(index)
+              setCurrentVideoIndex(idx)
+              setIndex(idx)
+              // Sync Redux player state just in case
               dispatch(openScreenPlayer({
                 isOpen: true,
                 contentItems: displayItems,
-                startIndex: index,
-                selectedVideo:item
+                startIndex: idx,
+                selectedVideo: item,
+                playlistId:id
               }))
-            }
-            }
+            }}
           >
             <div className="relative">
               <img
@@ -495,26 +424,26 @@ const PlaylistDetail = () => {
               >
                 <Trash className="w-4 h-4" />
               </button>
-              {/* Play icon overlay */}
-              <div className="absolute inset-0 flex items-center  justify-center opacity-0 hover:opacity-100 transition">
+              
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition">
                 <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
                 </svg>
               </div>
 
-              {/* Currently playing indicator */}
-              {currentVideoIndex === index && (
+              {currentVideoIndex === idx && (
                 <div className="absolute top-2 right-2 bg-primary text-primary-foreground px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
                   <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
                   Playing
                 </div>
               )}
 
-              {/* Episode number badge */}
               <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs font-semibold">
-                #{index + 1}
+                #{idx + 1}
               </div>
             </div>
+            
+            {/* Progress Bar */}
             <div
               className="h-[0.175rem] bg-red-900"
               style={{ width: `${item.watch_percentage}%` }}
@@ -525,71 +454,61 @@ const PlaylistDetail = () => {
               <p className="text-xs text-muted-foreground mt-1">
                 {item.year || "—"} • {item.type}
               </p>
-
-
               {item.type === "series" && (
                 <p className="text-[11px] text-muted-foreground mt-1">
                   {item.seasons} season • {item.episodes} episodes
                 </p>
               )}
-
             </div>
-
-
-            {/* Delete button */}
-
-
           </div>
         ))}
       </div>
 
-
-        {selectedVideo && (
-          selectedVideo.type === 'series' ? (
-            <ContentModal 
-                isOpen={true}
-                onClose={handleClose}
-                item={selectedVideo}
-                variant="series"
-                seasons={seasons}
-                movieId={selectedVideo?.id}
-                // Pass these so the modal can navigate the playlist
-                hasNext={currentVideoIndex! < displayItems.length - 1}
-                hasPrevious={currentVideoIndex! > 0}
-                onNext={handleNext} 
-                onPrevious={handlePrevious}
-                playlistInfo={{
-                  current: currentVideoIndex! + 1,
-                  total: displayItems.length
-                }}
-              />
-          ) : (
-            <FullscreenPlayer
-              isOpen={true}
-              onClose={handleClose}
-              videoUrl={selectedVideo?.video_url}
-              type={selectedVideo?.type}
-              title={`${selectedVideo?.title} (${currentVideoIndex! + 1}/${content.length})`}
-              userId="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
-              onVideoEnd={handleVideoEnd}
-              setSelectedVideo={setCurrentVideoIndex}
-              movieId={selectedVideo?.id}
-              hasNext={currentVideoIndex! < content?.length - 1}
-              hasPrevious={currentVideoIndex! > 0}
-              onNext={handleNext}
-              onPrevious={handlePrevious}
-              playlistInfo={{
-                current: (index ?? 0) + 1,
-                setIndex: setIndex,
-                total: content?.length,
-                autoPlay: isAutoPlay,
-                totalMovies: user_watch_history?.length
-              }}
-              onWatchHistoryUpdate={triggerHistoryRefresh}
-            />
-          )
-        )}
-      {/* {selectedVideo && } */}
+      {/* Players */}
+      {selectedVideo && (
+        selectedVideo.type === 'series' ? (
+          <ContentModal 
+            isOpen={true}
+            onClose={handleClose}
+            item={selectedVideo}
+            variant="series"
+            seasons={seasons}
+            movieId={selectedVideo?.id}
+            hasNext={currentVideoIndex! < displayItems.length - 1}
+            hasPrevious={currentVideoIndex! > 0}
+            onNext={handleNext} 
+            onPrevious={handlePrevious}
+            playlistInfo={{
+              current: currentVideoIndex! + 1,
+              total: displayItems.length
+            }}
+          />
+        ) : (
+          <FullscreenPlayer
+            isOpen={true}
+            onClose={handleClose}
+            videoUrl={selectedVideo?.video_url}
+            type={selectedVideo?.type}
+            title={`${selectedVideo?.title} (${currentVideoIndex! + 1}/${content.length})`}
+            userId={USER_ID}
+            onVideoEnd={handleVideoEnd}
+            setSelectedVideo={setCurrentVideoIndex}
+            movieId={selectedVideo?.id}
+            hasNext={currentVideoIndex! < content?.length - 1}
+            hasPrevious={currentVideoIndex! > 0}
+            onNext={handleNext}
+            onPrevious={handlePrevious}
+            playlistInfo={{
+              current: (index ?? 0) + 1,
+              setIndex: setIndex,
+              total: content?.length,
+              autoPlay: isAutoPlay,
+              totalMovies: user_watch_history?.length
+            }}
+            onWatchHistoryUpdate={triggerHistoryRefresh}
+          />
+        )
+      )}
 
     </div>
   )

@@ -9,7 +9,8 @@ const initialState = {
     description: "",
     playlistInfo: null,
     poster_url: "",
-    selectedVideo:null
+    selectedVideo:null,
+    playlistId:null
 
 }
 export const screenPlayer = createSlice({
@@ -25,6 +26,7 @@ export const screenPlayer = createSlice({
             state.playlistInfo = action.payload.playlistInfo;
             state.poster_url = action.payload.poster_url;
             state.selectedVideo = action.payload.selectedVideo;
+            state.playlistId    = action.payload.playlistId;
         },
         closeScreenPlayer:(state) =>{
             state.isOpen = false;

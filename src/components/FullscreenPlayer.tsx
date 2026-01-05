@@ -10,7 +10,7 @@ import { useLazyGetRecommendationsWtihContentEmbeddedQuery, useLazyGetUserRecomm
 
 import { Episode, FullscreenPlayerProps } from "@/types";
 import MovieDetailSection from "./MovieDetailSection";
-import { useLazyGetContentWithWatchHistoryFiltersQuery } from "@/store/contentSlice";
+import { useLazyGetContentWithWatchHistoryFiltersQuery, useLazyGetPlaylistContentWithWatchHistoryQuery } from "@/store/contentSlice";
 import RelatedContent from "./RelatedContent";
 import { useSelector } from "react-redux";
 
@@ -72,7 +72,9 @@ const FullscreenPlayer = ({
   const [triggerRecommendations, resultRecommendations ] = useLazyGetRecommendationsWtihContentEmbeddedQuery();
   const [triggerRelatedContent, resultRelatedContent ] = useLazyGetContentWithWatchHistoryFiltersQuery();
   const selectedContent = useSelector((state:any) => state.screenPlayer.selectedVideo);
-
+   const [triggerGetContentWithWatchHistory,result] = useLazyGetPlaylistContentWithWatchHistoryQuery()
+   const contentIds = useSelector((state:any) => state.screenPlayer.playlistInfo);
+   const playlistid  = useSelector((state:any) => state.screenPlayer.playlistId)
 
   console.log("Selected Content from Redux in FullscreenPlayer:", selectedContent);
   // const MemoizedVideoPlayer = memo(VideoPlayer);
@@ -134,49 +136,49 @@ useEffect(() => {
 
   // Fetch related content
 // 1. OPTIMIZED FETCH (N+1 Fix)
-useEffect(() => {
-  async function fetchRelatedContent() {
-    if (!currentMovie?.id) return;
-    const found = await triggerRelatedContent({ userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3", genre: null, year: '2012', type: null });
-    console.log("Related Content found",found)
-    // Build the query
-    let query = supabase
-      .from("content")
-      .select("id, title, poster_url, year, genre, type") // Only select what you need
-      .neq("id", currentMovie.id)
-      .limit(12);
+// useEffect(() => {
+//   async function fetchRelatedContent() {
+//     if (!currentMovie?.id) return;
+//     const found = await triggerRelatedContent({ userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3", genre: null, year: '2012', type: null });
+//     console.log("Related Content found",found)
+//     // Build the query
+//     let query = supabase
+//       .from("content")
+//       .select("id, title, poster_url, year, genre, type") // Only select what you need
+//       .neq("id", currentMovie.id)
+//       .limit(12);
 
-    if (selectedGenre !== "All") query = query.eq("genre", selectedGenre);
-    if (selectedYear !== "All") query = query.eq("year", parseInt(selectedYear));
-    if (selectedType !== "All") query = query.eq("type", selectedType);
+//     if (selectedGenre !== "All") query = query.eq("genre", selectedGenre);
+//     if (selectedYear !== "All") query = query.eq("year", parseInt(selectedYear));
+//     if (selectedType !== "All") query = query.eq("type", selectedType);
 
-    const { data: relatedData } = await query;
-    if (!relatedData) return;
+//     const { data: relatedData } = await query;
+//     if (!relatedData) return;
 
-    // BATCH CALL: Get all history for these 12 items at once
-    const contentIds = relatedData.map(item => item.id);
-    const { data: historyData } = await supabase
-      .from("user_watch_history")
-      .select("id, movie_id, watch_percentage, last_position, completed")
-      .eq("user_id", "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3")
-      .in("movie_id", contentIds);
+//     // BATCH CALL: Get all history for these 12 items at once
+//     const contentIds = relatedData.map(item => item.id);
+//     const { data: historyData } = await supabase
+//       .from("user_watch_history")
+//       .select("id, movie_id, watch_percentage, last_position, completed")
+//       .eq("user_id", "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3")
+//       .in("movie_id", contentIds);
 
-    // Merge history back into the related content locally
-    const merged = relatedData.map(item => {
-      const h = historyData?.find(hist => hist.movie_id === item.id);
-      return {
-        ...item,
-        watch_percentage: h?.watch_percentage || 0,
-        last_position: h?.last_position || 0,
-        completed: h?.completed || false
-      };
-    });
+//     // Merge history back into the related content locally
+//     const merged = relatedData.map(item => {
+//       const h = historyData?.find(hist => hist.movie_id === item.id);
+//       return {
+//         ...item,
+//         watch_percentage: h?.watch_percentage || 0,
+//         last_position: h?.last_position || 0,
+//         completed: h?.completed || false
+//       };
+//     });
 
-    setRelatedContent(merged);
-  }
+//     setRelatedContent(merged);
+//   }
 
-  fetchRelatedContent();
-}, [selectedGenre, selectedYear, selectedType, currentMovie?.id]);
+//   fetchRelatedContent();
+// }, [selectedGenre, selectedYear, selectedType, currentMovie?.id]);
 
 
 console.log("Current Movie in FullscreenPlayer:", currentMovie);
@@ -248,7 +250,8 @@ console.log("Seasons in FullscreenPlayer:", season);
           <div className="flex justify-center items-center gap-4 mb-4">
             <div className="flex items-center justify-center gap-4 cursor-pointer flex-1" onClick={async () => {
               setSelectedVideo(null)
-              // navigate(-1)
+              onClose()
+              // navigate(`/playlists/${playlistid}`)
             }}>
               <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />

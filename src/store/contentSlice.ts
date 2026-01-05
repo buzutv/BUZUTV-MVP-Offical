@@ -30,6 +30,15 @@ export const contentSlice = supabaseApi.injectEndpoints({
       providesTags: ['Content', 'user_watch_history'],
     }),
 
+    getPlaylistContentWithWatchHistory: builder.query<
+      Content[],
+      { userId: string; contentIds: string[] }
+    >({
+      query: ({ userId, contentIds }) => {
+        const ids = contentIds.join(",");
+        return `content?id=in.(${ids})&select=*,user_watch_history(watch_percentage,last_position,completed,movie_id)&user_watch_history.user_id=eq.${userId}`;
+      },
+    }),
     getContentWithWatchHistoryFilters:builder.query<Content[], RelatedContentFilterProps & {
       userId: string
     }>({
@@ -94,5 +103,7 @@ export const {
     useGetContentWithWatchHistoryFiltersQuery,
     useLazyGetContentWithWatchHistoryFiltersQuery,
     useGetContentWithWatchHistoryQuery,
-    useLazyGetContentWithWatchHistoryQuery
+    useLazyGetContentWithWatchHistoryQuery,
+    useGetPlaylistContentWithWatchHistoryQuery,
+    useLazyGetPlaylistContentWithWatchHistoryQuery
    } = contentSlice
