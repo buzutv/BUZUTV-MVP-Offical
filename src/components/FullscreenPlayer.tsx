@@ -251,7 +251,6 @@ console.log("Seasons in FullscreenPlayer:", season);
             <div className="flex items-center justify-center gap-4 cursor-pointer flex-1" onClick={async () => {
               setSelectedVideo(null)
               onClose()
-              // navigate(`/playlists/${playlistid}`)
             }}>
               <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />

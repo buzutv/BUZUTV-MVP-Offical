@@ -13,15 +13,19 @@ const RelatedContent = ({
     setPlaylists,
     handleRelatedClick
 }) => {
-  const [triggerRelatedContent] = useLazyGetContentWithWatchHistoryQuery()
-  const [relatedContent, setRelatedContent] = React.useState<Content[]>([])
+    const {data: relatedContentData, error, refetch} = useGetContentWithWatchHistoryQuery("03fa9a91-4281-4bd4-9e60-4da2ba72b0f3",{
+      refetchOnFocus:true,
+      refetchOnMountOrArgChange:true,
+      refetchOnReconnect:true
+    })
+    const [relatedContent, setRelatedContent] = React.useState<Content[]>([])
   const dispatch = useDispatch();
   useEffect(() =>{
     const fetchRelatedContent = async () => {
       try {
-        const response = await triggerRelatedContent("03fa9a91-4281-4bd4-9e60-4da2ba72b0f3")
-        if ('data' in response) {
-            const normalizedContent = response?.data?.map(item => {
+        // const response = await triggerRelatedContent("03fa9a91-4281-4bd4-9e60-4da2ba72b0f3")
+        
+            const normalizedContent = relatedContentData?.map(item => {
                     const [history] = item.user_watch_history ?? [];
 
                     return {
@@ -32,9 +36,7 @@ const RelatedContent = ({
                     };
                     });
           setRelatedContent(normalizedContent)
-        } else {
-          console.error('Error fetching related content:', response.error)
-        }
+        
       } catch (error) {
         console.error('Error fetching related content:', error)
       }
@@ -61,6 +63,7 @@ const RelatedContent = ({
                   dispatch(openScreenPlayer({
                     selectedVideo: content,
                   }))
+                  // refetch()
                 }}
 
 
