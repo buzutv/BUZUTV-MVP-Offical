@@ -170,7 +170,7 @@ const PlaylistDetail = () => {
   // 2. FIXED: Refetch everything when closing the player
   const handleClose = async () => {
     setCurrentVideoIndex(null)
-    
+   
     // Trigger the playlist fetch from Supabase again
     if(id) {
         triggerPlaylistWithItemsById({ userId: USER_ID, playlist_id: id });

@@ -76,9 +76,9 @@ const FullscreenPlayer = ({
   const selectedContent = useSelector((state:any) => state.screenPlayer.selectedVideo);
    const [triggerGetContentWithWatchHistory,result] = useLazyGetPlaylistContentWithWatchHistoryQuery()
    const contentIds = useSelector((state:any) => state.screenPlayer.playlistInfo);
-   const playlistid  = useSelector((state:any) => state.screenPlayer.playlistId)
+   const playlistId  = useSelector((state:any) => state.screenPlayer.playlistId)
 
-  console.log("Selected Content from Redux in FullscreenPlayer:", selectedContent);
+  console.log("Selected Content from Redux in FullscreenPlayer:", playlistId);
   // const MemoizedVideoPlayer = memo(VideoPlayer);
   useEffect(() => {
     moviesRef.current = movies;
@@ -251,8 +251,9 @@ console.log("Seasons in FullscreenPlayer:", season);
         <div className="w-full x-auto px-4 py-12">
           <div className="flex justify-center items-center gap-4 mb-4">
             <div className="flex items-center justify-center gap-4 cursor-pointer flex-1" onClick={async () => {
-              setSelectedVideo(null)
+              // setSelectedVideo(null)
               onClose()
+              // navigate(`/playlist/${playlistId}`)
             }}>
               <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -322,7 +323,11 @@ console.log("Seasons in FullscreenPlayer:", season);
                     })}
                   </div>
                 </div>
-                <h2 className="text-white text-2xl font-bold mb-6">Episodes</h2>
+                <div>
+                  {
+                    selectedContent.type === 'series' && currentSeasonEpisodes.length === 0 && (
+                      <>
+                              <h2 className="text-white text-2xl font-bold mb-6">Episodes</h2>
                 {/* Episode Grid/List */}
                 <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
                   {currentSeasonEpisodes.map((episode: any) => (
@@ -384,6 +389,15 @@ console.log("Seasons in FullscreenPlayer:", season);
                     </div>
                   ))}
                 </div>
+
+                      
+                      </>
+                 
+                    )
+                  }
+               
+
+                  </div>
               </div>
                                 )}
 

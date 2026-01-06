@@ -15,7 +15,8 @@ import { fetchSeriesSeasons, getOptimizedImageUrl } from "@/utils/youtubeUtils";
 import FullscreenPlayer from "./FullscreenPlayer";
 import { useGetSeasonWithEpisodesQuery } from "@/store/seasonSlice";
 import { openScreenPlayer } from "@/store/screenPlayerSlice";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { useLazyGetPlaylistContentWithWatchHistoryQuery } from "@/store/contentSlice";
 
 // Type guards to safely access properties
 const isMovie = (item: Movie | Content): item is Movie => {
@@ -133,13 +134,14 @@ const ContentModal: React.FC<ContentModalProps> = ({
   const [isSeriesPlayerOpen, setIsSeriesPlayerOpen] = useState(false);
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [currentSeasonNumber, setCurrentSeasonNumber] = useState<number>(1);
-
+  const [triggerGetContentWithWatchHistory,result] = useLazyGetPlaylistContentWithWatchHistoryQuery()
+  const USER_ID = "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3";
   const dispatch = useDispatch();
   const { favoriteIds, addToFavorites, removeFromFavorites } =
     useUserFavorites();
   const { content } = useContent();
   const { channels } = useChannels();
-
+  const  playlistId = useSelector((state:any) => state.screenPlayer.playlistId);
   const {data:seasonWithEpisode, error, refetch} = useGetSeasonWithEpisodesQuery({contentId:movieId,userId:"03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"}, {
     skip:!movieId,
     refetchOnMountOrArgChange: true,
@@ -385,9 +387,25 @@ const ContentModal: React.FC<ContentModalProps> = ({
     }
   };
 
-  const handleCloseSeriesPlayer = () => {
+  const handleCloseSeriesPlayer = async () => {
     setIsSeriesPlayerOpen(false);
     setCurrentEpisode(null);
+     onClose(false)
+    const data = await triggerGetContentWithWatchHistory({ 
+        userId: USER_ID, 
+        contentIds: content.map(item => item.id) 
+      }).unwrap()
+
+    // const normalized = data?.map((item) => {
+    //       const [history] = item.user_watch_history ?? [];
+    //       return {
+    //         ...item,
+    //         watch_percentage: history?.watch_percentage ?? 0,
+    //         last_position: history?.last_position ?? 0,
+    //         completed: history?.completed ?? false,
+    //       }
+    //     })
+    // setUserWatchHistory(normalized)
   };
 
   // Use the unified More Like This content (already normalized with posterUrl)
