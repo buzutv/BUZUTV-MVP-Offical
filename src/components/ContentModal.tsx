@@ -390,7 +390,8 @@ const ContentModal: React.FC<ContentModalProps> = ({
   const handleCloseSeriesPlayer = async () => {
     setIsSeriesPlayerOpen(false);
     setCurrentEpisode(null);
-     onClose(false)
+    refetch()
+    onClose(false)
     const data = await triggerGetContentWithWatchHistory({ 
         userId: USER_ID, 
         contentIds: content.map(item => item.id) 
