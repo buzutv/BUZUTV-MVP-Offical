@@ -22,14 +22,15 @@ export const recommendationSlice = supabaseApi.injectEndpoints({
     }),
     getRecommendationsWtihContentEmbedded: builder.query<
       Recommendation[],
-      { userId: string; type?: string }
-    >({
-      query: ({ userId, type }) =>({
-          url: `recommendations?select=*,content:content_id(*)&user_id=eq.${userId}&dismissed=eq.false${type ? `&recommendation_type=eq.${type}` : ''}`,
-          method: 'GET',
-          providesTags: ['recommendations'],
-      })
-    }),
+            { userId: string; type?: string }
+          >({
+            query: ({ userId, type }) => ({
+              url: `recommendations?select=*,content:content_id(*,user_watch_history(*))&user_id=eq.${userId}&dismissed=eq.false${type ? `&recommendation_type=eq.${type}` : ''}`,
+              method: 'GET',
+            }),
+            providesTags: ['recommendations'],
+          }),
+
     markRecommendationClicked: builder.mutation<
       Recommendation,
       { id: string }

@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo } from "react";
-import { useLazyGetRecommendationsWtihContentEmbeddedQuery } from "@/store/recommendationSlice";
+import { useGetRecommendationsWtihContentEmbeddedQuery, useLazyGetRecommendationsWtihContentEmbeddedQuery } from "@/store/recommendationSlice";
+import { openScreenPlayer } from "@/store/screenPlayerSlice";
+import { useDispatch } from "react-redux";
 
 // Section title helper
 const sectionTitles: Record<string, string> = {
@@ -31,6 +33,17 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
   const [triggerRecommendations, { data, isFetching }] =
     useLazyGetRecommendationsWtihContentEmbeddedQuery();
 
+  const {data:recommendations, error , refetch} = useGetRecommendationsWtihContentEmbeddedQuery(
+    {
+       userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3",
+    },{
+      refetchOnFocus:true,
+      refetchOnMountOrArgChange:true,
+      refetchOnReconnect:true
+    }
+  )
+  const dispatch = useDispatch()
+;
   useEffect(() => {
     triggerRecommendations({
       userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3",
@@ -41,14 +54,16 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
   const groupedRecommendations = useMemo(() => {
     if (!data) return {};
 
-    return data.reduce((acc: any, rec: any) => {
+    return recommendations.reduce((acc: any, rec: any) => {
       const key = rec.recommendation_type || "default";
       if (!acc[key]) acc[key] = [];
-      acc[key].push(rec);
+      acc[key].push(rec.content);
       return acc;
     }, {});
-  }, [data]);
+  }, [recommendations]);
 
+
+  console.log("Recommendations Data:", groupedRecommendations);
   // 🔹 Loading skeleton
   if (isFetching || !data) {
     return (
@@ -85,27 +100,32 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {recs.map((rec: any) => {
-                const content = rec.content;
-                if (!content) return null;
+             
+                if (!rec) return null;
 
                 return (
                   <div
                     key={rec.id}
                     className="group cursor-pointer"
                     onClick={() => {
-                      handleRelatedClick(content.id);
-                      setMovieid(content.id);
-                      setActualVideoUrl(content.video_url);
-                      setMovies([content]);
+                      handleRelatedClick(rec.id);
+                      setMovieid(rec.id);
+                      setActualVideoUrl(rec.video_url);
+                      setMovies([rec]);
                       setVideoEnded(false);
                       setPlaylists([]);
+                      dispatch(openScreenPlayer({
+                        selectedVideo:rec,
+                        currentVideoIndex:null,
+                        playlistInfo:null
+                      }))
                     }}
                   >
                     {/* Poster */}
                     <div className="relative aspect-square rounded-lg overflow-hidden bg-white/5">
                       <img
-                        src={getOptimizedImageUrl(content.poster_url, 400)}
-                        alt={content.title}
+                        src={getOptimizedImageUrl(rec.poster_url, 400)}
+                        alt={rec.title}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         loading="lazy"
                       />
@@ -115,14 +135,14 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
                     {/* Meta */}
                     <div className="mt-3">
                       <div className="text-white font-medium truncate">
-                        {content.title}
+                        {rec.title}
                       </div>
                       <div className="flex items-center gap-2 text-sm text-white/60 mt-1">
-                        {content.year && <span>{content.year}</span>}
-                        {content.genre && (
+                        {rec.year && <span>{rec.year}</span>}
+                        {rec.genre && (
                           <>
                             <span>•</span>
-                            <span className="truncate">{content.genre}</span>
+                            <span className="truncate">{rec.genre}</span>
                           </>
                         )}
                       </div>

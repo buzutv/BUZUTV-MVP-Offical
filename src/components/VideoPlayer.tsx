@@ -1,7 +1,8 @@
 import React, { useEffect, useImperativeHandle, forwardRef, useRef, useState, memo, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getYouTubeEmbedUrl, onReadyVideoLoader, saveWatchHistory } from "@/utils/youtubeUtils";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { openScreenPlayer, setCurrentVideoIndex } from "@/store/screenPlayerSlice";
 
 interface VideoPlayerProps {
   videoId: string;
@@ -47,7 +48,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   const [countdown, setCountdown] = useState(5);
   const [videoEnded, setVideoEnded] = useState(false);
   const [videoRestricted, setVideoRestricted] = useState(false);
-
+  const dispatch = useDispatch();
   // --- SYNC REFS ---
   useEffect(() => { playlistRef.current = playlistItems; }, [playlistItems, videoId]);
   useEffect(() => { currentIndexRef.current = playlistInfo?.current || 0; }, [playlistInfo, videoId]);
@@ -57,7 +58,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   // Update the selectedVideoRef whenever Redux changes so the player always has the latest data
   useEffect(() => { selectedVideoRef.current = selectedVideo; }, [selectedVideo]);
 
-  console.log("Video Player Rendered with Video ID:", movieId, videoId,episodeIdRef.current);
+  console.log("Video Player Rendered with Video ID:",playlistFullObject);
 
   useImperativeHandle(ref, () => ({
     play: () => playerInstanceRef.current?.playVideo(),
@@ -237,32 +238,40 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   };
 
   const playNext = async () => {
-    const currentList = playlistRef.current?.contents;
-    if (!currentList || currentIndexRef.current >= currentList.length - 1) return;
+    // const currentList = playlistRef.current?.contents;
+    
+    // if (!currentList || currentIndexRef.current >= currentList.length - 1) return;
 
+    if (!playlist_items) return;
     clearCountdownTimer();
     setVideoEnded(false);
     setVideoRestricted(false);
     
     currentIndexRef.current += 1;
-    setCurrentIndex(currentIndexRef.current);
+    dispatch(openScreenPlayer({ 
+      currentVideoIndex: currentVideoIndex + 1,
+      selectedVideo: playlist_items[currentVideoIndex + 1].content
+     }));
+    setCurrentIndex(currentVideoIndex + 1);
     
-    const nextVideo = currentList[currentIndexRef.current];
+    const nextVideo = playlist_items[currentVideoIndex + 1];
     if(setCurrentMovie) setCurrentMovie(nextVideo);
   };
 
   const playPrevious = async () => {
     const currentList = playlistRef.current?.contents;
-    if (!currentList || currentIndexRef.current <= 0) return;
+    if (!playlist_items) return;
+    if (!playlist_items || currentVideoIndex <= 0) return;
 
     clearCountdownTimer();
     setVideoEnded(false);
     setVideoRestricted(false);
 
     currentIndexRef.current -= 1;
-    setCurrentIndex(currentIndexRef.current);
+    dispatch(openScreenPlayer({ currentVideoIndex: currentVideoIndex - 1,selectedVideo: playlist_items[currentVideoIndex - 1].content }));
+    setCurrentIndex(currentVideoIndex - 1);
 
-    const prevVideo = currentList[currentIndexRef.current];
+    const prevVideo = playlist_items[currentVideoIndex - 1];
     if(setCurrentMovie) setCurrentMovie(prevVideo);
   };
   const playlist_items = playlistFullObject[0]?.playlist_items;

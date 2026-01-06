@@ -23,9 +23,9 @@ export const playlistsSlice = supabaseApi.injectEndpoints({
         `playlists?created_by=eq.${userId}&order=created_at.desc&select=*,playlist_items(*,content(*))`,
       providesTags: ['playlists', 'playlistitems', 'Content'],
     }),
-     getPlaylistsWithItemsById: builder.query<PlaylistItem[], GetPlaylistsByUserArgs>({
+      getPlaylistsWithItemsById: builder.query<PlaylistItem[], GetPlaylistsByUserArgs>({
       query: ({ userId, playlist_id }) =>
-        `playlists?created_by=eq.${userId}&id=eq.${playlist_id}&order=created_at.desc&select=*,playlist_items(*,content(*))`,
+        `playlists?created_by=eq.${userId}&id=eq.${playlist_id}&order=created_at.desc&select=*,playlist_items(*,content(*,user_watch_history(*)))`,
       providesTags: ['playlists', 'playlistitems', 'Content'],
     }),
 
