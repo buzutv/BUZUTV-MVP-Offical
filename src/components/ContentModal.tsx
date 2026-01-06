@@ -139,10 +139,11 @@ const ContentModal: React.FC<ContentModalProps> = ({
   const dispatch = useDispatch();
   const { favoriteIds, addToFavorites, removeFromFavorites } =
     useUserFavorites();
+  const [movie, setMovie] = useState(movieId)
   const { content } = useContent();
   const { channels } = useChannels();
   const  playlistId = useSelector((state:any) => state.screenPlayer.playlistId);
-  const {data:seasonWithEpisode, error, refetch} = useGetSeasonWithEpisodesQuery({contentId:movieId,userId:"03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"}, {
+  const {data:seasonWithEpisode, error, refetch} = useGetSeasonWithEpisodesQuery({contentId:movie,userId:"03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"}, {
     skip:!movieId,
     refetchOnMountOrArgChange: true,
     refetchOnFocus:true,
@@ -415,6 +416,8 @@ const ContentModal: React.FC<ContentModalProps> = ({
   // Handle More Like This clicks - ALWAYS switch current item within modal
   const handleMoreLikeThisClick = (clickedItem) => {
     setCurrentItem(clickedItem);
+    setMovie(clickedItem.id)
+    
   };
 
   // Background styles
