@@ -408,10 +408,12 @@ const PlaylistDetail = () => {
         dispatch(openScreenPlayer({
           isOpen: true,
           contentItems: displayItems,
-          startIndex: idx,
+          // startIndex: idx,
+          currentVideoIndex: idx,
           selectedVideo: item,
           playlistId: id
-        }));
+        }))
+        // dispatch(setCurrentVideoIndex({ currentVideoIndex: idx }));
       }}
     >
       <div className="relative">

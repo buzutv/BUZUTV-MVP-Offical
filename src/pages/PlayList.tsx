@@ -1,5 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton"
-import { useGetPlaylistsWithItemsQuery } from "../store/playlistSlice" // your RTK Query hook
+import { useGetPlaylistsWithItemsQuery, useLazyGetPlaylistsWithItemsByIdQuery } from "../store/playlistSlice" // your RTK Query hook
 import { useNavigate } from "react-router-dom"
 import { useState } from "react"
 import { 
@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/button"
 import { Circle, Plus, RefreshCcw, Trash2 } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { getOptimizedImageUrl } from "@/utils/youtubeUtils"
+import { setPlaylistInfo } from "@/store/screenPlayerSlice"
+import { useDispatch } from "react-redux"
 
 type PlaylistToDelete = {
     id: string;
@@ -25,8 +27,9 @@ const USER_ID = "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3" // replace with actual se
 
 const PlayList = () => {
     const { data: playlists = [], refetch, isFetching } = useGetPlaylistsWithItemsQuery(USER_ID)
+    const [triggerPlaylists] = useLazyGetPlaylistsWithItemsByIdQuery()
     const navigate = useNavigate()
-
+    const dispatch = useDispatch()
     const [isCreatePlaylistOpen, setIsCreatePlaylistOpen] = useState(false)
     const [playlistToDelete, setPlaylistToDelete] = useState<PlaylistToDelete>(null)
     const isDeleteDialogOpen = !!playlistToDelete
@@ -44,6 +47,14 @@ const PlayList = () => {
     const handleDeleteClick = (e: React.MouseEvent, playlistId: string, playlistTitle: string) => {
         e.stopPropagation()
         setPlaylistToDelete({ id: playlistId, title: playlistTitle })
+    }
+
+    const handleRoutetoPlaylistDetail = async (playlistId: string) => {
+        navigate(`/playlists/${playlistId}`)
+        const fetchedPlaylists = await triggerPlaylists({ userId: USER_ID, playlist_id: playlistId }).unwrap()
+        dispatch(setPlaylistInfo({
+            playlistInfo: fetchedPlaylists
+        }))
     }
 
     const handleConfirmDelete = async () => {
@@ -221,7 +232,7 @@ const PlayList = () => {
                             <div
                                 key={playlist.id}
                                 className="cursor-pointer transition-transform duration-300 hover:scale-[1.03] relative group"
-                                onClick={() => navigate(`/playlists/${playlist.id}`)}
+                                onClick={() => handleRoutetoPlaylistDetail(playlist.id)}
                             >
                                 <div className="relative h-[300px] mb-4">
                                     {previews.length > 0 ? (

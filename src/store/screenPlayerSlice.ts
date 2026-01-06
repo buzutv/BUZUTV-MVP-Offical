@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { title } from "process";
+
 
 const initialState = {
     isOpen: false,
@@ -10,7 +10,8 @@ const initialState = {
     playlistInfo: null,
     poster_url: "",
     selectedVideo:null,
-    playlistId:null
+    playlistId:null,
+    currentVideoIndex: 0
 
 }
 export const screenPlayer = createSlice({
@@ -23,7 +24,7 @@ export const screenPlayer = createSlice({
             state.movieId = action.payload.movieId;
             state.title = action.payload.title;
             state.description = action.payload.description;
-            state.playlistInfo = action.payload.playlistInfo;
+            state.currentVideoIndex = action.payload.currentVideoIndex;
             state.poster_url = action.payload.poster_url;
             state.selectedVideo = action.payload.selectedVideo;
             state.playlistId    = action.payload.playlistId;
@@ -38,12 +39,18 @@ export const screenPlayer = createSlice({
             state.poster_url = "";
             state.selectedVideo = null;
         },
+        setPlaylistInfo:(state,action) =>{
+            state.playlistInfo = action.payload.playlistInfo;
+        },
+        setCurrentVideoIndex:(state, action) => {
+            state.currentVideoIndex = action.payload.currentVideoIndex
+        }
 
 
     }
 
 })
 
-export const {openScreenPlayer,closeScreenPlayer} = screenPlayer.actions;
+export const {openScreenPlayer,setPlaylistInfo ,closeScreenPlayer, setCurrentVideoIndex } = screenPlayer.actions;
 
 export default screenPlayer.reducer;

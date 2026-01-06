@@ -41,7 +41,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   // Redux State & Ref
   const selectedVideo = useSelector((state: any) => state.screenPlayer.selectedVideo);
   const selectedVideoRef = useRef(selectedVideo);
-
+  const playlistFullObject = useSelector((state: any) => state?.screenPlayer?.playlistInfo) || {};
+  const currentVideoIndex = useSelector((state: any) => state?.screenPlayer?.currentVideoIndex) || 0;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [countdown, setCountdown] = useState(5);
   const [videoEnded, setVideoEnded] = useState(false);
@@ -52,7 +53,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   useEffect(() => { currentIndexRef.current = playlistInfo?.current || 0; }, [playlistInfo, videoId]);
   useEffect(() => { movieIdRef.current = movieId }, [movieId]);
   useEffect(() => { episodeIdRef.current = episodeId }, [episodeId]);
-  
+
   // Update the selectedVideoRef whenever Redux changes so the player always has the latest data
   useEffect(() => { selectedVideoRef.current = selectedVideo; }, [selectedVideo]);
 
@@ -264,10 +265,11 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
     const prevVideo = currentList[currentIndexRef.current];
     if(setCurrentMovie) setCurrentMovie(prevVideo);
   };
+  const playlist_items = playlistFullObject[0]?.playlist_items;
 
-  const hasNextVideo = playlistItems?.contents && currentIndex < playlistItems.contents.length - 1;
-  const hasPreviousVideo = playlistItems?.contents && currentIndex > 0;
-  const hasPlaylist = playlistItems?.contents && playlistItems.contents.length > 1;
+  const hasNextVideo = playlist_items && currentIndex < playlist_items.length - 1;
+  const hasPreviousVideo = playlist_items && currentIndex > 0;
+  const hasPlaylist = playlist_items && playlist_items.length > 1;
 
   // Cleanup on unmount
   useEffect(() => {
@@ -362,9 +364,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
 
           <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 
             bg-black/80 backdrop-blur-md text-white px-6 py-2.5 rounded-full text-base font-semibold shadow-xl border border-white/10">
-            <span className="text-blue-400">{currentIndex + 1}</span> 
+            <span className="text-blue-400">{currentVideoIndex + 1}</span> 
             <span className="text-white/60 mx-2">/</span>
-            <span className="text-white/90">{playlistItems?.contents?.length || playlistInfo?.totalMovies}</span>
+            <span className="text-white/90">{playlistItems?.contents?.length || playlistFullObject[0]?.playlist_items?.length}</span>
           </div>
         </>
        )}

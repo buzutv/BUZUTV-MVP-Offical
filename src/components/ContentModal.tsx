@@ -531,7 +531,7 @@ return (
                   <h1
                     className={`text-5xl font-bold text-white mb-6 ${effectiveKidsMode ? "drop-shadow-[2px_2px_4px_rgba(59,130,246,0.8)]" : ""}`}
                   >
-                    {normalizedItem.title}
+                    {seasonWithEpisode?.title}
                   </h1>
 
                   {/* Action Buttons Row */}
