@@ -35,6 +35,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   // Refs for props to avoid stale closures in event listeners
   const movieIdRef = useRef<string>(movieId);
   const episodeIdRef = useRef<string>(episodeId);
+  // const episodesRef = useRef<[]>([])
   const playlistRef = useRef(playlistItems);
   const currentIndexRef = useRef(0);
   const countdownRef = useRef<any>(null);
@@ -43,6 +44,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   const selectedVideo = useSelector((state: any) => state.screenPlayer.selectedVideo);
   const selectedVideoRef = useRef(selectedVideo);
   const playlistFullObject = useSelector((state: any) => state?.screenPlayer?.playlistInfo) || {};
+  const episodes = useSelector((state: any) => state?.screenPlayer?.seriesData?.episodes) || [];
+  const isSeries = useSelector((state: any) => state?.screenPlayer?.isSeries) || false;
+  const episodesRef = useRef<[]>([])
+  const isSeriesRef = useRef<boolean>();
   const currentVideoIndex = useSelector((state: any) => state?.screenPlayer?.currentVideoIndex) || 0;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [countdown, setCountdown] = useState(5);
@@ -50,15 +55,28 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   const [videoRestricted, setVideoRestricted] = useState(false);
   const dispatch = useDispatch();
   // --- SYNC REFS ---
+  const playlist_item = playlistFullObject[0]?.playlist_items || [];
+
+  // const currentQueue = isSeries ? episodes : playlist_item;
   useEffect(() => { playlistRef.current = playlistItems; }, [playlistItems, videoId]);
   useEffect(() => { currentIndexRef.current = playlistInfo?.current || 0; }, [playlistInfo, videoId]);
   useEffect(() => { movieIdRef.current = movieId }, [movieId]);
   useEffect(() => { episodeIdRef.current = episodeId }, [episodeId]);
-
+  useEffect(() => { 
+      if (episodes && episodes.length > 0) {
+        episodesRef.current = episodes;
+        isSeriesRef.current = true;
+      }
+    }, [episodes]);
   // Update the selectedVideoRef whenever Redux changes so the player always has the latest data
   useEffect(() => { selectedVideoRef.current = selectedVideo; }, [selectedVideo]);
-
-  console.log("Video Player Rendered with Video ID:",playlistFullObject);
+  
+ const currentQueue = isSeriesRef.current
+    ? (episodesRef.current?.length > 0 ? episodesRef.current : episodes) 
+    : playlist_item;
+  // console.log("Video Player Rendered with Video ID:",playlistFullObject);
+  console.log("Video Player Rendered with Video ID:",currentQueue);
+  
 
   useImperativeHandle(ref, () => ({
     play: () => playerInstanceRef.current?.playVideo(),
@@ -178,14 +196,21 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   // --- EVENT HANDLERS ---
 
   const handlePlayerStateChange = async (e: any) => {
-    if (e.data === window.YT.PlayerState.ENDED) {
-      await saveWatchHistory(userid, movieIdRef.current, episodeIdRef.current, videoId, e.target.getCurrentTime(), true, playerInstanceRef, type);
-      
-      const currentList = playlistRef.current?.contents;
-      if (currentList && currentList.length > 0 && currentIndexRef.current < currentList.length - 1) {
-        startCountdown();
+    
+     if (e.data === window.YT.PlayerState.ENDED) {
+    // 1. Save progress
+        await saveWatchHistory(userid, movieIdRef.current, episodeIdRef.current, videoId, e.target.getCurrentTime(), true, playerInstanceRef, type);
+        
+        // 2. Determine the correct "Next" availability
+        // For Series, we use the 'episodes' array from Redux
+        const totalItems = isSeries ? episodes.length : (playlist_items?.length || 0);
+        
+        if (currentVideoIndex < totalItems - 1) {
+          startCountdown(); 
+        } else {
+          console.log("End of content reached.");
+        }
       }
-    }
 
     if (e.data === window.YT.PlayerState.PAUSED) {
       await saveWatchHistory(userid, movieIdRef.current, episodeIdRef.current, videoId, e.target.getCurrentTime(), false, playerInstanceRef, type);
@@ -238,25 +263,34 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   };
 
   const playNext = async () => {
-    // const currentList = playlistRef.current?.contents;
-    
-    // if (!currentList || currentIndexRef.current >= currentList.length - 1) return;
+  if (!currentQueue || currentQueue.length === 0) return;
+  
+  // Calculate next index
+  const nextIndex = currentVideoIndex + 1;
+  
+  // Guard clause: Don't play if we are at the end
+  if (nextIndex >= currentQueue.length) return;
 
-    if (!playlist_items) return;
-    clearCountdownTimer();
-    setVideoEnded(false);
-    setVideoRestricted(false);
-    
-    currentIndexRef.current += 1;
-    dispatch(openScreenPlayer({ 
-      currentVideoIndex: currentVideoIndex + 1,
-      selectedVideo: playlist_items[currentVideoIndex + 1].content
-     }));
-    setCurrentIndex(currentVideoIndex + 1);
-    
-    const nextVideo = playlist_items[currentVideoIndex + 1];
-    if(setCurrentMovie) setCurrentMovie(nextVideo);
-  };
+  clearCountdownTimer();
+  setVideoEnded(false);
+  setVideoRestricted(false);
+  
+  // Determine the next video object based on type
+  // Series episodes are usually direct objects, Playlists are usually wrappers with .content
+  const nextItem = currentQueue[nextIndex];
+  const nextVideoData = isSeries ? nextItem : nextItem.content;
+
+  // Update Redux
+  dispatch(openScreenPlayer({ 
+    currentVideoIndex: nextIndex,
+    selectedVideo: nextVideoData
+  }));
+  
+  setCurrentIndex(nextIndex);
+  
+  // Update parent state if needed
+  if(setCurrentMovie) setCurrentMovie(nextItem);
+};
 
   const playPrevious = async () => {
     const currentList = playlistRef.current?.contents;
@@ -271,7 +305,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
     dispatch(openScreenPlayer({ currentVideoIndex: currentVideoIndex - 1,selectedVideo: playlist_items[currentVideoIndex - 1].content }));
     setCurrentIndex(currentVideoIndex - 1);
 
-    const prevVideo = playlist_items[currentVideoIndex - 1];
+    const prevVideo = isSeries ? episodes[currentVideoIndex - 1] : playlist_items[currentVideoIndex - 1];
     if(setCurrentMovie) setCurrentMovie(prevVideo);
   };
   const playlist_items = playlistFullObject[0]?.playlist_items;

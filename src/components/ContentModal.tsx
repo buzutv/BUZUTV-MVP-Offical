@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Heart, Play, Star } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -14,7 +14,7 @@ import SeriesPlayer from "@/components/SeriesPlayer";
 import { fetchSeriesSeasons, getOptimizedImageUrl } from "@/utils/youtubeUtils";
 import FullscreenPlayer from "./FullscreenPlayer";
 import { useGetSeasonWithEpisodesQuery } from "@/store/seasonSlice";
-import { openScreenPlayer } from "@/store/screenPlayerSlice";
+import { openScreenPlayer, setisSeries, setSeriesData } from "@/store/screenPlayerSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { useLazyGetPlaylistContentWithWatchHistoryQuery } from "@/store/contentSlice";
 
@@ -149,8 +149,18 @@ const ContentModal: React.FC<ContentModalProps> = ({
     refetchOnFocus:true,
     refetchOnReconnect:true
   })
+  const isSeries = useSelector((state:any) => state.screenPlayer.isSeries);
 
 
+  useEffect(() => {
+  // Add a check to ensure data exists
+    if (seasonWithEpisode && seasonWithEpisode.length > 0) {
+      dispatch(setSeriesData({
+        isSeries: true,
+        seriesData: seasonWithEpisode[0]
+      }));
+    }
+  }, [seasonWithEpisode, dispatch])
   console.log("Fetched season with episodes:", seasonWithEpisode);
   // Always find current backend content item dynamically
   const currentContentItem = React.useMemo(() => {
@@ -370,8 +380,13 @@ const ContentModal: React.FC<ContentModalProps> = ({
   const handlePlayFirstEpisode = () => {
     dispatch(openScreenPlayer({
               isOpen: true,
-              selectedVideo: seasonWithEpisode[0]?.episodes[0]    
+              isSeries:true,
+              selectedVideo: seasonWithEpisode[0]?.episodes[0],    
+              seriesData:seasonWithEpisode[0]
             }))
+    // dispatch(setSeriesData(seasonWithEpisode))
+ 
+                           
     const firstEpisode = seasons[0]?.episodes[0];
     if (firstEpisode && seasons.length > 0) {
       setCurrentEpisode(firstEpisode);
@@ -539,7 +554,7 @@ return (
                     <BrandButton
                       onClick={
                         
-                        contentType === "series"
+                        (contentType === "series" || isSeries)
                           ? handlePlayFirstEpisode
                           : handlePlayMovie
                           
@@ -651,6 +666,10 @@ return (
                                 ? "transition-all duration-300 hover:scale-105 will-change-transform transform-gpu leading-5 hover:text-white data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-[2px_19px_31px_rgba(59,130,246,0.35)] data-[state=active]:hover:bg-blue-600 hover:bg-blue-500/20"
                                 : "transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:scale-105 will-change-transform transform-gpu leading-5 hover:text-white data-[state=active]:bg-[linear-gradient(135deg,#7c3aed,#8b5cf6,#a855f7)] data-[state=active]:text-white data-[state=active]:border-2 data-[state=active]:border-[rgba(139,92,246,0.3)] data-[state=active]:shadow-[0_10px_30px_rgba(139,92,246,0.4)] data-[state=active]:hover:shadow-[0_20px_50px_rgba(139,92,246,0.6)] data-[state=active]:hover:brightness-110 data-[state=active]:hover:-translate-y-0.5 data-[state=active]:relative data-[state=active]:overflow-hidden before:content-[''] before:absolute before:top-0 before:-left-full before:w-full before:h-full before:bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] before:transition-[left] before:duration-500 data-[state=active]:hover:before:left-full"
                             }
+                          onClick={() => dispatch(setSeriesData({
+                            isSeries:true,
+                            seriesData:season
+                          }))}
                           >
                             Season {season.season_number}
                           </TabsTrigger>
@@ -663,7 +682,7 @@ return (
                           value={`season-${season.season_number}`}
                           className="space-y-2"
                         >
-                          {season.episodes.map((episode) => (
+                          {season.episodes.map((episode,index) => (
                             <div
                               key={episode.id}
                               onClick={() =>
@@ -697,6 +716,7 @@ return (
                                   );
                                    dispatch(openScreenPlayer({
                                           isOpen: true,
+                                          currentVideoIndex:index,
                                           // contentItems: displayItems,
                                           // startIndex: idx,
                                           selectedVideo: episode,

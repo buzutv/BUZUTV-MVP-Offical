@@ -74,9 +74,10 @@ const FullscreenPlayer = ({
   const [triggerRecommendations, resultRecommendations ] = useLazyGetRecommendationsWtihContentEmbeddedQuery();
   const [triggerRelatedContent, resultRelatedContent ] = useLazyGetContentWithWatchHistoryFiltersQuery();
   const selectedContent = useSelector((state:any) => state.screenPlayer.selectedVideo);
-   const [triggerGetContentWithWatchHistory,result] = useLazyGetPlaylistContentWithWatchHistoryQuery()
-   const contentIds = useSelector((state:any) => state.screenPlayer.playlistInfo);
-   const playlistId  = useSelector((state:any) => state.screenPlayer.playlistId)
+  const [triggerGetContentWithWatchHistory,result] = useLazyGetPlaylistContentWithWatchHistoryQuery()
+  const isSeries = useSelector((state:any) => state.screenPlayer.isSeries);
+  const contentIds = useSelector((state:any) => state.screenPlayer.playlistInfo);
+  const playlistId  = useSelector((state:any) => state.screenPlayer.playlistId)
 
   console.log("Selected Content from Redux in FullscreenPlayer:", currentEpisode?.id);
   // const MemoizedVideoPlayer = memo(VideoPlayer);
@@ -325,12 +326,12 @@ console.log("Seasons in FullscreenPlayer:", season);
                 </div>
                 <div>
                   {
-                    season && (
+                    season  && (
                       <>
                   <h2 className="text-white text-2xl font-bold mb-6">Episodes</h2>
                 {/* Episode Grid/List */}
                 <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
-                  {currentSeasonEpisodes.map((episode: any) => (
+                  {currentSeasonEpisodes.map((episode: any,index) => (
                     <div
                       key={episode.id}
                       className={`flex-shrink-0 w-80 cursor-pointer group snap-start transition-all duration-300 ${
@@ -347,7 +348,8 @@ console.log("Seasons in FullscreenPlayer:", season);
                         playerRef.current?.scrollIntoView({ behavior: "smooth" });
                          dispatch(openScreenPlayer({
                                       isOpen: true,
-                                      selectedVideo: episode  
+                                      selectedVideo: episode,
+                                      currentVideoIndex:index  
                                     }))
                       }}
                     >

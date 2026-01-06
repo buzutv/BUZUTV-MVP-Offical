@@ -1,23 +1,36 @@
-import { configureStore } from '@reduxjs/toolkit'
-import { supabaseApi } from '../store/baseApi'
-import logger from 'redux-logger'
-import { screenPlayer } from './screenPlayerSlice'
+import { configureStore, combineReducers } from "@reduxjs/toolkit"
+import { persistReducer, persistStore } from "redux-persist"
+import storage from "redux-persist/lib/storage"
+import logger from "redux-logger"
 
+import { supabaseApi } from "../store/baseApi"
+import { screenPlayer } from "./screenPlayerSlice"
+
+const rootReducer = combineReducers({
+  [supabaseApi.reducerPath]: supabaseApi.reducer,
+  screenPlayer: screenPlayer.reducer,
+})
+
+const persistConfig = {
+  key: "root",
+  storage,
+  whitelist: ["screenPlayer"],
+}
+
+const persistedReducer = persistReducer(persistConfig, rootReducer)
 
 export const store = configureStore({
-  reducer: {
-    // Add your reducers here
-    supabaseApi: supabaseApi.reducer,
-    screenPlayer: screenPlayer.reducer,
-  },
+  reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware()
-    .concat(supabaseApi.middleware)
-    .concat(logger), // ,
-
-    
+    getDefaultMiddleware({
+      serializableCheck: false,
+    })
+      .concat(supabaseApi.middleware)
+      .concat(logger),
 })
-// Infer the `RootState` and `AppDispatch` types from the store itself
+
+export const persistor = persistStore(store)
+
+// types
 export type RootState = ReturnType<typeof store.getState>
-// Inferred type: {posts: PostsState, comments: CommentsState, users: UsersState}
 export type AppDispatch = typeof store.dispatch

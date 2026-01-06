@@ -1,5 +1,6 @@
 import ContentModal from '@/components/ContentModal'
 import FullscreenPlayer from '@/components/FullscreenPlayer'
+import { DialogTrigger } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from '@/components/ui/sonner'
 import { useContent } from '@/hooks/useContent'
@@ -433,15 +434,41 @@ const PlaylistDetail = () => {
           </div>
 
           {/* Delete Button */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation(); // Prevents the card's onClick from firing
-              handleDelete(e, item);
-            }}
-            className="p-3 rounded-full bg-red-600 text-white hover:bg-red-700 transition shadow-lg"
-          >
-            <Trash className="w-6 h-6" />
-          </button>
+          <Dialog>
+            <DialogTrigger asChild>
+                 <button
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevents the card's onClick from firing
+                    handleDelete(e, item);
+                  }}
+                  className="p-3 rounded-full bg-red-600 text-white hover:bg-red-700 transition shadow-lg"
+                >
+                  <Trash className="w-6 h-6" />
+                </button>
+            </DialogTrigger>
+            <DialogContent className="bg-zinc-900 text-white p-6 rounded-xl min-w-[300px] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-40 h-auto overflow-y-auto border-2 border-white/10">
+              <div>
+                <h2 className="text-xl font-bold mb-4">Confirm Deletion</h2>
+                <p className="mb-6">Are you sure you want to remove <strong>{item.title}</strong> from this playlist?</p>
+                <div className="flex justify-end gap-4">
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevents the card's onClick from firing
+                      handleDelete(e, item);
+                    }}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                    Yes, Remove
+                  </button>
+                  <button onClick={handleClose} className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
+                    Cancel 
+                  </button>
+                </div>
+
+              </div>
+            </DialogContent>
+          </Dialog>
+         
         </div>
         {/* --- End Overlay --- */}
 

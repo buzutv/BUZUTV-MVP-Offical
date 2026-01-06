@@ -11,7 +11,9 @@ const initialState = {
     poster_url: "",
     selectedVideo:null,
     playlistId:null,
-    currentVideoIndex: 0
+    currentVideoIndex: 0,
+    isSeries: false,
+    seriesData: []
 
 }
 export const screenPlayer = createSlice({
@@ -28,6 +30,8 @@ export const screenPlayer = createSlice({
             state.poster_url = action.payload.poster_url;
             state.selectedVideo = action.payload.selectedVideo;
             state.playlistId    = action.payload.playlistId;
+            state.isSeries = action.payload.isSeries || false;
+            state.seriesData = action.payload.seriesData || [];
         },
         closeScreenPlayer:(state) =>{
             state.isOpen = false;
@@ -44,6 +48,13 @@ export const screenPlayer = createSlice({
         },
         setCurrentVideoIndex:(state, action) => {
             state.currentVideoIndex = action.payload.currentVideoIndex
+        },
+        setisSeries:(state, action) => {
+            state.isSeries = action.payload.isSeries
+        },
+        setSeriesData:(state, action) => {
+            state.isSeries = true
+            state.seriesData = action.payload.seriesData
         }
 
 
@@ -51,6 +62,6 @@ export const screenPlayer = createSlice({
 
 })
 
-export const {openScreenPlayer,setPlaylistInfo ,closeScreenPlayer, setCurrentVideoIndex } = screenPlayer.actions;
+export const {openScreenPlayer,setPlaylistInfo ,closeScreenPlayer, setCurrentVideoIndex,setisSeries,setSeriesData } = screenPlayer.actions;
 
 export default screenPlayer.reducer;
