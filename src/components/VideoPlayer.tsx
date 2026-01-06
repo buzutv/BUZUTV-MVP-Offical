@@ -56,7 +56,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   // Update the selectedVideoRef whenever Redux changes so the player always has the latest data
   useEffect(() => { selectedVideoRef.current = selectedVideo; }, [selectedVideo]);
 
-  console.log("Video Player Rendered with Video ID:", movieId, videoId);
+  console.log("Video Player Rendered with Video ID:", movieId, videoId,episodeIdRef.current);
 
   useImperativeHandle(ref, () => ({
     play: () => playerInstanceRef.current?.playVideo(),

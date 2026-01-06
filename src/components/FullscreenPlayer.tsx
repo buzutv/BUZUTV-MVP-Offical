@@ -78,7 +78,7 @@ const FullscreenPlayer = ({
    const contentIds = useSelector((state:any) => state.screenPlayer.playlistInfo);
    const playlistId  = useSelector((state:any) => state.screenPlayer.playlistId)
 
-  console.log("Selected Content from Redux in FullscreenPlayer:", playlistId);
+  console.log("Selected Content from Redux in FullscreenPlayer:", currentEpisode?.id);
   // const MemoizedVideoPlayer = memo(VideoPlayer);
   useEffect(() => {
     moviesRef.current = movies;
@@ -94,17 +94,17 @@ const FullscreenPlayer = ({
  
   }, [movies])
   useEffect(() => {
-  if (type === 'series' && season && season.length > 0 && !selectedSeasonId) {
-    const firstSeason = season[0];
-    const firstEpisode = firstSeason.episodes?.[0];
-    if (firstEpisode) {
-      setSelectedSeasonId(firstSeason.id);
-      setCurrentEpisode(firstEpisode); // Set the full object
-      setMovieid(firstEpisode.id);
-      setActualVideoUrl(firstEpisode.video_url || firstEpisode.videoUrl);
-      setMovies([firstEpisode]); 
+    if (season && season.length > 0 && !selectedSeasonId) {
+      const firstSeason = season[0];
+      const firstEpisode = firstSeason.episodes?.[0];
+      if (firstEpisode) {
+        setSelectedSeasonId(firstSeason.id);
+        setCurrentEpisode(firstEpisode); // Set the full object
+        setMovieid(firstEpisode.id);
+        setActualVideoUrl(firstEpisode.video_url || firstEpisode.videoUrl);
+        setMovies([firstEpisode]); 
+      }
     }
-  }
 }, [type, season]);
   console.log("current Episode:", currentEpisode);  
 
@@ -281,12 +281,12 @@ console.log("Seasons in FullscreenPlayer:", season);
                     videoId={selectedContent?.video_url}
                     // last_position={lastPausedTime}
                     setCurrentMovie={setCurrentMovie}
-                    type={type}
+                    type={type} 
                     setFinal={setFinal}
                     setActualVideoUrl={setActualVideoUrl}
                     playlistItems={playlists}
                     movieId={selectedContent?.id}
-                    episodeId={currentEpisode?.id} 
+                    episodeId={season ? selectedContent?.id : undefined} 
                     userid="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
                     playlistInfo={playlistInfo}
                     ref={parentRef}
@@ -325,9 +325,9 @@ console.log("Seasons in FullscreenPlayer:", season);
                 </div>
                 <div>
                   {
-                    selectedContent.type === 'series' && currentSeasonEpisodes.length === 0 && (
+                    season && (
                       <>
-                              <h2 className="text-white text-2xl font-bold mb-6">Episodes</h2>
+                  <h2 className="text-white text-2xl font-bold mb-6">Episodes</h2>
                 {/* Episode Grid/List */}
                 <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
                   {currentSeasonEpisodes.map((episode: any) => (

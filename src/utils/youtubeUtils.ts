@@ -130,12 +130,13 @@ export async function saveWatchHistory(
     ? 100
     : Math.floor((current / duration) * 100);
 
+    console.log("Is Series", episodeId)
   const isSeries = type === "series";
 
   const payload = {
     user_id: userId,
-    movie_id:movieId,
-    episode_id:  null,
+    movie_id: episodeId ?  null : movieId,
+    episode_id:  episodeId ? episodeId : null,
     watched_at: new Date().toISOString(),
     last_position: completed ? 0 : Math.floor(currentTime),
     watch_percentage: watchPercentage,
