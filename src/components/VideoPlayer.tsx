@@ -107,7 +107,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = forwardRef(({
   // --- INITIALIZE & UPDATE PLAYER ---
   useEffect(() => {
     if (!videoId) return;
-
+    setVideoRestricted(false);
     const vid = getVideoId(videoId);
     if (!vid) {
         console.warn("VideoPlayer: Attempted to init with invalid ID", videoId);
