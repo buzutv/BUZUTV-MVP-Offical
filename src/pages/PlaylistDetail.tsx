@@ -170,7 +170,7 @@ const PlaylistDetail = () => {
   // 2. FIXED: Refetch everything when closing the player
   const handleClose = async () => {
     setCurrentVideoIndex(null)
-   
+
     // Trigger the playlist fetch from Supabase again
     if(id) {
         triggerPlaylistWithItemsById({ userId: USER_ID, playlist_id: id });
@@ -393,76 +393,89 @@ const PlaylistDetail = () => {
       </div>
 
       {/* Video Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6">
-        {displayItems?.map((item, idx) => (
-          <div
-            key={item.id}
-            className={`z-10 w-full cursor-pointer rounded-xl overflow-hidden shadow-md hover:shadow-lg transition bg-white-900 text-zinc-900 border-2 ${currentVideoIndex === idx ? 'border-primary ring-2 ring-primary/50' : 'border-transparent'}`}
-            onClick={() => {
-              setCurrentVideoIndex(idx)
-              setIndex(idx)
-              // Sync Redux player state just in case
-              dispatch(openScreenPlayer({
-                isOpen: true,
-                contentItems: displayItems,
-                startIndex: idx,
-                selectedVideo: item,
-                playlistId:id
-              }))
-            }}
-          >
-            <div className="relative">
-              <img
-                src={getOptimizedImageUrl(item.poster_url, 400)}
-                alt={item.title}
-                className="w-full h-48 object-cover"
-              />
+      {/* Video Grid */}
+<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6">
+  {displayItems?.map((item, idx) => (
+    <div
+      key={item.id}
+      // Added 'group' class here
+      className={`group z-10 w-full cursor-pointer rounded-xl overflow-hidden shadow-md hover:shadow-lg transition bg-white text-zinc-900 border-2 ${
+        currentVideoIndex === idx ? 'border-primary ring-2 ring-primary/50' : 'border-transparent'
+      }`}
+      onClick={() => {
+        setCurrentVideoIndex(idx);
+        setIndex(idx);
+        dispatch(openScreenPlayer({
+          isOpen: true,
+          contentItems: displayItems,
+          startIndex: idx,
+          selectedVideo: item,
+          playlistId: id
+        }));
+      }}
+    >
+      <div className="relative">
+        <img
+          src={getOptimizedImageUrl(item.poster_url, 400)}
+          alt={item.title}
+          className="w-full h-48 object-cover"
+        />
 
-              <button
-                onClick={(e) => handleDelete(e, item)}
-                className="absolute bottom-2 right-2 p-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition shadow-md z-20"
-              >
-                <Trash className="w-4 h-4" />
-              </button>
-              
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition">
-                <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                </svg>
-              </div>
-
-              {currentVideoIndex === idx && (
-                <div className="absolute top-2 right-2 bg-primary text-primary-foreground px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-                  <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                  Playing
-                </div>
-              )}
-
-              <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs font-semibold">
-                #{idx + 1}
-              </div>
-            </div>
-            
-            {/* Progress Bar */}
-            <div
-              className="h-[0.175rem] bg-red-900"
-              style={{ width: `${item.watch_percentage}%` }}
-            ></div>
-
-            <div className="p-3 bg-muted-forground/10">
-              <p className="font-semibold text-sm line-clamp-1 text-muted-foreground">{item.content_title || item.title}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {item.year || "—"} • {item.type}
-              </p>
-              {item.type === "series" && (
-                <p className="text-[11px] text-muted-foreground mt-1">
-                  {item.seasons} season • {item.episodes} episodes
-                </p>
-              )}
-            </div>
+        {/* --- Centered Hover Overlay --- */}
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          {/* Play Icon */}
+          <div className="p-3 rounded-full bg-white/20 hover:bg-white/40 transition backdrop-blur-sm">
+            <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+            </svg>
           </div>
-        ))}
+
+          {/* Delete Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation(); // Prevents the card's onClick from firing
+              handleDelete(e, item);
+            }}
+            className="p-3 rounded-full bg-red-600 text-white hover:bg-red-700 transition shadow-lg"
+          >
+            <Trash className="w-6 h-6" />
+          </button>
+        </div>
+        {/* --- End Overlay --- */}
+
+        {/* Status Badges */}
+        {currentVideoIndex === idx && (
+          <div className="absolute top-2 right-2 bg-primary text-primary-foreground px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 z-20">
+            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+            Playing
+          </div>
+        )}
+
+        <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs font-semibold z-20">
+          #{idx + 1}
+        </div>
       </div>
+      
+      {/* Progress Bar */}
+      <div
+        className="h-[0.175rem] bg-red-600" 
+        style={{ width: `${item.watch_percentage}%` }}
+      ></div>
+
+      <div className="p-3 bg-white">
+        <p className="font-semibold text-sm line-clamp-1 text-zinc-900">{item.content_title || item.title}</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          {item.year || "—"} • {item.type}
+        </p>
+        {item.type === "series" && (
+          <p className="text-[11px] text-muted-foreground mt-1">
+            {item.seasons} season • {item.episodes} episodes
+          </p>
+        )}
+      </div>
+    </div>
+  ))}
+</div>
 
       {/* Players */}
       {selectedVideo && (
