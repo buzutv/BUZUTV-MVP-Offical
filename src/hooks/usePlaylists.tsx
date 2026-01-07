@@ -16,24 +16,24 @@ const usePlaylists = ({ id }: PlaylistHookProps = {}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState(null);
-  const {user} = useSupabaseAuth();
-  const { data:contentData, isLoading: contentLoading } = useGetContentQuery()
+  const { user } = useSupabaseAuth();
+  const { data: contentData, isLoading: contentLoading } = useGetContentQuery()
 
-  const {data: playlist,isLoading:playlistLoading , refetch} = useGetPlaylistsByUserQuery("03fa9a91-4281-4bd4-9e60-4da2ba72b0f3",{
+  const { data: playlist, isLoading: playlistLoading, refetch } = useGetPlaylistsByUserQuery("03fa9a91-4281-4bd4-9e60-4da2ba72b0f3", {
     refetchOnFocus: true,
     refetchOnReconnect: true,
     refetchOnMountOrArgChange: true,
   })
 
 
-  const {data: playlistWithItems,isLoading:playlistWithItemsLoading, refetch:refetchPlaylistWithItems} = useGetPlaylistsWithItemsQuery("03fa9a91-4281-4bd4-9e60-4da2ba72b0f3",{
+  const { data: playlistWithItems, isLoading: playlistWithItemsLoading, refetch: refetchPlaylistWithItems } = useGetPlaylistsWithItemsQuery("03fa9a91-4281-4bd4-9e60-4da2ba72b0f3", {
     refetchOnFocus: true,
     refetchOnReconnect: true,
     refetchOnMountOrArgChange: true,
   })
   const [triggerPlaylistById] = useLazyGetPlaylistByIdQuery();
-  const [triggerPlaylistWithItemsById,triggerResult] = useLazyGetPlaylistsWithItemsByIdQuery();
-  
+  const [triggerPlaylistWithItemsById, triggerResult] = useLazyGetPlaylistsWithItemsByIdQuery();
+
   console.log("Playlist from RTK Query:", playlistWithItems, "Loading:", playlistLoading);
 
   return {

@@ -292,3 +292,28 @@ export const getRecommendedMovies = async (user_id) => {
   console.log("Classified Recommended Movies", classifiedMovies);
   return classifiedMovies;
 };
+
+
+export const normalizer = (data:any) => {
+  /* 
+    given data like this
+      
+    
+    transform it into this 
+  
+  */
+
+ 
+      return {
+        ...data,
+        watch_percentage: data.user_watch_history?.watch_percentage ?? 0,
+        last_position: data.user_watch_history?.last_position ?? 0,
+        completed: data.user_watch_history?.completed ?? false,
+      }
+    
+
+
+   
+
+
+}

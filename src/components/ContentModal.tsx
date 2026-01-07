@@ -134,7 +134,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
   const [isSeriesPlayerOpen, setIsSeriesPlayerOpen] = useState(false);
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [currentSeasonNumber, setCurrentSeasonNumber] = useState<number>(1);
-  const [triggerGetContentWithWatchHistory,result] = useLazyGetPlaylistContentWithWatchHistoryQuery()
+  const [triggerGetContentWithWatchHistory, result] = useLazyGetPlaylistContentWithWatchHistoryQuery()
   const USER_ID = "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3";
   const dispatch = useDispatch();
   const { favoriteIds, addToFavorites, removeFromFavorites } =
@@ -142,18 +142,18 @@ const ContentModal: React.FC<ContentModalProps> = ({
   const [movie, setMovie] = useState(movieId)
   const { content } = useContent();
   const { channels } = useChannels();
-  const  playlistId = useSelector((state:any) => state.screenPlayer.playlistId);
-  const {data:seasonWithEpisode, error, refetch} = useGetSeasonWithEpisodesQuery({contentId:movie,userId:"03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"}, {
-    skip:!movieId,
+  const playlistId = useSelector((state: any) => state.screenPlayer.playlistId);
+  const { data: seasonWithEpisode, error, refetch } = useGetSeasonWithEpisodesQuery({ contentId: movie, userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3" }, {
+    skip: !movieId,
     refetchOnMountOrArgChange: true,
-    refetchOnFocus:true,
-    refetchOnReconnect:true
+    refetchOnFocus: true,
+    refetchOnReconnect: true
   })
-  const isSeries = useSelector((state:any) => state.screenPlayer.isSeries);
+  const isSeries = useSelector((state: any) => state.screenPlayer.isSeries);
 
 
   useEffect(() => {
-  // Add a check to ensure data exists
+    // Add a check to ensure data exists
     if (seasonWithEpisode && seasonWithEpisode.length > 0) {
       dispatch(setSeriesData({
         isSeries: true,
@@ -172,7 +172,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
     setCurrentItem(item);
   }, [item]);
 
-  
+
 
   console.log("Seasons passed to ContentModal:", seasons);
   // Dynamic favorite status based on current item
@@ -343,15 +343,15 @@ const ContentModal: React.FC<ContentModalProps> = ({
     }
   };
 
-  const hasNext = ():boolean => {
+  const hasNext = (): boolean => {
     return !!(seasons && currentEpisode ? (
-      seasons.some(season => 
-        season.episodes.some(episode => 
-          episode.season_number > currentSeasonNumber || 
+      seasons.some(season =>
+        season.episodes.some(episode =>
+          episode.season_number > currentSeasonNumber ||
           (episode.season_number === currentSeasonNumber && episode.episode_number > currentEpisode.episode_number)
         )
       )
-    ) : false); 
+    ) : false);
   }
 
   const onNext = () => {
@@ -371,7 +371,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
             setCurrentEpisode(seasons[i + 1].episodes[0]);
             setCurrentSeasonNumber(seasons[i + 1].season_number);
             return;
-          } 
+          }
         }
       }
     }
@@ -379,14 +379,14 @@ const ContentModal: React.FC<ContentModalProps> = ({
 
   const handlePlayFirstEpisode = () => {
     dispatch(openScreenPlayer({
-              isOpen: true,
-              isSeries:true,
-              selectedVideo: seasonWithEpisode[0]?.episodes[0],    
-              seriesData:seasonWithEpisode[0]
-            }))
+      isOpen: true,
+      isSeries: true,
+      selectedVideo: seasonWithEpisode[0]?.episodes[0],
+      seriesData: seasonWithEpisode[0]
+    }))
     // dispatch(setSeriesData(seasonWithEpisode))
- 
-                           
+
+
     const firstEpisode = seasons[0]?.episodes[0];
     if (firstEpisode && seasons.length > 0) {
       setCurrentEpisode(firstEpisode);
@@ -408,10 +408,10 @@ const ContentModal: React.FC<ContentModalProps> = ({
     setCurrentEpisode(null);
     refetch()
     onClose(false)
-    const data = await triggerGetContentWithWatchHistory({ 
-        userId: USER_ID, 
-        contentIds: content.map(item => item.id) 
-      }).unwrap()
+    const data = await triggerGetContentWithWatchHistory({
+      userId: USER_ID,
+      contentIds: content.map(item => item.id)
+    }).unwrap()
 
     // const normalized = data?.map((item) => {
     //       const [history] = item.user_watch_history ?? [];
@@ -432,7 +432,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
   const handleMoreLikeThisClick = (clickedItem) => {
     setCurrentItem(clickedItem);
     setMovie(clickedItem.id)
-    
+
   };
 
   // Background styles
@@ -468,21 +468,21 @@ const ContentModal: React.FC<ContentModalProps> = ({
   // Gradient styles
   const gradientStyles = effectiveKidsMode
     ? {
-        heroGradient:
-          "bg-gradient-to-t from-blue-400 via-blue-400/30 to-transparent",
-        contentGradient: "bg-gradient-to-b from-blue-400 to-transparent",
-        heartBorder: "border-blue-400/50 hover:border-blue-400",
-      }
+      heroGradient:
+        "bg-gradient-to-t from-blue-400 via-blue-400/30 to-transparent",
+      contentGradient: "bg-gradient-to-b from-blue-400 to-transparent",
+      heartBorder: "border-blue-400/50 hover:border-blue-400",
+    }
     : {
-        heroGradient: "bg-gradient-to-t from-black via-black/60 to-transparent",
-        contentGradient: "bg-gradient-to-b from-black to-transparent",
-        heartBorder: "border-brand-500/50 hover:border-brand-500",
-      };
+      heroGradient: "bg-gradient-to-t from-black via-black/60 to-transparent",
+      contentGradient: "bg-gradient-to-b from-black to-transparent",
+      heartBorder: "border-brand-500/50 hover:border-brand-500",
+    };
 
 
 
-   
-      if (isSeriesPlayerOpen && currentEpisode && seasons) {
+
+  if (isSeriesPlayerOpen && currentEpisode && seasons) {
     return (
       <div className="fixed inset-0 z-[99999] bg-black">
         <FullscreenPlayer
@@ -493,7 +493,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
           title={currentEpisode.title}
           userId="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
           poster_url={currentContentItem?.poster_url || normalizedItem.posterUrl}
-          
+
           // Your Series Logic
           onVideoEnd={() => {
             if (hasNext()) {
@@ -505,253 +505,252 @@ const ContentModal: React.FC<ContentModalProps> = ({
           movieId={movieId}
           hasNext={hasNext()}
           onNext={onNext}
-          onPrevious={() => {}}
+          onPrevious={() => { }}
           season={seasonWithEpisode}
         />
       </div>
     );
   }
-return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent
-          onInteractOutside={(e) => {
-            if (isSeriesPlayerOpen) {
-              e.preventDefault(); // Only block outside clicks when player is open
-            }
-          }}
-          className={`max-w-full md:max-w-[75vw] max-h-full md:max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-1000 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 ${getBackgroundStyles()}`}
-          style={getDefaultBackgroundStyle()}
-        >
-          <DialogTitle className="sr-only">{normalizedItem.title}</DialogTitle>
-          <ScrollArea className="h-[90vh] scroll-smooth">
-            <div className="relative min-h-full">
-              {/* Hero Section */}
-              <div className="relative w-full h-[60vh] overflow-hidden">
-                {/* Background Image */}
-                <div className="absolute inset-0">
-                  <img
-                    src={getOptimizedImageUrl(normalizedItem.posterUrl, 400)}
-                    alt={normalizedItem.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-
-                {/* Bottom gradient for fade effect */}
-                <div
-                  className={`absolute bottom-0 left-0 right-0 h-48 ${gradientStyles.heroGradient}`}
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent
+        onInteractOutside={(e) => {
+          if (isSeriesPlayerOpen) {
+            e.preventDefault(); // Only block outside clicks when player is open
+          }
+        }}
+        className={`max-w-full md:max-w-[75vw] max-h-full md:max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-1000 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 ${getBackgroundStyles()}`}
+        style={getDefaultBackgroundStyle()}
+      >
+        <DialogTitle className="sr-only">{normalizedItem.title}</DialogTitle>
+        <ScrollArea className="h-[90vh] scroll-smooth">
+          <div className="relative min-h-full">
+            {/* Hero Section */}
+            <div className="relative w-full h-[60vh] overflow-hidden">
+              {/* Background Image */}
+              <div className="absolute inset-0">
+                <img
+                  src={getOptimizedImageUrl(normalizedItem.posterUrl, 400)}
+                  alt={normalizedItem.title}
+                  className="w-full h-full object-cover"
                 />
-
-                {/* Title and Info Container */}
-                <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
-                  <h1
-                    className={`text-5xl font-bold text-white mb-6 ${effectiveKidsMode ? "drop-shadow-[2px_2px_4px_rgba(59,130,246,0.8)]" : ""}`}
-                  >
-                    {seasonWithEpisode?.title}
-                  </h1>
-
-                  {/* Action Buttons Row */}
-                  <div className="flex items-center space-x-4 mb-4">
-                    <BrandButton
-                      onClick={
-                        
-                        (contentType === "series" || isSeries)
-                          ? handlePlayFirstEpisode
-                          : handlePlayMovie
-                          
-                      }
-                      disabled={
-                        !currentVideoUrl &&
-                        (!seasonsData.length ||
-                          !seasonsData[0]?.episodes[0]?.video_url)
-                      }
-                      variant={effectiveKidsMode ? "kids" : "primary"}
-                      size="md"
-                      className={
-                        !currentVideoUrl &&
-                        (!seasonsData.length ||
-                          !seasonsData[0]?.episodes[0]?.video_url)
-                          ? "!bg-gray-600 !text-gray-400 !cursor-not-allowed !hover:bg-gray-600 !hover:-translate-y-0"
-                          : ""
-                      }
-                      
-                    >
-                      <Play className="w-6 h-6 fill-current" />
-                      <span>Play</span>
-                    </BrandButton>
-
-                    <button
-                      onClick={handleCurrentItemSave}
-                      className={`bg-black/20 backdrop-blur-md text-white p-2 rounded-full transition-all duration-200 border ${gradientStyles.heartBorder} hover:bg-black/30`}
-                    >
-                      <Heart
-                        className={`w-5 h-5 ${isCurrentItemSaved ? "fill-current text-red-500" : ""}`}
-                      />
-                    </button>
-                  </div>
-
-                  {/* Info Row */}
-                  <div className="flex items-center space-x-4 text-sm h-8">
-                    <div className="flex items-center space-x-1">
-                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                      <span className="text-green-400 font-semibold">
-                        {normalizedItem.rating}
-                      </span>
-                    </div>
-                    <span className="text-white font-medium">
-                      {normalizedItem.year}
-                    </span>
-
-                    {/* Duration display after year - only show if duration exists */}
-                    {getDurationOrSeasonsText() &&
-                      (effectiveKidsMode ? (
-                        <span className="bg-blue-500 text-white px-2 py-1 rounded text-xs font-medium">
-                          {getDurationOrSeasonsText()}
-                        </span>
-                      ) : (
-                        <span className="text-white font-medium">
-                          {getDurationOrSeasonsText()}
-                        </span>
-                      ))}
-
-                    {effectiveKidsMode ? (
-                      <>
-                        <span className="border border-blue-400 px-2 py-0.5 text-xs text-white font-medium bg-blue-500/90">
-                          KIDS
-                        </span>
-                        <span className="bg-yellow-500 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
-                          {normalizedItem.genre}
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="border border-brand-500 px-2 py-0.5 text-xs text-gray-300 font-medium">
-                          TV-MA
-                        </span>
-                        <span className="text-white">
-                          {normalizedItem.genre}
-                        </span>
-                      </>
-                    )}
-
-                    {channel?.logo_url && (
-                      <img
-                        src={getOptimizedImageUrl(channel.logo_url, 400)}
-                        alt={channel.name}
-                        className="w-8 h-8 object-contain rounded"
-                      />
-                    )}
-                  </div>
-                </div>
               </div>
 
-              {/* Content Section */}
-              <div className="p-4 md:p-8 pt-6 pb-0 relative">
-                <div
-                  className={`absolute top-0 left-0 right-0 h-4 ${gradientStyles.contentGradient} pointer-events-none`}
-                />
+              {/* Bottom gradient for fade effect */}
+              <div
+                className={`absolute bottom-0 left-0 right-0 h-48 ${gradientStyles.heroGradient}`}
+              />
 
-                {/* Series Episodes Section */}
-                {contentType === "series" && seasonsData.length > 0 && (
-                  <div className="mb-8">
-                    <Tabs defaultValue="season-1" className="w-full">
-                      <TabsList
-                        className={`flex flex-row gap-2 w-full bg-transparent transition-all duration-300 group ${effectiveKidsMode ? "" : ""}`}
-                      >
-                        {seasonWithEpisode?.map((season) => (
-                          <TabsTrigger
-                            key={`season-${season.season_number}`}
-                            value={`season-${season.season_number}`}
-                            className={
-                              effectiveKidsMode
-                                ? "transition-all duration-300 hover:scale-105 will-change-transform transform-gpu leading-5 hover:text-white data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-[2px_19px_31px_rgba(59,130,246,0.35)] data-[state=active]:hover:bg-blue-600 hover:bg-blue-500/20"
-                                : "transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:scale-105 will-change-transform transform-gpu leading-5 hover:text-white data-[state=active]:bg-[linear-gradient(135deg,#7c3aed,#8b5cf6,#a855f7)] data-[state=active]:text-white data-[state=active]:border-2 data-[state=active]:border-[rgba(139,92,246,0.3)] data-[state=active]:shadow-[0_10px_30px_rgba(139,92,246,0.4)] data-[state=active]:hover:shadow-[0_20px_50px_rgba(139,92,246,0.6)] data-[state=active]:hover:brightness-110 data-[state=active]:hover:-translate-y-0.5 data-[state=active]:relative data-[state=active]:overflow-hidden before:content-[''] before:absolute before:top-0 before:-left-full before:w-full before:h-full before:bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] before:transition-[left] before:duration-500 data-[state=active]:hover:before:left-full"
-                            }
-                          onClick={() => dispatch(setSeriesData({
-                            isSeries:true,
-                            seriesData:season
-                          }))}
-                          >
-                            Season {season.season_number}
-                          </TabsTrigger>
-                        ))}
-                      </TabsList>
+              {/* Title and Info Container */}
+              <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
+                <h1
+                  className={`text-5xl font-bold text-white mb-6 ${effectiveKidsMode ? "drop-shadow-[2px_2px_4px_rgba(59,130,246,0.8)]" : ""}`}
+                >
+                  {seasonWithEpisode?.title}
+                </h1>
 
-                      {seasonWithEpisode?.map((season) => (
-                        <TabsContent
-                          key={`season-${season.season_number}`}
-                          value={`season-${season.season_number}`}
-                          className="space-y-2"
-                        >
-                          {season.episodes.map((episode,index) => (
-                            <div
-                              key={episode.id}
-                              onClick={() =>
-                                handlePlayEpisode(episode, season.season_number)
-                              }
-                              className={`border flex items-center space-x-3 rounded-lg p-3 transition-all duration-300 group h-12 cursor-pointer ${
-                                effectiveKidsMode
-                                  ? "border-blue-400/20 bg-blue-500/60 hover:border-white hover:shadow-[0_0_8px_rgba(255,255,255,0.6)]"
-                                  : "border-brand-500/20 bg-black hover:border-white hover:shadow-[0_0_8px_rgba(255,255,255,0.6)]"
-                              }`}
-                            >
-                              <div className="flex items-center space-x-3 flex-1 min-w-0">
-                                <span className="text-white font-medium text-sm">
-                                  {episode.episode_number}
-                                </span>
-                                <div className="flex-1 min-w-0">
-                                  <h3 className="text-white font-medium text-sm line-clamp-1">
-                                    {episode.title}
-                                  </h3>
-                                </div>
-                                <span className="text-gray-300 text-xs flex-shrink-0">
-                                  {formatDuration(episode.duration_minutes)}
-                                </span>
-                              </div>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handlePlayEpisode(
-                                    episode,
-                                    season.season_number,
-                                  );
-                                   dispatch(openScreenPlayer({
-                                          isOpen: true,
-                                          currentVideoIndex:index,
-                                          // contentItems: displayItems,
-                                          // startIndex: idx,
-                                          selectedVideo: episode,
-                                          // playlistId:id
-                                        }))
-                                }}
-                                className="ml-3 p-2 rounded-full transition-colors bg-white/10 hover:bg-white/20 text-white flex-shrink-0"
-                                aria-label={`Play ${episode.title}`}
-                              >
-                                <Play className="w-4 h-4 fill-current" />
-                              </button>
-                            </div>
-                          ))}
-                        </TabsContent>
-                      ))}
-                    </Tabs>
+                {/* Action Buttons Row */}
+                <div className="flex items-center space-x-4 mb-4">
+                  <BrandButton
+                    onClick={
+
+                      (contentType === "series" || isSeries)
+                        ? handlePlayFirstEpisode
+                        : handlePlayMovie
+
+                    }
+                    disabled={
+                      !currentVideoUrl &&
+                      (!seasonsData.length ||
+                        !seasonsData[0]?.episodes[0]?.video_url)
+                    }
+                    variant={effectiveKidsMode ? "kids" : "primary"}
+                    size="md"
+                    className={
+                      !currentVideoUrl &&
+                        (!seasonsData.length ||
+                          !seasonsData[0]?.episodes[0]?.video_url)
+                        ? "!bg-gray-600 !text-gray-400 !cursor-not-allowed !hover:bg-gray-600 !hover:-translate-y-0"
+                        : ""
+                    }
+
+                  >
+                    <Play className="w-6 h-6 fill-current" />
+                    <span>Play</span>
+                  </BrandButton>
+
+                  <button
+                    onClick={handleCurrentItemSave}
+                    className={`bg-black/20 backdrop-blur-md text-white p-2 rounded-full transition-all duration-200 border ${gradientStyles.heartBorder} hover:bg-black/30`}
+                  >
+                    <Heart
+                      className={`w-5 h-5 ${isCurrentItemSaved ? "fill-current text-red-500" : ""}`}
+                    />
+                  </button>
+                </div>
+
+                {/* Info Row */}
+                <div className="flex items-center space-x-4 text-sm h-8">
+                  <div className="flex items-center space-x-1">
+                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                    <span className="text-green-400 font-semibold">
+                      {normalizedItem.rating}
+                    </span>
                   </div>
-                )}
+                  <span className="text-white font-medium">
+                    {normalizedItem.year}
+                  </span>
 
-                {/* More Like This Section */}
-                {normalizedRecommendedContent.length > 0 && (
-                  <ContentRow
-                    title="More Like This"
-                    items={normalizedRecommendedContent}
-                    isMoreLikeThis={true}
-                    onItemClick={handleMoreLikeThisClick}
-                  />
-                )}
+                  {/* Duration display after year - only show if duration exists */}
+                  {getDurationOrSeasonsText() &&
+                    (effectiveKidsMode ? (
+                      <span className="bg-blue-500 text-white px-2 py-1 rounded text-xs font-medium">
+                        {getDurationOrSeasonsText()}
+                      </span>
+                    ) : (
+                      <span className="text-white font-medium">
+                        {getDurationOrSeasonsText()}
+                      </span>
+                    ))}
+
+                  {effectiveKidsMode ? (
+                    <>
+                      <span className="border border-blue-400 px-2 py-0.5 text-xs text-white font-medium bg-blue-500/90">
+                        KIDS
+                      </span>
+                      <span className="bg-yellow-500 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                        {normalizedItem.genre}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="border border-brand-500 px-2 py-0.5 text-xs text-gray-300 font-medium">
+                        TV-MA
+                      </span>
+                      <span className="text-white">
+                        {normalizedItem.genre}
+                      </span>
+                    </>
+                  )}
+
+                  {channel?.logo_url && (
+                    <img
+                      src={getOptimizedImageUrl(channel.logo_url, 400)}
+                      alt={channel.name}
+                      className="w-8 h-8 object-contain rounded"
+                    />
+                  )}
+                </div>
               </div>
             </div>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
-)
-      {/* {currentEpisode && seasons && (
+
+            {/* Content Section */}
+            <div className="p-4 md:p-8 pt-6 pb-0 relative">
+              <div
+                className={`absolute top-0 left-0 right-0 h-4 ${gradientStyles.contentGradient} pointer-events-none`}
+              />
+
+              {/* Series Episodes Section */}
+              {contentType === "series" && seasonsData.length > 0 && (
+                <div className="mb-8">
+                  <Tabs defaultValue="season-1" className="w-full">
+                    <TabsList
+                      className={`flex flex-row gap-2 w-full bg-transparent transition-all duration-300 group ${effectiveKidsMode ? "" : ""}`}
+                    >
+                      {seasonWithEpisode?.map((season) => (
+                        <TabsTrigger
+                          key={`season-${season.season_number}`}
+                          value={`season-${season.season_number}`}
+                          className={
+                            effectiveKidsMode
+                              ? "transition-all duration-300 hover:scale-105 will-change-transform transform-gpu leading-5 hover:text-white data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-[2px_19px_31px_rgba(59,130,246,0.35)] data-[state=active]:hover:bg-blue-600 hover:bg-blue-500/20"
+                              : "transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:scale-105 will-change-transform transform-gpu leading-5 hover:text-white data-[state=active]:bg-[linear-gradient(135deg,#7c3aed,#8b5cf6,#a855f7)] data-[state=active]:text-white data-[state=active]:border-2 data-[state=active]:border-[rgba(139,92,246,0.3)] data-[state=active]:shadow-[0_10px_30px_rgba(139,92,246,0.4)] data-[state=active]:hover:shadow-[0_20px_50px_rgba(139,92,246,0.6)] data-[state=active]:hover:brightness-110 data-[state=active]:hover:-translate-y-0.5 data-[state=active]:relative data-[state=active]:overflow-hidden before:content-[''] before:absolute before:top-0 before:-left-full before:w-full before:h-full before:bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] before:transition-[left] before:duration-500 data-[state=active]:hover:before:left-full"
+                          }
+                          onClick={() => dispatch(setSeriesData({
+                            isSeries: true,
+                            seriesData: season
+                          }))}
+                        >
+                          Season {season.season_number}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+
+                    {seasonWithEpisode?.map((season) => (
+                      <TabsContent
+                        key={`season-${season.season_number}`}
+                        value={`season-${season.season_number}`}
+                        className="space-y-2"
+                      >
+                        {season.episodes.map((episode, index) => (
+                          <div
+                            key={episode.id}
+                            onClick={() =>
+                              handlePlayEpisode(episode, season.season_number)
+                            }
+                            className={`border flex items-center space-x-3 rounded-lg p-3 transition-all duration-300 group h-12 cursor-pointer ${effectiveKidsMode
+                                ? "border-blue-400/20 bg-blue-500/60 hover:border-white hover:shadow-[0_0_8px_rgba(255,255,255,0.6)]"
+                                : "border-brand-500/20 bg-black hover:border-white hover:shadow-[0_0_8px_rgba(255,255,255,0.6)]"
+                              }`}
+                          >
+                            <div className="flex items-center space-x-3 flex-1 min-w-0">
+                              <span className="text-white font-medium text-sm">
+                                {episode.episode_number}
+                              </span>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="text-white font-medium text-sm line-clamp-1">
+                                  {episode.title}
+                                </h3>
+                              </div>
+                              <span className="text-gray-300 text-xs flex-shrink-0">
+                                {formatDuration(episode.duration_minutes)}
+                              </span>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePlayEpisode(
+                                  episode,
+                                  season.season_number,
+                                );
+                                dispatch(openScreenPlayer({
+                                  isOpen: true,
+                                  currentVideoIndex: index,
+                                  // contentItems: displayItems,
+                                  // startIndex: idx,
+                                  selectedVideo: episode,
+                                  // playlistId:id
+                                }))
+                              }}
+                              className="ml-3 p-2 rounded-full transition-colors bg-white/10 hover:bg-white/20 text-white flex-shrink-0"
+                              aria-label={`Play ${episode.title}`}
+                            >
+                              <Play className="w-4 h-4 fill-current" />
+                            </button>
+                          </div>
+                        ))}
+                      </TabsContent>
+                    ))}
+                  </Tabs>
+                </div>
+              )}
+
+              {/* More Like This Section */}
+              {normalizedRecommendedContent.length > 0 && (
+                <ContentRow
+                  title="More Like This"
+                  items={normalizedRecommendedContent}
+                  isMoreLikeThis={true}
+                  onItemClick={handleMoreLikeThisClick}
+                />
+              )}
+            </div>
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  )
+  {/* {currentEpisode && seasons && (
         <div className="bg-black fixed inset-0 z-[99999] bg-black flex flex-col">
           <FullscreenPlayer
             isOpen={true}
@@ -782,10 +781,10 @@ return (
 
 
 
-        
-    
 
-  
+
+
+
 };
 
 export default ContentModal;

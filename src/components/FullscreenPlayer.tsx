@@ -71,13 +71,13 @@ const FullscreenPlayer = ({
   const parentRef = useRef()
   const dispatch = useDispatch();
   // const navigate = useNavigate();
-  const [triggerRecommendations, resultRecommendations ] = useLazyGetRecommendationsWtihContentEmbeddedQuery();
-  const [triggerRelatedContent, resultRelatedContent ] = useLazyGetContentWithWatchHistoryFiltersQuery();
-  const selectedContent = useSelector((state:any) => state.screenPlayer.selectedVideo);
-  const [triggerGetContentWithWatchHistory,result] = useLazyGetPlaylistContentWithWatchHistoryQuery()
-  const isSeries = useSelector((state:any) => state.screenPlayer.isSeries);
-  const contentIds = useSelector((state:any) => state.screenPlayer.playlistInfo);
-  const playlistId  = useSelector((state:any) => state.screenPlayer.playlistId)
+  const [triggerRecommendations, resultRecommendations] = useLazyGetRecommendationsWtihContentEmbeddedQuery();
+  const [triggerRelatedContent, resultRelatedContent] = useLazyGetContentWithWatchHistoryFiltersQuery();
+  const selectedContent = useSelector((state: any) => state.screenPlayer.selectedVideo);
+  const [triggerGetContentWithWatchHistory, result] = useLazyGetPlaylistContentWithWatchHistoryQuery()
+  const isSeries = useSelector((state: any) => state.screenPlayer.isSeries);
+  const contentIds = useSelector((state: any) => state.screenPlayer.playlistInfo);
+  const playlistId = useSelector((state: any) => state.screenPlayer.playlistId)
 
   console.log("Selected Content from Redux in FullscreenPlayer:", currentEpisode?.id);
   // const MemoizedVideoPlayer = memo(VideoPlayer);
@@ -85,14 +85,14 @@ const FullscreenPlayer = ({
     moviesRef.current = movies;
     durationRef.current = duration;
     currentMovieIdRef.current = movies[0]?.id || null;
-    
+
     // Only update currentMovie if the movies array actually changed structure
     // This prevents re-renders if only "duration" changes
-    if(movies[0] && movies[0].id !== currentMovie?.id) {
-        setCurrentMovie(movies[0]);
+    if (movies[0] && movies[0].id !== currentMovie?.id) {
+      setCurrentMovie(movies[0]);
     }
 
- 
+
   }, [movies])
   useEffect(() => {
     if (season && season.length > 0 && !selectedSeasonId) {
@@ -103,107 +103,107 @@ const FullscreenPlayer = ({
         setCurrentEpisode(firstEpisode); // Set the full object
         setMovieid(firstEpisode.id);
         setActualVideoUrl(firstEpisode.video_url || firstEpisode.videoUrl);
-        setMovies([firstEpisode]); 
+        setMovies([firstEpisode]);
       }
     }
-}, [type, season]);
-  console.log("current Episode:", currentEpisode);  
+  }, [type, season]);
+  console.log("current Episode:", currentEpisode);
 
 
 
-// Derived state: Get episodes for the currently selected season
-const currentSeasonEpisodes  = season?.length > 0  && season?.find(s => s.id === selectedSeasonId)?.episodes || [];
-// console.log("Current Season Episodes", currentSeasonEpisodes)
+  // Derived state: Get episodes for the currently selected season
+  const currentSeasonEpisodes = season?.length > 0 && season?.find(s => s.id === selectedSeasonId)?.episodes || [];
+  // console.log("Current Season Episodes", currentSeasonEpisodes)
   // Fetch movie data from Supabase
-useEffect(() => {
-  async function fetchMovies() {
-    // If it's a series and we already have the episode in 'movies' state, 
-    // don't fetch from the "content" table (series episodes are usually in the "episodes" or "seasons" data)
-    if (type === 'series') return; 
+  useEffect(() => {
+    async function fetchMovies() {
+      // If it's a series and we already have the episode in 'movies' state, 
+      // don't fetch from the "content" table (series episodes are usually in the "episodes" or "seasons" data)
+      if (type === 'series') return;
 
-    const queryUrl = actualVideoUrl || videoUrl;
-    if (!queryUrl || typeof queryUrl === 'object') return;
+      const queryUrl = actualVideoUrl || videoUrl;
+      if (!queryUrl || typeof queryUrl === 'object') return;
 
-    const { data, error } = await supabase
-      .from("content")
-      .select("*")
-      .eq("video_url", queryUrl);
+      const { data, error } = await supabase
+        .from("content")
+        .select("*")
+        .eq("video_url", queryUrl);
 
-    if (!error && data) {
-      setMovies(data);
+      if (!error && data) {
+        setMovies(data);
+      }
     }
-  }
 
-  fetchMovies();
-}, [actualVideoUrl, type]); // Remove videoUrl from dependencies if actualVideoUrl is derived from it
+    fetchMovies();
+  }, [actualVideoUrl, type]); // Remove videoUrl from dependencies if actualVideoUrl is derived from it
 
   // Fetch related content
-// 1. OPTIMIZED FETCH (N+1 Fix)
-// useEffect(() => {
-//   async function fetchRelatedContent() {
-//     if (!currentMovie?.id) return;
-//     const found = await triggerRelatedContent({ userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3", genre: null, year: '2012', type: null });
-//     console.log("Related Content found",found)
-//     // Build the query
-//     let query = supabase
-//       .from("content")
-//       .select("id, title, poster_url, year, genre, type") // Only select what you need
-//       .neq("id", currentMovie.id)
-//       .limit(12);
+  // 1. OPTIMIZED FETCH (N+1 Fix)
+  // useEffect(() => {
+  //   async function fetchRelatedContent() {
+  //     if (!currentMovie?.id) return;
+  //     const found = await triggerRelatedContent({ userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3", genre: null, year: '2012', type: null });
+  //     console.log("Related Content found",found)
+  //     // Build the query
+  //     let query = supabase
+  //       .from("content")
+  //       .select("id, title, poster_url, year, genre, type") // Only select what you need
+  //       .neq("id", currentMovie.id)
+  //       .limit(12);
 
-//     if (selectedGenre !== "All") query = query.eq("genre", selectedGenre);
-//     if (selectedYear !== "All") query = query.eq("year", parseInt(selectedYear));
-//     if (selectedType !== "All") query = query.eq("type", selectedType);
+  //     if (selectedGenre !== "All") query = query.eq("genre", selectedGenre);
+  //     if (selectedYear !== "All") query = query.eq("year", parseInt(selectedYear));
+  //     if (selectedType !== "All") query = query.eq("type", selectedType);
 
-//     const { data: relatedData } = await query;
-//     if (!relatedData) return;
+  //     const { data: relatedData } = await query;
+  //     if (!relatedData) return;
 
-//     // BATCH CALL: Get all history for these 12 items at once
-//     const contentIds = relatedData.map(item => item.id);
-//     const { data: historyData } = await supabase
-//       .from("user_watch_history")
-//       .select("id, movie_id, watch_percentage, last_position, completed")
-//       .eq("user_id", "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3")
-//       .in("movie_id", contentIds);
+  //     // BATCH CALL: Get all history for these 12 items at once
+  //     const contentIds = relatedData.map(item => item.id);
+  //     const { data: historyData } = await supabase
+  //       .from("user_watch_history")
+  //       .select("id, movie_id, watch_percentage, last_position, completed")
+  //       .eq("user_id", "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3")
+  //       .in("movie_id", contentIds);
 
-//     // Merge history back into the related content locally
-//     const merged = relatedData.map(item => {
-//       const h = historyData?.find(hist => hist.movie_id === item.id);
-//       return {
-//         ...item,
-//         watch_percentage: h?.watch_percentage || 0,
-//         last_position: h?.last_position || 0,
-//         completed: h?.completed || false
-//       };
-//     });
+  //     // Merge history back into the related content locally
+  //     const merged = relatedData.map(item => {
+  //       const h = historyData?.find(hist => hist.movie_id === item.id);
+  //       return {
+  //         ...item,
+  //         watch_percentage: h?.watch_percentage || 0,
+  //         last_position: h?.last_position || 0,
+  //         completed: h?.completed || false
+  //       };
+  //     });
 
-//     setRelatedContent(merged);
-//   }
+  //     setRelatedContent(merged);
+  //   }
 
-//   fetchRelatedContent();
-// }, [selectedGenre, selectedYear, selectedType, currentMovie?.id]);
+  //   fetchRelatedContent();
+  // }, [selectedGenre, selectedYear, selectedType, currentMovie?.id]);
 
 
-console.log("Current Movie in FullscreenPlayer:", currentMovie);
-console.log("Related Content in FullscreenPlayer:", relatedContent);
-console.log("Movies in FullscreenPlayer:", movies);
-console.log("Actual Video URL in FullscreenPlayer:", actualVideoUrl);
-console.log("Video URL prop in FullscreenPlayer:", videoUrl);
-console.log("Seasons in FullscreenPlayer:", season);
+  console.log("Current Movie in FullscreenPlayer:", currentMovie);
+  console.log("Related Content in FullscreenPlayer:", relatedContent);
+  console.log("Movies in FullscreenPlayer:", movies);
+  console.log("Actual Video URL in FullscreenPlayer:", actualVideoUrl);
+  console.log("Video URL prop in FullscreenPlayer:", videoUrl);
+  console.log("Seasons in FullscreenPlayer:", season);
 
-  useEffect(() =>{
-      async function fetchRecommendations() {
-      const recommend = await triggerRecommendations({userId:"03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"});
+  useEffect(() => {
+    async function fetchRecommendations() {
+      const recommend = await triggerRecommendations({ userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3" });
 
       setRecommended(recommend?.data)
-      }
-      fetchRecommendations();
-  },[])
+    }
+    fetchRecommendations();
+  }, [])
 
 
 
   console.log("Recommended Movies:", recommended);
-  
+
 
   const handleSearch = async (query: string) => {
     if (query.trim().length === 0) return [];
@@ -277,148 +277,151 @@ console.log("Seasons in FullscreenPlayer:", season);
             {/* <div ref={playerContainerRef} className="w-full h-full" /> */}
             <div ref={playerRef} className="h-[90%] w-full">
               {
-                actualVideoUrl && 
-                  <VideoPlayer
-                    videoId={selectedContent?.video_url}
-                    // last_position={lastPausedTime}
-                    setCurrentMovie={setCurrentMovie}
-                    type={type} 
-                    setFinal={setFinal}
-                    setActualVideoUrl={setActualVideoUrl}
-                    playlistItems={playlists}
-                    movieId={selectedContent?.id}
-                    episodeId={season ? selectedContent?.id : undefined} 
-                    userid="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
-                    playlistInfo={playlistInfo}
-                    ref={parentRef}
-                  />
+                actualVideoUrl &&
+                <VideoPlayer
+                  key={selectedContent?.id || selectedContent?.video_url}
+                  videoId={selectedContent?.video_url}
+                  // last_position={lastPausedTime}
+                  setCurrentMovie={setCurrentMovie}
+                  type={type}
+                  setFinal={setFinal}
+                  setActualVideoUrl={setActualVideoUrl}
+                  playlistItems={playlists}
+                  movieId={selectedContent?.id}
+                  episodeId={season ? selectedContent?.id : undefined}
+                  userid="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
+                  playlistInfo={playlistInfo}
+                  ref={parentRef}
+                />
               }
 
 
             </div>
             {/* Overlays */}
           </div>
- 
-                {season?.length > 0 && (
-              <div className="mb-8">
-                <div className="flex flex-col items-center mb-8">
-                 
-                  
-                  {/* Centered Season Tabs */}
-                  <div className="flex flex-wrap justify-center gap-2 p-1 bg-white/5 rounded-xl border border-white/10">
-                    {season.map((season) => {
-                      const isActive = selectedSeasonId === season.id;
-                      return (
-                        <button
-                          key={season.id}
-                          onClick={() => setSelectedSeasonId(season.id)}
-                          className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                            isActive 
-                              ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' 
-                              : 'text-white/60 hover:text-white hover:bg-white/10'
+
+          {season?.length > 0 && (
+            <div className="mb-8">
+              <div className="flex flex-col items-center mb-8">
+
+
+                {/* Centered Season Tabs */}
+                <div className="flex flex-wrap justify-center gap-2 p-1 bg-white/5 rounded-xl border border-white/10">
+                  {season.map((season) => {
+                    const isActive = selectedSeasonId === season.id;
+                    return (
+                      <button
+                        key={season.id}
+                        onClick={() => setSelectedSeasonId(season.id)}
+                        className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
+                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
+                          : 'text-white/60 hover:text-white hover:bg-white/10'
                           }`}
-                        >
-                          {season.title || `Season ${season.season_number}`}
-                        </button>
-                      );
-                    })}
-                  </div>
+                      >
+                        {season.title || `Season ${season.season_number}`}
+                      </button>
+                    );
+                  })}
                 </div>
-                <div>
-                  {
-                    season  && (
-                      <>
-                  <h2 className="text-white text-2xl font-bold mb-6">Episodes</h2>
-                {/* Episode Grid/List */}
-                <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
-                  {currentSeasonEpisodes.map((episode: any,index) => (
-                    <div
-                      key={episode.id}
-                      className={`flex-shrink-0 w-80 cursor-pointer group snap-start transition-all duration-300 ${
-                        currentEpisode?.id === episode.id
-                          ? 'ring-2 ring-blue-500'
-                          : 'hover:ring-2 hover:ring-white/30'
-                      }`}
-                      onClick={() => {
-                        setCurrentEpisode(episode);
-                        setActualVideoUrl(episode.video_url || episode.videoUrl);
-                        setVideoEnded(false);
-                        setMovieid(episode?.id)
-                        setMovies([episode])
-                        playerRef.current?.scrollIntoView({ behavior: "smooth" });
-                         dispatch(openScreenPlayer({
-                                      isOpen: true,
-                                      selectedVideo: episode,
-                                      currentVideoIndex:index  
-                                    }))
-                      }}
-                    >
-                      <div className="bg-white/5 rounded-lg overflow-hidden">
-                        <div className="relative aspect-video bg-slate-900">
-                          <img
-                            src={poster_url}
-                            alt={episode.title}
-                            className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                          />
-                          {currentEpisode?.id === episode.id && (
-                            <div className="absolute inset-0 bg-blue-600/20 flex items-center justify-center">
-                              <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded shadow-lg">
-                                Now Playing
+              </div>
+              <div>
+                {
+                  season && (
+                    <>
+                      <h2 className="text-white text-2xl font-bold mb-6">Episodes</h2>
+                      {/* Episode Grid/List */}
+                      <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+                        {currentSeasonEpisodes.map((episode: any, index) => (
+                          <div
+                            key={episode.id}
+                            className={`flex-shrink-0 w-80 cursor-pointer group snap-start transition-all duration-300 ${currentEpisode?.id === episode.id
+                              ? 'ring-2 ring-blue-500'
+                              : 'hover:ring-2 hover:ring-white/30'
+                              }`}
+                            onClick={() => {
+                              setCurrentEpisode(episode);
+                              setActualVideoUrl(episode.video_url || episode.videoUrl);
+                              setVideoEnded(false);
+                              setMovieid(episode?.id)
+                              setMovies([episode])
+                              playerRef.current?.scrollIntoView({ behavior: "smooth" });
+                              // Get all episodes from the current season for autoplay
+                              const allEpisodes = currentSeasonEpisodes || [];
+                              dispatch(openScreenPlayer({
+                                isOpen: true,
+                                selectedVideo: episode,
+                                currentVideoIndex: index,
+                                isSeries: true,
+                                seriesData: { episodes: allEpisodes }
+                              }))
+                            }}
+                          >
+                            <div className="bg-white/5 rounded-lg overflow-hidden">
+                              <div className="relative aspect-video bg-slate-900">
+                                <img
+                                  src={poster_url}
+                                  alt={episode.title}
+                                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                                />
+                                {currentEpisode?.id === episode.id && (
+                                  <div className="absolute inset-0 bg-blue-600/20 flex items-center justify-center">
+                                    <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded shadow-lg">
+                                      Now Playing
+                                    </div>
+                                  </div>
+                                )}
+                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                                  <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                              </div>
+
+                              <div className="p-4">
+                                <div className="text-blue-400 text-xs font-bold uppercase tracking-wider mb-1">
+                                  Episode {episode.episode_number}
+                                </div>
+                                <h3 className="text-white font-semibold mb-2 line-clamp-1">
+                                  {episode.title}
+                                </h3>
+                                {episode.description && (
+                                  <p className="text-white/60 text-sm line-clamp-2">
+                                    {episode.description}
+                                  </p>
+                                )}
                               </div>
                             </div>
-                          )}
-                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
-                            <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                            </svg>
                           </div>
-                        </div>
-                        
-                        <div className="p-4">
-                          <div className="text-blue-400 text-xs font-bold uppercase tracking-wider mb-1">
-                            Episode {episode.episode_number}
-                          </div>
-                          <h3 className="text-white font-semibold mb-2 line-clamp-1">
-                            {episode.title}
-                          </h3>
-                          {episode.description && (
-                            <p className="text-white/60 text-sm line-clamp-2">
-                              {episode.description}
-                            </p>
-                          )}
-                        </div>
+                        ))}
                       </div>
-                    </div>
-                  ))}
-                </div>
 
-                      
-                      </>
-                 
-                    )
-                  }
-               
 
-                  </div>
+                    </>
+
+                  )
+                }
+
+
               </div>
-                                )}
+            </div>
+          )}
 
           {/* Movie Details Section */}
-        <MovieDetailSection />
+          <MovieDetailSection />
 
           {/* Filters Section */}
           <div className="mb-8">
             // In your Parent Page/Component
-                <RecommendedSection 
-                    // recommended={recommended} // The object { genre_based: [...], popular: [...] }
-                    handleRelatedClick={handleRelatedClick}
-                    setMovieid={setMovieid}
-                    setActualVideoUrl={setActualVideoUrl}
-                    setMovies={setMovies}
-                    setVideoEnded={setVideoEnded}
-                    setPlaylists={setPlaylists}
-                    getOptimizedImageUrl={getOptimizedImageUrl}
-                />
+            <RecommendedSection
+              // recommended={recommended} // The object { genre_based: [...], popular: [...] }
+              handleRelatedClick={handleRelatedClick}
+              setMovieid={setMovieid}
+              setActualVideoUrl={setActualVideoUrl}
+              setMovies={setMovies}
+              setVideoEnded={setVideoEnded}
+              setPlaylists={setPlaylists}
+              getOptimizedImageUrl={getOptimizedImageUrl}
+            />
 
             <h2 className="text-white text-2xl font-bold mb-4">More Like This</h2>
             <div className="flex flex-wrap gap-4">
@@ -429,7 +432,7 @@ console.log("Seasons in FullscreenPlayer:", season);
                   value={selectedGenre}
                   onChange={(e) => setSelectedGenre(e.target.value)}
                   aria-placeholder="Select Genre"
-                  
+
                   className="text-white px-4 py-2 bg-white/10 rounded-lg border border-white/20 focus:border-white/40 outline-none"
                 >
                   {genres.map(genre => (
@@ -466,8 +469,8 @@ console.log("Seasons in FullscreenPlayer:", season);
                 </select>
               </div>
             </div>
-                </div>
-                
+          </div>
+
 
           {/* Related Content Grid */}
           <RelatedContent
@@ -477,7 +480,7 @@ console.log("Seasons in FullscreenPlayer:", season);
             setMovies={setMovies}
             setVideoEnded={setVideoEnded}
             setPlaylists={setPlaylists}
-            // relatedContent={relatedContent}
+          // relatedContent={relatedContent}
           />
         </div>
       </div>
