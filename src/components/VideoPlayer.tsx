@@ -210,6 +210,14 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
           return prev - 1;
         });
       }, 1000);
+
+    };
+
+    const handleReplay = () => {
+      setVideoEnded(false);
+      setCountdown(5); // Reset for next time
+      playerInstanceRef.current?.seekTo(0);
+      playerInstanceRef.current?.playVideo();
     };
 
     // --- NAVIGATION ---
@@ -308,6 +316,8 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
           startCountdown();
         } else {
           console.log("End of content reached");
+          setVideoEnded(true);
+          setCountdown(0); // 0 indicates end of playlist/single video
         }
       }
 
@@ -387,7 +397,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
 
         {/* Countdown Overlay */}
         {videoEnded && countdown > 0 && (
-          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80 text-white">
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 backdrop-blur-3xl text-white">
             <div className="text-6xl font-bold mb-4">{countdown}</div>
             <p className="text-xl mb-2">Up Next</p>
             <p className="text-sm mb-6">Playing in {countdown} seconds...</p>
@@ -401,6 +411,19 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
               className="px-6 py-3 bg-white text-black rounded-lg hover:bg-gray-200 transition"
             >
               Play Now
+            </button>
+          </div>
+        )}
+
+        {/* Replay Overlay (End of Content) */}
+        {videoEnded && countdown === 0 && (
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 backdrop-blur-3xl text-white animate-in fade-in zoom-in duration-500">
+            <h2 className="text-5xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">Thanks for watching!</h2>
+            <button
+              onClick={handleReplay}
+              className="px-8 py-3 bg-white text-black font-semibold rounded-full hover:bg-zinc-200 transition transform hover:scale-110 shadow-lg hover:shadow-xl hover:shadow-white/20"
+            >
+              Replay Video
             </button>
           </div>
         )}
