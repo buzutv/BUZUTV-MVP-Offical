@@ -6,7 +6,7 @@ import { Content, RelatedContentFilterProps } from '../types'
 
 
 export const contentSlice = supabaseApi.injectEndpoints({
-    endpoints: (builder) => ({
+  endpoints: (builder) => ({
     getContent: builder.query<Content[], { type?: string; channelId?: string }>({
       query: (params) => {
         const q = new URLSearchParams({ select: '*' });
@@ -20,10 +20,10 @@ export const contentSlice = supabaseApi.injectEndpoints({
     }),
 
     getContentById: builder.query<Content, string>({
-        query: (id) => `content?id=eq.${id}&select=*`,
-        transformResponse: (res: Content[]) => res[0],
-        providesTags: (_r, _e, id) => [{ type: 'Content', id }],
-      }),
+      query: (id) => `content?id=eq.${id}&select=*`,
+      transformResponse: (res: Content[]) => res[0],
+      providesTags: (_r, _e, id) => [{ type: 'Content', id }],
+    }),
     getContentWithWatchHistory: builder.query<Content[], string>({
       query: (userId) =>
         `content?select=*,user_watch_history(*,movie_id)&user_watch_history.user_id=eq.${userId}`,
@@ -39,28 +39,29 @@ export const contentSlice = supabaseApi.injectEndpoints({
         return `content?id=in.(${ids})&select=*,user_watch_history(watch_percentage,last_position,completed,movie_id)&user_watch_history.user_id=eq.${userId}`;
       },
     }),
-    getContentWithWatchHistoryFilters:builder.query<Content[], RelatedContentFilterProps & {
+    getContentWithWatchHistoryFilters: builder.query<Content[], RelatedContentFilterProps & {
       userId: string
     }>({
-      query:({genre , year, type, userId}) => {
-        const url = new URLSearchParams({ select: '*,user_watch_history(*,movie_id)',});
-        if(genre){
-            url.append('genre', `eq.${genre}`);
+      query: ({ genre, year, type, userId }) => {
+        const url = new URLSearchParams({ select: '*,user_watch_history(*,movie_id)', });
+        if (genre) {
+          url.append('genre', `ilike.%${genre}%`);
         }
-        if(year){
-            url.append('year', `eq.${year}`);
+        if (year) {
+          url.append('year', `eq.${year}`);
         }
-        if(type){
-            url.append('type', `eq.${type}`);
+        if (type) {
+          url.append('type', `eq.${type}`);
         }
-        if(userId){
-            url.append('user_watch_history.user_id', `eq.${userId}`);
+        if (userId) {
+          url.append('user_watch_history.user_id', `eq.${userId}`);
         }
         return {
           url: `content?${url.toString()}&limit=12`,
-          method:'GET',
+          method: 'GET',
 
-      }}
+        }
+      }
     }),
 
     createContent: builder.mutation<Content, Partial<Content>>({
@@ -97,13 +98,13 @@ export const contentSlice = supabaseApi.injectEndpoints({
 
 
 export const {
-    useGetContentQuery,
-    useGetContentByIdQuery,
-    useCreateContentMutation,
-    useGetContentWithWatchHistoryFiltersQuery,
-    useLazyGetContentWithWatchHistoryFiltersQuery,
-    useGetContentWithWatchHistoryQuery,
-    useLazyGetContentWithWatchHistoryQuery,
-    useGetPlaylistContentWithWatchHistoryQuery,
-    useLazyGetPlaylistContentWithWatchHistoryQuery
-   } = contentSlice
+  useGetContentQuery,
+  useGetContentByIdQuery,
+  useCreateContentMutation,
+  useGetContentWithWatchHistoryFiltersQuery,
+  useLazyGetContentWithWatchHistoryFiltersQuery,
+  useGetContentWithWatchHistoryQuery,
+  useLazyGetContentWithWatchHistoryQuery,
+  useGetPlaylistContentWithWatchHistoryQuery,
+  useLazyGetPlaylistContentWithWatchHistoryQuery
+} = contentSlice

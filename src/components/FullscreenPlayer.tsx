@@ -12,6 +12,7 @@ import { Episode, FullscreenPlayerProps } from "@/types";
 import MovieDetailSection from "./MovieDetailSection";
 import { useLazyGetContentWithWatchHistoryFiltersQuery, useLazyGetPlaylistContentWithWatchHistoryQuery } from "@/store/contentSlice";
 import RelatedContent from "./RelatedContent";
+import AdToast from "./AdToast";
 import { useDispatch, useSelector } from "react-redux";
 import { openScreenPlayer } from "@/store/screenPlayerSlice";
 
@@ -58,6 +59,7 @@ const FullscreenPlayer = ({
   const playlistRef = useRef<string>("")
   // Episode selection state for series
   const [episodes, setEpisodes] = useState<Episode[]>([]);
+  const [showAd, setShowAd] = useState(false);
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [actualVideoUrl, setActualVideoUrl] = useState(videoUrl);
   const id = useParams()
@@ -137,51 +139,89 @@ const FullscreenPlayer = ({
     fetchMovies();
   }, [actualVideoUrl, type]); // Remove videoUrl from dependencies if actualVideoUrl is derived from it
 
+  // Sync local state with Redux selectedContent (handles autoplay updates)
+  useEffect(() => {
+    if (selectedContent) {
+      if (type === 'series' || selectedContent.episode_number) {
+        setCurrentEpisode(selectedContent);
+        setMovieid(selectedContent.id);
+        setActualVideoUrl(selectedContent.video_url || selectedContent.videoUrl);
+        if (selectedContent.season_id && selectedContent.season_id !== selectedSeasonId) {
+          setSelectedSeasonId(selectedContent.season_id);
+        }
+      } else {
+        setMovieid(selectedContent.id);
+        setActualVideoUrl(selectedContent.video_url);
+        // Ensure movies state reflects current content for related fetch etc
+        if (selectedContent.id !== currentMovie?.id) {
+          setMovies([selectedContent]);
+        }
+      }
+    }
+  }, [selectedContent]);
+
+  // Ad Timer
+  useEffect(() => {
+    // Start interval
+    const interval = setInterval(() => {
+      setShowAd(true);
+    }, 60000); // 1 minute
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Ad Auto-dismiss
+  useEffect(() => {
+    if (showAd) {
+      const timer = setTimeout(() => {
+        setShowAd(false);
+      }, 10000); // 10 seconds duration
+      return () => clearTimeout(timer);
+    }
+  }, [showAd]);
+
   // Fetch related content
   // 1. OPTIMIZED FETCH (N+1 Fix)
-  // useEffect(() => {
-  //   async function fetchRelatedContent() {
-  //     if (!currentMovie?.id) return;
-  //     const found = await triggerRelatedContent({ userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3", genre: null, year: '2012', type: null });
-  //     console.log("Related Content found",found)
-  //     // Build the query
-  //     let query = supabase
-  //       .from("content")
-  //       .select("id, title, poster_url, year, genre, type") // Only select what you need
-  //       .neq("id", currentMovie.id)
-  //       .limit(12);
+  // Fetch related content with filters
+  useEffect(() => {
+    async function fetchRelatedContent() {
+      if (!currentMovie?.id) return;
 
-  //     if (selectedGenre !== "All") query = query.eq("genre", selectedGenre);
-  //     if (selectedYear !== "All") query = query.eq("year", parseInt(selectedYear));
-  //     if (selectedType !== "All") query = query.eq("type", selectedType);
+      const genre = selectedGenre !== "All" ? selectedGenre : undefined;
+      const year = selectedYear !== "All" ? selectedYear : undefined;
+      const type = selectedType !== "All" ? selectedType : undefined;
 
-  //     const { data: relatedData } = await query;
-  //     if (!relatedData) return;
+      const { data: relatedData } = await triggerRelatedContent({
+        userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3",
+        genre,
+        year,
+        type
+      });
 
-  //     // BATCH CALL: Get all history for these 12 items at once
-  //     const contentIds = relatedData.map(item => item.id);
-  //     const { data: historyData } = await supabase
-  //       .from("user_watch_history")
-  //       .select("id, movie_id, watch_percentage, last_position, completed")
-  //       .eq("user_id", "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3")
-  //       .in("movie_id", contentIds);
+      if (!relatedData) return;
 
-  //     // Merge history back into the related content locally
-  //     const merged = relatedData.map(item => {
-  //       const h = historyData?.find(hist => hist.movie_id === item.id);
-  //       return {
-  //         ...item,
-  //         watch_percentage: h?.watch_percentage || 0,
-  //         last_position: h?.last_position || 0,
-  //         completed: h?.completed || false
-  //       };
-  //     });
+      const filtered = relatedData.filter((item: any) => item.id !== currentMovie.id);
 
-  //     setRelatedContent(merged);
-  //   }
+      // Merge history (embedded)
+      const merged = filtered.map((item: any) => {
+        // Handle array or single object from Supabase join
+        const history = Array.isArray(item.user_watch_history)
+          ? item.user_watch_history[0]
+          : item.user_watch_history;
 
-  //   fetchRelatedContent();
-  // }, [selectedGenre, selectedYear, selectedType, currentMovie?.id]);
+        return {
+          ...item,
+          watch_percentage: history?.watch_percentage || 0,
+          last_position: history?.last_position || 0,
+          completed: history?.completed || false
+        };
+      });
+
+      setRelatedContent(merged);
+    }
+
+    fetchRelatedContent();
+  }, [selectedGenre, selectedYear, selectedType, currentMovie?.id, triggerRelatedContent]);
 
 
   console.log("Current Movie in FullscreenPlayer:", currentMovie);
@@ -424,49 +464,53 @@ const FullscreenPlayer = ({
             />
 
             <h2 className="text-white text-2xl font-bold mb-4">More Like This</h2>
-            <div className="flex flex-wrap gap-4">
-
-              <div>
-                <label className="text-white/60 text-sm mb-2 block bg-white/10 rounded-lg px-4 py-2">Genre</label>
+            <div className="flex flex-wrap items-center gap-4">
+              {/* Genre Filter */}
+              <div className="relative group">
                 <select
                   value={selectedGenre}
                   onChange={(e) => setSelectedGenre(e.target.value)}
-                  aria-placeholder="Select Genre"
-
-                  className="text-white px-4 py-2 bg-white/10 rounded-lg border border-white/20 focus:border-white/40 outline-none"
+                  className="appearance-none bg-white/5 hover:bg-white/10 text-white pl-4 pr-10 py-2.5 rounded-full border border-white/10 hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all cursor-pointer min-w-[120px]"
                 >
                   {genres.map(genre => (
                     <option key={genre} value={genre} className="bg-[#1a1a1a]">{genre}</option>
                   ))}
                 </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-white/50">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                </div>
               </div>
 
               {/* Year Filter */}
-              <div>
-                <label className="text-white/60 text-sm mb-2 block bg-white/10 rounded-lg px-4 py-2">Year</label>
+              <div className="relative group">
                 <select
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(e.target.value)}
-                  className="bg-white/10 text-white px-4 py-2 rounded-lg border border-white/20 focus:border-white/40 outline-none"
+                  className="appearance-none bg-white/5 hover:bg-white/10 text-white pl-4 pr-10 py-2.5 rounded-full border border-white/10 hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all cursor-pointer min-w-[100px]"
                 >
                   {years.map(year => (
                     <option key={year} value={year} className="bg-[#1a1a1a]">{year}</option>
                   ))}
                 </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-white/50">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                </div>
               </div>
 
               {/* Type Filter */}
-              <div>
-                <label className="text-white/60 text-sm mb-2 block bg-white/10 rounded-lg px-4 py-2">Type</label>
+              <div className="relative group">
                 <select
                   value={selectedType}
                   onChange={(e) => setSelectedType(e.target.value)}
-                  className="bg-white/10 text-white px-4 py-2 rounded-lg border border-white/20 focus:border-white/40 outline-none"
+                  className="appearance-none bg-white/5 hover:bg-white/10 text-white pl-4 pr-10 py-2.5 rounded-full border border-white/10 hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all cursor-pointer min-w-[100px] capitalize"
                 >
                   {types.map(type => (
                     <option key={type} value={type} className="bg-[#1a1a1a] capitalize">{type}</option>
                   ))}
                 </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-white/50">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                </div>
               </div>
             </div>
           </div>
@@ -480,10 +524,12 @@ const FullscreenPlayer = ({
             setMovies={setMovies}
             setVideoEnded={setVideoEnded}
             setPlaylists={setPlaylists}
-          // relatedContent={relatedContent}
+            relatedContent={relatedContent}
+            isLoading={resultRelatedContent.isFetching}
           />
         </div>
       </div>
+      <AdToast isVisible={showAd} onClose={() => setShowAd(false)} />
     </div>
   );
 };

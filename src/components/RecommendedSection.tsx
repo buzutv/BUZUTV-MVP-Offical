@@ -2,6 +2,7 @@ import React, { useEffect, useMemo } from "react";
 import { useGetRecommendationsWtihContentEmbeddedQuery, useLazyGetRecommendationsWtihContentEmbeddedQuery } from "@/store/recommendationSlice";
 import { openScreenPlayer } from "@/store/screenPlayerSlice";
 import { useDispatch } from "react-redux";
+import ContentGridItem from "./ContentGridItem";
 
 // Section title helper
 const sectionTitles: Record<string, string> = {
@@ -33,17 +34,18 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
   const [triggerRecommendations, { data, isFetching }] =
     useLazyGetRecommendationsWtihContentEmbeddedQuery();
 
-  const {data:recommendations, error , refetch} = useGetRecommendationsWtihContentEmbeddedQuery(
+  const { data: recommendations } = useGetRecommendationsWtihContentEmbeddedQuery(
     {
-       userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3",
-    },{
-      refetchOnFocus:true,
-      refetchOnMountOrArgChange:true,
-      refetchOnReconnect:true
-    }
-  )
-  const dispatch = useDispatch()
-;
+      userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3",
+    }, {
+    refetchOnFocus: true,
+    refetchOnMountOrArgChange: true,
+    refetchOnReconnect: true
+  }
+  );
+
+  const dispatch = useDispatch();
+
   useEffect(() => {
     triggerRecommendations({
       userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3",
@@ -54,16 +56,15 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
   const groupedRecommendations = useMemo(() => {
     if (!data) return {};
 
-    return recommendations.reduce((acc: any, rec: any) => {
+    return recommendations?.reduce((acc: any, rec: any) => {
       const key = rec.recommendation_type || "default";
       if (!acc[key]) acc[key] = [];
       acc[key].push(rec.content);
       return acc;
-    }, {});
-  }, [recommendations]);
+    }, {}) || {};
+  }, [recommendations, data]);
 
 
-  console.log("Recommendations Data:", groupedRecommendations);
   // 🔹 Loading skeleton
   if (isFetching || !data) {
     return (
@@ -71,10 +72,10 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
         {[1, 2].map((i) => (
           <div key={i} className="mb-10">
             <div className="mb-4 h-8 w-48 rounded-full bg-white/10 animate-pulse" />
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
               {Array.from({ length: 5 }).map((_, j) => (
                 <div key={j}>
-                  <div className="aspect-square rounded-lg bg-white/10 animate-pulse mb-2" />
+                  <div className="aspect-video rounded-lg bg-white/10 animate-pulse mb-2" />
                   <div className="h-4 w-3/4 bg-white/10 rounded mb-1 animate-pulse" />
                   <div className="h-3 w-1/2 bg-white/5 rounded animate-pulse" />
                 </div>
@@ -98,56 +99,29 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
               {sectionTitles[key] || sectionTitles.default}
             </h2>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
               {recs.map((rec: any) => {
-             
+
                 if (!rec) return null;
 
                 return (
-                  <div
+                  <ContentGridItem
                     key={rec.id}
-                    className="group cursor-pointer"
-                    onClick={() => {
-                      handleRelatedClick(rec.id);
-                      setMovieid(rec.id);
-                      setActualVideoUrl(rec.video_url);
-                      setMovies([rec]);
+                    item={rec}
+                    onClick={(item) => {
+                      handleRelatedClick(item.id);
+                      setMovieid(item.id);
+                      setActualVideoUrl(item.video_url);
+                      setMovies([item]);
                       setVideoEnded(false);
                       setPlaylists([]);
                       dispatch(openScreenPlayer({
-                        selectedVideo:rec,
-                        currentVideoIndex:null,
-                        playlistInfo:null
+                        selectedVideo: item,
+                        currentVideoIndex: null,
+                        playlistInfo: null
                       }))
                     }}
-                  >
-                    {/* Poster */}
-                    <div className="relative aspect-square rounded-lg overflow-hidden bg-white/5">
-                      <img
-                        src={getOptimizedImageUrl(rec.poster_url, 400)}
-                        alt={rec.title}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        loading="lazy"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-
-                    {/* Meta */}
-                    <div className="mt-3">
-                      <div className="text-white font-medium truncate">
-                        {rec.title}
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-white/60 mt-1">
-                        {rec.year && <span>{rec.year}</span>}
-                        {rec.genre && (
-                          <>
-                            <span>•</span>
-                            <span className="truncate">{rec.genre}</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                  />
                 );
               })}
             </div>

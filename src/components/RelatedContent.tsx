@@ -1,110 +1,61 @@
-import { useGetContentWithWatchHistoryQuery, useLazyGetContentWithWatchHistoryFiltersQuery, useLazyGetContentWithWatchHistoryQuery } from '@/store/contentSlice'
 import { openScreenPlayer } from '@/store/screenPlayerSlice'
-import { Content } from '@/types'
-import { getOptimizedImageUrl } from '@/utils/youtubeUtils'
-import React, { useEffect } from 'react'
+import React from 'react'
 import { useDispatch } from 'react-redux'
+import ContentGridItem from './ContentGridItem'
 
 const RelatedContent = ({
-    setMovieid,
-    setVideoEnded,
-    setActualVideoUrl,
-    setMovies,
-    setPlaylists,
-    handleRelatedClick
+  setMovieid,
+  setVideoEnded,
+  setActualVideoUrl,
+  setMovies,
+  setPlaylists,
+  handleRelatedClick,
+  relatedContent = [], // New prop
+  isLoading = false // New prop
 }) => {
-    const {data: relatedContentData, error, refetch} = useGetContentWithWatchHistoryQuery("03fa9a91-4281-4bd4-9e60-4da2ba72b0f3",{
-      refetchOnFocus:true,
-      refetchOnMountOrArgChange:true,
-      refetchOnReconnect:true
-    })
-    const [relatedContent, setRelatedContent] = React.useState<Content[]>([])
   const dispatch = useDispatch();
-  useEffect(() =>{
-    const fetchRelatedContent = async () => {
-      try {
-        // const response = await triggerRelatedContent("03fa9a91-4281-4bd4-9e60-4da2ba72b0f3")
-        
-            const normalizedContent = relatedContentData?.map(item => {
-                    const [history] = item.user_watch_history ?? [];
 
-                    return {
-                        ...item,
-                        watch_percentage: history?.watch_percentage ?? 0,
-                        last_position: history?.last_position ?? 0,
-                        completed: history?.completed ?? false,
-                    };
-                    });
-          setRelatedContent(normalizedContent)
-        
-      } catch (error) {
-        console.error('Error fetching related content:', error)
-      }
-    }
-
-    fetchRelatedContent()
-  },[])
-
-  console.log("RELATED CONTENT:", relatedContent)
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 lg:grid-cols-4 xl:grid-cols-5">
-            {relatedContent.map((content) => (
-              <div
-                key={content.id}
-                className="cursor-pointer basis-[350px] max-w-[350px]"
-                onClick={() => {
-                  handleRelatedClick(content.id)
-                  setMovieid(content.id)
-                  // Now switch to new content
-                  setActualVideoUrl(content.video_url);
-                  setMovies([content]);
-                  setVideoEnded(false);
-                  setPlaylists([])
-                  dispatch(openScreenPlayer({
-                    selectedVideo: content,
-                  }))
-                  // refetch()
-                }}
-
-
-
-              >
-                <div className="relative aspect-square rounded-lg overflow-hidden bg-white/5 h-[50%] w-full">
-                  <img
-                    src={getOptimizedImageUrl(content.poster_url, 400)}
-                    alt={content?.content_title || content.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <div className="text-white text-sm font-semibold">
-                        {content?.content_title || content.title}
-                      </div>
-                      {content.year && (
-                        <div className="text-white/60 text-xs">{content.year}</div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div
-                  className="h-[0.175rem] bg-red-900"
-                  style={{ width: `${content?.watch_percentage}%` }}
-                ></div>
-                <div className="text-white font-medium truncate">
-                  {content?.content_title || content.title}
-                </div>
-                <div className="flex items-center gap-2 text-sm text-white/60 mt-1">
-                  {content?.year && <span>{content?.year}</span>}
-                  {content?.genre && (
-                    <>
-                      <span>•</span>
-                      <span>{content?.genre}</span>
-                    </>
-                  )}
-                </div>
-              </div>
-            ))}
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <div key={i} className="flex flex-col gap-2">
+            <div className="aspect-video w-full rounded-lg bg-white/10 animate-pulse" />
+            <div className="h-4 w-3/4 bg-white/10 rounded animate-pulse" />
+            <div className="h-3 w-1/2 bg-white/5 rounded animate-pulse" />
           </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (!relatedContent || relatedContent.length === 0) {
+    return <div className="text-white/50 text-center py-8">No related content found</div>;
+  }
+
+  // console.log("RELATED CONTENT PROPS:", relatedContent)
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+      {relatedContent.map((content) => (
+        <ContentGridItem
+          key={content.id}
+          item={content}
+          showWatchProgress={true}
+          onClick={(item) => {
+            handleRelatedClick(item.id)
+            setMovieid(item.id)
+            setActualVideoUrl(item.video_url);
+            setMovies([item]);
+            setVideoEnded(false);
+            setPlaylists([])
+            dispatch(openScreenPlayer({
+              selectedVideo: item,
+            }))
+          }}
+        />
+      ))}
+    </div>
   )
 }
 

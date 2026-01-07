@@ -4,7 +4,7 @@ import { fetchWatchHistory, getOptimizedImageUrl } from '@/utils/youtubeUtils';
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
-  // onResultSelect?: (result: any) => void;
+  onResultSelect?: (result: any) => void;
   results?: any[];
   placeholder?: string;
   isLoading?: boolean;
@@ -13,12 +13,11 @@ interface SearchBarProps {
   className?: string;
   setActualVideoUrl?: (url: string) => void;
   setMovieid?: (movie: any) => void;
-
 }
 
 const SearchBar = ({
   onSearch,
-  // onResultSelect,
+  onResultSelect,
   results = [],
   placeholder = "Search...",
   isLoading = false,
@@ -43,14 +42,12 @@ const SearchBar = ({
   };
 
   const handleResultClick = async (result: any) => {
-    console.log("Search Result", result);
-    // setActualVideoUrl(result.video_url);
-    // // onResultSelect?.(result);
-    // setIsFocused(false);
-    // const history = await fetchWatchHistory("03fa9a91-4281-4bd4-9e60-4da2ba72b0f3", result.id);
-    console.log("History one", history);
-    setMovieid(result.id);
-    setActualVideoUrl(result.video_url);
+    if (setMovieid) setMovieid(result.id);
+    if (setActualVideoUrl) setActualVideoUrl(result.video_url);
+    if (onResultSelect) onResultSelect(result.video_url);
+
+    setIsFocused(false);
+    setQuery("");
   };
 
   const showDropdown = isFocused && query.trim().length > 0 && showResults;
@@ -81,7 +78,7 @@ const SearchBar = ({
 
       {/* Results Dropdown */}
       {showDropdown && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-white/20 rounded-lg shadow-2xl max-h-96 overflow-y-auto z-50">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-white/20 rounded-lg shadow-2xl max-h-96 overflow-y-auto z-[100]">
           {isLoading ? (
             <div className="p-4 text-center text-white/60">
               <div className="animate-spin w-6 h-6 border-2 border-white/20 border-t-white rounded-full mx-auto"></div>
