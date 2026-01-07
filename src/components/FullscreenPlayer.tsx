@@ -15,6 +15,7 @@ import RelatedContent from "./RelatedContent";
 import AdToast from "./AdToast";
 import { useDispatch, useSelector } from "react-redux";
 import { openScreenPlayer } from "@/store/screenPlayerSlice";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 const FullscreenPlayer = ({
   isOpen,
@@ -276,18 +277,13 @@ const FullscreenPlayer = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-[#0a0a0a] overflow-y-auto">
+    <div className="fixed inset-0 z-[9999] overflow-y-auto" style={{
+      background: `linear-gradient(200deg, #311066 0%, #1D0833 20%, #120222 45%, black 100%)`,
+    }}>
 
-      <div className="min-w-[1280px] mx-auto w-full p-8" style={{
-        background: `
-            linear-gradient(
-              200deg,
-              #311066 0%,
-              #1D0833 20%,
-              #120222 45%,
-              black 100%
-            )`,
-      }}  >
+      <div className="max-w-[1600px] mx-auto w-full p-8">
+
+
 
         <div className="w-full x-auto px-4 py-12">
           <div className="flex justify-center items-center gap-4 mb-4">
@@ -313,9 +309,9 @@ const FullscreenPlayer = ({
             />
           </div>
 
-          <div className="aspect-video w-full bg-black rounded-lg overflow-hidden mb-8 relative">
+          <div className="aspect-video w-full bg-black rounded-2xl overflow-hidden mb-8 relative shadow-2xl border border-white/10">
             {/* <div ref={playerContainerRef} className="w-full h-full" /> */}
-            <div ref={playerRef} className="h-[90%] w-full">
+            <div ref={playerRef} className="h-full w-full">
               {
                 actualVideoUrl &&
                 <VideoPlayer
@@ -370,70 +366,73 @@ const FullscreenPlayer = ({
                     <>
                       <h2 className="text-white text-2xl font-bold mb-6">Episodes</h2>
                       {/* Episode Grid/List */}
-                      <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
-                        {currentSeasonEpisodes.map((episode: any, index) => (
-                          <div
-                            key={episode.id}
-                            className={`flex-shrink-0 w-80 cursor-pointer group snap-start transition-all duration-300 ${currentEpisode?.id === episode.id
-                              ? 'ring-2 ring-blue-500'
-                              : 'hover:ring-2 hover:ring-white/30'
-                              }`}
-                            onClick={() => {
-                              setCurrentEpisode(episode);
-                              setActualVideoUrl(episode.video_url || episode.videoUrl);
-                              setVideoEnded(false);
-                              setMovieid(episode?.id)
-                              setMovies([episode])
-                              playerRef.current?.scrollIntoView({ behavior: "smooth" });
-                              // Get all episodes from the current season for autoplay
-                              const allEpisodes = currentSeasonEpisodes || [];
-                              dispatch(openScreenPlayer({
-                                isOpen: true,
-                                selectedVideo: episode,
-                                currentVideoIndex: index,
-                                isSeries: true,
-                                seriesData: { episodes: allEpisodes }
-                              }))
-                            }}
-                          >
-                            <div className="bg-white/5 rounded-lg overflow-hidden">
-                              <div className="relative aspect-video bg-slate-900">
-                                <img
-                                  src={poster_url}
-                                  alt={episode.title}
-                                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                                />
-                                {currentEpisode?.id === episode.id && (
-                                  <div className="absolute inset-0 bg-blue-600/20 flex items-center justify-center">
-                                    <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded shadow-lg">
-                                      Now Playing
+                      <ScrollArea className="w-full pb-4">
+                        <div className="flex w-max gap-4 pb-4">
+                          {currentSeasonEpisodes.map((episode: any, index) => (
+                            <div
+                              key={episode.id}
+                              className={`flex-shrink-0 w-80 cursor-pointer group snap-start transition-all duration-300 ${currentEpisode?.id === episode.id
+                                ? 'ring-2 ring-blue-500'
+                                : 'hover:ring-2 hover:ring-white/30'
+                                }`}
+                              onClick={() => {
+                                setCurrentEpisode(episode);
+                                setActualVideoUrl(episode.video_url || episode.videoUrl);
+                                setVideoEnded(false);
+                                setMovieid(episode?.id)
+                                setMovies([episode])
+                                playerRef.current?.scrollIntoView({ behavior: "smooth" });
+                                // Get all episodes from the current season for autoplay
+                                const allEpisodes = currentSeasonEpisodes || [];
+                                dispatch(openScreenPlayer({
+                                  isOpen: true,
+                                  selectedVideo: episode,
+                                  currentVideoIndex: index,
+                                  isSeries: true,
+                                  seriesData: { episodes: allEpisodes }
+                                }))
+                              }}
+                            >
+                              <div className="bg-white/5 rounded-lg overflow-hidden">
+                                <div className="relative aspect-video bg-slate-900">
+                                  <img
+                                    src={poster_url}
+                                    alt={episode.title}
+                                    className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                                  />
+                                  {currentEpisode?.id === episode.id && (
+                                    <div className="absolute inset-0 bg-blue-600/20 flex items-center justify-center">
+                                      <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded shadow-lg">
+                                        Now Playing
+                                      </div>
                                     </div>
+                                  )}
+                                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                                    <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                                    </svg>
                                   </div>
-                                )}
-                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
-                                  <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                                  </svg>
                                 </div>
-                              </div>
 
-                              <div className="p-4">
-                                <div className="text-blue-400 text-xs font-bold uppercase tracking-wider mb-1">
-                                  Episode {episode.episode_number}
+                                <div className="p-4">
+                                  <div className="text-blue-400 text-xs font-bold uppercase tracking-wider mb-1">
+                                    Episode {episode.episode_number}
+                                  </div>
+                                  <h3 className="text-white font-semibold mb-2 line-clamp-1">
+                                    {episode.title}
+                                  </h3>
+                                  {episode.description && (
+                                    <p className="text-white/60 text-sm line-clamp-2">
+                                      {episode.description}
+                                    </p>
+                                  )}
                                 </div>
-                                <h3 className="text-white font-semibold mb-2 line-clamp-1">
-                                  {episode.title}
-                                </h3>
-                                {episode.description && (
-                                  <p className="text-white/60 text-sm line-clamp-2">
-                                    {episode.description}
-                                  </p>
-                                )}
                               </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                        <ScrollBar orientation="horizontal" />
+                      </ScrollArea>
 
 
                     </>
