@@ -13,7 +13,7 @@ const sectionTitles: Record<string, string> = {
 };
 
 type RecommendedSectionProps = {
-  handleRelatedClick: (id: string) => void;
+  handleRelatedClick: (id: string, item: any) => void;
   setMovieid: (id: string) => void;
   setActualVideoUrl: (url: string) => void;
   setMovies: (movies: any[]) => void;
@@ -109,7 +109,7 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
                     key={rec.id}
                     item={rec}
                     onClick={(item) => {
-                      handleRelatedClick(item.id);
+                      handleRelatedClick(item.id, item);
                       setMovieid(item.id);
                       setActualVideoUrl(item.video_url);
                       setMovies([item]);

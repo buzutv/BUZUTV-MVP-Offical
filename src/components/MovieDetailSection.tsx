@@ -4,22 +4,33 @@ import { getOptimizedImageUrl } from '../utils/youtubeUtils';
 import { useEffect, useRef, useState } from 'react';
 import { useLazyGetContentByIdQuery } from '@/store/contentSlice';
 const MovieDetailSection = () => {
-    const currentMovie = useSelector((state: any) => state.screenPlayer.contentId);
+    const {
+        selectedVideo,
+        isSeries,
+        contentId
+    } = useSelector((state: any) => state.screenPlayer);
+
+    // const isSeries = useSelector((state: any) => state.screenPlayer.isSeries)
     const [currentMovieState, setCurrentMovieState] = useState(null);
     const [triggerContentById] = useLazyGetContentByIdQuery()
-    const contentIdRef = useRef(currentMovie)
-    if (!contentIdRef.current) return null;
+    const contentIdRef = useRef(contentId)
+    if (!contentIdRef.current && !isSeries) return null;
     useEffect(() => {
         const fetchContentById = async () => {
-            if (!contentIdRef.current) return;
-            const { data, error } = await triggerContentById(contentIdRef.current)
-            if (data) {
-                setCurrentMovieState(data)
+            if (!contentIdRef.current) return
+            if (!isSeries) {
+                setCurrentMovieState(selectedVideo)
+            }
+            else {
+                const { data, error } = await triggerContentById(contentIdRef.current)
+                if (data) {
+                    setCurrentMovieState(data)
+                }
             }
         }
         fetchContentById()
     }, [contentIdRef.current])
-    console.log("Current Movie Detail", contentIdRef.current)
+    console.log("Current Movie Detail", currentMovieState)
     return (
 
         <div

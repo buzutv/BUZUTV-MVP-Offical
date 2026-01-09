@@ -43,7 +43,7 @@ const RelatedContent = ({
           item={content}
           showWatchProgress={true}
           onClick={(item) => {
-            handleRelatedClick(item.id)
+            handleRelatedClick(item.id, item)
             setMovieid(item.id)
             setActualVideoUrl(item.video_url);
             setMovies([item]);

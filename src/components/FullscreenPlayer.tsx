@@ -82,6 +82,7 @@ const FullscreenPlayer = ({
   const isSeries = useSelector((state: any) => state.screenPlayer.isSeries);
   const contentIds = useSelector((state: any) => state.screenPlayer.playlistInfo);
   const playlistId = useSelector((state: any) => state.screenPlayer.playlistId)
+
   const [triggerGetSearchContentWithWatchHistory, resultGetSearchContentWithWatchHistory] = useLazyGetSearchContentWithWatchHistoryQuery()
   console.log("Selected Content from Redux in FullscreenPlayer:", currentEpisode?.id);
   // const MemoizedVideoPlayer = memo(VideoPlayer);
@@ -247,7 +248,11 @@ const FullscreenPlayer = ({
     setSearchResults(searchResult || []);
   };
 
-  const handleRelatedClick = (id: string) => {
+  const handleRelatedClick = (id: string, item) => {
+    dispatch(openScreenPlayer({
+      selectedVideo: item,
+      isSeries: item.type === 'series',
+    }))
     setVideoId(id);
 
     setTimeout(() => {
@@ -322,7 +327,7 @@ const FullscreenPlayer = ({
             {/* Overlays */}
           </div>
 
-          {season?.length > 0 && (
+          {season?.length > 0 && isSeries && (
             <div className="mb-8">
               <div className="flex flex-col items-center mb-8">
 
@@ -348,7 +353,7 @@ const FullscreenPlayer = ({
               </div>
               <div>
                 {
-                  season && (
+                  season && isSeries && (
                     <>
                       <h2 className="text-white text-2xl font-bold mb-6">Episodes</h2>
                       {/* Episode Grid/List */}
