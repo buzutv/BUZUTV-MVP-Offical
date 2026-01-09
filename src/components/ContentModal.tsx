@@ -14,7 +14,7 @@ import SeriesPlayer from "@/components/SeriesPlayer";
 import { fetchSeriesSeasons, getOptimizedImageUrl } from "@/utils/youtubeUtils";
 import FullscreenPlayer from "./FullscreenPlayer";
 import { useGetSeasonWithEpisodesQuery } from "@/store/seasonSlice";
-import { openScreenPlayer, setisSeries, setSeriesData } from "@/store/screenPlayerSlice";
+import { openScreenPlayer, setContentId, setisSeries, setSeriesData } from "@/store/screenPlayerSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { useLazyGetPlaylistContentWithWatchHistoryQuery } from "@/store/contentSlice";
 
@@ -382,9 +382,9 @@ const ContentModal: React.FC<ContentModalProps> = ({
       isOpen: true,
       isSeries: true,
       selectedVideo: seasonWithEpisode[0]?.episodes[0],
-      seriesData: seasonWithEpisode[0]
+      seriesData: seasonWithEpisode[0],
+      contentId: movie
     }))
-    // dispatch(setSeriesData(seasonWithEpisode))
 
 
     const firstEpisode = seasons[0]?.episodes[0];
@@ -689,8 +689,8 @@ const ContentModal: React.FC<ContentModalProps> = ({
                               handlePlayEpisode(episode, season.season_number)
                             }
                             className={`border flex items-center space-x-3 rounded-lg p-3 transition-all duration-300 group h-12 cursor-pointer ${effectiveKidsMode
-                                ? "border-blue-400/20 bg-blue-500/60 hover:border-white hover:shadow-[0_0_8px_rgba(255,255,255,0.6)]"
-                                : "border-brand-500/20 bg-black hover:border-white hover:shadow-[0_0_8px_rgba(255,255,255,0.6)]"
+                              ? "border-blue-400/20 bg-blue-500/60 hover:border-white hover:shadow-[0_0_8px_rgba(255,255,255,0.6)]"
+                              : "border-brand-500/20 bg-black hover:border-white hover:shadow-[0_0_8px_rgba(255,255,255,0.6)]"
                               }`}
                           >
                             <div className="flex items-center space-x-3 flex-1 min-w-0">

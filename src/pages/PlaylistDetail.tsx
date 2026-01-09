@@ -8,7 +8,7 @@ import { usePlaylistDetail } from '@/hooks/usePlaylistDetail'
 import usePlaylists from '@/hooks/usePlaylists'
 import { supabase } from '@/integrations/supabase/client'
 import { useLazyGetPlaylistContentWithWatchHistoryQuery } from '@/store/contentSlice'
-import { openScreenPlayer } from '@/store/screenPlayerSlice'
+import { openScreenPlayer, setContentId } from '@/store/screenPlayerSlice'
 import { useLazyGetSeasonWithEpisodesQuery } from '@/store/seasonSlice'
 import { fetchSeriesSeasons, getOptimizedImageUrl } from '@/utils/youtubeUtils'
 import { Dialog, DialogContent } from '@radix-ui/react-dialog'
@@ -408,12 +408,13 @@ const PlaylistDetail = () => {
               dispatch(openScreenPlayer({
                 isOpen: true,
                 contentItems: displayItems,
+                // contentId: item.id,
                 // startIndex: idx,
                 currentVideoIndex: idx,
                 selectedVideo: item,
                 playlistId: id
               }))
-              // dispatch(setCurrentVideoIndex({ currentVideoIndex: idx }));
+              dispatch(setContentId({ contentId: item.id }));
             }}
           >
             <div className="relative">

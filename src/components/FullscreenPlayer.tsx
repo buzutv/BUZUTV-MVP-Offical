@@ -477,8 +477,8 @@ const FullscreenPlayer = ({
                         key={genre}
                         onClick={() => setSelectedGenre(genre)}
                         className={`px-6 py-3 rounded-full text-base font-medium transition-all duration-300 transform border hover:scale-105 active:scale-95 ${selectedGenre === genre
-                            ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white border-blue-400 shadow-[0_0_20px_rgba(37,99,235,0.3)]'
-                            : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border-white/5 hover:border-white/20'
+                          ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white border-blue-400 shadow-[0_0_20px_rgba(37,99,235,0.3)]'
+                          : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border-white/5 hover:border-white/20'
                           }`}
                       >
                         {genre}
@@ -503,8 +503,8 @@ const FullscreenPlayer = ({
                         key={type}
                         onClick={() => setSelectedType(type)}
                         className={`px-8 py-3 rounded-full text-base font-medium transition-all duration-300 transform border hover:scale-105 active:scale-95 capitalize ${selectedType === type
-                            ? 'bg-gradient-to-r from-purple-600 to-purple-500 text-white border-purple-400 shadow-[0_0_20px_rgba(147,51,234,0.3)]'
-                            : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border-white/5 hover:border-white/20'
+                          ? 'bg-gradient-to-r from-purple-600 to-purple-500 text-white border-purple-400 shadow-[0_0_20px_rgba(147,51,234,0.3)]'
+                          : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border-white/5 hover:border-white/20'
                           }`}
                       >
                         {type}

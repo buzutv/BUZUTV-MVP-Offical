@@ -100,6 +100,7 @@ export const contentSlice = supabaseApi.injectEndpoints({
 export const {
   useGetContentQuery,
   useGetContentByIdQuery,
+  useLazyGetContentByIdQuery,
   useCreateContentMutation,
   useGetContentWithWatchHistoryFiltersQuery,
   useLazyGetContentWithWatchHistoryFiltersQuery,
