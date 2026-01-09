@@ -169,6 +169,9 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
             rel: 0,
             showinfo: 0,
             modestbranding: 1,
+            cc_load_policy: 0, // Hide closed captions by default
+            iv_load_policy: 3, // Hide video annotations
+            disablekb: 0, // Enable keyboard controls
           },
           events: {
             onReady: (e: any) => {

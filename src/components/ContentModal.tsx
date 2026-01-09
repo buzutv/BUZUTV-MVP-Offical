@@ -396,6 +396,13 @@ const ContentModal: React.FC<ContentModalProps> = ({
   };
 
   const handlePlayEpisode = (episode: Episode, seasonNumber: number) => {
+    dispatch(openScreenPlayer({
+      isOpen: true,
+      isSeries: true,
+      selectedVideo: episode,
+      seriesData: seasonWithEpisode[0],
+      contentId: movie
+    }))
     if (episode.video_url && seasons.length > 0) {
       setCurrentEpisode(episode);
       setCurrentSeasonNumber(seasonNumber);

@@ -85,7 +85,7 @@ export async function fetchWatchHistory(userId: string, movieId: string) {
 
 
 export async function onReadyVideoLoader(e: any, movieId: string, userId: string) {
-   console.log("CURRENT MOVIE ID IN EVENT:", movieId);
+  console.log("CURRENT MOVIE ID IN EVENT:", movieId);
   // const last_position = await fetchWatchHistory(userId, movieId.id)
   console.log("Last position", movieId.last_position, movieId.watch_percentage, movieId.completed);
   if (movieId.completed || movieId.watch_percentage >= 99) {
@@ -122,21 +122,21 @@ export async function saveWatchHistory(
   completed: boolean,
   ref: any,
   type?: "series" | string,
- 
+
 ) {
   const duration = ref.current?.getDuration?.() || 1;
-  const current  = ref.current?.getCurrentTime?.() || 0;
+  const current = ref.current?.getCurrentTime?.() || 0;
   const watchPercentage = completed
     ? 100
     : Math.floor((current / duration) * 100);
 
-    console.log("Is Series", episodeId)
+  console.log("Is Series", episodeId)
   const isSeries = type === "series";
 
   const payload = {
     user_id: userId,
-    movie_id: episodeId ?  null : movieId,
-    episode_id:  episodeId ? episodeId : null,
+    movie_id: episodeId ? null : movieId,
+    episode_id: episodeId ? episodeId : null,
     watched_at: new Date().toISOString(),
     last_position: completed ? 0 : Math.floor(currentTime),
     watch_percentage: watchPercentage,
@@ -198,7 +198,7 @@ export async function fetchSeriesSeasons(contentUuid: string) {
     //   .from("content")
     //   .select("*")
     //   .in("video_url", episodesData?.map(ep => ep.video_url));
-    
+
     // if(episodeContentError) {
     //   console.error("Error fetching episode content data for season", season.id, ":", episodeContentError);
     // }
@@ -229,15 +229,15 @@ export async function fetchSeriesSeasons(contentUuid: string) {
 // }
 
 export const getOptimizedImageUrl = (
-  url: string | null | undefined, 
+  url: string | null | undefined,
   width: number = 400
 ): string => {
   if (!url) return '';
-  
+
   if (!url.includes('supabase.co/storage/v1/object/public/')) {
     return url;
   }
-  
+
   const separator = url.includes('?') ? '&' : '?';
   return `${url}${separator}width=${width}&quality=80&resize=contain`;
 };
@@ -294,7 +294,7 @@ export const getRecommendedMovies = async (user_id) => {
 };
 
 
-export const normalizer = (data:any) => {
+export const normalizer = (data: any) => {
   /* 
     given data like this
       
@@ -303,17 +303,17 @@ export const normalizer = (data:any) => {
   
   */
 
- 
-      return {
-        ...data,
-        watch_percentage: data.user_watch_history?.watch_percentage ?? 0,
-        last_position: data.user_watch_history?.last_position ?? 0,
-        completed: data.user_watch_history?.completed ?? false,
-      }
-    
+
+  return {
+    ...data,
+    watch_percentage: data.user_watch_history?.watch_percentage ?? 0,
+    last_position: data.user_watch_history?.last_position ?? 0,
+    completed: data.user_watch_history?.completed ?? false,
+  }
 
 
-   
+
+
 
 
 }
