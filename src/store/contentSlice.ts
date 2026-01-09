@@ -29,6 +29,15 @@ export const contentSlice = supabaseApi.injectEndpoints({
         `content?select=*,user_watch_history(*,movie_id)&user_watch_history.user_id=eq.${userId}`,
       providesTags: ['Content', 'user_watch_history'],
     }),
+    getSearchContentWithWatchHistory: builder.query<
+      Content[],
+      { userId: string; search: string }
+    >({
+      query: ({ userId, search }) =>
+        `content?select=*,user_watch_history(*,movie_id)&user_watch_history.user_id=eq.${userId}&or=(title.ilike.*${search}*)`,
+      providesTags: ['Content', 'user_watch_history'],
+    }),
+
 
     getPlaylistContentWithWatchHistory: builder.query<
       Content[],
@@ -102,6 +111,8 @@ export const {
   useGetContentByIdQuery,
   useLazyGetContentByIdQuery,
   useCreateContentMutation,
+  useGetSearchContentWithWatchHistoryQuery,
+  useLazyGetSearchContentWithWatchHistoryQuery,
   useGetContentWithWatchHistoryFiltersQuery,
   useLazyGetContentWithWatchHistoryFiltersQuery,
   useGetContentWithWatchHistoryQuery,

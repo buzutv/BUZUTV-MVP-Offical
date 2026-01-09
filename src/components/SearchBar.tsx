@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Search, X } from 'lucide-react';
 import { fetchWatchHistory, getOptimizedImageUrl } from '@/utils/youtubeUtils';
+import { useDispatch } from 'react-redux';
+import { openScreenPlayer } from '@/store/screenPlayerSlice';
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
@@ -29,7 +31,7 @@ const SearchBar = ({
 }: SearchBarProps) => {
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
-
+  const dispatch = useDispatch()
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setQuery(value);
@@ -45,7 +47,9 @@ const SearchBar = ({
     if (setMovieid) setMovieid(result.id);
     if (setActualVideoUrl) setActualVideoUrl(result.video_url);
     if (onResultSelect) onResultSelect(result.video_url);
-
+    dispatch(openScreenPlayer({
+      selectedVideo: result
+    }))
     setIsFocused(false);
     setQuery("");
   };

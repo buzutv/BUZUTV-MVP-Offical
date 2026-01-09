@@ -8,7 +8,7 @@ const MovieDetailSection = () => {
     const [currentMovieState, setCurrentMovieState] = useState(null);
     const [triggerContentById] = useLazyGetContentByIdQuery()
     const contentIdRef = useRef(currentMovie)
-    if (!currentMovie) return null;
+    if (!contentIdRef.current) return null;
     useEffect(() => {
         const fetchContentById = async () => {
             if (!contentIdRef.current) return;

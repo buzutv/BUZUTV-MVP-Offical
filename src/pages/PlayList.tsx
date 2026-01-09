@@ -2,12 +2,12 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useGetPlaylistsWithItemsQuery, useLazyGetPlaylistsWithItemsByIdQuery } from "../store/playlistSlice" // your RTK Query hook
 import { useNavigate } from "react-router-dom"
 import { useState } from "react"
-import { 
-    Dialog, 
-    DialogContent, 
-    DialogHeader, 
-    DialogTitle, 
-    DialogTrigger, 
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
     DialogFooter,
     DialogDescription
 } from "@/components/ui/dialog"
@@ -118,24 +118,24 @@ const PlayList = () => {
                 <DialogContent className="sm:max-w-[425px] bg-white text-black">
                     <DialogHeader>
                         <DialogTitle className="text-xl text-red-600 flex items-center gap-2">
-                            <Trash2 className="w-5 h-5"/>
+                            <Trash2 className="w-5 h-5" />
                             Confirm Deletion
                         </DialogTitle>
                         <DialogDescription>
                             Delete playlist:
-                            <span className="font-bold"> "{playlistToDelete?.title}"</span>?  
+                            <span className="font-bold"> "{playlistToDelete?.title}"</span>?
                             This action is permanent.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
-                        <Button 
-                            variant="outline" 
+                        <Button
+                            variant="outline"
                             onClick={() => setPlaylistToDelete(null)}
                             className="text-gray-600 border-gray-300 hover:bg-gray-100"
                         >
                             Cancel
                         </Button>
-                        <Button 
+                        <Button
                             onClick={handleConfirmDelete}
                             className="bg-red-600 hover:bg-red-700 text-white"
                         >
@@ -161,7 +161,11 @@ const PlayList = () => {
                             </Button>
                         </DialogTrigger>
 
-                        <DialogContent className="max-w-md bg-white text-black">
+                        <DialogContent className="max-w-md  text-black"
+                            style={{
+                                background: `linear-gradient(200deg, #311066 0%, #1D0833 20%, #120222 45%, black 100%)`,
+                            }}
+                        >
                             <DialogHeader>
                                 <DialogTitle className="text-xl text-white">Create New Playlist</DialogTitle>
                             </DialogHeader>

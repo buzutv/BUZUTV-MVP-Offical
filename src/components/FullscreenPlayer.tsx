@@ -10,7 +10,7 @@ import { useLazyGetRecommendationsWtihContentEmbeddedQuery, useLazyGetUserRecomm
 
 import { Episode, FullscreenPlayerProps } from "@/types";
 import MovieDetailSection from "./MovieDetailSection";
-import { useLazyGetContentWithWatchHistoryFiltersQuery, useLazyGetPlaylistContentWithWatchHistoryQuery } from "@/store/contentSlice";
+import { useLazyGetContentWithWatchHistoryFiltersQuery, useLazyGetPlaylistContentWithWatchHistoryQuery, useLazyGetSearchContentWithWatchHistoryQuery } from "@/store/contentSlice";
 import RelatedContent from "./RelatedContent";
 import AdToast from "./AdToast";
 import { useDispatch, useSelector } from "react-redux";
@@ -81,7 +81,7 @@ const FullscreenPlayer = ({
   const isSeries = useSelector((state: any) => state.screenPlayer.isSeries);
   const contentIds = useSelector((state: any) => state.screenPlayer.playlistInfo);
   const playlistId = useSelector((state: any) => state.screenPlayer.playlistId)
-
+  const [triggerGetSearchContentWithWatchHistory, resultGetSearchContentWithWatchHistory] = useLazyGetSearchContentWithWatchHistoryQuery()
   console.log("Selected Content from Redux in FullscreenPlayer:", currentEpisode?.id);
   // const MemoizedVideoPlayer = memo(VideoPlayer);
   useEffect(() => {
@@ -248,20 +248,22 @@ const FullscreenPlayer = ({
 
   const handleSearch = async (query: string) => {
     if (query.trim().length === 0) return [];
+    const searchResult = await triggerGetSearchContentWithWatchHistory({ userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3", search: query }).unwrap()
+    // const { data, error } = await supabase
+    //   .from("content")
+    //   .select("*")
+    //   .ilike("title", `%${query}%`)
+    //   .order("created_at", { ascending: false });
 
-    const { data, error } = await supabase
-      .from("content")
-      .select("*")
-      .ilike("title", `%${query}%`)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error("Error fetching search results:", error);
-      return [];
-    }
+    // if (error) {
+    //   console.error("Error fetching search results:", error);
+    //   return [];
+    // }
     setIsSearching(false);
-    setSearchResults(data || []);
+    setSearchResults(searchResult || []);
   };
+
+  console.log("Search Results in FullscreenPlayer:", searchResults);
   const handleRelatedClick = (id: string) => {
     setVideoId(id);
 

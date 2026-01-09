@@ -149,6 +149,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
     refetchOnFocus: true,
     refetchOnReconnect: true
   })
+  console.log("Season with Episode", seasonWithEpisode)
   const isSeries = useSelector((state: any) => state.screenPlayer.isSeries);
 
 
@@ -703,7 +704,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
                                 </h3>
                               </div>
                               <span className="text-gray-300 text-xs flex-shrink-0">
-                                {formatDuration(episode.duration_minutes)}
+                                {formatDuration(episode?.duration_minutes)}
                               </span>
                             </div>
                             <button
