@@ -34,7 +34,8 @@ const FullscreenPlayer = ({
   hasPrevious = false,
   onNext,
   onPrevious,
-  playlistInfo
+  playlistInfo,
+  onHistorySaved
 }: FullscreenPlayerProps) => {
 
   const playerRef = useRef<HTMLDivElement>()
@@ -225,12 +226,6 @@ const FullscreenPlayer = ({
   }, [selectedGenre, selectedYear, selectedType, currentMovie?.id, triggerRelatedContent]);
 
 
-  console.log("Current Movie in FullscreenPlayer:", currentMovie);
-  console.log("Related Content in FullscreenPlayer:", relatedContent);
-  console.log("Movies in FullscreenPlayer:", movies);
-  console.log("Actual Video URL in FullscreenPlayer:", actualVideoUrl);
-  console.log("Video URL prop in FullscreenPlayer:", videoUrl);
-  console.log("Seasons in FullscreenPlayer:", season);
 
   useEffect(() => {
     async function fetchRecommendations() {
@@ -243,27 +238,15 @@ const FullscreenPlayer = ({
 
 
 
-  console.log("Recommended Movies:", recommended);
 
 
   const handleSearch = async (query: string) => {
     if (query.trim().length === 0) return [];
     const searchResult = await triggerGetSearchContentWithWatchHistory({ userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3", search: query }).unwrap()
-    // const { data, error } = await supabase
-    //   .from("content")
-    //   .select("*")
-    //   .ilike("title", `%${query}%`)
-    //   .order("created_at", { ascending: false });
-
-    // if (error) {
-    //   console.error("Error fetching search results:", error);
-    //   return [];
-    // }
     setIsSearching(false);
     setSearchResults(searchResult || []);
   };
 
-  console.log("Search Results in FullscreenPlayer:", searchResults);
   const handleRelatedClick = (id: string) => {
     setVideoId(id);
 
@@ -325,10 +308,11 @@ const FullscreenPlayer = ({
                   setFinal={setFinal}
                   setActualVideoUrl={setActualVideoUrl}
                   playlistItems={playlists}
-                  movieId={selectedContent?.id}
-                  episodeId={season ? selectedContent?.id : undefined}
+                  movieId={movieId}
+                  episodeId={isSeries ? selectedContent?.id : undefined}
                   userid="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
                   playlistInfo={playlistInfo}
+                  onHistorySaved={onHistorySaved}
                   ref={parentRef}
                 />
               }
@@ -414,6 +398,16 @@ const FullscreenPlayer = ({
                                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
                                     </svg>
                                   </div>
+
+                                  {/* Progress Bar */}
+                                  {episode.watch_percentage > 0 && (
+                                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+                                      <div
+                                        className="h-full bg-blue-500 transition-all duration-300"
+                                        style={{ width: `${episode.watch_percentage}%` }}
+                                      />
+                                    </div>
+                                  )}
                                 </div>
 
                                 <div className="p-4">

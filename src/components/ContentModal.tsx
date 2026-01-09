@@ -149,7 +149,6 @@ const ContentModal: React.FC<ContentModalProps> = ({
     refetchOnFocus: true,
     refetchOnReconnect: true
   })
-  console.log("Season with Episode", seasonWithEpisode)
   const isSeries = useSelector((state: any) => state.screenPlayer.isSeries);
 
 
@@ -508,6 +507,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
           onNext={onNext}
           onPrevious={() => { }}
           season={seasonWithEpisode}
+          onHistorySaved={refetch}
         />
       </div>
     );
@@ -543,7 +543,8 @@ const ContentModal: React.FC<ContentModalProps> = ({
               />
 
               {/* Title and Info Container */}
-              <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
+              <div className="absolute bottom-0 left-0 right-0 p-8 z-10"
+              >
                 <h1
                   className={`text-5xl font-bold text-white mb-6 ${effectiveKidsMode ? "drop-shadow-[2px_2px_4px_rgba(59,130,246,0.8)]" : ""}`}
                 >
@@ -670,7 +671,10 @@ const ContentModal: React.FC<ContentModalProps> = ({
                           onClick={() => dispatch(setSeriesData({
                             isSeries: true,
                             seriesData: season
-                          }))}
+                          }))
+
+
+                          }
                         >
                           Season {season.season_number}
                         </TabsTrigger>
@@ -688,6 +692,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
                             key={episode.id}
                             onClick={() =>
                               handlePlayEpisode(episode, season.season_number)
+
                             }
                             className={`border flex items-center space-x-3 rounded-lg p-3 transition-all duration-300 group h-12 cursor-pointer ${effectiveKidsMode
                               ? "border-blue-400/20 bg-blue-500/60 hover:border-white hover:shadow-[0_0_8px_rgba(255,255,255,0.6)]"

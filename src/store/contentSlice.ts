@@ -101,6 +101,42 @@ export const contentSlice = supabaseApi.injectEndpoints({
       }),
       invalidatesTags: ['Content'],
     }),
+
+    saveWatchHistory: builder.mutation<any, {
+      userId: string;
+      movieId: string;
+      episodeId?: string;
+      videoId: string;
+      currentTime: number;
+      completed: boolean;
+      watchPercentage: number;
+      type?: string;
+    }>({
+      query: (payload) => ({
+        url: 'user_watch_history',
+        method: 'POST',
+        body: {
+          user_id: payload.userId,
+          movie_id: payload.episodeId ? null : payload.movieId,
+          episode_id: payload.episodeId || null,
+          watched_at: new Date().toISOString(),
+          last_position: payload.completed ? 0 : Math.floor(payload.currentTime),
+          watch_percentage: payload.watchPercentage,
+          completed: payload.completed,
+        },
+        headers: {
+          'Prefer': 'resolution=merge-duplicates'
+        }
+      }),
+      invalidatesTags: (result, error, { movieId }) => [
+        { type: 'user_watch_history' },
+        { type: 'seasons', id: movieId },
+        { type: 'seasons' }, // Ensure any season listing is refreshed
+        'user_watch_history',
+        'seasons',
+        'Content'
+      ]
+    }),
   }),
 })
 
@@ -118,5 +154,6 @@ export const {
   useGetContentWithWatchHistoryQuery,
   useLazyGetContentWithWatchHistoryQuery,
   useGetPlaylistContentWithWatchHistoryQuery,
-  useLazyGetPlaylistContentWithWatchHistoryQuery
+  useLazyGetPlaylistContentWithWatchHistoryQuery,
+  useSaveWatchHistoryMutation
 } = contentSlice

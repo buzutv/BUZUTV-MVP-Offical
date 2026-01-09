@@ -4,6 +4,8 @@ import { getYouTubeEmbedUrl, normalizer, onReadyVideoLoader, saveWatchHistory } 
 import { useDispatch, useSelector } from "react-redux";
 import { openScreenPlayer, setCurrentVideoIndex } from "@/store/screenPlayerSlice";
 
+const USER_ID = "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3";
+
 interface VideoPlayerProps {
   videoId: string;
   setActualVideoUrl?: (videoId: string) => void;
@@ -15,10 +17,11 @@ interface VideoPlayerProps {
   playlistInfo?: any;
   userid: string;
   setFinal?: (any: any) => void;
+  onHistorySaved?: () => void;
 }
 
 const VideoPlayer = forwardRef<any, VideoPlayerProps>(
-  ({ videoId, playlistItems, setCurrentMovie, movieId, episodeId, setFinal, type, userid, playlistInfo }, ref) => {
+  ({ videoId, playlistItems, setCurrentMovie, movieId, episodeId, setFinal, type, userid, playlistInfo, onHistorySaved }, ref) => {
     const playerContainerRef = useRef<HTMLDivElement>(null);
     const playerInstanceRef = useRef<any>(null);
 
@@ -301,7 +304,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
       if (state === window.YT.PlayerState.ENDED) {
         // Save watch history
         await saveWatchHistory(
-          userid,
+          USER_ID,
           movieIdRef.current,
           episodeIdRef.current,
           videoIdRef.current,
@@ -310,6 +313,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
           playerInstanceRef,
           type
         );
+        if (onHistorySaved) onHistorySaved();
 
         // Check if there's a next video
         if (currentVideoIndex < currentQueue.length - 1) {
@@ -323,7 +327,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
 
       if (state === window.YT.PlayerState.PAUSED) {
         await saveWatchHistory(
-          userid,
+          USER_ID,
           movieIdRef.current,
           episodeIdRef.current,
           videoIdRef.current,
@@ -332,14 +336,15 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
           playerInstanceRef,
           type
         );
+        if (onHistorySaved) onHistorySaved();
       }
 
       if (state === window.YT.PlayerState.BUFFERING) {
         const currentTime = e.target.getCurrentTime();
-        if (currentTime > 1) {
+        if (currentTime >= 0) {
           if (setFinal) setFinal(currentTime);
           await saveWatchHistory(
-            userid,
+            USER_ID,
             movieIdRef.current,
             episodeIdRef.current,
             videoIdRef.current,
@@ -348,6 +353,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
             playerInstanceRef,
             type
           );
+          if (onHistorySaved) onHistorySaved();
         }
       }
     };

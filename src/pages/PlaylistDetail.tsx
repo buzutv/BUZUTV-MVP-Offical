@@ -414,7 +414,7 @@ const PlaylistDetail = () => {
                 selectedVideo: item,
                 playlistId: id
               }))
-              dispatch(setContentId({ contentId: item.id }));
+              // dispatch(setContentId({ contentId: item.id }));
             }}
           >
             <div className="relative">
