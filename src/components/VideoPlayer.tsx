@@ -30,6 +30,8 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
     const episodeIdRef = useRef(episodeId);
     const videoIdRef = useRef(videoId);
     const countdownRef = useRef<any>(null);
+    const progressIntervalRef = useRef<any>(null);
+    const hasTriggeredTransition = useRef(false);
 
     // Redux State
     const selectedVideo = useSelector((state: any) => state.screenPlayer.selectedVideo);
@@ -147,6 +149,9 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
         return;
       }
 
+      // Reset transition flag for new video
+      hasTriggeredTransition.current = false;
+
       // Initialize YouTube API if not loaded
       if (!window.YT) {
         const tag = document.createElement("script");
@@ -190,6 +195,30 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
         (window as any).onYouTubeIframeAPIReady = initPlayer;
       }
     }, [videoId, getVideoId, userid]);
+
+    // --- TIME POLLING ---
+    const startPolling = useCallback(() => {
+      stopPolling();
+      progressIntervalRef.current = setInterval(() => {
+        if (!playerInstanceRef.current || !playerInstanceRef.current.getCurrentTime) return;
+
+        const currentTime = playerInstanceRef.current.getCurrentTime();
+        const duration = playerInstanceRef.current.getDuration();
+
+        if (duration > 0 && duration - currentTime <= 20 && !hasTriggeredTransition.current && !videoEnded) {
+          console.log("Early transition triggered (30s remaining)");
+          hasTriggeredTransition.current = true;
+          startCountdown();
+        }
+      }, 1000);
+    }, [videoEnded]);
+
+    const stopPolling = useCallback(() => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+    }, []);
 
     // --- COUNTDOWN HELPERS ---
     const clearCountdownTimer = () => {
@@ -304,6 +333,12 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
     const handlePlayerStateChange = async (e: any) => {
       const state = e.data;
 
+      if (state === window.YT.PlayerState.PLAYING) {
+        startPolling();
+      } else {
+        stopPolling();
+      }
+
       if (state === window.YT.PlayerState.ENDED) {
         // Save watch history
         await saveWatchHistory(
@@ -318,13 +353,15 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
         );
         if (onHistorySaved) onHistorySaved();
 
-        // Check if there's a next video
-        if (currentVideoIndex < currentQueue.length - 1) {
-          startCountdown();
-        } else {
-          console.log("End of content reached");
-          setVideoEnded(true);
-          setCountdown(0); // 0 indicates end of playlist/single video
+        // Check if there's a next video (only if not already triggered by early transition)
+        if (!hasTriggeredTransition.current) {
+          if (currentVideoIndex < currentQueue.length - 1) {
+            startCountdown();
+          } else {
+            console.log("End of content reached");
+            setVideoEnded(true);
+            setCountdown(0); // 0 indicates end of playlist/single video
+          }
         }
       }
 
@@ -385,8 +422,9 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
           playerInstanceRef.current = null;
         }
         clearCountdownTimer();
+        stopPolling();
       };
-    }, []);
+    }, [stopPolling]);
 
     const hasNextVideo = currentVideoIndex < currentQueue.length - 1;
     const hasPreviousVideo = currentVideoIndex > 0;

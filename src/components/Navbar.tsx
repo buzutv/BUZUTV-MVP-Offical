@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import BrandButton from "@/components/ui/BrandButton";
+import { Dialog, DialogContent } from "./ui/dialog";
 
 interface NavbarProps {
   searchQuery: string;
@@ -160,9 +161,8 @@ const Navbar = React.memo(
     return (
       <nav
         ref={navRef}
-        className={`fixed top-3 left-0 right-0 z-50 px-4 min-[1100px]:px-6 h-14 transition-all duration-500 ${
-          shouldShowNav ? "flex min-[1100px]:flex" : "hidden"
-        } items-center`}
+        className={`fixed top-3 left-0 right-0 z-50 px-4 min-[1100px]:px-6 h-14 transition-all duration-500 ${shouldShowNav ? "flex min-[1100px]:flex" : "hidden"
+          } items-center`}
       >
         <div
           className="max-w-full px-4 min-[1100px]:px-8 w-full flex items-center justify-between h-14 relative bg-black/20 backdrop-blur-lg border border-white/10"
@@ -190,10 +190,9 @@ const Navbar = React.memo(
                   className={`
                     flex items-center justify-center gap-3 rounded-full font-medium will-change-transform transform-gpu transition-all whitespace-nowrap
                     px-4 py-1 text-base
-                    ${
-                      isActivePath(to)
-                        ? to === "/kids"
-                          ? `
+                    ${isActivePath(to)
+                      ? to === "/kids"
+                        ? `
                             bg-[linear-gradient(135deg,#1d4ed8,#2563eb,#3b82f6)]
                             text-white
                             border border-[rgba(37,99,235,0.3)]
@@ -208,7 +207,7 @@ const Navbar = React.memo(
                             before:transition-[left] before:duration-500
                             hover:before:left-full
                           `
-                          : `
+                        : `
                             bg-[linear-gradient(135deg,#7c3aed,#8b5cf6,#a855f7)]
                             text-white
                             border-2 border-[rgba(139,92,246,0.3)]
@@ -223,7 +222,7 @@ const Navbar = React.memo(
                             before:transition-[left] before:duration-500
                             hover:before:left-full
                           `
-                        : `
+                      : `
                           text-white border border-transparent
                           hover:bg-brand-500/10 hover:backdrop-blur
                           hover:-translate-y-0.5
@@ -247,11 +246,10 @@ const Navbar = React.memo(
           <div className="flex items-center gap-2">
             {/* Desktop search - hidden on mobile */}
             <div
-              className={`relative rounded-full px-2 py-1 hidden min-[1100px]:block ${
-                isSearchOpen || searchQuery
-                  ? "border border-white/10 bg-black/10"
-                  : ""
-              }`}
+              className={`relative rounded-full px-2 py-1 hidden min-[1100px]:block ${isSearchOpen || searchQuery
+                ? "border border-white/10 bg-black/10"
+                : ""
+                }`}
             >
               {(isSearchOpen || searchQuery) && isLoggedIn ? (
                 <div className="flex items-center px-3 py-1 rounded-full transition-all">
@@ -341,18 +339,16 @@ const Navbar = React.memo(
             >
               <div className="relative w-6 h-6">
                 <Menu
-                  className={`absolute inset-0 transition-all duration-300 ease-in-out transform ${
-                    isMenuOpen
-                      ? "opacity-0 scale-90 rotate-45"
-                      : "opacity-100 scale-100 rotate-0"
-                  }`}
+                  className={`absolute inset-0 transition-all duration-300 ease-in-out transform ${isMenuOpen
+                    ? "opacity-0 scale-90 rotate-45"
+                    : "opacity-100 scale-100 rotate-0"
+                    }`}
                 />
                 <X
-                  className={`absolute inset-0 transition-all duration-300 ease-in-out transform ${
-                    isMenuOpen
-                      ? "opacity-100 scale-100 rotate-0"
-                      : "opacity-0 scale-90 -rotate-45"
-                  }`}
+                  className={`absolute inset-0 transition-all duration-300 ease-in-out transform ${isMenuOpen
+                    ? "opacity-100 scale-100 rotate-0"
+                    : "opacity-0 scale-90 -rotate-45"
+                    }`}
                 />
               </div>
             </button>
@@ -361,11 +357,10 @@ const Navbar = React.memo(
 
         {/* Mobile dropdown */}
         <div
-          className={`absolute top-14 left-4 right-4 z-40 bg-black/20 backdrop-blur-lg border border-white/10 border-t-transparent rounded-b-[30px] px-6 py-4 space-y-3 min-[1100px]:hidden transition-all duration-300 ease-in-out transform ${
-            isMenuOpen
-              ? "opacity-100 translate-y-0 pointer-events-auto"
-              : "opacity-0 -translate-y-4 pointer-events-none"
-          }`}
+          className={`absolute top-14 left-4 right-4 z-40 bg-black/20 backdrop-blur-lg border border-white/10 border-t-transparent rounded-b-[30px] px-6 py-4 space-y-3 min-[1100px]:hidden transition-all duration-300 ease-in-out transform ${isMenuOpen
+            ? "opacity-100 translate-y-0 pointer-events-auto"
+            : "opacity-0 -translate-y-4 pointer-events-none"
+            }`}
         >
           {/* Mobile search */}
           <div className="pb-3 border-b border-white/10">
@@ -392,6 +387,58 @@ const Navbar = React.memo(
               {label}
             </Link>
           ))}
+
+          <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
+            <DialogContent className="bg-zinc-900 text-white p-6 rounded-xl min-w-[50%] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-40 h-auto overflow-y-auto border-2 border-white/10 max-h-[85vh]">
+              <div className="fixed inset-0 -z-10"
+                style={{
+                  background: `linear-gradient(200deg, #311066 0%, #1D0833 20%, #120222 45%, black 100%)`,
+                }}
+              ></div>
+              <h2 className="text-xl font-bold mb-4">Add Movies to Playlist</h2>
+
+              <input
+                type="text"
+                placeholder="Search movies..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 mb-4"
+              />
+
+              <div className="grid grid-cols-3 gap-8 overflow-y-auto h-[50vh] pr-2">
+                {[]?.map((movie) => {
+                  // const isSelected = selectedMovies.includes(movie.id);
+                  return (
+                    <div
+                      key={movie.id}
+                      className={`relative h-48 rounded-xl cursor-pointer overflow-hidden shadow-md transition-transform ${isSelected ? "ring-4 ring-primary/70 scale-105 bg-black opacity-1 border-4 border-white" : "hover:scale-105"}`}
+                      style={{
+                        backgroundImage: `url(${movie.poster_url || movie.backdrop_url || "/placeholder.jpg"})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }}
+                    // onClick={() => toggleMovieSelection(movie.id)}
+                    >
+                      <div className="absolute inset-0 bg-black/40 flex flex-col justify-end p-3">
+                        <p className="font-bold text-white line-clamp-1">{movie.title}</p>
+                        <p className="text-xs text-zinc-300">
+                          {movie.year || "—"} • {movie.type || "Unknown"}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={handleSearchClick}
+                disabled={searchQuery.length === 0}
+                className="w-full mt-6 px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/80 shadow-lg transition"
+              >
+                Add Selected ({searchQuery.length})
+              </button>
+            </DialogContent>
+          </Dialog>
 
         </div>
       </nav>
