@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, XIcon } from "lucide-react";
 import BrandButton from "@/components/ui/BrandButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -18,6 +18,8 @@ const Auth = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   useEffect(() => {
@@ -25,76 +27,76 @@ const Auth = () => {
     if (mode === "signup") setIsSignUp(true);
   }, [searchParams]);
 
-  
+
   console.log("Erros", errors)
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const newErrors: { [key: string]: string } = {};
+    const newErrors: { [key: string]: string } = {};
 
-  const trimmedFullName = fullName.trim();
+    const trimmedFullName = fullName.trim();
 
-  // ----------------------------
-  // VALIDATION
-  // ----------------------------
-  if (isSignUp) {
-    if (!trimmedFullName) newErrors.fullName = "Full Name is required";
-    if (!email.trim()) newErrors.email = "Email is required";
-    if (!phone.trim()) newErrors.phone = "Phone number is required";
-    if (!password.trim()) newErrors.password = "Password is required";
-    if (!confirmPassword.trim())
-      newErrors.confirmPassword = "Confirm Password is required";
-
-    if (password && password.length < 6)
-      newErrors.password = "Password must be at least 6 characters long";
-
-    if (password && confirmPassword && password !== confirmPassword)
-      newErrors.confirmPassword = "Passwords do not match";
-  } else {
-    if (!email.trim()) newErrors.email = "Email is required";
-    if (!password.trim()) newErrors.password = "Password is required";
-  }
-
-  // Apply all errors at once
-  setErrors(newErrors);
-
-  // Stop execution if any validation failed
-  if (Object.keys(newErrors).length > 0) {
-    toast.error("Please fix the highlighted fields");
-    return;
-  }
-
-  // ----------------------------
-  // SUBMIT LOGIC
-  // ----------------------------
-  setIsLoading(true);
-  try {
+    // ----------------------------
+    // VALIDATION
+    // ----------------------------
     if (isSignUp) {
-      const result = await signup(email, password, trimmedFullName, phone);
-      if (result.success) {
-        toast.success("Account created successfully!");
-        navigate("/");
-        resetForm();
-      } else {
-        toast.error(result.error || "User already exists");
-      }
+      if (!trimmedFullName) newErrors.fullName = "Full Name is required";
+      if (!email.trim()) newErrors.email = "Email is required";
+      if (!phone.trim()) newErrors.phone = "Phone number is required";
+      if (!password.trim()) newErrors.password = "Password is required";
+      if (!confirmPassword.trim())
+        newErrors.confirmPassword = "Confirm Password is required";
+
+      if (password && password.length < 6)
+        newErrors.password = "Password must be at least 6 characters long";
+
+      if (password && confirmPassword && password !== confirmPassword)
+        newErrors.confirmPassword = "Passwords do not match";
     } else {
-      const result = await login(email, password);
-      if (result.success) {
-        toast.success("Logged in successfully!");
-        navigate("/");
-        resetForm();
-      } else {
-        toast.error("Invalid credentials");
-      }
+      if (!email.trim()) newErrors.email = "Email is required";
+      if (!password.trim()) newErrors.password = "Password is required";
     }
-  } catch (error) {
-    toast.error("An error occurred. Please try again.");
-  } finally {
-    setIsLoading(false);
-  }
-};
+
+    // Apply all errors at once
+    setErrors(newErrors);
+
+    // Stop execution if any validation failed
+    if (Object.keys(newErrors).length > 0) {
+      toast.error("Please fix the highlighted fields");
+      return;
+    }
+
+    // ----------------------------
+    // SUBMIT LOGIC
+    // ----------------------------
+    setIsLoading(true);
+    try {
+      if (isSignUp) {
+        const result = await signup(email, password, trimmedFullName, phone);
+        if (result.success) {
+          toast.success("Account created successfully!");
+          navigate("/");
+          resetForm();
+        } else {
+          toast.error(result.error || "User already exists");
+        }
+      } else {
+        const result = await login(email, password);
+        if (result.success) {
+          toast.success("Logged in successfully!");
+          navigate("/");
+          resetForm();
+        } else {
+          toast.error("Invalid credentials");
+        }
+      }
+    } catch (error) {
+      toast.error("An error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
 
   const handleGoogleSignIn = async () => {
@@ -166,7 +168,8 @@ const handleSubmit = async (e: React.FormEvent) => {
         <div className="max-w-md w-full">
           <div className="bg-black/40 border-white/20 backdrop-blur-md rounded-lg shadow-xl p-4 ">
             {/* Header */}
-            <div className="text-center mb-6">
+            <div className="text-center mb-6 relative">
+              <XIcon className="absolute right-4 top-4 w-6 h-6 cursor-pointer" onClick={() => navigate("/")} />
               <h1 className="text-3xl font-bold flex items-center justify-center gap-3">
                 {isSignUp ? "Sign Up" : "Log In"} to{" "}
                 <img src="/logo.png" alt="BUZUTV" className="h-8 w-auto" />
@@ -201,15 +204,15 @@ const handleSubmit = async (e: React.FormEvent) => {
                     >
                       Full Name
                     </label>
-                  {errors.fullName && <p className="text-red-500 text-xs">{errors.fullName}</p>}                    
-                  <input
+                    {errors.fullName && <p className="text-red-500 text-xs">{errors.fullName}</p>}
+                    <input
                       id="fullName"
                       type="text"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
                       placeholder="Enter your full name"
-                      // required
+                      required
                     />
                   </div>
 
@@ -259,14 +262,27 @@ const handleSubmit = async (e: React.FormEvent) => {
                   Password
                 </label>
                 {errors.password && <p className="text-red-500 text-xs">{errors.password}</p>}
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
-                  placeholder="Enter your password"
-                />
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors pr-10"
+                    placeholder="Enter your password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
                 {!isSignUp && (
                   <div className="mt-2">
                     <button
@@ -289,14 +305,27 @@ const handleSubmit = async (e: React.FormEvent) => {
                     Confirm Password
                   </label>
                   {errors.confirmPassword && <p className="text-red-500 text-xs">{errors.confirmPassword}</p>}
-                  <input
-                    id="confirmPassword"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
-                    placeholder="Confirm your password"
-                  />
+                  <div className="relative">
+                    <input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors pr-10"
+                      placeholder="Confirm your password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
               )}
 

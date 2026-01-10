@@ -353,7 +353,7 @@ const FullscreenPlayer = ({
               </div>
               <div>
                 {
-                  season && isSeries && (
+                  season && (
                     <>
                       <h2 className="text-white text-2xl font-bold mb-6">Episodes</h2>
                       {/* Episode Grid/List */}

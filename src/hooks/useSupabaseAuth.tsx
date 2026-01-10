@@ -79,7 +79,8 @@ export const useSupabaseAuth = () => {
     phone?: string,
   ) => {
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      const REDIRECT_URL = import.meta.env.VITE_REDIRECT_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+      const redirectUrl = `${REDIRECT_URL}/`;
 
       const { error } = await supabase.auth.signUp({
         email,

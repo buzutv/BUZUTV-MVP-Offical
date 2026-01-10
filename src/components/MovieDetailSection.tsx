@@ -14,7 +14,7 @@ const MovieDetailSection = () => {
     const [currentMovieState, setCurrentMovieState] = useState(null);
     const [triggerContentById] = useLazyGetContentByIdQuery()
     const contentIdRef = useRef(contentId)
-    if (!contentIdRef.current && !isSeries) return null;
+    if (!contentIdRef.current) return null;
     useEffect(() => {
         const fetchContentById = async () => {
             if (!contentIdRef.current) return
@@ -29,10 +29,8 @@ const MovieDetailSection = () => {
             }
         }
         fetchContentById()
-    }, [contentIdRef.current])
-    console.log("Current Movie Detail", currentMovieState)
+    }, [contentIdRef.current, selectedVideo])
     return (
-
         <div
             className="relative rounded-lg overflow-hidden mb-12 min-h-[300px] min-w-full"
             style={{

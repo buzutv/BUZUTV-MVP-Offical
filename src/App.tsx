@@ -109,6 +109,8 @@ const App = () => {
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/movies" element={<RequireAuth><Movies /></RequireAuth>} />
+
+
               <Route path="/series" element={<RequireAuth><Series /></RequireAuth>} />
               <Route path="/kids" element={<RequireAuth><Kids /></RequireAuth>} />
               <Route path="/my-list" element={<RequireAuth><MyList /></RequireAuth>} />

@@ -34,6 +34,8 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 // Demo users who should see mock content
 const demoUsers = ["user@example.com", "admin@example.com"];
 
+const REDIRECT_URL = import.meta.env.VITE_REDIRECT_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -162,7 +164,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/`,
+        emailRedirectTo: `${REDIRECT_URL}/`,
         data: {
           full_name: name,
           name: name,
@@ -202,7 +204,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/`,
+        redirectTo: `${REDIRECT_URL}/`,
       },
     });
 

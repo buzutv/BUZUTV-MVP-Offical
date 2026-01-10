@@ -5,7 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowUpRight, X } from "lucide-react";
+import { ArrowUpRight, Eye, EyeOff, X, XIcon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -28,38 +28,40 @@ const LoginModal = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showOtpForm, setShowOtpForm] = useState(false);
   const [otpCode, setOtpCode] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
 
-  console.log("LoginModal rendered",errors);
+  console.log("LoginModal rendered", errors);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    
+
 
     // Shared validations
     const trimmedFullName = fullName.trim();
-    if(!trimmedFullName && isSignUp){
+    if (!trimmedFullName && isSignUp) {
       setErrors((prev) => ({ ...prev, fullName: "Full Name is required" }));
       // toast.error("Full Name is required");
     }
 
-    if(!email) setErrors((prev) => ({...prev, email:"Email is required"}))
-    if(!password) setErrors((prev) => ({...prev, password:"Password is required"}))
-    setTimeout(() =>{
+    if (!email) setErrors((prev) => ({ ...prev, email: "Email is required" }))
+    if (!password) setErrors((prev) => ({ ...prev, password: "Password is required" }))
+    setTimeout(() => {
       setErrors({})
-    },1000)
-    
+    }, 1000)
+
     if (isSignUp) {
       if (!email) {
         // setErrors((prev) => ({ ...prev, email: "Email is required" }));
-         toast.error("Email is required");
+        toast.error("Email is required");
       }
-      if (!password || !confirmPassword || !fullName.trim()){
-          // setErrors((prev) => ({ ...prev, password: "All fields are required" }));
-          // setErrors((prev) => ({ ...prev, confirmPassword: "All fields are required" }));
-          toast.error("All fields are required");
+      if (!password || !confirmPassword || !fullName.trim()) {
+        // setErrors((prev) => ({ ...prev, password: "All fields are required" }));
+        // setErrors((prev) => ({ ...prev, confirmPassword: "All fields are required" }));
+        toast.error("All fields are required");
       }
       if (password !== confirmPassword)
         return toast.error("Passwords do not match");
@@ -153,6 +155,7 @@ const LoginModal = () => {
 
   return (
     <Dialog open={showLoginModal} onOpenChange={handleClose}>
+      {/* <XIcon className="absolute top-4 right-4 cursor-pointer text-slate-100" onClick={handleClose} /> */}
       <DialogContent
         className="sm:max-w-md bg-black/80 text-white border-brand-500 backdrop-blur-md overflow-hidden"
         hideCloseButton
@@ -223,7 +226,7 @@ const LoginModal = () => {
                     <label
                       htmlFor="phone"
                       className="block text-sm font-medium text-gray-300 mb-2"
-                      
+
                     >
                       Phone Number
                     </label>
@@ -268,15 +271,28 @@ const LoginModal = () => {
                   Password
                 </label>
                 {errors.password && <p className="text-red-500 text-xs">{errors.password}</p>}
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
-                  placeholder="Enter your password"
-                  required
-                />
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors pr-10"
+                    placeholder="Enter your password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
                 {!isSignUp && (
                   <div className="mt-2">
                     <button
@@ -299,15 +315,28 @@ const LoginModal = () => {
                     Confirm Password
                   </label>
                   {errors.confirmPassword && <p className="text-red-500 text-xs">{errors.confirmPassword}</p>}
-                  <input
-                    id="confirmPassword"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
-                    placeholder="Confirm your password"
-                    required
-                  />
+                  <div className="relative">
+                    <input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors pr-10"
+                      placeholder="Confirm your password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
               )}
 
