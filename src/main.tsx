@@ -4,6 +4,7 @@ import './index.css'
 import { persistor, store } from './store/store'
 import { Provider } from 'react-redux'
 import { PersistGate } from "redux-persist/integration/react"
+import { AuthProvider } from './contexts/AuthContext.tsx'
 
 const container = document.getElementById('root')
 
@@ -12,8 +13,10 @@ if (container) {
 
   root.render(
     <Provider store={store}>
-        <PersistGate loading={null} persistor={persistor}>
-            <App />
+      <PersistGate loading={null} persistor={persistor}>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
       </PersistGate>
     </Provider>,
   )

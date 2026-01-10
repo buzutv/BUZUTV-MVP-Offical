@@ -3,8 +3,9 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getYouTubeEmbedUrl, normalizer, onReadyVideoLoader, saveWatchHistory } from "@/utils/youtubeUtils";
 import { useDispatch, useSelector } from "react-redux";
 import { openScreenPlayer, setCurrentVideoIndex } from "@/store/screenPlayerSlice";
+import { useAuth } from "@/contexts/AuthContext";
 
-const USER_ID = "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3";
+const USER_ID = ""; // Will be replaced by useAuth().user?.id
 
 interface VideoPlayerProps {
   videoId: string;
@@ -22,6 +23,8 @@ interface VideoPlayerProps {
 
 const VideoPlayer = forwardRef<any, VideoPlayerProps>(
   ({ videoId, playlistItems, setCurrentMovie, movieId, episodeId, setFinal, type, userid, playlistInfo, onHistorySaved }, ref) => {
+    const { user } = useAuth();
+    const effectiveUserId = userid || user?.id || "";
     const playerContainerRef = useRef<HTMLDivElement>(null);
     const playerInstanceRef = useRef<any>(null);
 
@@ -342,7 +345,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
       if (state === window.YT.PlayerState.ENDED) {
         // Save watch history
         await saveWatchHistory(
-          USER_ID,
+          effectiveUserId,
           movieIdRef.current,
           episodeIdRef.current,
           videoIdRef.current,
@@ -367,7 +370,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
 
       if (state === window.YT.PlayerState.PAUSED) {
         await saveWatchHistory(
-          USER_ID,
+          effectiveUserId,
           movieIdRef.current,
           episodeIdRef.current,
           videoIdRef.current,
@@ -384,7 +387,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
         if (currentTime >= 0) {
           if (setFinal) setFinal(currentTime);
           await saveWatchHistory(
-            USER_ID,
+            effectiveUserId,
             movieIdRef.current,
             episodeIdRef.current,
             videoIdRef.current,
