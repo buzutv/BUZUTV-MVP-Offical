@@ -26,6 +26,7 @@ const transformDatabaseContent = (dbContent: any[]) => {
     channelId: item.channel_id,
     created_at: item.created_at,
     seasons_data: item.seasons_data,
+    user_watch_history: item.user_watch_history,
   }));
 
   return transformed;
@@ -47,6 +48,7 @@ const transformDatabaseChannels = (dbChannels: any[]) => {
 export const useAppContent = () => {
   const { content: dbContent, isLoading: dbContentLoading } = useContent();
   const { channels: dbChannels, isLoading: dbChannelsLoading } = useChannels();
+
 
   const transformedContent = useMemo(() => {
     if (dbContentLoading || !dbContent?.length) {
@@ -194,6 +196,8 @@ export const useAppContent = () => {
       allContent: transformedContent,
     };
   }, [transformedContent]);
+
+
 
   return {
     movies: transformedContent,

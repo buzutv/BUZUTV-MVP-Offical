@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import usePlaylists from "@/hooks/usePlaylists";
 import { toast } from "sonner";
 import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
+import { Content } from "@/types";
 
 export interface ContentCardProps {
   item: Movie | any;
@@ -71,8 +72,7 @@ const ContentCard = ({
   // State to control the create playlist dialog
   const [isCreatePlaylistOpen, setIsCreatePlaylistOpen] = useState(false);
 
-  console.log("User in ContentCard:", playlists);
-  const [currentModalItem, setCurrentModalItem] = useState<Movie | null>(null);
+  const [currentModalItem, setCurrentModalItem] = useState<Movie | Content | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentVideoUrl, setCurrentVideoUrl] = useState("");
   const [currentVideoTitle, setCurrentVideoTitle] = useState("");
@@ -96,6 +96,8 @@ const ContentCard = ({
     }),
     [item]
   );
+
+  // console.log("Normalized Item", normalizedItem)
 
   const actualItem = currentModalItem || normalizedItem;
 
@@ -191,7 +193,7 @@ const ContentCard = ({
       id: crypto.randomUUID(),
       title: playlistForm.title,
       description: playlistForm.description,
-      created_by: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3" // Ideally use user.id from auth context
+      created_by: user?.id// Ideally use user.id from auth context
     }
 
     console.log('Playlist payload:', user);
@@ -279,7 +281,10 @@ const ContentCard = ({
           onClose={handleExitFullscreen}
           videoUrl={currentVideoUrl}
           title={currentVideoTitle}
-          userId={user?.id || ""} // Pass userId prop
+          userId={user?.id} // Pass userId prop
+          type={item?.type}
+          movieId={item?.id}
+
         />
       )}
 

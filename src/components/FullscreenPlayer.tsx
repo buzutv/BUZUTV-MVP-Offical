@@ -14,7 +14,7 @@ import { useLazyGetContentWithWatchHistoryFiltersQuery, useLazyGetPlaylistConten
 import RelatedContent from "./RelatedContent";
 import AdToast from "./AdToast";
 import { useDispatch, useSelector } from "react-redux";
-import { openScreenPlayer } from "@/store/screenPlayerSlice";
+import { openScreenPlayer, closeScreenPlayer } from "@/store/screenPlayerSlice";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 const FullscreenPlayer = ({
@@ -292,6 +292,7 @@ const FullscreenPlayer = ({
             <div className="flex items-center justify-center gap-4 cursor-pointer flex-1" onClick={async () => {
               // setSelectedVideo(null)
               onClose()
+              dispatch(closeScreenPlayer())
               // navigate(`/playlist/${playlistId}`)
             }}>
               <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">

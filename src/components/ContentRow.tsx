@@ -143,7 +143,7 @@ const ContentRow = React.memo(
                 <div key={item.id} >
                   <ContentCard
                     item={item}
-                    variant="auto"
+                    variant={item?.type ?? "auto"}
                     autoDetectKids={true}
                     isMoreLikeThis={isMoreLikeThis}
                     width="w-64"
@@ -166,7 +166,7 @@ const ContentRow = React.memo(
       prevProps.isMoreLikeThis === nextProps.isMoreLikeThis &&
       // Compare actual item IDs to detect content changes
       JSON.stringify(prevProps.items.map((item) => item.id)) ===
-        JSON.stringify(nextProps.items.map((item) => item.id))
+      JSON.stringify(nextProps.items.map((item) => item.id))
     );
   },
 );

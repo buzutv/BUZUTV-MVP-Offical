@@ -44,6 +44,8 @@ export const screenPlayer = createSlice({
             state.playlistInfo = null;
             state.poster_url = "";
             state.selectedVideo = null;
+            state.title = "";
+            state.seriesData = []
         },
         setPlaylistInfo: (state, action) => {
             state.playlistInfo = action.payload.playlistInfo;

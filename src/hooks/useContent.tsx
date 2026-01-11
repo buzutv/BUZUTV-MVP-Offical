@@ -70,24 +70,24 @@ const searchContentData = async (query: string): Promise<Content[]> => {
 
 }
 export const useContent = () => {
-  const {
-    data: content,
-    isLoading,
-    error,
-    refetch,
-  } = useContentCache("content", fetchContentData, []);
+  // const {
+  //   data: content,
+  //   isLoading,
+  //   error,
+  //   refetch,
+  // } = useContentCache("content", fetchContentData, []);
 
-  const {data: contentWithWatchHistory, isLoading: isContentWithWatchHistoryLoading, refetch: refetchContentWithWatchHistory} = useGetContentWithWatchHistoryQuery("03fa9a91-4281-4bd4-9e60-4da2ba72b0f3", {
+  const { data: contentWithWatchHistory, isLoading: isContentWithWatchHistoryLoading, error: ContentWithWatchHistoryError, refetch: refetchContentWithWatchHistory } = useGetContentWithWatchHistoryQuery("03fa9a91-4281-4bd4-9e60-4da2ba72b0f3", {
     refetchOnFocus: true,
     refetchOnReconnect: true,
     refetchOnMountOrArgChange: true,
   })
   return {
-    content: content || [],
+    content: contentWithWatchHistory || [],
     contentWithWatchHistory,
-    isLoading,
-    error,
-    refetch,
+    isLoading: isContentWithWatchHistoryLoading,
+    error: ContentWithWatchHistoryError,
+    refetch: refetchContentWithWatchHistory,
     searchContentData
   };
 };

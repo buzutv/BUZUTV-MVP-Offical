@@ -13,10 +13,11 @@ import { useMoreLikeThis } from "@/hooks/useMoreLikeThis";
 import SeriesPlayer from "@/components/SeriesPlayer";
 import { fetchSeriesSeasons, getOptimizedImageUrl } from "@/utils/youtubeUtils";
 import FullscreenPlayer from "./FullscreenPlayer";
-import { useGetSeasonWithEpisodesQuery } from "@/store/seasonSlice";
+import { useGetSeasonWithEpisodesQuery, useLazyGetSeasonWithEpisodesQuery } from "@/store/seasonSlice";
 import { openScreenPlayer, setContentId, setisSeries, setSeriesData } from "@/store/screenPlayerSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { useLazyGetPlaylistContentWithWatchHistoryQuery } from "@/store/contentSlice";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Type guards to safely access properties
 const isMovie = (item: Movie | Content): item is Movie => {
@@ -132,37 +133,67 @@ const ContentModal: React.FC<ContentModalProps> = ({
 
   // SeriesPlayer state
   const [isSeriesPlayerOpen, setIsSeriesPlayerOpen] = useState(false);
+  const [isMovieOpen, setIsMovieOpen] = useState(false);
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [currentSeasonNumber, setCurrentSeasonNumber] = useState<number>(1);
+  const { user } = useAuth();
   const [triggerGetContentWithWatchHistory, result] = useLazyGetPlaylistContentWithWatchHistoryQuery()
-  const USER_ID = "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3";
+  const USER_ID = user?.id;
   const dispatch = useDispatch();
   const { favoriteIds, addToFavorites, removeFromFavorites } =
     useUserFavorites();
   const [movie, setMovie] = useState(movieId)
   const { content } = useContent();
   const { channels } = useChannels();
+  const [seasonWithEpisodes, setSeasonWithEpisodes] = useState([])
   const playlistId = useSelector((state: any) => state.screenPlayer.playlistId);
-  const { data: seasonWithEpisode, error, refetch } = useGetSeasonWithEpisodesQuery({ contentId: movie, userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3" }, {
-    skip: !movieId,
-    refetchOnMountOrArgChange: true,
-    refetchOnFocus: true,
-    refetchOnReconnect: true
-  })
-  console.log("Season with Episode", seasonWithEpisode)
+  const selectedFromRecommendations = useSelector((state: any) => state.screenPlayer.selectedVideo);
+  // const { data: seasonWithEpisode, error, refetch } = useGetSeasonWithEpisodesQuery({ contentId: movie, userId: user?.id }, {
+  //   skip: !movieId,
+  //   refetchOnMountOrArgChange: true,
+  //   refetchOnFocus: true,
+  //   refetchOnReconnect: true
+  // })
+
+
+  const [triggerSeasonWithEpisode] = useLazyGetSeasonWithEpisodesQuery()
+  // console.log("Season with Episode", seasonWithEpisode)
   const isSeries = useSelector((state: any) => state.screenPlayer.isSeries);
+
+  useEffect(() => {
+    async function fetchSeasonData() {
+      if (item.type === "series") {
+        const data = await triggerSeasonWithEpisode({ contentId: item.id, userId: user?.id }).unwrap()
+        console.log("Season with Episode in useEffect", data)
+        setSeasonWithEpisodes(data)
+      }
+
+    }
+    fetchSeasonData()
+  }, [item, user?.id])
 
 
   useEffect(() => {
-    // Add a check to ensure data exists
-    if (seasonWithEpisode && seasonWithEpisode.length > 0) {
-      dispatch(setSeriesData({
-        isSeries: true,
-        seriesData: seasonWithEpisode[0]
-      }));
+    async function fetchSeasonData() {
+      if (item.type === "series") {
+        const data = await triggerSeasonWithEpisode({ contentId: movie, userId: user?.id }).unwrap()
+        console.log("Season with Episode in useEffect", data)
+        setSeasonWithEpisodes(data)
+      }
+
     }
-  }, [seasonWithEpisode, dispatch])
-  console.log("Fetched season with episodes:", seasonWithEpisode);
+    fetchSeasonData()
+  }, [movie])
+  // useEffect(() => {
+  //   // Add a check to ensure data exists
+  //   if (seasonWithEpisodes && seasonWithEpisodes.length > 0) {
+  //     dispatch(setSeriesData({
+  //       isSeries: true,
+  //       seriesData: seasonWithEpisodes[0]
+  //     }));
+  //   }
+  // }, [seasonWithEpisodes, dispatch])
+  // console.log("Fetched season with episodes:", seasonWithEpisodes);
   // Always find current backend content item dynamically
   const currentContentItem = React.useMemo(() => {
     return content.find((c) => c.id === currentItem.id);
@@ -202,6 +233,8 @@ const ContentModal: React.FC<ContentModalProps> = ({
     effectiveKidsMode,
     limit: 6,
   });
+
+  console.log("More Like This Content:", currentContentItem);
 
   // Determine content type
   const contentType =
@@ -322,7 +355,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
   const currentVideoUrl = React.useMemo(() => {
     return (
       currentContentItem?.video_url ||
-      (isMovie(currentItem) ? currentItem.videoUrl : undefined)
+      (isMovie(currentItem) ? currentItem.videoUrl || currentItem.video_url : undefined)
     );
   }, [currentContentItem?.video_url, currentItem]);
 
@@ -330,6 +363,13 @@ const ContentModal: React.FC<ContentModalProps> = ({
   const handlePlayMovie = () => {
     if (currentVideoUrl && onPlayEpisode) {
       // Use onPlayEpisode for consistency across all components
+      dispatch(openScreenPlayer({
+        isOpen: true,
+        selectedVideo: selectedFromRecommendations,
+        selectedVideoTitle: normalizedItem.title
+      }))
+      setIsMovieOpen(true)
+
       onPlayEpisode(currentVideoUrl, normalizedItem.title);
     } else if (currentVideoUrl) {
       console.warn(
@@ -345,8 +385,8 @@ const ContentModal: React.FC<ContentModalProps> = ({
   };
 
   const hasNext = (): boolean => {
-    return !!(seasons && currentEpisode ? (
-      seasons.some(season =>
+    return !!(seasonWithEpisodes && currentEpisode ? (
+      seasonWithEpisodes.some(season =>
         season.episodes.some(episode =>
           episode.season_number > currentSeasonNumber ||
           (episode.season_number === currentSeasonNumber && episode.episode_number > currentEpisode.episode_number)
@@ -356,9 +396,9 @@ const ContentModal: React.FC<ContentModalProps> = ({
   }
 
   const onNext = () => {
-    if (!seasons || !currentEpisode) return;
-    for (let i = 0; i < seasons.length; i++) {
-      const season = seasons[i];
+    if (seasonWithEpisodes.length === 0 || !currentEpisode) return;
+    for (let i = 0; i < seasonWithEpisodes.length; i++) {
+      const season = seasonWithEpisodes[i];
       for (let j = 0; j < season.episodes.length; j++) {
         const episode = season.episodes[j];
         if (episode.id === currentEpisode.id) {
@@ -382,22 +422,23 @@ const ContentModal: React.FC<ContentModalProps> = ({
     dispatch(openScreenPlayer({
       isOpen: true,
       isSeries: true,
-      selectedVideo: seasonWithEpisode[0]?.episodes[0],
-      seriesData: seasonWithEpisode[0],
+      selectedVideo: seasonWithEpisodes[0]?.episodes[0],
+      seriesData: seasonWithEpisodes[0],
       contentId: movie
     }))
 
 
-    const firstEpisode = seasons[0]?.episodes[0];
-    if (firstEpisode && seasons.length > 0) {
+
+    const firstEpisode = seasonWithEpisodes[0]?.episodes[0];
+    if (firstEpisode && seasonWithEpisodes.length > 0) {
       setCurrentEpisode(firstEpisode);
-      setCurrentSeasonNumber(seasons[0].season_number);
+      setCurrentSeasonNumber(seasonWithEpisodes[0].season_number);
       setIsSeriesPlayerOpen(true);
     }
   };
 
   const handlePlayEpisode = (episode: Episode, seasonNumber: number) => {
-    if (episode.video_url && seasons.length > 0) {
+    if (episode.video_url && seasonWithEpisodes.length > 0) {
       setCurrentEpisode(episode);
       setCurrentSeasonNumber(seasonNumber);
       setIsSeriesPlayerOpen(true);
@@ -407,32 +448,35 @@ const ContentModal: React.FC<ContentModalProps> = ({
   const handleCloseSeriesPlayer = async () => {
     setIsSeriesPlayerOpen(false);
     setCurrentEpisode(null);
-    refetch()
+    // refetch()
     onClose(false)
     const data = await triggerGetContentWithWatchHistory({
       userId: USER_ID,
       contentIds: content.map(item => item.id)
     }).unwrap()
 
-    // const normalized = data?.map((item) => {
-    //       const [history] = item.user_watch_history ?? [];
-    //       return {
-    //         ...item,
-    //         watch_percentage: history?.watch_percentage ?? 0,
-    //         last_position: history?.last_position ?? 0,
-    //         completed: history?.completed ?? false,
-    //       }
-    //     })
-    // setUserWatchHistory(normalized)
   };
 
   // Use the unified More Like This content (already normalized with posterUrl)
   const normalizedRecommendedContent = moreLikeThisContent;
 
   // Handle More Like This clicks - ALWAYS switch current item within modal
-  const handleMoreLikeThisClick = (clickedItem) => {
+  const handleMoreLikeThisClick = async (clickedItem) => {
     setCurrentItem(clickedItem);
     setMovie(clickedItem.id)
+
+    const fetchSeasonWithEpisodes = await triggerSeasonWithEpisode({
+      contentId: clickedItem?.id,
+      userId: user?.id,
+    }).unwrap()
+    dispatch(openScreenPlayer({
+      isOpen: true,
+      isSeries: clickedItem?.type === "series",
+      selectedVideo: clickedItem,
+      seriesData: clickedItem?.type === "series" ? fetchSeasonWithEpisodes[0] : null,
+      contentId: clickedItem.id
+    }))
+
 
   };
 
@@ -483,16 +527,16 @@ const ContentModal: React.FC<ContentModalProps> = ({
 
 
 
-  if (isSeriesPlayerOpen && currentEpisode && seasons) {
+  if ((isSeriesPlayerOpen && currentEpisode && seasonWithEpisodes.length > 0) || isMovieOpen) {
     return (
       <div className="fixed inset-0 z-[99999] bg-black">
         <FullscreenPlayer
           isOpen={true}
           onClose={handleCloseSeriesPlayer} // This returns us to the Modal
-          videoUrl={currentEpisode?.video_url}
-          type="series"
-          title={currentEpisode.title}
-          userId="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
+          videoUrl={item?.type === "movie" ? item?.video_url : currentEpisode?.video_url}
+          type={item?.type}
+          title={item?.type === "movie" ? item?.title : currentEpisode.title}
+          userId={user?.id}
           poster_url={currentContentItem?.poster_url || normalizedItem.posterUrl}
 
           // Your Series Logic
@@ -503,11 +547,11 @@ const ContentModal: React.FC<ContentModalProps> = ({
               handleCloseSeriesPlayer(); // Goes back to modal if finished
             }
           }}
-          movieId={movieId}
+          movieId={currentContentItem?.id}
           hasNext={hasNext()}
           onNext={onNext}
           onPrevious={() => { }}
-          season={seasonWithEpisode}
+          season={seasonWithEpisodes}
         />
       </div>
     );
@@ -547,7 +591,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
                 <h1
                   className={`text-5xl font-bold text-white mb-6 ${effectiveKidsMode ? "drop-shadow-[2px_2px_4px_rgba(59,130,246,0.8)]" : ""}`}
                 >
-                  {seasonWithEpisode?.title}
+                  {seasonWithEpisodes?.title}
                 </h1>
 
                 {/* Action Buttons Row */}
@@ -555,7 +599,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
                   <BrandButton
                     onClick={
 
-                      (contentType === "series" || isSeries)
+                      (contentType === "series")
                         ? handlePlayFirstEpisode
                         : handlePlayMovie
 
@@ -658,7 +702,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
                     <TabsList
                       className={`flex flex-row gap-2 w-full bg-transparent transition-all duration-300 group ${effectiveKidsMode ? "" : ""}`}
                     >
-                      {seasonWithEpisode?.map((season) => (
+                      {seasonWithEpisodes?.map((season) => (
                         <TabsTrigger
                           key={`season-${season.season_number}`}
                           value={`season-${season.season_number}`}
@@ -677,7 +721,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
                       ))}
                     </TabsList>
 
-                    {seasonWithEpisode?.map((season) => (
+                    {seasonWithEpisodes?.map((season) => (
                       <TabsContent
                         key={`season-${season.season_number}`}
                         value={`season-${season.season_number}`}
