@@ -62,9 +62,11 @@ interface Episode {
   id: string;
   title: string;
   episode_number: number;
+  season_number?: number;
   duration_minutes?: number;
   description?: string;
   video_url?: string;
+  videoUrl?: string; // Support both
 }
 
 interface Season {
@@ -323,9 +325,9 @@ const ContentModal: React.FC<ContentModalProps> = ({
   // Get current video URL from the current content item
   const currentVideoUrl = React.useMemo(() => {
     return (
-      currentContentItem?.video_url ||
-      currentItem?.video_url ||
-      (isMovie(currentItem) ? currentItem.videoUrl : undefined) ||
+      (currentContentItem as any)?.video_url ||
+      (currentItem as any)?.video_url ||
+      (isMovie(currentItem) ? (currentItem as any).videoUrl : undefined) ||
       videoUrl
     );
   }, [currentContentItem?.video_url, currentItem, videoUrl]);
@@ -336,10 +338,10 @@ const ContentModal: React.FC<ContentModalProps> = ({
       // Prefer onPlay for movies if available
       console.log("Calling onPlay for movie", currentVideoUrl);
       dispatch(openScreenPlayer({
-        selectedVideo: currentContentItem,
+        selectedVideo: currentContentItem || currentItem,
         isOpen: true,
         isSeries: false,
-        contentId: movie,
+        contentId: movie || movieId,
         videoUrl: currentVideoUrl,
         title: normalizedItem.title
       }))
@@ -348,10 +350,10 @@ const ContentModal: React.FC<ContentModalProps> = ({
       // Fall back to onPlayEpisode for backward compatibility
       console.log("Calling onPlayEpisode for movie (fallback)", currentVideoUrl);
       dispatch(openScreenPlayer({
-        selectedVideo: currentContentItem,
+        selectedVideo: currentContentItem || currentItem,
         isOpen: true,
         isSeries: false,
-        contentId: movie,
+        contentId: movie || movieId,
         videoUrl: currentVideoUrl,
         title: normalizedItem.title
       }))
@@ -372,7 +374,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
   const hasNext = (): boolean => {
     return !!(seasons && currentEpisode ? (
       seasons.some(season =>
-        season.episodes.some(episode =>
+        season.episodes.some((episode: any) =>
           episode.season_number > currentSeasonNumber ||
           (episode.season_number === currentSeasonNumber && episode.episode_number > currentEpisode.episode_number)
         )
@@ -404,21 +406,18 @@ const ContentModal: React.FC<ContentModalProps> = ({
   }
 
   const handlePlayFirstEpisode = () => {
+    const firstEpisode = seasons[0]?.episodes[0];
     dispatch(openScreenPlayer({
       isOpen: true,
       isSeries: true,
-      selectedVideo: seasonWithEpisode && seasonWithEpisode.length > 0 ? seasonWithEpisode[0]?.episodes[0] : null,
-      seriesData: seasonWithEpisode && seasonWithEpisode.length > 0 ? seasonWithEpisode[0] : null,
-      contentId: movie
+      selectedVideo: firstEpisode || seasonWithEpisode && seasonWithEpisode.length > 0 ? (seasonWithEpisode[0] as any)?.episodes[0] : (currentItem as any),
+      seriesData: seasonWithEpisode && seasonWithEpisode.length > 0 ? (seasonWithEpisode[0] as any) : null,
+      contentId: movie || movieId,
+      videoUrl: firstEpisode?.video_url || firstEpisode?.videoUrl || currentVideoUrl,
+      title: firstEpisode?.title || normalizedItem.title
     }))
 
-
-    const firstEpisode = seasons[0]?.episodes[0];
-    if (firstEpisode && seasons.length > 0) {
-      setCurrentEpisode(firstEpisode);
-      setCurrentSeasonNumber(seasons[0].season_number);
-      setIsSeriesPlayerOpen(true);
-    }
+    onClose(false);
   };
 
   const handlePlayEpisode = (episode: Episode, seasonNumber: number) => {
@@ -427,13 +426,12 @@ const ContentModal: React.FC<ContentModalProps> = ({
       isSeries: true,
       selectedVideo: episode,
       seriesData: seasonWithEpisode[0],
-      contentId: movie
+      contentId: movie || movieId,
+      videoUrl: episode.video_url || (episode as any).videoUrl,
+      title: episode.title
     }))
-    if (episode.video_url && seasons.length > 0) {
-      setCurrentEpisode(episode);
-      setCurrentSeasonNumber(seasonNumber);
-      setIsSeriesPlayerOpen(true);
-    }
+
+    onClose(false);
   };
 
   const handleCloseSeriesPlayer = async () => {
@@ -515,36 +513,6 @@ const ContentModal: React.FC<ContentModalProps> = ({
 
 
 
-  if (isSeriesPlayerOpen && currentEpisode && seasons) {
-    return (
-      <div className="fixed inset-0 z-[99999] bg-black">
-        <FullscreenPlayer
-          isOpen={true}
-          onClose={handleCloseSeriesPlayer} // This returns us to the Modal
-          videoUrl={currentEpisode?.video_url}
-          type="series"
-          title={currentEpisode.title}
-          userId={user?.id}
-          poster_url={currentContentItem?.poster_url || normalizedItem.posterUrl}
-
-          // Your Series Logic
-          onVideoEnd={() => {
-            if (hasNext()) {
-              onNext(); // Plays next episode
-            } else {
-              handleCloseSeriesPlayer(); // Goes back to modal if finished
-            }
-          }}
-          movieId={movieId}
-          hasNext={hasNext()}
-          onNext={onNext}
-          onPrevious={() => { }}
-          season={seasonWithEpisode}
-          onHistorySaved={refetch}
-        />
-      </div>
-    );
-  }
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent

@@ -29,13 +29,19 @@ export interface Episode {
   id: string; // uuid
   season_id: string; // uuid
   episode_number: number;
+  season_number?: number;
   title: string;
   description?: string | null;
   duration_minutes?: number | null;
   video_url?: string | null;
+  videoUrl?: string | null;
   thumbnail_url?: string | null;
+  poster_url?: string;
   created_at?: string | null;
   updated_at?: string | null;
+  watch_percentage?: number;
+  last_position?: number;
+  completed?: boolean;
 }
 export interface PlaylistItemWithContent {
   id: string;
@@ -108,6 +114,7 @@ export interface Season {
   release_date?: string | null; // date
   created_at?: string | null;
   updated_at?: string | null;
+  episodes: Episode[];
 }
 
 export interface RelatedContentFilterProps {
@@ -136,17 +143,6 @@ export interface UserWatchHistory {
 }
 
 
-// Episode interface
-export interface Episode {
-  title: string;
-  description?: string | null;
-  episodeNumber: number;
-  videoUrl: string;
-  poster_url?: string;
-  airDate?: string;
-  rating?: string;
-  seasonNumber?: number;
-}
 
 export interface FullscreenPlayerProps {
   isOpen: boolean;

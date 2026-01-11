@@ -7,23 +7,23 @@ import { useAuth } from "@/contexts/AuthContext";
 export interface Content {
   id: string;
   title: string;
-  description: string | null;
-  type: "movie" | "series";
-  is_kids: boolean | null;
-  genre: string | null;
-  year: number | null;
-  rating: number | null;
-  poster_url: string | null;
-  backdrop_url: string | null;
-  video_url: string | null;
-  duration_minutes: number | null;
-  seasons: number | null;
-  episodes: number | null;
-  is_featured: boolean | null;
-  is_trending: boolean | null;
-  channel_id: string | null;
-  created_at: string | null;
-  updated_at: string | null;
+  description?: string | null;
+  type: "movie" | "series" | "kids";
+  is_kids?: boolean | null;
+  genre?: string | null;
+  year?: number | null;
+  rating?: number | null;
+  poster_url?: string | null;
+  backdrop_url?: string | null;
+  video_url?: string | null;
+  duration_minutes?: number | null;
+  seasons?: number | null;
+  episodes?: number | null;
+  is_featured?: boolean | null;
+  is_trending?: boolean | null;
+  channel_id?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
   seasons_data?: any;
 }
 
@@ -47,7 +47,7 @@ const fetchContentData = async (): Promise<Content[]> => {
   const transformStart = performance.now();
   const transformedData = (data || []).map((item) => ({
     ...item,
-    type: item.type as "movie" | "series",
+    type: item.type as "movie" | "series" | "kids",
     is_kids: (item as any).is_kids ?? false,
   }));
 
@@ -67,7 +67,7 @@ const searchContentData = async (query: string): Promise<Content[]> => {
     toast.error("Failed to search content");
     throw error;
   }
-  return data || [];
+  return (data as Content[]) || [];
 
 }
 export const useContent = () => {

@@ -219,10 +219,7 @@ const Index = React.memo(() => {
             }}
             onPlay={() => {
               // Triggered for valid movies
-              console.log("Play triggered for Movie");
               setShowContentModal(false);
-              setShowPlayer(true);
-              // Also dispatch for Redux consistency if needed/obsessively
               dispatch(openScreenPlayer({
                 isOpen: true,
                 selectedVideo: selectedContent,
@@ -231,18 +228,6 @@ const Index = React.memo(() => {
                 videoUrl: selectedContent.video_url || selectedContent.videoUrl
               }));
             }}
-          />
-        )}
-
-        {selectedContent && showPlayer && (
-          <FullscreenPlayer
-            isOpen={showPlayer}
-            onClose={handleClosePlayer}
-            videoUrl={selectedContent.video_url || selectedContent.videoUrl}
-            title={selectedContent.title}
-            movieId={selectedContent.id}
-            type={selectedContent.type || "movie"}
-            userId={user?.id}
           />
         )}
 

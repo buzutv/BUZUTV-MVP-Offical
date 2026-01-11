@@ -78,12 +78,20 @@ const FullscreenPlayer = ({
   // const navigate = useNavigate();
   const [triggerRecommendations, resultRecommendations] = useLazyGetRecommendationsWtihContentEmbeddedQuery();
   const [triggerRelatedContent, resultRelatedContent] = useLazyGetContentWithWatchHistoryFiltersQuery();
+  const reduxIsOpen = useSelector((state: any) => state.screenPlayer.isOpen);
   const selectedContent = useSelector((state: any) => state.screenPlayer.selectedVideo);
+  const reduxVideoUrl = useSelector((state: any) => state.screenPlayer.videoUrl);
+  const reduxMovieId = useSelector((state: any) => state.screenPlayer.movieId);
   const [triggerGetContentWithWatchHistory, result] = useLazyGetPlaylistContentWithWatchHistoryQuery()
   const isSeries = useSelector((state: any) => state.screenPlayer.isSeries);
+  const reduxSeriesData = useSelector((state: any) => state.screenPlayer.seriesData);
   const contentIds = useSelector((state: any) => state.screenPlayer.playlistInfo);
   const playlistId = useSelector((state: any) => state.screenPlayer.playlistId)
-  const {user} = useAuth()
+  const { user } = useAuth()
+
+  // Effective state: favor props if provided, otherwise use Redux
+  const effectiveIsOpen = isOpen || reduxIsOpen;
+  const effectiveSeasons = (season && season.length > 0) ? season : (Array.isArray(reduxSeriesData) ? reduxSeriesData : (reduxSeriesData ? [reduxSeriesData] : []));
 
   const [triggerGetSearchContentWithWatchHistory, resultGetSearchContentWithWatchHistory] = useLazyGetSearchContentWithWatchHistoryQuery()
   console.log("Selected Content from Redux in FullscreenPlayer:", currentEpisode?.id);
@@ -156,7 +164,10 @@ const FullscreenPlayer = ({
         }
       } else {
         setMovieid(selectedContent.id);
-        setActualVideoUrl(selectedContent.video_url);
+        const url = selectedContent.video_url || selectedContent.videoUrl ||
+          (selectedContent.id === reduxMovieId ? reduxVideoUrl : undefined) ||
+          (selectedContent.id === reduxSeriesData?.id ? reduxVideoUrl : undefined);
+        if (url) setActualVideoUrl(url);
         // Ensure movies state reflects current content for related fetch etc
         if (selectedContent.id !== currentMovie?.id) {
           setMovies([selectedContent]);
@@ -266,7 +277,14 @@ const FullscreenPlayer = ({
   const years = ["All", "2024", "2023", "2022", "2021", "2020"];
   const types = ["All", "movie", "series"];
 
-  if (!isOpen) return null;
+  if (!effectiveIsOpen) return null;
+
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    }
+    dispatch({ type: 'screenPlayer/closeScreenPlayer' });
+  };
 
   return (
     <div className="fixed inset-0 z-[9999] overflow-y-auto" style={{
@@ -279,11 +297,7 @@ const FullscreenPlayer = ({
 
         <div className="w-full x-auto px-4 py-12">
           <div className="flex justify-center items-center gap-4 mb-4">
-            <div className="flex items-center justify-center gap-4 cursor-pointer flex-1" onClick={async () => {
-              // setSelectedVideo(null)
-              onClose()
-              // navigate(`/playlist/${playlistId}`)
-            }}>
+            <div className="flex items-center justify-center gap-4 cursor-pointer flex-1" onClick={handleClose}>
               <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
@@ -307,8 +321,8 @@ const FullscreenPlayer = ({
               {
                 actualVideoUrl &&
                 <VideoPlayer
-                  key={selectedContent?.id || selectedContent?.video_url}
-                  videoId={selectedContent?.video_url}
+                  key={selectedContent?.id || actualVideoUrl}
+                  videoId={actualVideoUrl || selectedContent?.video_url}
                   // last_position={lastPausedTime}
                   setCurrentMovie={setCurrentMovie}
                   type={type}

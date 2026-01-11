@@ -105,6 +105,15 @@ const App = () => {
               onSearchChange={handleSearchChange}
               onSearchClear={handleClearSearch}
             />
+            {/* Global Fullscreen Player - controlled by Redux */}
+            <FullscreenPlayer
+              isOpen={false} // Will be overridden by Redux state inside the component
+              videoUrl=""
+              title=""
+              userId={user?.id || ""}
+              movieId=""
+              type="movie"
+            />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />

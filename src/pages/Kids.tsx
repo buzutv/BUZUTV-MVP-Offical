@@ -263,10 +263,7 @@ const Kids = () => {
                                 const finalUrl = url || contentItem?.video_url;
 
                                 if (finalUrl) {
-                                  setCurrentVideoUrl(finalUrl);
-                                  setCurrentVideoTitle(episodeTitle || selectedMovie.title);
                                   setShowContentModal(false);
-                                  setIsFullscreen(true);
 
                                   dispatch(openScreenPlayer({
                                     isOpen: true,
@@ -287,10 +284,7 @@ const Kids = () => {
 
                                 if (finalUrl) {
                                   console.log("Play triggered for Kids Movie", finalUrl);
-                                  setCurrentVideoUrl(finalUrl);
-                                  setCurrentVideoTitle(selectedMovie.title);
                                   setShowContentModal(false);
-                                  setIsFullscreen(true);
 
                                   dispatch(openScreenPlayer({
                                     isOpen: true,
@@ -307,24 +301,6 @@ const Kids = () => {
                               contentItem={contentItem}
                               channel={channel}
                             />
-
-                            {selectedMovie && isFullscreen && (
-                              <FullscreenPlayer
-                                isOpen={isFullscreen}
-                                onClose={() => {
-                                  setIsFullscreen(false);
-                                  setCurrentVideoUrl("");
-                                  setCurrentVideoTitle("");
-                                  setSelectedMovie(null);
-                                  dispatch(closeScreenPlayer());
-                                }}
-                                videoUrl={currentVideoUrl}
-                                title={currentVideoTitle}
-                                movieId={selectedMovie.id}
-                                type={selectedMovie.type || "movie"}
-                                userId={user?.id}
-                              />
-                            )}
                           </>
                         );
                       })()}

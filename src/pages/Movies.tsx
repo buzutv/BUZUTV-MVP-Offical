@@ -255,7 +255,6 @@ const Movies = React.memo(() => {
 
                           if (finalUrl) {
                             setShowContentModal(false);
-                            setIsFullscreen(true);
                             // Dispatch to Redux
                             dispatch(openScreenPlayer({
                               isOpen: true,
@@ -269,22 +268,6 @@ const Movies = React.memo(() => {
                         }}
                         contentItem={rawContent.find((item) => item.id === selectedMovie.id)}
                         channel={channels.find((ch) => ch.id === selectedMovie.channelId)}
-                      />
-                    )}
-
-                    {selectedMovie && isFullscreen && (
-                      <FullscreenPlayer
-                        isOpen={isFullscreen}
-                        onClose={() => {
-                          setIsFullscreen(false);
-                          setSelectedMovie(null);
-                          dispatch(closeScreenPlayer());
-                        }}
-                        videoUrl={selectedMovie.video_url || rawContent.find((item) => item.id === selectedMovie.id)?.video_url}
-                        title={selectedMovie.title}
-                        movieId={selectedMovie.id}
-                        type="movie"
-                        userId={user?.id}
                       />
                     )}
                   </div>
