@@ -2,6 +2,8 @@ import { useMemo } from "react";
 import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
 import { genres } from "@/data/mockMovies";
+import { useGetContentWithWatchHistoryQuery } from "@/store/contentSlice";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Transform database content to match Movie interface
 const transformDatabaseContent = (dbContent: any[]) => {
@@ -26,6 +28,7 @@ const transformDatabaseContent = (dbContent: any[]) => {
     channelId: item.channel_id,
     created_at: item.created_at,
     seasons_data: item.seasons_data,
+    user_watch_history: item.user_watch_history || [],
   }));
 
   return transformed;
@@ -45,9 +48,14 @@ const transformDatabaseChannels = (dbChannels: any[]) => {
 };
 
 export const useAppContent = () => {
-  const { content: dbContent, isLoading: dbContentLoading } = useContent();
+  // const { content: dbContent, isLoading: dbContentLoading } = useContent();
   const { channels: dbChannels, isLoading: dbChannelsLoading } = useChannels();
-
+  const { user } = useAuth()
+  const { data: dbContent, isLoading: dbContentLoading } = useGetContentWithWatchHistoryQuery(user?.id, {
+    refetchOnFocus: true,
+    refetchOnMountOrArgChange: true
+  })
+  console.log("DB Content", dbContent)
   const transformedContent = useMemo(() => {
     if (dbContentLoading || !dbContent?.length) {
       return [];

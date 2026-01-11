@@ -16,6 +16,7 @@ import AdToast from "./AdToast";
 import { useDispatch, useSelector } from "react-redux";
 import { openScreenPlayer } from "@/store/screenPlayerSlice";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { useAuth } from "@/contexts/AuthContext";
 
 const FullscreenPlayer = ({
   isOpen,
@@ -82,6 +83,7 @@ const FullscreenPlayer = ({
   const isSeries = useSelector((state: any) => state.screenPlayer.isSeries);
   const contentIds = useSelector((state: any) => state.screenPlayer.playlistInfo);
   const playlistId = useSelector((state: any) => state.screenPlayer.playlistId)
+  const {user} = useAuth()
 
   const [triggerGetSearchContentWithWatchHistory, resultGetSearchContentWithWatchHistory] = useLazyGetSearchContentWithWatchHistoryQuery()
   console.log("Selected Content from Redux in FullscreenPlayer:", currentEpisode?.id);
@@ -195,7 +197,7 @@ const FullscreenPlayer = ({
       const type = selectedType !== "All" ? selectedType : undefined;
 
       const { data: relatedData } = await triggerRelatedContent({
-        userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3",
+        userId: user?.id,
         genre,
         year,
         type
@@ -230,7 +232,7 @@ const FullscreenPlayer = ({
 
   useEffect(() => {
     async function fetchRecommendations() {
-      const recommend = await triggerRecommendations({ userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3" });
+      const recommend = await triggerRecommendations({ userId: user?.id });
 
       setRecommended(recommend?.data)
     }
@@ -243,7 +245,7 @@ const FullscreenPlayer = ({
 
   const handleSearch = async (query: string) => {
     if (query.trim().length === 0) return [];
-    const searchResult = await triggerGetSearchContentWithWatchHistory({ userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3", search: query }).unwrap()
+    const searchResult = await triggerGetSearchContentWithWatchHistory({ userId: user?.id, search: query }).unwrap()
     setIsSearching(false);
     setSearchResults(searchResult || []);
   };
@@ -315,7 +317,7 @@ const FullscreenPlayer = ({
                   playlistItems={playlists}
                   movieId={movieId}
                   episodeId={isSeries ? selectedContent?.id : undefined}
-                  userid="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
+                  userid={user?.id}
                   playlistInfo={playlistInfo}
                   onHistorySaved={onHistorySaved}
                   ref={parentRef}

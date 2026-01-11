@@ -61,13 +61,20 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
       episodesCount: episodes.length,
       playlistItemsCount: playlist_items.length,
       currentVideoIndex,
-      videoId
+      videoId,
+      movieId,
+      episodeId,
     });
 
     // --- SYNC REFS ---
     useEffect(() => {
-      movieIdRef.current = movieId;
-    }, [movieId]);
+      if (!isSeries) {
+        movieIdRef.current = movieId ?? selectedVideo?.id;
+      }
+      else {
+        movieIdRef.current = movieId;
+      }
+    }, [movieId, isSeries]);
 
     useEffect(() => {
       episodeIdRef.current = episodeId;

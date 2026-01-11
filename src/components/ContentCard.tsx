@@ -58,7 +58,6 @@ const ContentCard = ({
   const { favoriteIds, addToFavorites, removeFromFavorites } = useUserFavorites();
   const { content } = useContent();
   const { channels } = useChannels();
-
   // State for playlist creation form
   const [playlistForm, setPlaylistForm] = useState<{
     title: string;
@@ -117,10 +116,16 @@ const ContentCard = ({
     [isSaved, actualItem.id, addToFavorites, removeFromFavorites]
   );
 
-  const handleCardClick = useCallback(() => {
+  const handleCardClick = useCallback((e?: React.MouseEvent | React.KeyboardEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+
+    // If onOpen returns true, it means it handled the action (e.g. showed login modal)
     if (onOpen && onOpen() === true) return;
 
     if (onItemClick) {
+      console.log("Calling onItemClick with:", actualItem);
       onItemClick(actualItem);
       return;
     }

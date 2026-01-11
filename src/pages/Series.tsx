@@ -20,18 +20,58 @@ import { useChannels } from "@/hooks/useChannels";
 import FullscreenPlayer from "@/components/FullscreenPlayer";
 import { Spinner } from "@/components/ui/spinner";
 import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
+import { useDispatch } from "react-redux";
+import { openScreenPlayer, closeScreenPlayer } from "@/store/screenPlayerSlice";
+import { useLazyGetSeasonWithEpisodesQuery } from "@/store/seasonSlice";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Series = () => {
   const { seriesContent, isLoading, content } = useAppContent();
   const [selectedSeries, setSelectedSeries] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [fullscreenVideoUrl, setFullscreenVideoUrl] = useState("");
-  const [fullscreenVideoTitle, setFullscreenVideoTitle] = useState("");
+  const [showContentModal, setShowContentModal] = useState(false);
+  const [seriesSeasons, setSeriesSeasons] = useState<any[]>([]);
   const [activeGenre, setActiveGenre] = useState("all");
   const { favoriteIds, addToFavorites, removeFromFavorites } =
     useUserFavorites();
   const { content: rawContent } = useContent();
   const { channels } = useChannels();
+  const dispatch = useDispatch();
+  const { user } = useAuth();
+  const [triggerGetSeasonWithEpisodes] = useLazyGetSeasonWithEpisodesQuery();
+  const [showPlayer, setShowPlayer] = useState(false);
+
+  const handleSeriesClick = async (series: any) => {
+    console.log("Series Clicked:", series);
+    setSelectedSeries(series);
+    setShowContentModal(true);
+
+    try {
+      console.log("Fetching seasons for series ID:", series.id);
+      const seasonWithEpisode = await triggerGetSeasonWithEpisodes({
+        contentId: series.id,
+        userId: user?.id || "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
+      }).unwrap();
+
+      console.log("Fetched seasons result:", seasonWithEpisode);
+      setSeriesSeasons(seasonWithEpisode || []);
+    } catch (error) {
+      console.error("Error fetching seasons for series:", error);
+      setSeriesSeasons([]);
+    }
+  };
+
+  const handleClosePlayer = () => {
+    setShowPlayer(false);
+    setSelectedSeries(null);
+    dispatch(closeScreenPlayer());
+  }
+
+  const handleCloseContentModal = () => {
+    setShowContentModal(false);
+    setSelectedSeries(null);
+    setSeriesSeasons([]);
+  };
 
   // Get genres that actually have series content (excluding kids)
   const availableSeriesGenres = React.useMemo(() => {
@@ -91,7 +131,7 @@ const Series = () => {
           ></div>
           <div className="relative flex items-center justify-center min-h-screen">
             <div className="text-2xl text-white">
-              <Spinner className="w-12 h-12"/>
+              <Spinner className="w-12 h-12" />
             </div>
           </div>
         </div>
@@ -120,11 +160,12 @@ const Series = () => {
             {series.map((show) => (
               <CarouselItem key={show.id} className="pl-1 basis-auto">
                 <div className="w-64">
-                  <ContentCard 
+                  <ContentCard
                     item={show}
                     variant="series"
                     autoDetectKids={true}
                     width="w-64"
+                    onItemClick={() => handleSeriesClick(show)}
                   />
                 </div>
               </CarouselItem>
@@ -192,7 +233,7 @@ const Series = () => {
                           <div
                             key={show.id}
                             className="relative flex items-center bg-black/40 backdrop-blur-md rounded-lg shadow-lg p-2 group border-2 border-white/10 hover:border-brand-500/50 min-h-[60px] flex-1 cursor-pointer transition-all duration-300"
-                            onClick={() => setSelectedSeries(show)}
+                            onClick={() => handleSeriesClick(show)}
                           >
                             {/* Ranking Badge */}
                             <div className="absolute -left-6 top-1/2 -translate-y-1/2 z-10">
@@ -226,68 +267,46 @@ const Series = () => {
                           </div>
                         ))}
                     </div>
-                    {selectedSeries &&
-                      (() => {
-                        // Match SeriesCard modal logic
-                        const isSaved = favoriteIds.includes(selectedSeries.id);
-                        const contentItem = rawContent.find(
-                          (item) => item.id === selectedSeries.id,
-                        );
-                        const videoUrl = contentItem?.video_url;
-                        const channel = channels.find(
-                          (ch) => ch.id === selectedSeries.channelId,
-                        );
+                    {selectedSeries && (
+                      <ContentModal
+                        isOpen={showContentModal}
+                        onClose={handleCloseContentModal}
+                        item={selectedSeries}
+                        variant="series"
+                        autoDetectKids={true}
+                        seasons={seriesSeasons}
+                        movieId={selectedSeries.id}
+                        onPlayEpisode={(url, title) => {
+                          setShowContentModal(false);
+                          setShowPlayer(true);
 
-                        // This will be handled internally by ContentModal using useMoreLikeThis hook
-                        const recommendedContent = [];
-                        const handleSaveModal = () => {
-                          if (isSaved) {
-                            removeFromFavorites(selectedSeries.id);
-                          } else {
-                            addToFavorites(selectedSeries.id);
-                          }
-                        };
-                        const handlePlayEpisode = (
-                          videoUrl: string,
-                          episodeTitle: string,
-                        ) => {
-                          setFullscreenVideoUrl(videoUrl);
-                          setFullscreenVideoTitle(episodeTitle);
-                          setIsFullscreen(true);
-                        };
-                        const handleExitFullscreen = () => {
-                          setIsFullscreen(false);
-                          setFullscreenVideoUrl("");
-                          setFullscreenVideoTitle("");
-                        };
-                        return (
-                          <>
-                            {isFullscreen && fullscreenVideoUrl && (
-                              <FullscreenPlayer
-                                isOpen={isFullscreen}
-                                onClose={handleExitFullscreen}
-                                videoUrl={fullscreenVideoUrl}
-                                title={fullscreenVideoTitle}
-                              />
-                            )}
-                            <ContentModal
-                              isOpen={!!selectedSeries && !isFullscreen}
-                              onClose={(open) => !open && setSelectedSeries(null)}
-                              item={selectedSeries}
-                              variant="series"
-                              autoDetectKids={true}
-                              onPlayEpisode={(videoUrl, episodeTitle) => {
-                                setFullscreenVideoUrl(videoUrl);
-                                setFullscreenVideoTitle(episodeTitle);
-                                setIsFullscreen(true);
-                              }}
-                              videoUrl={videoUrl}
-                              contentItem={contentItem}
-                              channel={channel}
-                            />
-                          </>
-                        );
-                      })()}
+                          // Optional: Dispatch for consistency, although FullscreenPlayer can handle some state
+                          dispatch(openScreenPlayer({
+                            isOpen: true,
+                            selectedVideo: selectedSeries,
+                            isSeries: true,
+                            movieId: selectedSeries.id,
+                            videoUrl: url,
+                            title: title,
+                            seriesData: seriesSeasons
+                          }));
+                        }}
+                        contentItem={rawContent.find((item) => item.id === selectedSeries.id)}
+                        channel={channels.find((ch) => ch.id === selectedSeries.channelId)}
+                      />
+                    )}
+
+                    {selectedSeries && showPlayer && (
+                      <FullscreenPlayer
+                        isOpen={showPlayer}
+                        onClose={handleClosePlayer}
+                        videoUrl={selectedSeries.video_url || ""}
+                        title={selectedSeries.title}
+                        movieId={selectedSeries.id}
+                        type="series"
+                        userId={user?.id}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
@@ -323,6 +342,7 @@ const Series = () => {
                             title="New TV Shows"
                             items={newSeries}
                             onCardClick={handleContentRowCardClick}
+                            onItemClick={handleSeriesClick}
                           />
                         )
                       );
@@ -343,6 +363,7 @@ const Series = () => {
                         title="Recommended"
                         items={seriesContent.recommended.slice(0, 8)}
                         onCardClick={handleContentRowCardClick}
+                        onItemClick={handleSeriesClick}
                       />
                     )}
 
@@ -353,6 +374,7 @@ const Series = () => {
                           title="Comedy"
                           items={seriesContent.byGenre.Comedy.slice(0, 8)}
                           onCardClick={handleContentRowCardClick}
+                          onItemClick={handleSeriesClick}
                         />
                       )}
 
@@ -363,6 +385,7 @@ const Series = () => {
                           title="Drama"
                           items={seriesContent.byGenre.Drama.slice(0, 8)}
                           onCardClick={handleContentRowCardClick}
+                          onItemClick={handleSeriesClick}
                         />
                       )}
 
@@ -373,6 +396,7 @@ const Series = () => {
                           title="Sports"
                           items={seriesContent.byGenre.Sports.slice(0, 8)}
                           onCardClick={handleContentRowCardClick}
+                          onItemClick={handleSeriesClick}
                         />
                       )}
 
@@ -383,6 +407,7 @@ const Series = () => {
                           title="Romance"
                           items={seriesContent.byGenre.Romance.slice(0, 8)}
                           onCardClick={handleContentRowCardClick}
+                          onItemClick={handleSeriesClick}
                         />
                       )}
 
@@ -393,6 +418,7 @@ const Series = () => {
                           title="Action"
                           items={seriesContent.byGenre.Action.slice(0, 8)}
                           onCardClick={handleContentRowCardClick}
+                          onItemClick={handleSeriesClick}
                         />
                       )}
 
@@ -403,6 +429,7 @@ const Series = () => {
                           title="Lifestyle"
                           items={seriesContent.byGenre.Lifestyle.slice(0, 8)}
                           onCardClick={handleContentRowCardClick}
+                          onItemClick={handleSeriesClick}
                         />
                       )}
 
@@ -413,6 +440,7 @@ const Series = () => {
                           title="Documentary"
                           items={seriesContent.byGenre.Documentary.slice(0, 8)}
                           onCardClick={handleContentRowCardClick}
+                          onItemClick={handleSeriesClick}
                         />
                       )}
 
@@ -426,6 +454,7 @@ const Series = () => {
                             8,
                           )}
                           onCardClick={handleContentRowCardClick}
+                          onItemClick={handleSeriesClick}
                         />
                       )}
                   </>
@@ -482,6 +511,7 @@ const Series = () => {
                                 }
                                 items={newSeriesFiltered}
                                 onCardClick={handleContentRowCardClick}
+                                onItemClick={handleSeriesClick}
                               />
                             )
                           );
@@ -497,6 +527,7 @@ const Series = () => {
                           }
                           items={filteredSeries.slice(2, 10)}
                           onCardClick={handleContentRowCardClick}
+                          onItemClick={handleSeriesClick}
                         />
                       </>
                     )}
@@ -513,6 +544,7 @@ const Series = () => {
                         <ContentGrid
                           items={filteredSeries}
                           onCardClick={handleContentRowCardClick}
+                          onItemClick={handleSeriesClick}
                         />
                       ) : (
                         <div className="text-center py-16">

@@ -130,7 +130,7 @@ export async function saveWatchHistory(
     ? 100
     : Math.floor((current / duration) * 100);
 
-  console.log("Is Series", episodeId)
+  console.log("Is Series", userId, movieId, episodeId,currentTime,completed,type)
   const isSeries = type === "series";
 
   const payload = {

@@ -20,6 +20,10 @@ import { useChannels } from "@/hooks/useChannels";
 import FullscreenPlayer from "@/components/FullscreenPlayer";
 import { Spinner } from "@/components/ui/spinner";
 import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
+import { useAuth } from "@/contexts/AuthContext";
+import { useDispatch } from "react-redux";
+import { closeScreenPlayer, openScreenPlayer } from "@/store/screenPlayerSlice";
+
 
 const Movies = React.memo(() => {
   const startTime = performance.now();
@@ -27,14 +31,16 @@ const Movies = React.memo(() => {
 
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [activeGenre, setActiveGenre] = useState("all");
+  const { user } = useAuth();
+  const dispatch = useDispatch();
 
+  console.log("Movie content", movieContent)
   const { favoriteIds, addToFavorites, removeFromFavorites } =
     useUserFavorites();
   const { content: rawContent } = useContent();
   const { channels } = useChannels();
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [currentVideoUrl, setCurrentVideoUrl] = useState<string>("");
-  const [currentVideoTitle, setCurrentVideoTitle] = useState<string>("");
+  const [showContentModal, setShowContentModal] = useState(false);
 
   const availableMovieGenres = useMemo(() => {
     if (!movieContent.all || movieContent.all.length === 0) {
@@ -68,9 +74,13 @@ const Movies = React.memo(() => {
     return false;
   }, []);
 
-  const handleCardClick = useCallback((movie) => {
+  const handleCardClick = (movie) => {
+    console.log("Selected movie", movie)
     setSelectedMovie(movie);
-  }, []);
+    setShowContentModal(true);
+  }
+
+  // console.log("Selected movie", selectedMovie)
 
   if (isLoading) {
     return (
@@ -92,7 +102,7 @@ const Movies = React.memo(() => {
           ></div>
           <div className="relative flex items-center justify-center min-h-screen">
             <div className="text-2xl font-bold text-white">
-              <Spinner className="w-12 h-12"/>
+              <Spinner className="w-12 h-12" />
             </div>
           </div>
         </div>
@@ -122,11 +132,12 @@ const Movies = React.memo(() => {
             {movies.map((movie) => (
               <CarouselItem key={movie.id} className="pl-1 basis-auto">
                 <div className="w-64">
-                  <ContentCard 
+                  <ContentCard
                     item={movie}
                     variant="movie"
                     autoDetectKids={true}
                     width="w-64"
+                    onItemClick={() => handleCardClick(movie)}
                   />
                 </div>
               </CarouselItem>
@@ -226,69 +237,56 @@ const Movies = React.memo(() => {
                           </div>
                         ))}
                     </div>
-                    {selectedMovie &&
-                      (() => {
-                        // Match MovieCard modal logic
-                        const isSaved = favoriteIds.includes(selectedMovie.id);
-                        const contentItem = rawContent.find(
-                          (item) => item.id === selectedMovie.id,
-                        );
-                        const videoUrl = contentItem?.video_url;
-                        const channel = channels.find(
-                          (ch) => ch.id === selectedMovie.channelId,
-                        );
+                    {selectedMovie && (
+                      <ContentModal
+                        isOpen={showContentModal}
+                        onClose={() => {
+                          setShowContentModal(false);
+                          setSelectedMovie(null);
+                        }}
+                        item={selectedMovie}
+                        variant="movie"
+                        autoDetectKids={true}
+                        onPlayEpisode={(url, title) => {
+                          const contentItem = rawContent.find(
+                            (item) => item.id === selectedMovie.id,
+                          );
+                          const finalUrl = url || contentItem?.video_url;
 
-                        // This will be handled internally by ContentModal using useMoreLikeThis hook
-                        const recommendedContent = [];
-                        const handleSaveModal = () => {
-                          if (isSaved) {
-                            removeFromFavorites(selectedMovie.id);
-                          } else {
-                            addToFavorites(selectedMovie.id);
-                          }
-                        };
-                        const handleModalPlayClick = () => {
-                          if (videoUrl) {
+                          if (finalUrl) {
+                            setShowContentModal(false);
                             setIsFullscreen(true);
+                            // Dispatch to Redux
+                            dispatch(openScreenPlayer({
+                              isOpen: true,
+                              selectedVideo: selectedMovie,
+                              isSeries: false,
+                              movieId: selectedMovie.id,
+                              videoUrl: finalUrl,
+                              title: title || selectedMovie.title
+                            }));
                           }
-                        };
-                        const handleExitFullscreen = () => {
+                        }}
+                        contentItem={rawContent.find((item) => item.id === selectedMovie.id)}
+                        channel={channels.find((ch) => ch.id === selectedMovie.channelId)}
+                      />
+                    )}
+
+                    {selectedMovie && isFullscreen && (
+                      <FullscreenPlayer
+                        isOpen={isFullscreen}
+                        onClose={() => {
                           setIsFullscreen(false);
-                        };
-                        return (
-                          <>
-                            {isFullscreen && currentVideoUrl && (
-                              <FullscreenPlayer
-                                isOpen={isFullscreen}
-                                onClose={() => {
-                                  setIsFullscreen(false);
-                                  setCurrentVideoUrl("");
-                                  setCurrentVideoTitle("");
-                                }}
-                                videoUrl={currentVideoUrl}
-                                title={currentVideoTitle}
-                              />
-                            )}
-                            <ContentModal
-                              isOpen={!!selectedMovie && !isFullscreen}
-                              onClose={(open) => !open && setSelectedMovie(null)}
-                              item={selectedMovie}
-                              variant="movie"
-                              autoDetectKids={true}
-                              onPlayEpisode={(url, title) => {
-                                if (url) {
-                                  setCurrentVideoUrl(url);
-                                  setCurrentVideoTitle(title);
-                                  setIsFullscreen(true);
-                                }
-                              }}
-                              videoUrl={videoUrl}
-                              contentItem={contentItem}
-                              channel={channel}
-                            />
-                          </>
-                        );
-                      })()}
+                          setSelectedMovie(null);
+                          dispatch(closeScreenPlayer());
+                        }}
+                        videoUrl={selectedMovie.video_url || rawContent.find((item) => item.id === selectedMovie.id)?.video_url}
+                        title={selectedMovie.title}
+                        movieId={selectedMovie.id}
+                        type="movie"
+                        userId={user?.id}
+                      />
+                    )}
                   </div>
                 </div>
               </div>

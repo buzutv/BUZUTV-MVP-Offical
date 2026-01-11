@@ -11,6 +11,9 @@ import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
 import FullscreenPlayer from "@/components/FullscreenPlayer";
 import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
+import { useDispatch } from "react-redux";
+import { openScreenPlayer, closeScreenPlayer } from "@/store/screenPlayerSlice";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Kids = () => {
   const { kidsContent, isLoading } = useAppContent();
@@ -23,6 +26,9 @@ const Kids = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string>("");
   const [currentVideoTitle, setCurrentVideoTitle] = useState<string>("");
+  const [showContentModal, setShowContentModal] = useState(false);
+  const dispatch = useDispatch();
+  const { user } = useAuth();
 
   // Enhanced kids content with additional categories
   const enhancedKidsContent = useMemo(() => {
@@ -108,6 +114,7 @@ const Kids = () => {
   // Add click logic for Top Ranked
   const handleCardClick = (movie) => {
     setSelectedMovie(movie);
+    setShowContentModal(true);
   };
 
   if (isLoading) {
@@ -137,6 +144,9 @@ const Kids = () => {
       </ProtectedRoute>
     );
   }
+
+
+  console.log("Kids Selected Movie", selectedMovie)
 
   return (
     <ProtectedRoute>
@@ -237,35 +247,84 @@ const Kids = () => {
                         };
                         return (
                           <>
-                            {isFullscreen && currentVideoUrl && (
-                              <FullscreenPlayer
-                                isOpen={isFullscreen}
-                                onClose={() => {
-                                  setIsFullscreen(false);
-                                  setCurrentVideoUrl("");
-                                  setCurrentVideoTitle("");
-                                }}
-                                videoUrl={currentVideoUrl}
-                                title={currentVideoTitle}
-                              />
-                            )}
                             <ContentModal
-                              isOpen={!!selectedMovie && !isFullscreen}
-                              onClose={(open) => !open && setSelectedMovie(null)}
+                              isOpen={showContentModal}
+                              onClose={() => {
+                                setShowContentModal(false);
+                                setSelectedMovie(null);
+                              }}
                               item={selectedMovie}
                               variant="auto"
                               isKidsMode={true}
                               onPlayEpisode={(url, episodeTitle) => {
-                                if (url) {
-                                  setCurrentVideoUrl(url);
-                                  setCurrentVideoTitle(episodeTitle);
+                                const contentItem = content.find(
+                                  (item) => item.id === selectedMovie.id,
+                                );
+                                const finalUrl = url || contentItem?.video_url;
+
+                                if (finalUrl) {
+                                  setCurrentVideoUrl(finalUrl);
+                                  setCurrentVideoTitle(episodeTitle || selectedMovie.title);
+                                  setShowContentModal(false);
                                   setIsFullscreen(true);
+
+                                  dispatch(openScreenPlayer({
+                                    isOpen: true,
+                                    selectedVideo: selectedMovie,
+                                    isSeries: selectedMovie.type === 'series',
+                                    movieId: selectedMovie.id,
+                                    videoUrl: finalUrl,
+                                    title: episodeTitle || selectedMovie.title,
+                                    contentId: selectedMovie.id
+                                  }));
+                                }
+                              }}
+                              onPlay={() => {
+                                const contentItem = content.find(
+                                  (item) => item.id === selectedMovie.id,
+                                );
+                                const finalUrl = contentItem?.video_url;
+
+                                if (finalUrl) {
+                                  console.log("Play triggered for Kids Movie", finalUrl);
+                                  setCurrentVideoUrl(finalUrl);
+                                  setCurrentVideoTitle(selectedMovie.title);
+                                  setShowContentModal(false);
+                                  setIsFullscreen(true);
+
+                                  dispatch(openScreenPlayer({
+                                    isOpen: true,
+                                    selectedVideo: selectedMovie,
+                                    isSeries: false,
+                                    movieId: selectedMovie.id,
+                                    videoUrl: finalUrl,
+                                    title: selectedMovie.title,
+                                    contentId: selectedMovie.id
+                                  }));
                                 }
                               }}
                               videoUrl={videoUrl}
                               contentItem={contentItem}
                               channel={channel}
                             />
+
+                            {selectedMovie && isFullscreen && (
+                              <FullscreenPlayer
+                                isOpen={isFullscreen}
+                                onClose={() => {
+                                  setIsFullscreen(false);
+                                  setCurrentVideoUrl("");
+                                  setCurrentVideoTitle("");
+                                  setSelectedMovie(null);
+                                  dispatch(closeScreenPlayer());
+                                }}
+                                videoUrl={currentVideoUrl}
+                                title={currentVideoTitle}
+                                movieId={selectedMovie.id}
+                                type={selectedMovie.type || "movie"}
+                                userId={user?.id}
+                              />
+                            )}
                           </>
                         );
                       })()}
@@ -294,6 +353,7 @@ const Kids = () => {
                         title="New Kids Content"
                         items={enhancedKidsContent.new}
                         onCardClick={handleContentRowCardClick}
+                        onItemClick={handleCardClick}
                       />
                     )}
 
@@ -312,6 +372,7 @@ const Kids = () => {
                         title="Recommended"
                         items={enhancedKidsContent.recommended}
                         onCardClick={handleContentRowCardClick}
+                        onItemClick={handleCardClick}
                       />
                     )}
 
@@ -326,6 +387,7 @@ const Kids = () => {
                             title="TV Shows"
                             items={kidsShows.slice(0, 8)}
                             onCardClick={handleContentRowCardClick}
+                            onItemClick={handleCardClick}
                           />
                         )
                       );
@@ -342,6 +404,7 @@ const Kids = () => {
                             title="Movies"
                             items={kidsMovies.slice(0, 8)}
                             onCardClick={handleContentRowCardClick}
+                            onItemClick={handleCardClick}
                           />
                         )
                       );
@@ -359,6 +422,7 @@ const Kids = () => {
                             title="Educational"
                             items={educationalContent}
                             onCardClick={handleContentRowCardClick}
+                            onItemClick={handleCardClick}
                           />
                         )
                       );
@@ -391,6 +455,7 @@ const Kids = () => {
                                 }
                                 items={newKidsContentFiltered}
                                 onCardClick={handleContentRowCardClick}
+                                onItemClick={handleCardClick}
                               />
                             )
                           );
@@ -406,6 +471,7 @@ const Kids = () => {
                           }
                           items={filteredKidsContent.slice(2, 10)}
                           onCardClick={handleContentRowCardClick}
+                          onItemClick={handleCardClick}
                         />
                       </>
                     )}
@@ -422,6 +488,7 @@ const Kids = () => {
                         <ContentGrid
                           items={filteredKidsContent}
                           onCardClick={handleContentRowCardClick}
+                          onItemClick={handleCardClick}
                         />
                       ) : (
                         <div className="text-center py-16">
@@ -433,8 +500,8 @@ const Kids = () => {
                             {activeGenre === "all"
                               ? ""
                               : activeGenre.charAt(0).toUpperCase() +
-                                activeGenre.slice(1) +
-                                " "}
+                              activeGenre.slice(1) +
+                              " "}
                             kids content available at the moment
                           </p>
                         </div>

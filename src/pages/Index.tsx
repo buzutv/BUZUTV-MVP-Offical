@@ -1,6 +1,11 @@
 import React, { useCallback, useMemo, useState } from "react";
 import ChannelModal from "@/components/ChannelModal";
+import ContentModal from "@/components/ContentModal";
+
+
+import FullscreenPlayer from "@/components/FullscreenPlayer";
 import FullViewportHero from "@/components/FullViewportHero";
+
 import FilterBar from "@/components/FilterBar";
 import ContentGrid from "@/components/ContentGrid";
 import { useAppContent } from "@/hooks/useAppContent";
@@ -9,6 +14,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import ContentRow from "@/components/ContentRow";
 import { featuredContentIds } from "@/data/featuredContentIds";
 import { Spinner } from "@/components/ui/spinner"
+import { openScreenPlayer, closeScreenPlayer } from "@/store/screenPlayerSlice";
+import { useDispatch } from "react-redux";
+import { useLazyGetSeasonWithEpisodesQuery } from "@/store/seasonSlice";
 interface Channel {
   id: string;
   name: string;
@@ -23,11 +31,14 @@ const Index = React.memo(() => {
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const [showChannelModal, setShowChannelModal] = useState(false);
   const [activeGenre, setActiveGenre] = useState("all");
-
+  const { user } = useAuth()
+  const dispatch = useDispatch()
+  const [triggerGetSeasonWithEpisodes] = useLazyGetSeasonWithEpisodesQuery()
   const startTime = performance.now();
   const { homeContent, channels, isLoading, content, kidsContent } =
     useAppContent();
 
+  console.log('Home Contnet', homeContent)
   const availableGenresWithContent = useMemo((): string[] => {
     if (!content.allContent || content.allContent.length === 0) {
       return ["All"];
@@ -72,12 +83,57 @@ const Index = React.memo(() => {
     setShowChannelModal(false);
     setSelectedChannel(null);
   }, []);
+  const [selectedContent, setSelectedContent] = useState<any>(null);
+  const [showContentModal, setShowContentModal] = useState(false);
+  const [showPlayer, setShowPlayer] = useState(false);
+  const [seriesSeasons, setSeriesSeasons] = useState<any[]>([]);
+
+  const handleContentRowItemClick = async (item: any) => {
+    console.log("Content item clicked in Index.tsx:", item.type, item.id);
+
+    // Initial State Set for Modal
+    setSelectedContent(item);
+    setShowContentModal(true);
+
+    if (item.type === "series") {
+      try {
+        const seasonWithEpisode = await triggerGetSeasonWithEpisodes({
+          contentId: item.id,
+          userId: user?.id || "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
+        }).unwrap();
+
+        console.log("Fetched seasons for series:", seasonWithEpisode);
+        setSeriesSeasons(seasonWithEpisode || []);
+      } catch (error) {
+        console.error("Error fetching seasons for series:", error);
+        setSeriesSeasons([]);
+      }
+    } else {
+      // Clear seasons for movies to avoid stale data
+      setSeriesSeasons([]);
+    }
+  }
+
+  /* Close Player Handlers */
+  const handleClosePlayer = () => {
+    setShowPlayer(false);
+    setSelectedContent(null);
+    dispatch(closeScreenPlayer());
+  }
+
+  const handleCloseContentModal = () => {
+    setShowContentModal(false);
+    setSelectedContent(null);
+    setSeriesSeasons([]);
+  };
 
   const handleContentRowCardClick = useCallback(() => {
+
     if (!isLoggedIn) {
       setShowLoginModal(true);
       return true;
     }
+
     return false;
   }, [isLoggedIn, setShowLoginModal]);
 
@@ -144,6 +200,52 @@ const Index = React.memo(() => {
           channel={selectedChannel}
         />
 
+        {selectedContent && (
+          <ContentModal
+            isOpen={showContentModal}
+            onClose={handleCloseContentModal}
+            item={selectedContent}
+            variant="auto"
+            autoDetectKids={true}
+            movieId={selectedContent.id}
+            seasons={seriesSeasons}
+            onPlayEpisode={(url, title) => {
+              // Handles both Series Episode Play and Movie Play (if url passed)
+              console.log("Play triggered from ContentModal:", url, title);
+              if (url) {
+                setShowContentModal(false);
+                setShowPlayer(true);
+              }
+            }}
+            onPlay={() => {
+              // Triggered for valid movies
+              console.log("Play triggered for Movie");
+              setShowContentModal(false);
+              setShowPlayer(true);
+              // Also dispatch for Redux consistency if needed/obsessively
+              dispatch(openScreenPlayer({
+                isOpen: true,
+                selectedVideo: selectedContent,
+                isSeries: false,
+                movieId: selectedContent.id,
+                videoUrl: selectedContent.video_url || selectedContent.videoUrl
+              }));
+            }}
+          />
+        )}
+
+        {selectedContent && showPlayer && (
+          <FullscreenPlayer
+            isOpen={showPlayer}
+            onClose={handleClosePlayer}
+            videoUrl={selectedContent.video_url || selectedContent.videoUrl}
+            title={selectedContent.title}
+            movieId={selectedContent.id}
+            type={selectedContent.type || "movie"}
+            userId={user?.id}
+          />
+        )}
+
         {/* Full Viewport Hero Section with Channels at Bottom */}
         <FullViewportHero
           items={featured}
@@ -195,6 +297,7 @@ const Index = React.memo(() => {
                         title="New Content"
                         items={newContent}
                         onCardClick={handleContentRowCardClick}
+                        onItemClick={handleContentRowItemClick}
                       />
                     )
                   );
@@ -206,6 +309,7 @@ const Index = React.memo(() => {
                     title="Recommended"
                     items={homeContent.trending}
                     onCardClick={handleContentRowCardClick}
+                    onItemClick={handleContentRowItemClick}
                   />
                 )}
 
@@ -221,6 +325,7 @@ const Index = React.memo(() => {
                         title="Kids"
                         items={kidsOnlyContent}
                         onCardClick={handleContentRowCardClick}
+                        onItemClick={handleContentRowItemClick}
                       />
                     )
                   );
@@ -243,6 +348,7 @@ const Index = React.memo(() => {
                         title="Featured Movies"
                         items={featuredMovies}
                         onCardClick={handleContentRowCardClick}
+                        onItemClick={handleContentRowItemClick}
                       />
                     )
                   );
@@ -265,6 +371,7 @@ const Index = React.memo(() => {
                         title="Featured Shows"
                         items={featuredShows}
                         onCardClick={handleContentRowCardClick}
+                        onItemClick={handleContentRowItemClick}
                       />
                     )
                   );
@@ -328,6 +435,7 @@ const Index = React.memo(() => {
                     <ContentGrid
                       items={filteredContent}
                       onCardClick={handleContentRowCardClick}
+                      onItemClick={handleContentRowItemClick}
                     />
                   ) : (
                     <div className="text-center py-16">

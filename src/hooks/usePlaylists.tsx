@@ -4,7 +4,8 @@ import { useContentCache } from "./useContentCache";
 import { set } from "date-fns";
 import { useGetPlaylistsByUserQuery, useGetPlaylistsWithItemsQuery, useLazyGetPlaylistByIdQuery, useLazyGetPlaylistsWithItemsByIdQuery } from "@/store/playlistSlice";
 import { useSupabaseAuth } from "./useSupabaseAuth";
-import { useGetContentQuery } from "@/store/contentSlice";
+import { useGetContentQuery, useGetContentWithWatchHistoryQuery } from "@/store/contentSlice";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface PlaylistHookProps {
   id?: string;
@@ -16,17 +17,21 @@ const usePlaylists = ({ id }: PlaylistHookProps = {}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState(null);
-  const { user } = useSupabaseAuth();
-  const { data: contentData, isLoading: contentLoading } = useGetContentQuery()
+  const {user} = useAuth()
+  const { data: contentData, isLoading: contentLoading } = useGetContentWithWatchHistoryQuery(user?.id,{
+    refetchOnFocus:true,
+    refetchOnReconnect:true,
+    refetchOnMountOrArgChange:true,
+  })
 
-  const { data: playlist, isLoading: playlistLoading, refetch } = useGetPlaylistsByUserQuery("03fa9a91-4281-4bd4-9e60-4da2ba72b0f3", {
+  const { data: playlist, isLoading: playlistLoading, refetch } = useGetPlaylistsByUserQuery(user?.id, {
     refetchOnFocus: true,
     refetchOnReconnect: true,
     refetchOnMountOrArgChange: true,
   })
 
 
-  const { data: playlistWithItems, isLoading: playlistWithItemsLoading, refetch: refetchPlaylistWithItems } = useGetPlaylistsWithItemsQuery("03fa9a91-4281-4bd4-9e60-4da2ba72b0f3", {
+  const { data: playlistWithItems, isLoading: playlistWithItemsLoading, refetch: refetchPlaylistWithItems } = useGetPlaylistsWithItemsQuery(user?.id, {
     refetchOnFocus: true,
     refetchOnReconnect: true,
     refetchOnMountOrArgChange: true,

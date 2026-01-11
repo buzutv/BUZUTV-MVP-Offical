@@ -44,7 +44,7 @@ export const contentSlice = supabaseApi.injectEndpoints({
       { userId: string; contentIds: string[] }
     >({
       query: ({ userId, contentIds }) => {
-        const ids = contentIds.join(",");
+        const ids = contentIds.length > 0 ? contentIds.join(",") : "";
         return `content?id=in.(${ids})&select=*,user_watch_history(watch_percentage,last_position,completed,movie_id)&user_watch_history.user_id=eq.${userId}`;
       },
     }),

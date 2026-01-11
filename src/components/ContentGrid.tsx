@@ -3,13 +3,15 @@ import ContentCard from "@/components/ContentCard";
 
 interface ContentGridProps {
   items: any[];
-  onCardClick?: (item: any) => boolean;
+  onCardClick?: () => boolean;
+  onItemClick?: (item: any) => void;
   isMoreLikeThis?: boolean;
 }
 
 const ContentGrid: React.FC<ContentGridProps> = ({
   items,
   onCardClick,
+  onItemClick,
   isMoreLikeThis = false,
 }) => {
   return (
@@ -23,8 +25,9 @@ const ContentGrid: React.FC<ContentGridProps> = ({
               autoDetectKids={true}
               isMoreLikeThis={isMoreLikeThis}
               // className="w-96 h-96"
-              
-              onOpen={() => onCardClick?.(item)}
+
+              onOpen={onCardClick}
+              onItemClick={onItemClick}
             />
           </div>
         </div>
