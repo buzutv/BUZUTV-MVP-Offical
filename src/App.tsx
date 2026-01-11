@@ -26,7 +26,7 @@ import AdminEditChannel from "./pages/admin/AdminEditChannel";
 import NotFound from "./pages/NotFound";
 import LoginModal from "./components/auth/LoginModal";
 import { useAuth } from "@/contexts/AuthContext";
-import SearchOverlay from "@/components/SearchOverlay";
+import SearchModal from "@/components/SearchModal";
 import { useAppContent } from "@/hooks/useAppContent";
 import { useState } from "react";
 import Navbar from "./components/Navbar";
@@ -73,16 +73,8 @@ const RouteChangeMonitor = () => {
 };
 
 const App = () => {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { content, channels, isLoading } = useAppContent();
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
-  const handleClearSearch = () => {
-    setSearchQuery("");
-  };
-  const showSearchOverlay = searchQuery.trim().length > 0;
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -93,16 +85,15 @@ const App = () => {
           <BrowserRouter>
             <RouteChangeMonitor />
             <LoginModal />
-            {/* Global Search Overlay */}
-            <SearchOverlay
-              searchQuery={searchQuery}
-              isVisible={showSearchOverlay}
-              onClose={handleClearSearch}
+            <RouteChangeMonitor />
+            <LoginModal />
+            {/* Global Search Modal */}
+            <SearchModal
+              isOpen={isSearchOpen}
+              onClose={() => setIsSearchOpen(false)}
             />
             <Navbar
-              searchQuery={searchQuery}
-              onSearchChange={handleSearchChange}
-              onSearchClear={handleClearSearch}
+              onSearchClick={() => setIsSearchOpen(true)}
             />
             <Routes>
               <Route path="/" element={<Index />} />
