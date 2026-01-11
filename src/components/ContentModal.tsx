@@ -365,8 +365,9 @@ const ContentModal: React.FC<ContentModalProps> = ({
       // Use onPlayEpisode for consistency across all components
       dispatch(openScreenPlayer({
         isOpen: true,
-        selectedVideo: selectedFromRecommendations,
-        selectedVideoTitle: normalizedItem.title
+        selectedVideo: selectedFromRecommendations || currentContentItem || currentItem,
+        selectedVideoTitle: normalizedItem.title,
+        videoUrl: currentVideoUrl
       }))
       setIsMovieOpen(true)
 

@@ -17,23 +17,24 @@ import { supabase } from "@/integrations/supabase/client"
 import { getOptimizedImageUrl } from "@/utils/youtubeUtils"
 import { setPlaylistInfo } from "@/store/screenPlayerSlice"
 import { useDispatch } from "react-redux"
+import { useAuth } from "@/contexts/AuthContext"
 
 type PlaylistToDelete = {
     id: string;
     title: string;
 } | null;
 
-const USER_ID = "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3" // replace with actual session user
+
 
 const PlayList = () => {
-    const { data: playlists = [], refetch, isFetching } = useGetPlaylistsWithItemsQuery(USER_ID)
+    const { user } = useAuth()
+    const { data: playlists = [], refetch, isFetching } = useGetPlaylistsWithItemsQuery(user?.id)
     const [triggerPlaylists] = useLazyGetPlaylistsWithItemsByIdQuery()
     const navigate = useNavigate()
     const dispatch = useDispatch()
     const [isCreatePlaylistOpen, setIsCreatePlaylistOpen] = useState(false)
     const [playlistToDelete, setPlaylistToDelete] = useState<PlaylistToDelete>(null)
     const isDeleteDialogOpen = !!playlistToDelete
-
     const [playlistForm, setPlaylistForm] = useState({
         title: '',
         description: ''
@@ -51,7 +52,7 @@ const PlayList = () => {
 
     const handleRoutetoPlaylistDetail = async (playlistId: string) => {
         navigate(`/playlists/${playlistId}`)
-        const fetchedPlaylists = await triggerPlaylists({ userId: USER_ID, playlist_id: playlistId }).unwrap()
+        const fetchedPlaylists = await triggerPlaylists({ userId: user?.id, playlist_id: playlistId }).unwrap()
         dispatch(setPlaylistInfo({
             playlistInfo: fetchedPlaylists
         }))
@@ -83,7 +84,7 @@ const PlayList = () => {
             id: crypto.randomUUID(),
             title: playlistForm.title,
             description: playlistForm.description,
-            created_by: USER_ID
+            created_by: user?.id
         }
 
         const { error } = await supabase.from('playlists').insert([payload])

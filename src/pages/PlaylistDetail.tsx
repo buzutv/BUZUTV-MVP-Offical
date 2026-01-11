@@ -3,6 +3,7 @@ import FullscreenPlayer from '@/components/FullscreenPlayer'
 import { DialogTrigger } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from '@/components/ui/sonner'
+import { useAuth } from '@/contexts/AuthContext'
 import { useContent } from '@/hooks/useContent'
 import { usePlaylistDetail } from '@/hooks/usePlaylistDetail'
 import usePlaylists from '@/hooks/usePlaylists'
@@ -39,14 +40,13 @@ const PlaylistDetail = () => {
 
   const [seasons, setSeasons] = useState<any[]>([]);
   const dispatch = useDispatch();
-
+  const { user } = useAuth()
   const [triggerGetContentWithWatchHistory, result] = useLazyGetPlaylistContentWithWatchHistoryQuery()
   // const [triggerGetSeasonWithEpisodes] = useLazyGetSeasonWithEpisodesQuery()
   const { refetch } = usePlaylistDetail(
     content.length ? content.map(c => c.id) : undefined
   );
-  // --- HARDCODED USER ID (From your original code) ---
-  const USER_ID = "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3";
+
 
   // 1. FIXED: Added 'playlistWithItems' to dependencies so UI updates when data is refetched
   useEffect(() => {
@@ -59,11 +59,11 @@ const PlaylistDetail = () => {
   }, [id, playlistWithItems])
 
   useEffect(() => {
-    if (id) triggerPlaylistWithItemsById({ userId: USER_ID, playlist_id: id })
+    if (id) triggerPlaylistWithItemsById({ userId: user?.id, playlist_id: id })
 
     async function fetchRPC() {
       const { data } = await supabase.rpc('generate_all_recommendations', {
-        user_id_param: USER_ID
+        user_id_param: user?.id
       });
       return data
     }
@@ -81,7 +81,7 @@ const PlaylistDetail = () => {
     async function loadWatchHistory() {
       if (content.length > 0) {
         const data = await triggerGetContentWithWatchHistory({
-          userId: USER_ID,
+          userId: user?.id,
           contentIds: content.map(item => item.id)
         }).unwrap()
 
@@ -174,13 +174,13 @@ const PlaylistDetail = () => {
 
     // Trigger the playlist fetch from Supabase again
     if (id) {
-      triggerPlaylistWithItemsById({ userId: USER_ID, playlist_id: id });
+      triggerPlaylistWithItemsById({ userId: user?.id, playlist_id: id });
     }
 
     // Trigger the history specific refresh
     triggerHistoryRefresh();
     const data = await triggerGetContentWithWatchHistory({
-      userId: USER_ID,
+      userId: user?.id,
       contentIds: content.map(item => item.id)
     }).unwrap()
 
@@ -215,7 +215,7 @@ const PlaylistDetail = () => {
     }
 
     // Refresh after adding
-    if (id) triggerPlaylistWithItemsById({ userId: USER_ID, playlist_id: id });
+    if (id) triggerPlaylistWithItemsById({ userId: user?.id, playlist_id: id });
     await refetch(id);
   }
 
@@ -258,7 +258,7 @@ const PlaylistDetail = () => {
     if (!error) {
       toast.success("Item removed!");
       // Refetch logic
-      if (id) triggerPlaylistWithItemsById({ userId: USER_ID, playlist_id: id });
+      if (id) triggerPlaylistWithItemsById({ userId: user?.id, playlist_id: id });
       refetch(id);
     } else {
       console.error("Delete error:", error.message);
@@ -532,7 +532,7 @@ const PlaylistDetail = () => {
             videoUrl={selectedVideo?.video_url}
             type={selectedVideo?.type}
             title={`${selectedVideo?.title} (${currentVideoIndex! + 1}/${content.length})`}
-            userId={USER_ID}
+            userId={user?.id}
             onVideoEnd={handleVideoEnd}
             setSelectedVideo={setCurrentVideoIndex}
             movieId={selectedVideo?.id}

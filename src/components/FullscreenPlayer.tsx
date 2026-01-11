@@ -16,6 +16,7 @@ import AdToast from "./AdToast";
 import { useDispatch, useSelector } from "react-redux";
 import { openScreenPlayer, closeScreenPlayer } from "@/store/screenPlayerSlice";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { useAuth } from "@/contexts/AuthContext";
 
 const FullscreenPlayer = ({
   isOpen,
@@ -53,6 +54,7 @@ const FullscreenPlayer = ({
   const navigate = useNavigate();
   const [final, setFinal] = useState(0);
   const [video_id, setVideoId] = useState<string>("");
+  const { user } = useAuth()
   // Refs to hold latest values for callbacks to avoid dependency cycles
   const moviesRef = useRef(movies);
   const durationRef = useRef(duration);
@@ -77,12 +79,25 @@ const FullscreenPlayer = ({
   const [triggerRecommendations, resultRecommendations] = useLazyGetRecommendationsWtihContentEmbeddedQuery();
   const [triggerRelatedContent, resultRelatedContent] = useLazyGetContentWithWatchHistoryFiltersQuery();
   const selectedContent = useSelector((state: any) => state.screenPlayer.selectedVideo);
+  const reduxVideoUrl = useSelector((state: any) => state.screenPlayer.videoUrl);
   const [triggerGetContentWithWatchHistory, result] = useLazyGetPlaylistContentWithWatchHistoryQuery()
   const isSeries = useSelector((state: any) => state.screenPlayer.isSeries);
   const contentIds = useSelector((state: any) => state.screenPlayer.playlistInfo);
   const playlistId = useSelector((state: any) => state.screenPlayer.playlistId)
   const [triggerGetSearchContentWithWatchHistory, resultGetSearchContentWithWatchHistory] = useLazyGetSearchContentWithWatchHistoryQuery()
   console.log("Selected Content from Redux in FullscreenPlayer:", currentEpisode?.id);
+  const [localProgress, setLocalProgress] = useState<Record<string, { watch_percentage: number, last_position: number }>>({});
+
+  const handleProgressUpdate = (data: { id: string, watch_percentage: number, last_position: number }) => {
+    setLocalProgress(prev => ({
+      ...prev,
+      [data.id]: {
+        watch_percentage: data.watch_percentage,
+        last_position: data.last_position
+      }
+    }));
+  };
+
   // const MemoizedVideoPlayer = memo(VideoPlayer);
   useEffect(() => {
     moviesRef.current = movies;
@@ -152,14 +167,17 @@ const FullscreenPlayer = ({
         }
       } else {
         setMovieid(selectedContent.id);
-        setActualVideoUrl(selectedContent.video_url);
+        const url = selectedContent.video_url || selectedContent.videoUrl || reduxVideoUrl;
+        setActualVideoUrl(url);
         // Ensure movies state reflects current content for related fetch etc
         if (selectedContent.id !== currentMovie?.id) {
           setMovies([selectedContent]);
         }
       }
+    } else if (reduxVideoUrl) {
+      setActualVideoUrl(reduxVideoUrl);
     }
-  }, [selectedContent]);
+  }, [selectedContent, reduxVideoUrl]);
 
   // Ad Timer
   useEffect(() => {
@@ -193,7 +211,7 @@ const FullscreenPlayer = ({
       const type = selectedType !== "All" ? selectedType : undefined;
 
       const { data: relatedData } = await triggerRelatedContent({
-        userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3",
+        userId: user?.id,
         genre,
         year,
         type
@@ -328,9 +346,10 @@ const FullscreenPlayer = ({
                   playlistItems={playlists}
                   movieId={selectedContent?.id}
                   episodeId={season ? selectedContent?.id : undefined}
-                  userid="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
+                  userid={user?.id}
                   playlistInfo={playlistInfo}
                   ref={parentRef}
+                  onProgressUpdate={handleProgressUpdate}
                 />
               }
 
@@ -415,6 +434,16 @@ const FullscreenPlayer = ({
                                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
                                     </svg>
                                   </div>
+
+                                  {/* Progress Bar with Live Update */}
+                                  {(localProgress[episode.id]?.watch_percentage > 0 || episode.watch_percentage > 0) && (
+                                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+                                      <div
+                                        className="h-full bg-blue-500 transition-all duration-300"
+                                        style={{ width: `${localProgress[episode.id]?.watch_percentage || episode.watch_percentage}%` }}
+                                      />
+                                    </div>
+                                  )}
                                 </div>
 
                                 <div className="p-4">
@@ -453,7 +482,7 @@ const FullscreenPlayer = ({
 
           {/* Filters Section */}
           <div className="mb-8">
-            // In your Parent Page/Component
+            {/* // In your Parent Page/Component */}
             <RecommendedSection
               // recommended={recommended} // The object { genre_based: [...], popular: [...] }
               handleRelatedClick={handleRelatedClick}

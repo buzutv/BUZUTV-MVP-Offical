@@ -3,6 +3,7 @@ import { useGetRecommendationsWtihContentEmbeddedQuery, useLazyGetRecommendation
 import { openScreenPlayer } from "@/store/screenPlayerSlice";
 import { useDispatch } from "react-redux";
 import ContentGridItem from "./ContentGridItem";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Section title helper
 const sectionTitles: Record<string, string> = {
@@ -31,12 +32,13 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
   setPlaylists,
   getOptimizedImageUrl,
 }) => {
+  const { user } = useAuth()
   const [triggerRecommendations, { data, isFetching }] =
     useLazyGetRecommendationsWtihContentEmbeddedQuery();
 
-  const { data: recommendations } = useGetRecommendationsWtihContentEmbeddedQuery(
+  const { data: recommendations, refetch } = useGetRecommendationsWtihContentEmbeddedQuery(
     {
-      userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3",
+      userId: user?.id,
     }, {
     refetchOnFocus: true,
     refetchOnMountOrArgChange: true,
@@ -48,7 +50,7 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
 
   useEffect(() => {
     triggerRecommendations({
-      userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3",
+      userId: user?.id,
     });
   }, []);
 
@@ -120,6 +122,7 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
                         currentVideoIndex: null,
                         playlistInfo: null
                       }))
+                      refetch()
                     }}
                   />
                 );

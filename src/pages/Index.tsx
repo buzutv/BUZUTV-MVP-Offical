@@ -25,8 +25,7 @@ const Index = React.memo(() => {
   const [activeGenre, setActiveGenre] = useState("all");
 
   const startTime = performance.now();
-  const { homeContent, channels, isLoading, content, kidsContent } =
-    useAppContent();
+  const { homeContent, channels, isLoading, content, kidsContent } = useAppContent();
 
   const availableGenresWithContent = useMemo((): string[] => {
     if (!content.allContent || content.allContent.length === 0) {

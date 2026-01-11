@@ -15,10 +15,11 @@ interface VideoPlayerProps {
   playlistInfo?: any;
   userid: string;
   setFinal?: (any: any) => void;
+  onProgressUpdate?: (data: { id: string, watch_percentage: number, last_position: number }) => void;
 }
 
 const VideoPlayer = forwardRef<any, VideoPlayerProps>(
-  ({ videoId, playlistItems, setCurrentMovie, movieId, episodeId, setFinal, type, userid, playlistInfo }, ref) => {
+  ({ videoId, playlistItems, setCurrentMovie, movieId, episodeId, setFinal, type, userid, playlistInfo, onProgressUpdate }, ref) => {
     const playerContainerRef = useRef<HTMLDivElement>(null);
     const playerInstanceRef = useRef<any>(null);
 
@@ -332,6 +333,16 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
           playerInstanceRef,
           type
         );
+        if (onProgressUpdate) {
+          const currentTime = e.target.getCurrentTime();
+          const duration = e.target.getDuration();
+          const percentage = duration > 0 ? (currentTime / duration) * 100 : 0;
+          onProgressUpdate({
+            id: episodeIdRef.current || movieIdRef.current,
+            watch_percentage: percentage,
+            last_position: currentTime
+          });
+        }
       }
 
       if (state === window.YT.PlayerState.BUFFERING) {
@@ -348,6 +359,15 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
             playerInstanceRef,
             type
           );
+          if (onProgressUpdate) {
+            const duration = e.target.getDuration();
+            const percentage = duration > 0 ? (currentTime / duration) * 100 : 0;
+            onProgressUpdate({
+              id: episodeIdRef.current || movieIdRef.current,
+              watch_percentage: percentage,
+              last_position: currentTime
+            });
+          }
         }
       }
     };
