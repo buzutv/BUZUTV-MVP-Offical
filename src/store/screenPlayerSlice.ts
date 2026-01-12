@@ -14,7 +14,8 @@ const initialState = {
     playlistId: null,
     currentVideoIndex: 0,
     isSeries: false,
-    seriesData: []
+    seriesData: [],
+    contentModalOpen: false
 
 }
 export const screenPlayer = createSlice({
@@ -45,7 +46,8 @@ export const screenPlayer = createSlice({
             state.poster_url = "";
             state.selectedVideo = null;
             state.title = "";
-            state.seriesData = []
+            state.seriesData = [],
+                state.contentModalOpen = !state.contentModalOpen
         },
         setPlaylistInfo: (state, action) => {
             state.playlistInfo = action.payload.playlistInfo;

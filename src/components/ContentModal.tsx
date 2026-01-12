@@ -130,7 +130,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
   // State for switching items within the modal
   const [currentItem, setCurrentItem] = useState<Movie | Content>(item);
 
-
+  const contentModalOpen = useSelector((state: any) => state.screenPlayer.contentModalOpen);
   // SeriesPlayer state
   const [isSeriesPlayerOpen, setIsSeriesPlayerOpen] = useState(false);
   const [isMovieOpen, setIsMovieOpen] = useState(false);
@@ -170,7 +170,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
 
     }
     fetchSeasonData()
-  }, [item, user?.id])
+  }, [item, user?.id, contentModalOpen])
 
 
   useEffect(() => {
