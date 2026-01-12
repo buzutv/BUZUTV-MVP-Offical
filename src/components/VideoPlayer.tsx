@@ -79,6 +79,20 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
       play: () => playerInstanceRef.current?.playVideo(),
       pause: () => playerInstanceRef.current?.pauseVideo(),
       getDuration: () => playerInstanceRef.current?.getDuration(),
+      saveProgress: async () => {
+        if (playerInstanceRef.current && playerInstanceRef.current.getCurrentTime) {
+          await saveWatchHistory(
+            userid,
+            movieIdRef.current,
+            episodeIdRef.current,
+            videoIdRef.current,
+            playerInstanceRef.current.getCurrentTime(),
+            false,
+            playerInstanceRef,
+            type
+          );
+        }
+      }
     }));
 
     // --- ID EXTRACTION ---

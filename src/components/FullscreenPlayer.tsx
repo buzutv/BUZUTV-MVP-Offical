@@ -17,6 +17,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { openScreenPlayer, closeScreenPlayer } from "@/store/screenPlayerSlice";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useAuth } from "@/contexts/AuthContext";
+import { useContent } from "@/hooks/useContent";
 
 const FullscreenPlayer = ({
   isOpen,
@@ -60,6 +61,7 @@ const FullscreenPlayer = ({
   const durationRef = useRef(duration);
   const currentMovieIdRef = useRef<string | null>(null);
   const playlistRef = useRef<string>("")
+  const { refetch: refetchContentWithWatchHistory } = useContent()
   // Episode selection state for series
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [showAd, setShowAd] = useState(false);
@@ -252,7 +254,7 @@ const FullscreenPlayer = ({
 
   useEffect(() => {
     async function fetchRecommendations() {
-      const recommend = await triggerRecommendations({ userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3" });
+      const recommend = await triggerRecommendations({ userId: user?.id });
 
       setRecommended(recommend?.data)
     }
@@ -308,10 +310,16 @@ const FullscreenPlayer = ({
         <div className="w-full x-auto px-4 py-12">
           <div className="flex justify-center items-center gap-4 mb-4">
             <div className="flex items-center justify-center gap-4 cursor-pointer flex-1" onClick={async () => {
-              // setSelectedVideo(null)
+              // Save progress first
+              if (parentRef.current && (parentRef.current as any).saveProgress) {
+                await (parentRef.current as any).saveProgress();
+              }
+              // Then refetch content to get updated history
+              await refetchContentWithWatchHistory()
+
+              // Finally close
               onClose()
               dispatch(closeScreenPlayer())
-              // navigate(`/playlist/${playlistId}`)
             }}>
               <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />

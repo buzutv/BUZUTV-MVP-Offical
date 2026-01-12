@@ -138,7 +138,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
   const [currentSeasonNumber, setCurrentSeasonNumber] = useState<number>(1);
   const { user } = useAuth();
   const [triggerGetContentWithWatchHistory, result] = useLazyGetPlaylistContentWithWatchHistoryQuery()
-  const USER_ID = user?.id;
+  // const USER_ID = user?.id;
   const dispatch = useDispatch();
   const { favoriteIds, addToFavorites, removeFromFavorites } =
     useUserFavorites();
@@ -452,7 +452,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
     // refetch()
     onClose(false)
     const data = await triggerGetContentWithWatchHistory({
-      userId: USER_ID,
+      userId: user?.id,
       contentIds: content.map(item => item.id)
     }).unwrap()
 
