@@ -310,10 +310,10 @@ const FullscreenPlayer = ({
         <div className="w-full x-auto px-4 py-12">
           <div className="flex justify-center items-center gap-4 mb-4">
             <div className="flex items-center justify-center gap-4 cursor-pointer flex-1" onClick={async () => {
-              // Save progress first
-              if (parentRef.current && (parentRef.current as any).saveProgress) {
-                await (parentRef.current as any).saveProgress();
-              }
+              // // Save progress first
+              // if (parentRef.current && (parentRef.current as any).saveProgress) {
+              //   await (parentRef.current as any).saveProgress();
+              // }
               // Then refetch content to get updated history
               await refetchContentWithWatchHistory()
 

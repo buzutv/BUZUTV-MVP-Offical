@@ -4,7 +4,7 @@ import { getOptimizedImageUrl } from '../utils/youtubeUtils';
 import { useEffect, useRef, useState } from 'react';
 import { useLazyGetContentByIdQuery } from '@/store/contentSlice';
 const MovieDetailSection = () => {
-    const currentMovie = useSelector((state: any) => state.screenPlayer.contentId);
+    const currentMovie = useSelector((state: any) => state.screenPlayer.selectedVideo.id);
     const [currentMovieState, setCurrentMovieState] = useState(null);
     const [triggerContentById] = useLazyGetContentByIdQuery()
     const contentIdRef = useRef(currentMovie)

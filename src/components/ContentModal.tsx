@@ -449,8 +449,9 @@ const ContentModal: React.FC<ContentModalProps> = ({
   const handleCloseSeriesPlayer = async () => {
     setIsSeriesPlayerOpen(false);
     setCurrentEpisode(null);
+    setIsMovieOpen(false);
     // refetch()
-    onClose(false)
+    // onClose(false) // Don't close the modal, just the player
     const data = await triggerGetContentWithWatchHistory({
       userId: user?.id,
       contentIds: content.map(item => item.id)
@@ -731,8 +732,17 @@ const ContentModal: React.FC<ContentModalProps> = ({
                         {season.episodes.map((episode, index) => (
                           <div
                             key={episode.id}
-                            onClick={() =>
+                            onClick={() => {
                               handlePlayEpisode(episode, season.season_number)
+                              dispatch(openScreenPlayer({
+                                isOpen: true,
+                                currentVideoIndex: index,
+                                // contentItems: displayItems,
+                                // startIndex: idx,
+                                selectedVideo: episode,
+                                // playlistId:id
+                              }))
+                            }
                             }
                             className={`border flex items-center space-x-3 rounded-lg p-3 transition-all duration-300 group h-12 cursor-pointer ${effectiveKidsMode
                               ? "border-blue-400/20 bg-blue-500/60 hover:border-white hover:shadow-[0_0_8px_rgba(255,255,255,0.6)]"
@@ -748,9 +758,9 @@ const ContentModal: React.FC<ContentModalProps> = ({
                                   {episode.title}
                                 </h3>
                               </div>
-                              <span className="text-gray-300 text-xs flex-shrink-0">
+                              {/* <span className="text-gray-300 text-xs flex-shrink-0">
                                 {formatDuration(episode?.duration_minutes)}
-                              </span>
+                              </span> */}
                             </div>
                             <button
                               onClick={(e) => {
