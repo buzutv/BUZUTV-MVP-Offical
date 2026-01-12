@@ -531,31 +531,33 @@ const ContentModal: React.FC<ContentModalProps> = ({
 
   if ((isSeriesPlayerOpen && currentEpisode && seasonWithEpisodes.length > 0) || isMovieOpen) {
     return (
-      <div className="fixed inset-0 z-[99999] bg-black">
-        <FullscreenPlayer
-          isOpen={true}
-          onClose={handleCloseSeriesPlayer} // This returns us to the Modal
-          videoUrl={item?.type === "movie" ? item?.video_url : currentEpisode?.video_url}
-          type={item?.type}
-          title={item?.type === "movie" ? item?.title : currentEpisode.title}
-          userId={user?.id}
-          poster_url={currentContentItem?.poster_url || normalizedItem.posterUrl}
+      <Dialog open={true} onOpenChange={(open) => !open && handleCloseSeriesPlayer()}>
+        <DialogContent className="max-w-[100vw] w-screen h-screen p-0 m-0 border-none bg-black z-[99999]" onInteractOutside={(e) => e.preventDefault()}>
+          <FullscreenPlayer
+            isOpen={true}
+            onClose={handleCloseSeriesPlayer} // This returns us to the Modal
+            videoUrl={item?.type === "movie" ? item?.video_url : currentEpisode?.video_url}
+            type={item?.type}
+            title={item?.type === "movie" ? item?.title : currentEpisode.title}
+            userId={user?.id}
+            poster_url={currentContentItem?.poster_url || normalizedItem.posterUrl}
 
-          // Your Series Logic
-          onVideoEnd={() => {
-            if (hasNext()) {
-              onNext(); // Plays next episode
-            } else {
-              handleCloseSeriesPlayer(); // Goes back to modal if finished
-            }
-          }}
-          movieId={currentContentItem?.id}
-          hasNext={hasNext()}
-          onNext={onNext}
-          onPrevious={() => { }}
-          season={seasonWithEpisodes}
-        />
-      </div>
+            // Your Series Logic
+            onVideoEnd={() => {
+              if (hasNext()) {
+                onNext(); // Plays next episode
+              } else {
+                handleCloseSeriesPlayer(); // Goes back to modal if finished
+              }
+            }}
+            movieId={currentContentItem?.id}
+            hasNext={hasNext()}
+            onNext={onNext}
+            onPrevious={() => { }}
+            season={seasonWithEpisodes}
+          />
+        </DialogContent>
+      </Dialog>
     );
   }
   return (

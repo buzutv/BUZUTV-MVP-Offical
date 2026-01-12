@@ -154,7 +154,20 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ searchQuery, isVisible, o
   // if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 w-1/2 h-1/2 flex justify-center z-50 bg-black/95 backdrop-blur-xl animate-in fade-in duration-200">
+    <div className="fixed inset-0 w-1/2 h-1/2 flex justify-center z-50 backdrop-blur-xl animate-in fade-in duration-200">
+      <div
+        className="fixed inset-0"
+        style={{
+          background: `
+  linear-gradient(
+    200deg,
+    #311066 0%,   /* very dark violet */
+    #1D0833 20%,  /* deep blackish purple */
+    #120222 45%,  /* near-black violet */
+    black 100%    /* pure black */
+`,
+        }}
+      ></div>
 
       {/* Header / Search Input */}
       <div className="flex items-center gap-4 px-6 py-4 border-b border-white/10 bg-black/50">
