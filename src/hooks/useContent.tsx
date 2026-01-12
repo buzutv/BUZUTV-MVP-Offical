@@ -71,12 +71,7 @@ const searchContentData = async (query: string): Promise<Content[]> => {
 
 }
 export const useContent = () => {
-  // const {
-  //   data: content,
-  //   isLoading,
-  //   error,
-  //   refetch,
-  // } = useContentCache("content", fetchContentData, []);
+
   const { user } = useAuth()
   const { data: contentWithWatchHistory, isLoading: isContentWithWatchHistoryLoading, error: ContentWithWatchHistoryError, refetch: refetchContentWithWatchHistory } = useGetContentWithWatchHistoryQuery(user?.id, {
     refetchOnFocus: true,

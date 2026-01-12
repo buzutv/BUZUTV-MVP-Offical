@@ -14,7 +14,6 @@ import { Content } from "@/types"; // Ensure this import matches your types.ts
 import ChannelModal from "@/components/ChannelModal";
 import ContentModal from "@/components/ContentModal";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
-import FullscreenPlayer from "@/components/FullscreenPlayer";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface SearchModalProps {
@@ -133,27 +132,6 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
         } else {
             addToFavorites(selectedItem.id);
         }
-    };
-
-    const handlePlayMovie = () => {
-        const item = content.find(c => c.id === selectedItem?.id);
-        if (item?.video_url) {
-            setFullscreenVideoUrl(item.video_url);
-            setFullscreenVideoTitle(selectedItem.title);
-            setIsFullscreen(true);
-        }
-    };
-
-    const handlePlayEpisode = (url: string, title: string) => {
-        setFullscreenVideoUrl(url);
-        setFullscreenVideoTitle(title);
-        setIsFullscreen(true);
-    };
-
-    const handleExitFullscreen = () => {
-        setIsFullscreen(false);
-        setFullscreenVideoUrl("");
-        setFullscreenVideoTitle("");
     };
 
     const hasResults =
@@ -276,30 +254,20 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
 
             {!!selectedItem && (
                 <ContentModal
-                    isOpen={!!selectedItem && !isFullscreen}
+                    isOpen={!!selectedItem}
                     onClose={(open) => !open && handleCloseContentModal()}
                     item={selectedItem}
                     variant={selectedItem.type || 'movie'}
                     autoDetectKids={true}
                     isSaved={favoriteIds.includes(selectedItem.id)}
                     onSave={handleSaveModal}
-                    onPlay={selectedItem.type === 'movie' ? handlePlayMovie : undefined}
-                    onPlayEpisode={selectedItem.type === 'series' ? handlePlayEpisode : undefined}
+                    onPlayEpisode={(url, title) => {
+                        // Playback is handled internally by ContentModal
+                        console.log("Starting playback from SearchModal for:", title);
+                    }}
                     // Pass minimal required props, content modal fetches details internally mostly
                     videoUrl={content.find(c => c.id === selectedItem.id)?.video_url}
                     contentItem={content.find(c => c.id === selectedItem.id)}
-                />
-            )}
-
-            {isFullscreen && (
-                <FullscreenPlayer
-                    isOpen={isFullscreen}
-                    onClose={handleExitFullscreen}
-                    videoUrl={fullscreenVideoUrl}
-                    title={fullscreenVideoTitle}
-                    userId={user?.id || ''}
-                    type={selectedItem?.type || 'movie'}
-                    movieId={selectedItem?.id}
                 />
             )}
 

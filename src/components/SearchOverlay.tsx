@@ -9,7 +9,6 @@ import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import ContentModal from "@/components/ContentModal";
-import FullscreenPlayer from "@/components/FullscreenPlayer";
 import ChannelCard from "@/components/ChannelCard";
 import ChannelModal from "@/components/ChannelModal";
 import ContentCard from "@/components/ContentCard";
@@ -304,57 +303,23 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ searchQuery, isVisible, o
           }
         };
 
-        const handleModalPlayClick = () => {
-          if (videoUrl) {
-            setIsFullscreen(true);
-          }
-        };
-
-        const handlePlayEpisode = (
-          videoUrl: string,
-          episodeTitle: string,
-        ) => {
-          setFullscreenVideoUrl(videoUrl);
-          setFullscreenVideoTitle(episodeTitle);
-          setIsFullscreen(true);
-        };
-
-        const handleExitFullscreen = () => {
-          setIsFullscreen(false);
-          setFullscreenVideoUrl("");
-          setFullscreenVideoTitle("");
-        };
-
         return (
-          <>
-            {isFullscreen && (videoUrl || fullscreenVideoUrl) && (
-              <FullscreenPlayer
-                isOpen={isFullscreen}
-                onClose={handleExitFullscreen}
-                videoUrl={fullscreenVideoUrl || videoUrl}
-                title={fullscreenVideoTitle || selectedItem.title}
-                userId={process.env.NODE_ENV === "development" ? "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3" : (selectedItem.user_id || "")}
-                type={selectedItem.type || "movie"}
-                movieId={selectedItem.id}
-              />
-            )}
-
-            <ContentModal
-              isOpen={!!selectedItem && !isFullscreen}
-              onClose={(open) => !open && handleCloseModal()}
-              item={selectedItem}
-              variant={selectedItem.type}
-              autoDetectKids={true}
-              isSaved={isSaved}
-              onSave={handleSaveModal}
-              onPlay={selectedItem.type === "movie" ? handleModalPlayClick : undefined}
-              onPlayEpisode={selectedItem.type === "series" ? handlePlayEpisode : undefined}
-              videoUrl={videoUrl}
-              contentItem={contentItem}
-              channel={channel}
-              recommendedContent={recommendedContent}
-            />
-          </>
+          <ContentModal
+            isOpen={!!selectedItem}
+            onClose={(open) => !open && handleCloseModal()}
+            item={selectedItem}
+            variant={selectedItem.type}
+            autoDetectKids={true}
+            isSaved={isSaved}
+            onSave={handleSaveModal}
+            onPlayEpisode={(url, title) => {
+              // Playback is handled internally by ContentModal
+              console.log("Starting playback from SearchOverlay for:", title);
+            }}
+            contentItem={contentItem}
+            channel={channel}
+            recommendedContent={recommendedContent}
+          />
         )
       })()}
     </div>
