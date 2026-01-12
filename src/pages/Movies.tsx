@@ -17,7 +17,7 @@ import ContentModal from "@/components/ContentModal";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
-import FullscreenPlayer from "@/components/FullscreenPlayer";
+// import FullscreenPlayer from "@/components/FullscreenPlayer";
 import { Spinner } from "@/components/ui/spinner";
 import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
 
@@ -32,9 +32,7 @@ const Movies = React.memo(() => {
     useUserFavorites();
   const { content: rawContent } = useContent();
   const { channels } = useChannels();
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [currentVideoUrl, setCurrentVideoUrl] = useState<string>("");
-  const [currentVideoTitle, setCurrentVideoTitle] = useState<string>("");
+
 
   const availableMovieGenres = useMemo(() => {
     if (!movieContent.all || movieContent.all.length === 0) {
@@ -92,7 +90,7 @@ const Movies = React.memo(() => {
           ></div>
           <div className="relative flex items-center justify-center min-h-screen">
             <div className="text-2xl font-bold text-white">
-              <Spinner className="w-12 h-12"/>
+              <Spinner className="w-12 h-12" />
             </div>
           </div>
         </div>
@@ -122,7 +120,7 @@ const Movies = React.memo(() => {
             {movies.map((movie) => (
               <CarouselItem key={movie.id} className="pl-1 basis-auto">
                 <div className="w-64">
-                  <ContentCard 
+                  <ContentCard
                     item={movie}
                     variant="movie"
                     autoDetectKids={true}
@@ -247,40 +245,17 @@ const Movies = React.memo(() => {
                             addToFavorites(selectedMovie.id);
                           }
                         };
-                        const handleModalPlayClick = () => {
-                          if (videoUrl) {
-                            setIsFullscreen(true);
-                          }
-                        };
-                        const handleExitFullscreen = () => {
-                          setIsFullscreen(false);
-                        };
+
                         return (
                           <>
-                            {isFullscreen && currentVideoUrl && (
-                              <FullscreenPlayer
-                                isOpen={isFullscreen}
-                                onClose={() => {
-                                  setIsFullscreen(false);
-                                  setCurrentVideoUrl("");
-                                  setCurrentVideoTitle("");
-                                }}
-                                videoUrl={currentVideoUrl}
-                                title={currentVideoTitle}
-                              />
-                            )}
                             <ContentModal
-                              isOpen={!!selectedMovie && !isFullscreen}
+                              isOpen={!!selectedMovie}
                               onClose={(open) => !open && setSelectedMovie(null)}
                               item={selectedMovie}
                               variant="movie"
                               autoDetectKids={true}
                               onPlayEpisode={(url, title) => {
-                                if (url) {
-                                  setCurrentVideoUrl(url);
-                                  setCurrentVideoTitle(title);
-                                  setIsFullscreen(true);
-                                }
+                                // console.log("Play clicked from Movies page for:", title);
                               }}
                               videoUrl={videoUrl}
                               contentItem={contentItem}
@@ -537,7 +512,7 @@ const Movies = React.memo(() => {
           )}
         </div>
       </div>
-    </ProtectedRoute>
+    </ProtectedRoute >
   );
 });
 

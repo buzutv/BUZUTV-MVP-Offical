@@ -9,20 +9,17 @@ import ContentModal from "@/components/ContentModal";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
-import FullscreenPlayer from "@/components/FullscreenPlayer";
+// import FullscreenPlayer from "@/components/FullscreenPlayer";
 import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
 
 const Kids = () => {
   const { kidsContent, isLoading } = useAppContent();
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [activeGenre, setActiveGenre] = useState("all");
-  const { favoriteIds, addToFavorites, removeFromFavorites } =
-    useUserFavorites();
+  const { favoriteIds, addToFavorites, removeFromFavorites } = useUserFavorites();
   const { content } = useContent();
   const { channels } = useChannels();
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [currentVideoUrl, setCurrentVideoUrl] = useState<string>("");
-  const [currentVideoTitle, setCurrentVideoTitle] = useState<string>("");
+
 
   // Enhanced kids content with additional categories
   const enhancedKidsContent = useMemo(() => {
@@ -138,8 +135,10 @@ const Kids = () => {
     );
   }
 
+
   return (
     <ProtectedRoute>
+
       <div className="min-h-screen bg-gradient-to-tl from-yellow-300 via-blue-300 to-sky-400 text-white">
         {/* Navigation is now global, do not render Navbar here */}
         <div className="pt-16">
@@ -227,40 +226,17 @@ const Kids = () => {
                             addToFavorites(selectedMovie.id);
                           }
                         };
-                        const handleModalPlayClick = () => {
-                          if (videoUrl) {
-                            setIsFullscreen(true);
-                          }
-                        };
-                        const handleExitFullscreen = () => {
-                          setIsFullscreen(false);
-                        };
+
                         return (
                           <>
-                            {isFullscreen && currentVideoUrl && (
-                              <FullscreenPlayer
-                                isOpen={isFullscreen}
-                                onClose={() => {
-                                  setIsFullscreen(false);
-                                  setCurrentVideoUrl("");
-                                  setCurrentVideoTitle("");
-                                }}
-                                videoUrl={currentVideoUrl}
-                                title={currentVideoTitle}
-                              />
-                            )}
                             <ContentModal
-                              isOpen={!!selectedMovie && !isFullscreen}
+                              isOpen={!!selectedMovie}
                               onClose={(open) => !open && setSelectedMovie(null)}
                               item={selectedMovie}
                               variant="auto"
                               isKidsMode={true}
                               onPlayEpisode={(url, episodeTitle) => {
-                                if (url) {
-                                  setCurrentVideoUrl(url);
-                                  setCurrentVideoTitle(episodeTitle);
-                                  setIsFullscreen(true);
-                                }
+                                // console.log("Play clicked from Kids page for:", episodeTitle);
                               }}
                               videoUrl={videoUrl}
                               contentItem={contentItem}
@@ -433,8 +409,8 @@ const Kids = () => {
                             {activeGenre === "all"
                               ? ""
                               : activeGenre.charAt(0).toUpperCase() +
-                                activeGenre.slice(1) +
-                                " "}
+                              activeGenre.slice(1) +
+                              " "}
                             kids content available at the moment
                           </p>
                         </div>
@@ -457,7 +433,7 @@ const Kids = () => {
           )}
         </div>
       </div>
-    </ProtectedRoute>
+    </ProtectedRoute >
   );
 };
 

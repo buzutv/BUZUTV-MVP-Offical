@@ -17,16 +17,14 @@ import ContentModal from "@/components/ContentModal";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
-import FullscreenPlayer from "@/components/FullscreenPlayer";
+// import FullscreenPlayer from "@/components/FullscreenPlayer";
 import { Spinner } from "@/components/ui/spinner";
 import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
 
 const Series = () => {
   const { seriesContent, isLoading, content } = useAppContent();
   const [selectedSeries, setSelectedSeries] = useState(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [fullscreenVideoUrl, setFullscreenVideoUrl] = useState("");
-  const [fullscreenVideoTitle, setFullscreenVideoTitle] = useState("");
+
   const [activeGenre, setActiveGenre] = useState("all");
   const { favoriteIds, addToFavorites, removeFromFavorites } =
     useUserFavorites();
@@ -91,7 +89,7 @@ const Series = () => {
           ></div>
           <div className="relative flex items-center justify-center min-h-screen">
             <div className="text-2xl text-white">
-              <Spinner className="w-12 h-12"/>
+              <Spinner className="w-12 h-12" />
             </div>
           </div>
         </div>
@@ -120,7 +118,7 @@ const Series = () => {
             {series.map((show) => (
               <CarouselItem key={show.id} className="pl-1 basis-auto">
                 <div className="w-64">
-                  <ContentCard 
+                  <ContentCard
                     item={show}
                     variant="series"
                     autoDetectKids={true}
@@ -247,39 +245,17 @@ const Series = () => {
                             addToFavorites(selectedSeries.id);
                           }
                         };
-                        const handlePlayEpisode = (
-                          videoUrl: string,
-                          episodeTitle: string,
-                        ) => {
-                          setFullscreenVideoUrl(videoUrl);
-                          setFullscreenVideoTitle(episodeTitle);
-                          setIsFullscreen(true);
-                        };
-                        const handleExitFullscreen = () => {
-                          setIsFullscreen(false);
-                          setFullscreenVideoUrl("");
-                          setFullscreenVideoTitle("");
-                        };
+
                         return (
                           <>
-                            {isFullscreen && fullscreenVideoUrl && (
-                              <FullscreenPlayer
-                                isOpen={isFullscreen}
-                                onClose={handleExitFullscreen}
-                                videoUrl={fullscreenVideoUrl}
-                                title={fullscreenVideoTitle}
-                              />
-                            )}
                             <ContentModal
-                              isOpen={!!selectedSeries && !isFullscreen}
+                              isOpen={!!selectedSeries}
                               onClose={(open) => !open && setSelectedSeries(null)}
                               item={selectedSeries}
                               variant="series"
                               autoDetectKids={true}
                               onPlayEpisode={(videoUrl, episodeTitle) => {
-                                setFullscreenVideoUrl(videoUrl);
-                                setFullscreenVideoTitle(episodeTitle);
-                                setIsFullscreen(true);
+                                // console.log("Play clicked from Series page for:", episodeTitle);
                               }}
                               videoUrl={videoUrl}
                               contentItem={contentItem}
@@ -539,7 +515,7 @@ const Series = () => {
           )}
         </div>
       </div>
-    </ProtectedRoute>
+    </ProtectedRoute >
   );
 };
 
