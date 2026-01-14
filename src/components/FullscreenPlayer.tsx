@@ -160,26 +160,34 @@ const FullscreenPlayer = ({
   // Sync local state with Redux selectedContent (handles autoplay updates)
   useEffect(() => {
     if (selectedContent) {
-      if (type === 'series' || selectedContent.episode_number) {
-        setCurrentEpisode(selectedContent);
-        setMovieid(selectedContent.id);
-        setActualVideoUrl(selectedContent.video_url || selectedContent.videoUrl);
-        if (selectedContent.season_id && selectedContent.season_id !== selectedSeasonId) {
-          setSelectedSeasonId(selectedContent.season_id);
+      // Merge local progress if available
+      const progress = localProgress[selectedContent.id];
+      const updatedContent = progress ? {
+        ...selectedContent,
+        watch_percentage: progress.watch_percentage,
+        last_position: progress.last_position
+      } : selectedContent;
+
+      if (type === 'series' || updatedContent.episode_number) {
+        setCurrentEpisode(updatedContent);
+        setMovieid(updatedContent.id);
+        setActualVideoUrl(updatedContent.video_url || updatedContent.videoUrl);
+        if (updatedContent.season_id && updatedContent.season_id !== selectedSeasonId) {
+          setSelectedSeasonId(updatedContent.season_id);
         }
       } else {
-        setMovieid(selectedContent.id);
-        const url = selectedContent.video_url || selectedContent.videoUrl || reduxVideoUrl;
+        setMovieid(updatedContent.id);
+        const url = updatedContent.video_url || updatedContent.videoUrl || reduxVideoUrl;
         setActualVideoUrl(url);
         // Ensure movies state reflects current content for related fetch etc
-        if (selectedContent.id !== currentMovie?.id) {
-          setMovies([selectedContent]);
+        if (updatedContent.id !== currentMovie?.id) {
+          setMovies([updatedContent]);
         }
       }
     } else if (reduxVideoUrl) {
       setActualVideoUrl(reduxVideoUrl);
     }
-  }, [selectedContent, reduxVideoUrl]);
+  }, [selectedContent, reduxVideoUrl, localProgress]);
 
   // Ad Timer
   useEffect(() => {
@@ -406,17 +414,26 @@ const FullscreenPlayer = ({
                                 : 'hover:ring-2 hover:ring-white/30'
                                 }`}
                               onClick={() => {
-                                setCurrentEpisode(episode);
-                                setActualVideoUrl(episode.video_url || episode.videoUrl);
+                                // Merge local progress if available to ensure player resumes correctly
+                                const progress = localProgress[episode.id];
+                                const updatedEpisode = progress ? {
+                                  ...episode,
+                                  watch_percentage: progress.watch_percentage,
+                                  last_position: progress.last_position
+                                } : episode;
+
+                                setCurrentEpisode(updatedEpisode);
+                                setActualVideoUrl(updatedEpisode.video_url || updatedEpisode.videoUrl);
                                 setVideoEnded(false);
-                                setMovieid(episode?.id)
-                                setMovies([episode])
+                                setMovieid(updatedEpisode?.id)
+                                setMovies([updatedEpisode])
                                 playerRef.current?.scrollIntoView({ behavior: "smooth" });
+
                                 // Get all episodes from the current season for autoplay
                                 const allEpisodes = currentSeasonEpisodes || [];
                                 dispatch(openScreenPlayer({
                                   isOpen: true,
-                                  selectedVideo: episode,
+                                  selectedVideo: updatedEpisode,
                                   currentVideoIndex: index,
                                   isSeries: true,
                                   seriesData: { episodes: allEpisodes }

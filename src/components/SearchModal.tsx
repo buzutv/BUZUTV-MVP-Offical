@@ -146,13 +146,13 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
                 className="fixed inset-0"
                 style={{
                     background: `
-  linear-gradient(
-    200deg,
-    #311066 0%,   /* very dark violet */
-    #1D0833 20%,  /* deep blackish purple */
-    #120222 45%,  /* near-black violet */
-    black 100%    /* pure black */
-`,
+                                linear-gradient(
+                                    200deg,
+                                    #311066 0%,   /* very dark violet */
+                                    #1D0833 20%,  /* deep blackish purple */
+                                    #120222 45%,  /* near-black violet */
+                                    black 100%    /* pure black */
+                                `,
                 }}
             ></div>
             <DialogContent className="max-w-[90vw] w-full h-[85vh] p-0 bg-black/95 border-white/10 backdrop-blur-xl gap-0 overflow-hidden flex flex-col">

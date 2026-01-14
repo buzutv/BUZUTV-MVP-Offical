@@ -109,26 +109,33 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
     }, []);
 
     // --- RESUME LOGIC ---
-    const resumeVideoPosition = (player: any) => {
+    const getResumePosition = useCallback(() => {
       const currentVidData = selectedVideoRef.current;
-      if (currentVidData) {
-        const history = Array.isArray(currentVidData.user_watch_history)
-          ? currentVidData.user_watch_history[0]
-          : currentVidData.user_watch_history;
+      if (!currentVidData) return 0;
 
-        const isCompleted = currentVidData.completed || history?.completed;
-        const watchPct = currentVidData.watch_percentage || history?.watch_percentage || 0;
-        const lastPos = currentVidData.last_position || history?.last_position || 0;
+      const history = Array.isArray(currentVidData.user_watch_history)
+        ? currentVidData.user_watch_history[0]
+        : currentVidData.user_watch_history;
 
-        console.log("Resuming logic:", { isCompleted, watchPct, lastPos });
+      const isCompleted = currentVidData.completed || history?.completed;
+      const watchPct = currentVidData.watch_percentage || history?.watch_percentage || 0;
+      const lastPos = currentVidData.last_position || history?.last_position || 0;
 
-        if (isCompleted || watchPct >= 99) {
-          player.seekTo(0, true);
-        } else if (lastPos > 0) {
-          player.seekTo(lastPos, true);
-        }
-        player.playVideo();
+      console.log("Resuming logic calculated position:", { isCompleted, watchPct, lastPos });
+
+      if (isCompleted || watchPct >= 99) {
+        return 0;
+      } else if (lastPos > 0) {
+        return lastPos;
       }
+      return 0;
+    }, []);
+
+    const resumeVideoPosition = (player: any) => {
+      const startSeconds = getResumePosition();
+      console.log("Resuming to position:", startSeconds);
+      player.seekTo(startSeconds, true);
+      player.playVideo();
     };
 
     // --- INITIALIZE & UPDATE PLAYER ---
@@ -143,16 +150,16 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
         return;
       }
 
+      const startPos = getResumePosition();
+
       // If player exists, load new video
       if (playerInstanceRef.current) {
         try {
-          console.log("Loading video:", vid);
-          playerInstanceRef.current.loadVideoById(vid);
-
-          // Wait for metadata then resume
-          setTimeout(() => {
-            resumeVideoPosition(playerInstanceRef.current);
-          }, 500);
+          console.log("Loading video:", vid, "at position:", startPos);
+          playerInstanceRef.current.loadVideoById({
+            videoId: vid,
+            startSeconds: startPos
+          });
         } catch (e) {
           console.error("Error loading video", e);
         }
@@ -169,7 +176,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
       const initPlayer = () => {
         if (playerInstanceRef.current) return;
 
-        console.log("Initializing YouTube Player:", vid);
+        console.log("Initializing YouTube Player:", vid, "starting at:", startPos);
 
         playerInstanceRef.current = new window.YT.Player(playerContainerRef.current, {
           height: "100%",
@@ -181,11 +188,12 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
             rel: 0,
             showinfo: 0,
             modestbranding: 1,
+            start: Math.floor(startPos)
           },
           events: {
             onReady: (e: any) => {
-              onReadyVideoLoader(e, selectedVideoRef.current, userid);
-              resumeVideoPosition(e.target);
+              // We use start parameter in playerVars, but seekTo as a fallback/reinforcement
+              e.target.playVideo();
             },
             onStateChange: handlePlayerStateChange,
             onError: handlePlayerError,
@@ -198,7 +206,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
       } else {
         (window as any).onYouTubeIframeAPIReady = initPlayer;
       }
-    }, [videoId, getVideoId, userid]);
+    }, [videoId, getVideoId, userid, getResumePosition]);
 
     // --- COUNTDOWN HELPERS ---
     const clearCountdownTimer = () => {
