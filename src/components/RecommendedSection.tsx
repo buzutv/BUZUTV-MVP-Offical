@@ -10,6 +10,7 @@ const sectionTitles: Record<string, string> = {
   genre_based: "Because you watched similar genres",
   popular: "Trending & Popular",
   history_based: "Pick up where you left off",
+  explore: "Explore New Taste",
   default: "Recommended For You",
 };
 
@@ -46,6 +47,7 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
   }
   );
 
+  console.log("Recommendations", recommendations)
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -66,6 +68,7 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
     }, {}) || {};
   }, [recommendations, data]);
 
+  console.log("Recommendations", groupedRecommendations)
 
   // 🔹 Loading skeleton
   if (isFetching || !data) {
@@ -92,7 +95,7 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
   // 🔹 Render data
   return (
     <div className="mt-8 mb-8">
-      {Object.entries(new Set(groupedRecommendations)).map(([key, recs]: any) => {
+      {Object.entries(groupedRecommendations).map(([key, recs]: any) => {
         if (!recs.length) return null;
 
         return (
