@@ -28,6 +28,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
     const episodeIdRef = useRef(episodeId);
     const videoIdRef = useRef(videoId);
     const countdownRef = useRef<any>(null);
+    const isCountdownStartedRef = useRef(false);
 
     // Redux State
     const selectedVideo = useSelector((state: any) => state.screenPlayer.selectedVideo);
@@ -49,6 +50,8 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
     // Determine current queue based on content type
     const currentQueue = isSeries ? episodes : playlist_items;
 
+    const hasNextVideo = currentVideoIndex < currentQueue.length - 1;
+
     console.log("VideoPlayer State:", {
       isSeries,
       episodesCount: episodes.length,
@@ -68,6 +71,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
 
     useEffect(() => {
       videoIdRef.current = videoId;
+      isCountdownStartedRef.current = false; // Reset when video changes
     }, [videoId]);
 
     useEffect(() => {
@@ -208,6 +212,28 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
       }
     }, [videoId, getVideoId, userid, getResumePosition]);
 
+    // --- EARLY COUNTDOWN POLLING ---
+    useEffect(() => {
+      const checkThreshold = setInterval(() => {
+        if (
+          playerInstanceRef.current &&
+          playerInstanceRef.current.getPlayerState() === window.YT.PlayerState.PLAYING &&
+          hasNextVideo &&
+          !isCountdownStartedRef.current
+        ) {
+          const currentTime = playerInstanceRef.current.getCurrentTime();
+          const duration = playerInstanceRef.current.getDuration();
+
+          if (duration > 0 && duration - currentTime <= 20) {
+            console.log("Starting early countdown (20s remaining, 5s duration)");
+            startCountdown(5);
+          }
+        }
+      }, 1000);
+
+      return () => clearInterval(checkThreshold);
+    }, [hasNextVideo]);
+
     // --- COUNTDOWN HELPERS ---
     const clearCountdownTimer = () => {
       if (countdownRef.current) {
@@ -216,10 +242,13 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
       }
     };
 
-    const startCountdown = () => {
+    const startCountdown = (initialValue: number = 5) => {
+      if (isCountdownStartedRef.current) return;
+
       clearCountdownTimer();
       setVideoEnded(true);
-      setCountdown(5);
+      setCountdown(initialValue);
+      isCountdownStartedRef.current = true;
 
       countdownRef.current = setInterval(() => {
         setCountdown((prev) => {
@@ -421,7 +450,6 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
       };
     }, []);
 
-    const hasNextVideo = currentVideoIndex < currentQueue.length - 1;
     const hasPreviousVideo = currentVideoIndex > 0;
     const hasPlaylist = currentQueue.length > 1;
 
