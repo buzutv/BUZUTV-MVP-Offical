@@ -92,7 +92,7 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
   // 🔹 Render data
   return (
     <div className="mt-8 mb-8">
-      {Object.entries(groupedRecommendations).map(([key, recs]: any) => {
+      {Object.entries(new Set(groupedRecommendations)).map(([key, recs]: any) => {
         if (!recs.length) return null;
 
         return (
