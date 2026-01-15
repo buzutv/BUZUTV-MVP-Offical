@@ -112,7 +112,7 @@ export interface Season {
 
 export interface RelatedContentFilterProps {
   genre?: string;
-  year?: number;
+  year?: string;
   type?: string;
 }
 

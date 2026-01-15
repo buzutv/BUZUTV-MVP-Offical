@@ -82,8 +82,8 @@ const ChannelCard = ({ channel }: ChannelCardProps) => {
               <button
                 onClick={handleToggleFavorite}
                 className={`flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold shadow-md transition-all duration-200 ${isFavorite
-                    ? "bg-green-600 text-white hover:bg-green-500"
-                    : "bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
+                  ? "bg-green-600 text-white hover:bg-green-500"
+                  : "bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
                   }`}
               >
                 {isFavorite ? <UserCheck size={16} /> : <UserPlus size={16} />}

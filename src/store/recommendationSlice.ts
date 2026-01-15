@@ -1,7 +1,7 @@
 import { supabaseApi } from "./baseApi";
 import { Recommendation } from "../types";
 export const recommendationSlice = supabaseApi.injectEndpoints({
-    endpoints: (builder) => ({
+  endpoints: (builder) => ({
     getUserRecommendations: builder.query<
       Recommendation[],
       { userId: string; type?: string }
@@ -22,14 +22,14 @@ export const recommendationSlice = supabaseApi.injectEndpoints({
     }),
     getRecommendationsWtihContentEmbedded: builder.query<
       Recommendation[],
-            { userId: string; type?: string }
-          >({
-            query: ({ userId, type }) => ({
-              url: `recommendations?select=*,content:content_id(*,user_watch_history(*))&user_id=eq.${userId}&dismissed=eq.false${type ? `&recommendation_type=eq.${type}` : ''}`,
-              method: 'GET',
-            }),
-            providesTags: ['recommendations'],
-          }),
+      { userId: string; type?: string }
+    >({
+      query: ({ userId, type }) => ({
+        url: `recommendations?select=*,content:content_id(*,user_watch_history(*))&user_id=eq.${userId}&dismissed=eq.false&limit=10${type ? `&recommendation_type=eq.${type}` : ''}`,
+        method: 'GET',
+      }),
+      providesTags: ['recommendations'],
+    }),
 
     markRecommendationClicked: builder.mutation<
       Recommendation,
@@ -80,11 +80,11 @@ export const recommendationSlice = supabaseApi.injectEndpoints({
 })
 
 export const {
-    useGetUserRecommendationsQuery,
-    useGetRecommendationsWtihContentEmbeddedQuery,
-    useLazyGetRecommendationsWtihContentEmbeddedQuery,
-    useLazyGetUserRecommendationsQuery,
-    useMarkRecommendationClickedMutation,
-    useDismissRecommendationMutation,
-    useCreateRecommendationMutation,
+  useGetUserRecommendationsQuery,
+  useGetRecommendationsWtihContentEmbeddedQuery,
+  useLazyGetRecommendationsWtihContentEmbeddedQuery,
+  useLazyGetUserRecommendationsQuery,
+  useMarkRecommendationClickedMutation,
+  useDismissRecommendationMutation,
+  useCreateRecommendationMutation,
 } = recommendationSlice;
