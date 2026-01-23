@@ -182,7 +182,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent md:hidden" />
 
                 {/* Content */}
-                <div className="relative z-10 flex flex-col h-full px-4 md:px-16 lg:px-24 max-w-4xl pb-48">
+                <div className="relative bottom-[5rem] z-10 flex flex-col h-full px-4 md:px-16 lg:px-24 max-w-4xl pb-48">
                   <div className="space-y-4 md:space-y-6 mt-auto md: pb-8">
                     {/* Movie Title */}
                     <h1 className="text-3xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
@@ -204,7 +204,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
                       {/* Duration/Seasons - only show if available */}
                       {(() => {
                         const currentContentItem = content.find((c) => c.id === slide.id);
-                        
+
                         if (slide.type === "series") {
                           // For series, show number of seasons - using same logic as ContentModal
                           if (currentContentItem?.seasons_data) {
@@ -213,7 +213,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
                                 typeof currentContentItem.seasons_data === "string"
                                   ? JSON.parse(currentContentItem.seasons_data)
                                   : currentContentItem.seasons_data;
-                              
+
                               if (Array.isArray(seasonsData) && seasonsData.length > 0) {
                                 const seasonCount = seasonsData.length;
                                 return (
@@ -226,7 +226,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
                               console.error("Error parsing seasons data for duration display:", error);
                             }
                           }
-                          
+
                           // Fallback for series
                           return (
                             <span className="text-white text-sm">
@@ -236,14 +236,14 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
                         } else {
                           // For movies, show duration
                           const duration = currentContentItem?.duration_minutes;
-                          
+
                           if (duration) {
                             const hours = Math.floor(duration / 60);
                             const mins = duration % 60;
-                            const formattedDuration = hours > 0 
+                            const formattedDuration = hours > 0
                               ? (mins > 0 ? `${hours}h ${mins}m` : `${hours}h`)
                               : `${mins}m`;
-                            
+
                             return (
                               <span className="text-white text-sm">
                                 {formattedDuration}
@@ -251,7 +251,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
                             );
                           }
                         }
-                        
+
                         return null;
                       })()}
                       {/* Rating - always display like HeroBanner */}
@@ -314,13 +314,13 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
       </div>
 
       {/* Bottom Channels Section */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/90 via-black/70 to-transparent">
+      <div className="absolute -bottom-20 left-0 right-0 z-10 bg-gradient-to-t from-black/90 via-black/70 to-transparent">
         <div className="px-8 pt-6">
           {/* Channels Header */}
           <div className="mb-4">
             <h2 className="text-white text-xl md:text-2xl">Top Channels</h2>
           </div>
-           
+
 
           {/* Channels Scrollable Row with Side Navigation */}
           <div className="relative">
@@ -378,7 +378,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
         // Find the backend content item and channel
         const backendContentItem = content.find(item => item.id === modalItem.id);
         const backendChannel = backendChannels.find(ch => ch.id === modalItem.channelId);
-        
+
         return (
           <ContentModal
             isOpen={modalOpen}

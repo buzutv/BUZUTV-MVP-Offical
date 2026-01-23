@@ -114,25 +114,64 @@ const FullscreenPlayer = ({
 
 
   }, [movies])
+  const [seasons, setSeasons] = useState<any[]>(season || []);
+
   useEffect(() => {
-    if (season && season.length > 0 && !selectedSeasonId) {
-      const firstSeason = season[0];
+    if (season) {
+      setSeasons(season);
+    }
+  }, [season]);
+
+  // Fetch seasons when switching to a different series via Related/Recommended
+  useEffect(() => {
+    const fetchNewSeasons = async () => {
+      // Check if we switched to a series that matches selectedContent but differs from current seasons
+      if (selectedContent?.type === 'series' && selectedContent.id && (!seasons.length || seasons[0]?.series_id !== selectedContent.id)) {
+        const { data, error } = await supabase
+          .from('seasons')
+          .select('*, episodes(*)')
+          .eq('series_id', selectedContent.id)
+          .order('season_number', { ascending: true });
+
+        if (data) {
+          // Sort episodes by episode_number
+          const sortedSeasons = data.map(s => ({
+            ...s,
+            episodes: s.episodes?.sort((a: any, b: any) => a.episode_number - b.episode_number)
+          }));
+          setSeasons(sortedSeasons);
+
+          // Auto-select first season/episode if not already playing
+          if (sortedSeasons.length > 0 && !selectedSeasonId) {
+            const first = sortedSeasons[0];
+            setSelectedSeasonId(first.id);
+          }
+        }
+      }
+    };
+
+    fetchNewSeasons();
+  }, [selectedContent?.id, selectedContent?.type]);
+
+
+  useEffect(() => {
+    if (seasons && seasons.length > 0 && !selectedSeasonId) {
+      const firstSeason = seasons[0];
       const firstEpisode = firstSeason.episodes?.[0];
       if (firstEpisode) {
         setSelectedSeasonId(firstSeason.id);
-        setCurrentEpisode(firstEpisode); // Set the full object
-        setMovieid(firstEpisode.id);
-        setActualVideoUrl(firstEpisode.video_url || firstEpisode.videoUrl);
-        setMovies([firstEpisode]);
+        if (!currentEpisode || currentEpisode.series_id !== firstSeason.series_id) {
+          setCurrentEpisode(firstEpisode);
+          setMovieid(firstEpisode.id);
+          setActualVideoUrl(firstEpisode.video_url || firstEpisode.videoUrl);
+          setMovies([firstEpisode]);
+        }
       }
     }
-  }, [type, season]);
-  console.log("current Episode:", currentEpisode);
-
-
+  }, [type, seasons, selectedSeasonId]);
 
   // Derived state: Get episodes for the currently selected season
-  const currentSeasonEpisodes = season?.length > 0 && season?.find(s => s.id === selectedSeasonId)?.episodes || [];
+  const currentSeasonEpisodes = seasons?.length > 0 && seasons?.find(s => s.id === selectedSeasonId)?.episodes || [];
   // console.log("Current Season Episodes", currentSeasonEpisodes)
   // Fetch movie data from Supabase
   useEffect(() => {
@@ -182,6 +221,10 @@ const FullscreenPlayer = ({
         // Ensure movies state reflects current content for related fetch etc
         if (updatedContent.id !== currentMovie?.id) {
           setMovies([updatedContent]);
+        }
+        // If switching to a movie, clear seasons
+        if (seasons.length > 0) {
+          setSeasons([]);
         }
       }
     } else if (reduxVideoUrl) {
@@ -358,7 +401,7 @@ const FullscreenPlayer = ({
                   setActualVideoUrl={setActualVideoUrl}
                   playlistItems={playlists}
                   movieId={selectedContent?.id}
-                  episodeId={season ? selectedContent?.id : undefined}
+                  episodeId={seasons?.length > 0 ? selectedContent?.id : undefined}
                   userid={user?.id}
                   playlistInfo={playlistInfo}
                   ref={parentRef}
@@ -371,14 +414,14 @@ const FullscreenPlayer = ({
             {/* Overlays */}
           </div>
 
-          {season?.length > 0 && (
+          {seasons?.length > 0 && (
             <div className="mb-8">
               <div className="flex flex-col items-center mb-8">
 
 
                 {/* Centered Season Tabs */}
                 <div className="flex flex-wrap justify-center gap-2 p-1 bg-white/5 rounded-xl border border-white/10">
-                  {season.map((season) => {
+                  {seasons.map((season) => {
                     const isActive = selectedSeasonId === season.id;
                     return (
                       <button
@@ -397,7 +440,7 @@ const FullscreenPlayer = ({
               </div>
               <div>
                 {
-                  season && (
+                  seasons && (
                     <>
                       <h2 className="text-white text-2xl font-bold mb-6">Episodes</h2>
                       {/* Episode Grid/List */}
