@@ -3,7 +3,6 @@ import { Channel } from "@/data/mockMovies";
 import React from "react";
 import { useUserChannelFavorites } from "@/hooks/useUserChannelFavorites";
 import { Button } from "./ui/button";
-import { getOptimizedImageUrl } from '../utils/youtubeUtils';
 interface ChannelCardProps {
   channel: Channel;
 }

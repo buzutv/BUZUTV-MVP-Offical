@@ -12,7 +12,7 @@ import ContentCard from "@/components/ContentCard";
 import { useContent } from "@/hooks/useContent";
 import { useUserChannelFavorites } from "@/hooks/useUserChannelFavorites";
 import { Movie } from "@/data/mockMovies";
-import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
+
 
 interface Channel {
   id: string;

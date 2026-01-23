@@ -3,23 +3,24 @@ import { useSelector } from 'react-redux';
 import { getOptimizedImageUrl } from '../utils/youtubeUtils';
 import { useEffect, useRef, useState } from 'react';
 import { useLazyGetContentByIdQuery } from '@/store/contentSlice';
-const MovieDetailSection = () => {
+const MovieDetailSection = ({ content }: {
+    content: string
+}) => {
     const currentMovie = useSelector((state: any) => state.screenPlayer.selectedVideo.id);
     const [currentMovieState, setCurrentMovieState] = useState(null);
     const [triggerContentById] = useLazyGetContentByIdQuery()
     const contentIdRef = useRef(currentMovie)
-    if (!contentIdRef.current) return null;
     useEffect(() => {
         const fetchContentById = async () => {
             if (!contentIdRef.current) return;
-            const { data, error } = await triggerContentById(contentIdRef.current)
+            const { data, error } = await triggerContentById(content)
             if (data) {
                 setCurrentMovieState(data)
             }
         }
         fetchContentById()
-    }, [contentIdRef.current])
-    console.log("Current Movie Detail", contentIdRef.current)
+    }, [content])
+    console.log("Current Movie Detail", currentMovieState)
     return (
 
         <div

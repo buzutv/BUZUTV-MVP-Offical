@@ -21,7 +21,7 @@ export const contentSlice = supabaseApi.injectEndpoints({
 
     getContentById: builder.query<Content, string>({
       query: (id) => `content?id=eq.${id}&select=*`,
-      transformResponse: (res: Content[]) => res[0],
+      // transformResponse: (res: Content[]) => res[0],
       providesTags: (_r, _e, id) => [{ type: 'Content', id }],
     }),
     getContentWithWatchHistory: builder.query<Content[], string>({

@@ -312,12 +312,9 @@ const FullscreenPlayer = ({
     }}>
 
       <div className="max-w-[1600px] mx-auto w-full p-8">
-
-
-
         <div className="w-full x-auto px-4 py-12">
           <div className="flex justify-center items-center gap-4 mb-4">
-            <div className="flex items-center justify-center gap-4 cursor-pointer flex-1" onClick={async () => {
+            <div className="flex items-center justify-start gap-4 cursor-pointer flex-1" onClick={async () => {
               // // Save progress first
               // if (parentRef.current && (parentRef.current as any).saveProgress) {
               //   await (parentRef.current as any).saveProgress();
@@ -332,7 +329,7 @@ const FullscreenPlayer = ({
               <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              <p className="text-lg font-semibold text-white">Back</p>
+              <p className="text-lg font-semibold text-white ">Back</p>
             </div>
             {/* <SearchBar
               onSearch={handleSearch}
@@ -503,7 +500,7 @@ const FullscreenPlayer = ({
           )}
 
           {/* Movie Details Section */}
-          <MovieDetailSection />
+          <MovieDetailSection content={selectedContent?.id} />
 
           {/* Filters Section */}
           <div className="mb-8">
