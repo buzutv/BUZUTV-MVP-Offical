@@ -165,22 +165,12 @@ const Index = React.memo(() => {
           </div>
 
           <div className="max-w-full">
-            {activeGenre === "all" ? (
-              // Show original layout with content rows when "All" is selected
+            {filteredContent.length > 0 && (
               <>
-                {/*/!* Continue Watching - Show trending content as placeholder *!/*/}
-                {/*{homeContent.trending.length > 0 && (*/}
-                {/*  <ContentRow*/}
-                {/*    title="Continue Watching"*/}
-                {/*    items={homeContent.trending.slice(0, 8)}*/}
-                {/*    onCardClick={handleContentRowCardClick}*/}
-                {/*  />*/}
-                {/*)}*/}
-
-                {/* New Movies and Shows - Sort by created_at (newest first) */}
+                {/* New content row - Sort filtered content by date */}
                 {(() => {
-                  const newContent = content.allContent
-                    .filter((item) => item.created_at && !item.isKids) // Only items with created_at date and not kids content
+                  const newContentFiltered = filteredContent
+                    .filter((item) => item.created_at)
                     .sort(
                       (a, b) =>
                         new Date(b.created_at).getTime() -
@@ -189,161 +179,62 @@ const Index = React.memo(() => {
                     .slice(0, 8);
 
                   return (
-                    newContent.length > 0 && (
+                    newContentFiltered.length > 0 && (
                       <ContentRow
-                        title="New Content"
-                        items={newContent}
+                        key={`new-content-${activeGenre}`}
+                        title={
+                          activeGenre === "all"
+                            ? "New Content"
+                            : `New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies and TV Shows`
+                        }
+                        items={newContentFiltered}
                         onCardClick={handleContentRowCardClick}
                       />
                     )
                   );
                 })()}
 
-                {/* Recommended - Show trending content */}
-                {homeContent.trending.length > 0 && (
-                  <ContentRow
-                    title="Recommended"
-                    items={homeContent.trending}
-                    onCardClick={handleContentRowCardClick}
-                  />
-                )}
-
-                {/* Kids - Show kids content */}
-                {(() => {
-                  const kidsOnlyContent = content.allContent
-                    .filter((item) => item.isKids === true)
-                    .slice(0, 8);
-
-                  return (
-                    kidsOnlyContent.length > 0 && (
-                      <ContentRow
-                        title="Kids"
-                        items={kidsOnlyContent}
-                        onCardClick={handleContentRowCardClick}
-                      />
-                    )
-                  );
-                })()}
-
-                {/* Featured Movies - Use isFeatured flag only */}
-                {(() => {
-                  const featuredMovies = content.allContent
-                    .filter(
-                      (item) =>
-                        item.type === "movie" &&
-                        item.isFeatured === true &&
-                        !item.isKids,
-                    )
-                    .slice(0, 8);
-
-                  return (
-                    featuredMovies.length > 0 && (
-                      <ContentRow
-                        title="Featured Movies"
-                        items={featuredMovies}
-                        onCardClick={handleContentRowCardClick}
-                      />
-                    )
-                  );
-                })()}
-
-                {/* Featured Shows - Use isFeatured flag only */}
-                {(() => {
-                  const featuredShows = content.allContent
-                    .filter(
-                      (item) =>
-                        item.type === "series" &&
-                        item.isFeatured === true &&
-                        !item.isKids,
-                    )
-                    .slice(0, 8);
-
-                  return (
-                    featuredShows.length > 0 && (
-                      <ContentRow
-                        title="Featured Shows"
-                        items={featuredShows}
-                        onCardClick={handleContentRowCardClick}
-                      />
-                    )
-                  );
-                })()}
-              </>
-            ) : (
-              // Show filtered content for specific genre
-              <>
-                {filteredContent.length > 0 && (
-                  <>
-                    {/* New content row - Sort filtered content by date */}
-                    {(() => {
-                      const newContentFiltered = filteredContent
-                        .filter((item) => item.created_at)
-                        .sort(
-                          (a, b) =>
-                            new Date(b.created_at).getTime() -
-                            new Date(a.created_at).getTime(),
-                        )
-                        .slice(0, 8);
-
-                      return (
-                        newContentFiltered.length > 0 && (
-                          <ContentRow
-                            key={`new-content-${activeGenre}`}
-                            title={
-                              activeGenre === "all"
-                                ? "New Content"
-                                : `New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies and TV Shows`
-                            }
-                            items={newContentFiltered}
-                            onCardClick={handleContentRowCardClick}
-                          />
-                        )
-                      );
-                    })()}
-
-                    {/* Recommended row */}
-                    <ContentRow
-                      key={`recommended-content-${activeGenre}`}
-                      title={
-                        activeGenre === "all"
-                          ? "Recommended"
-                          : `Recommended ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies and TV Shows`
-                      }
-                      items={filteredContent.slice(2, 10)}
-                      onCardClick={handleContentRowCardClick}
-                    />
-                  </>
-                )}
-
-                {/* Grid Layout for all filtered content */}
-                <div className="sm:mt-0 md:mt-8 mb-8 pl-4">
-                  <h2 className="text-2xl mb-4">
-                    {activeGenre === "all"
-                      ? "All Content"
-                      : `All ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies and TV Shows`}
-                  </h2>
-
-                  {filteredContent.length > 0 ? (
-                    <ContentGrid
-                      items={filteredContent}
-                      onCardClick={handleContentRowCardClick}
-                    />
-                  ) : (
-                    <div className="text-center py-16">
-                      <h3 className="text-xl font-bold mb-2">
-                        No content found
-                      </h3>
-                      <p className="text-gray-400">
-                        No{" "}
-                        {activeGenre.charAt(0).toUpperCase() +
-                          activeGenre.slice(1)}{" "}
-                        movies and TV shows available at the moment
-                      </p>
-                    </div>
-                  )}
-                </div>
+                {/* Recommended row */}
+                <ContentRow
+                  key={`recommended-content-${activeGenre}`}
+                  title={
+                    activeGenre === "all"
+                      ? "Recommended"
+                      : `Recommended ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies and TV Shows`
+                  }
+                  items={filteredContent.slice(2, 10)}
+                  onCardClick={handleContentRowCardClick}
+                />
               </>
             )}
+
+            {/* Grid Layout for all filtered content */}
+            <div className="sm:mt-0 md:mt-8 mb-8 pl-4">
+              <h2 className="text-2xl mb-4">
+                {activeGenre === "all"
+                  ? "All Content"
+                  : `All ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies and TV Shows`}
+              </h2>
+
+              {filteredContent.length > 0 ? (
+                <ContentGrid
+                  items={filteredContent}
+                  onCardClick={handleContentRowCardClick}
+                />
+              ) : (
+                <div className="text-center py-16">
+                  <h3 className="text-xl font-bold mb-2">
+                    No content found
+                  </h3>
+                  <p className="text-gray-400">
+                    No{" "}
+                    {activeGenre.charAt(0).toUpperCase() +
+                      activeGenre.slice(1)}{" "}
+                    movies and TV shows available at the moment
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Footer */}

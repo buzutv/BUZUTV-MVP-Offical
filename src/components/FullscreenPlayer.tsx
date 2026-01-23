@@ -334,7 +334,7 @@ const FullscreenPlayer = ({
               </svg>
               <p className="text-lg font-semibold text-white">Back</p>
             </div>
-            <SearchBar
+            {/* <SearchBar
               onSearch={handleSearch}
               onResultSelect={setActualVideoUrl}
               results={searchResults}
@@ -343,7 +343,7 @@ const FullscreenPlayer = ({
               className="flex-[14] z-50"
               setActualVideoUrl={setActualVideoUrl}
               setMovieid={setMovieid}
-            />
+            /> */}
           </div>
 
           <div className="aspect-video w-full bg-black rounded-2xl overflow-hidden mb-8 relative shadow-2xl border border-white/10">

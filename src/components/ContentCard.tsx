@@ -69,6 +69,8 @@ const ContentCard = ({
     description: ''
   });
 
+  console.log("Content Card", item)
+
   // State to control the create playlist dialog
   const [isCreatePlaylistOpen, setIsCreatePlaylistOpen] = useState(false);
 
@@ -84,7 +86,7 @@ const ContentCard = ({
   const normalizedItem = useMemo(
     () => ({
       id: item.id,
-      title: item.title,
+      title: item.title || item.name,
       posterUrl: item.posterUrl || item.poster_url || "/placeholder.svg",
       type: item.type || "movie",
       genre: item.genre,
@@ -97,9 +99,9 @@ const ContentCard = ({
     [item]
   );
 
-  // console.log("Normalized Item", normalizedItem)
 
   const actualItem = currentModalItem || normalizedItem;
+  console.log("Normalized Item", normalizedItem)
 
   const isSaved = favoriteIds.includes(actualItem.id);
 
@@ -291,7 +293,6 @@ const ContentCard = ({
       <div
         className={`content-card group ${widthClass} w-[360px] h-[220px] border-2 border-transparent hover:scale-105 hover:border-white hover:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:scale-105 focus:border-white focus:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:outline-none rounded-lg transition-all duration-300 overflow-hidden relative ${className}`}
         tabIndex={0}
-        role="button"
         aria-label={`${normalizedItem.type === "series" ? "View series" : "View movie"} ${normalizedItem.title
           }`}
         onKeyDown={(e) => {
@@ -393,7 +394,7 @@ const ContentCard = ({
         )}
 
         <div className="block cursor-pointer" onClick={handleCardClick}>
-          <div className="relative overflow-hidden transition-all duration-300">
+          <div className="relative overflow-hidden transition-all duration-300 h-[200px]">
             <div className="w-full h-full">
               <img
                 src={getOptimizedImageUrl(normalizedItem.posterUrl, 400)}
@@ -421,9 +422,9 @@ const ContentCard = ({
               />
             </div>
 
-            <div className="absolute bottom-0 left-0 right-0 z-10 p-3 pt-6 pointer-events-none">
+            <div className="absolute bottom-0 left-0  z-10 p-3 pt-6 pointer-events-none">
               <h3 className="font-medium text-white text-md line-clamp-2 transform transition-transform duration-300 origin-left group-hover:scale-[1.1]">
-                {normalizedItem.title}
+                {item?.title}
               </h3>
             </div>
 
@@ -440,7 +441,7 @@ const ContentCard = ({
               <button
                 className="absolute inset-0 z-20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
                 onClick={handleCardClick}
-                aria-label={`View ${normalizedItem.title} details`}
+                aria-label={`View ${item?.title} details`}
               />
             )}
           </div>

@@ -7,14 +7,14 @@ import { Content, RelatedContentFilterProps } from '../types'
 
 export const contentSlice = supabaseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getContent: builder.query<Content[], { type?: string; channelId?: string }>({
-      query: (params) => {
-        const q = new URLSearchParams({ select: '*' });
+    getContent: builder.query<Content[], void>({
+      query: () => {
+        // const q = new URLSearchParams({ select: '*' });
 
-        if (params?.type) q.append('type', `eq.${params.type}`);
-        if (params?.channelId) q.append('channel_id', `eq.${params.channelId}`);
+        // if (params?.type) q.append('type', `eq.${params.type}`);
+        // if (params?.channelId) q.append('channel_id', `eq.${params.channelId}`);
 
-        return `content?${q.toString()}`;
+        return `content`;
       },
       providesTags: ['Content'],
     }),

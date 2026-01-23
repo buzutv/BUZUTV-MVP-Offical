@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useContentCache } from "@/hooks/useContentCache";
-import { useGetContentWithWatchHistoryQuery } from "@/store/contentSlice";
+import { useGetContentQuery, useGetContentWithWatchHistoryQuery } from "@/store/contentSlice";
 import { useAuth } from "@/contexts/AuthContext";
 
 export interface Content {
@@ -71,17 +71,32 @@ const searchContentData = async (query: string): Promise<Content[]> => {
 
 }
 export const useContent = () => {
+  const { user } = useAuth();
 
-  const { user } = useAuth()
-  const { data: contentWithWatchHistory, isLoading: isContentWithWatchHistoryLoading, error: ContentWithWatchHistoryError, refetch: refetchContentWithWatchHistory } = useGetContentWithWatchHistoryQuery(user?.id, {
+  // Fetch public content (fallback)
+  const { data: content, isLoading: isContentLoading } = useGetContentQuery();
+
+  // Fetch content with watch history only if user is logged in
+  const {
+    data: contentWithWatchHistory,
+    isLoading: isContentWithWatchHistoryLoading,
+    error: ContentWithWatchHistoryError,
+    refetch: refetchContentWithWatchHistory
+  } = useGetContentWithWatchHistoryQuery(user?.id ?? '', {
     refetchOnFocus: true,
     refetchOnReconnect: true,
     refetchOnMountOrArgChange: true,
-  })
+    skip: !user?.id // Skip if no user
+  });
+
+  // Determine which content to return
+  const finalContent = user?.id ? (contentWithWatchHistory ?? []) : (content ?? []);
+  const isLoading = user?.id ? isContentWithWatchHistoryLoading : isContentLoading;
+
   return {
-    content: contentWithWatchHistory || [],
+    content: finalContent.length > 0 ? finalContent : (content ?? []),
     contentWithWatchHistory,
-    isLoading: isContentWithWatchHistoryLoading,
+    isLoading,
     error: ContentWithWatchHistoryError,
     refetch: refetchContentWithWatchHistory,
     searchContentData

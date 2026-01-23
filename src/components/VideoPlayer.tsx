@@ -367,7 +367,6 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
         if (currentVideoIndex < currentQueue.length - 1) {
           startCountdown();
         } else {
-          console.log("End of content reached");
           setVideoEnded(true);
           setCountdown(0); // 0 indicates end of playlist/single video
         }

@@ -30,7 +30,7 @@ const ContentRow = React.memo(
     const { playlists } = usePlaylists()
 
 
-    console.log("Playlists in ContentRow:", playlists);
+    console.log("Playlists in ContentRow:", items);
 
 
     const checkScrollability = useCallback(() => {

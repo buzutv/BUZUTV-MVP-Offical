@@ -31,6 +31,8 @@ const Series = () => {
   const { content: rawContent } = useContent();
   const { channels } = useChannels();
 
+
+  console.log("seriesContent", seriesContent)
   // Get genres that actually have series content (excluding kids)
   const availableSeriesGenres = React.useMemo(() => {
     if (!seriesContent.all || seriesContent.all.length === 0) {
@@ -207,7 +209,7 @@ const Series = () => {
                             {/* Info */}
                             <div className="flex-1 min-w-0">
                               <h3 className="font-semibold text-white text-base mb-0.5 line-clamp-1">
-                                {show.title}
+                                {show?.title}
                               </h3>
                               <div className="flex items-center space-x-2 text-xs text-gray-300 mb-0.5">
                                 <span>{show.year}</span>
@@ -280,7 +282,7 @@ const Series = () => {
               {/* Content Sections */}
               <div className="max-w-full sm:pr-6 sm:pl-4 pr-6 md:pl-6">
                 {activeGenre === "all" ? (
-                  // Show all series rows when "All" is selected
+                  // Show "All" View with Grid Layout (Replacing genre sliders)
                   <>
                     {/* New TV Shows - Sort by created_at (newest first) */}
                     {(() => {
@@ -304,15 +306,6 @@ const Series = () => {
                       );
                     })()}
 
-                    {/*/!* Continue Watching - Show trending series *!/*/}
-                    {/*{seriesContent.trending.length > 0 && (*/}
-                    {/*  <ContentRow*/}
-                    {/*    title="Continue Watching"*/}
-                    {/*    items={seriesContent.trending.slice(0, 8)}*/}
-                    {/*    onCardClick={handleContentRowCardClick}*/}
-                    {/*  />*/}
-                    {/*)}*/}
-
                     {/* Recommended */}
                     {seriesContent.recommended.length > 0 && (
                       <ContentRow
@@ -322,88 +315,22 @@ const Series = () => {
                       />
                     )}
 
-                    {/* Comedy */}
-                    {seriesContent.byGenre.Comedy &&
-                      seriesContent.byGenre.Comedy.length > 0 && (
-                        <ContentRow
-                          title="Comedy"
-                          items={seriesContent.byGenre.Comedy.slice(0, 8)}
+                    {/* Grid Layout for ALL series */}
+                    <div className="sm:mt-0 md:mt-8 mb-8 pl-4">
+                      <h2 className="text-2xl mb-4">All TV Shows</h2>
+                      {seriesContent.all.length > 0 ? (
+                        <ContentGrid
+                          items={seriesContent.all}
                           onCardClick={handleContentRowCardClick}
                         />
+                      ) : (
+                        <div className="text-center py-16">
+                          <h3 className="text-xl font-bold mb-2">
+                            No series found
+                          </h3>
+                        </div>
                       )}
-
-                    {/* Drama */}
-                    {seriesContent.byGenre.Drama &&
-                      seriesContent.byGenre.Drama.length > 0 && (
-                        <ContentRow
-                          title="Drama"
-                          items={seriesContent.byGenre.Drama.slice(0, 8)}
-                          onCardClick={handleContentRowCardClick}
-                        />
-                      )}
-
-                    {/* Sports */}
-                    {seriesContent.byGenre.Sports &&
-                      seriesContent.byGenre.Sports.length > 0 && (
-                        <ContentRow
-                          title="Sports"
-                          items={seriesContent.byGenre.Sports.slice(0, 8)}
-                          onCardClick={handleContentRowCardClick}
-                        />
-                      )}
-
-                    {/* Romance */}
-                    {seriesContent.byGenre.Romance &&
-                      seriesContent.byGenre.Romance.length > 0 && (
-                        <ContentRow
-                          title="Romance"
-                          items={seriesContent.byGenre.Romance.slice(0, 8)}
-                          onCardClick={handleContentRowCardClick}
-                        />
-                      )}
-
-                    {/* Action */}
-                    {seriesContent.byGenre.Action &&
-                      seriesContent.byGenre.Action.length > 0 && (
-                        <ContentRow
-                          title="Action"
-                          items={seriesContent.byGenre.Action.slice(0, 8)}
-                          onCardClick={handleContentRowCardClick}
-                        />
-                      )}
-
-                    {/* Lifestyle */}
-                    {seriesContent.byGenre.Lifestyle &&
-                      seriesContent.byGenre.Lifestyle.length > 0 && (
-                        <ContentRow
-                          title="Lifestyle"
-                          items={seriesContent.byGenre.Lifestyle.slice(0, 8)}
-                          onCardClick={handleContentRowCardClick}
-                        />
-                      )}
-
-                    {/* Documentary */}
-                    {seriesContent.byGenre.Documentary &&
-                      seriesContent.byGenre.Documentary.length > 0 && (
-                        <ContentRow
-                          title="Documentary"
-                          items={seriesContent.byGenre.Documentary.slice(0, 8)}
-                          onCardClick={handleContentRowCardClick}
-                        />
-                      )}
-
-                    {/* Informational */}
-                    {seriesContent.byGenre.Informational &&
-                      seriesContent.byGenre.Informational.length > 0 && (
-                        <ContentRow
-                          title="Informational"
-                          items={seriesContent.byGenre.Informational.slice(
-                            0,
-                            8,
-                          )}
-                          onCardClick={handleContentRowCardClick}
-                        />
-                      )}
+                    </div>
                   </>
                 ) : (
                   // Show filtered content for specific genre
@@ -412,22 +339,8 @@ const Series = () => {
                       <>
                         {/* New content row - Sort filtered series by date */}
                         {(() => {
-                          console.log("🆕 NEW SERIES ROW DEBUG:");
-                          console.log(
-                            "Filtered series count:",
-                            filteredSeries.length,
-                          );
-                          console.log(
-                            "Active genre for new series:",
-                            activeGenre,
-                          );
-
                           const withDates = filteredSeries.filter(
                             (series) => series.created_at,
-                          );
-                          console.log(
-                            "Series with created_at:",
-                            withDates.length,
                           );
 
                           const newSeriesFiltered = withDates
@@ -437,15 +350,6 @@ const Series = () => {
                                 new Date(a.created_at).getTime(),
                             )
                             .slice(0, 8);
-
-                          console.log(
-                            "Final new series for display:",
-                            newSeriesFiltered.map((s) => ({
-                              title: s.title,
-                              genre: s.genre,
-                              created_at: s.created_at,
-                            })),
-                          );
 
                           return (
                             newSeriesFiltered.length > 0 && (
