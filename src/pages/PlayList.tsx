@@ -229,6 +229,8 @@ const PlayList = () => {
             {/* PLAYLIST GRID */}
             {playlists.length > 0 && (
                 <div className="grid gap-10 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+
+                    {/* <div> */}
                     {playlists.map((playlist) => {
                         const items = playlist.playlist_items || []
                         const previews = items.slice(0, 3)
@@ -249,10 +251,10 @@ const PlayList = () => {
                                                     400
                                                 )}
                                                 className={`absolute left-0 w-full h-[300px] rounded-xl shadow-lg object-cover 
-                                                    transition-all duration-300
-                                                    ${i === 0 ? "z-30 top-0 scale-105" : ""}
-                                                    ${i === 1 ? "z-20 top-4 scale-95" : ""}
-                                                    ${i === 2 ? "z-10 top-8 scale-90" : ""}`}
+                                                        transition-all duration-300
+                                                        ${i === 0 ? "z-30 top-0 scale-105" : ""}
+                                                        ${i === 1 ? "z-20 top-4 scale-95" : ""}
+                                                        ${i === 2 ? "z-10 top-8 scale-90" : ""}`}
                                             />
                                         ))
                                     ) : (
@@ -277,6 +279,8 @@ const PlayList = () => {
                             </div>
                         )
                     })}
+
+                    {/* </div> */}
                 </div>
             )}
 

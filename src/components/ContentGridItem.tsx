@@ -16,14 +16,14 @@ const ContentGridItem: React.FC<ContentGridItemProps> = ({ item, onClick, showWa
             {/* Poster Container */}
             <div className="relative aspect-video w-full rounded-lg overflow-hidden bg-white/5 shadow-md transition-all duration-300 group-hover:shadow-xl group-hover:ring-2 group-hover:ring-white/20">
                 <img
-                    src={getOptimizedImageUrl(item.backdrop_url || item.poster_url, 400)}
+                    src={item.backdrop_url || item.poster_url}
                     alt={item.title || item.content_title}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     loading="lazy"
                 />
 
                 {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 from-0% via-black/40 via-40% to-transparent to-90% opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                 {/* Play Icon Overlay */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">

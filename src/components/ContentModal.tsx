@@ -579,7 +579,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
               {/* Background Image */}
               <div className="absolute inset-0">
                 <img
-                  src={getOptimizedImageUrl(normalizedItem.posterUrl, 400)}
+                  src={normalizedItem.posterUrl}
                   alt={normalizedItem.title}
                   className="w-full h-full object-cover"
                 />
@@ -684,7 +684,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
 
                   {channel?.logo_url && (
                     <img
-                      src={getOptimizedImageUrl(channel.logo_url, 400)}
+                      src={channel.logo_url}
                       alt={channel.name}
                       className="w-8 h-8 object-contain rounded"
                     />

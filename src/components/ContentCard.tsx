@@ -262,7 +262,7 @@ const ContentCard = ({
 
   const gradientClasses = effectiveKidsMode
     ? {
-      base: "bg-[linear-gradient(to_top,rgba(37,99,235,0.95)_0%,rgba(37,99,235,0.7)_30%,rgba(37,99,235,0.4)_60%,rgba(37,99,235,0.2)_80%,rgba(37,99,235,0.1)_90%,transparent_100%)]",
+      base: "bg-[linear-gradient(to_top,rgba(37,99,235,0.95)_0%,rgba(37,99,235,0.9)_40%,rgba(37,99,235,0.4)_60%,rgba(37,99,235,0.2)_80%,rgba(37,99,235,0.1)_90%,transparent_100%)]",
       hover:
         "bg-[linear-gradient(to_top,rgba(37,99,235,0.95)_0%,rgba(37,99,235,0.7)_30%,rgba(37,99,235,0.4)_60%,transparent_90%)]",
     }
@@ -291,7 +291,12 @@ const ContentCard = ({
       )}
 
       <div
-        className={`content-card group ${widthClass} w-[360px] h-[220px] border-2 border-transparent hover:scale-105 hover:border-white hover:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:scale-105 focus:border-white focus:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:outline-none rounded-lg transition-all duration-300 overflow-hidden relative ${className}`}
+        className={`content-card group ${widthClass} w-[360px] h-[220px] border-2 border-transparent hover:scale-105 hover:border-white hover:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:scale-105 focus:border-white focus:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:outline-none rounded-lg transition-all duration-300 overflow-hidden relative ${className}
+          inset-0
+          bg-gradient-to-t from-black/90 from-0% via-black/40 via-40% to-transparent to-90%
+          h-[12.25rem]
+        
+        `}
         tabIndex={0}
         aria-label={`${normalizedItem.type === "series" ? "View series" : "View movie"} ${normalizedItem.title
           }`}
@@ -393,11 +398,11 @@ const ContentCard = ({
           </Popover>
         )}
 
-        <div className="block cursor-pointer" onClick={handleCardClick}>
-          <div className="relative overflow-hidden transition-all duration-300 h-[200px]">
+        <div className="block cursor-pointer h-full" onClick={handleCardClick}>
+          <div className="relative overflow-hidden transition-all duration-300 h-full">
             <div className="w-full h-full">
               <img
-                src={getOptimizedImageUrl(normalizedItem.posterUrl, 400)}
+                src={normalizedItem.posterUrl}
                 alt={`${normalizedItem.title} poster`}
                 className="w-full h-full rounded-lg object-cover transform transition-transform duration-300 hover:scale-[1.1]"
                 loading="lazy"
@@ -422,7 +427,7 @@ const ContentCard = ({
               />
             </div>
 
-            <div className="absolute bottom-0 left-0  z-10 p-3 pt-6 pointer-events-none">
+            <div className="absolute bottom-0 left-0 z-10 p-3 pt-6 pointer-events-none">
               <h3 className="font-medium text-white text-md line-clamp-2 transform transition-transform duration-300 origin-left group-hover:scale-[1.1]">
                 {item?.title}
               </h3>

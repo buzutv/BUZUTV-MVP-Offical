@@ -218,7 +218,7 @@ const Index = React.memo(() => {
 
               {filteredContent.length > 0 ? (
                 <ContentGrid
-                  items={filteredContent}
+                  items={filteredContent.slice(0, 10)}
                   onCardClick={handleContentRowCardClick}
                 />
               ) : (

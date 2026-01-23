@@ -9,7 +9,6 @@ import ContentModal from "@/components/ContentModal";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
-// import FullscreenPlayer from "@/components/FullscreenPlayer";
 import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
 
 const Kids = () => {
@@ -140,13 +139,26 @@ const Kids = () => {
     <ProtectedRoute>
 
       <div className="min-h-screen bg-gradient-to-tl from-yellow-300 via-blue-300 to-sky-400 text-white">
+        <div
+          className="fixed inset-0"
+          style={{
+            background: `
+    linear-gradient(
+      180deg,
+      #d732f8ff 0%,   /* very dark violet */
+      #a09ca3ff 20%,  /* deep blackish purple */
+      #e5ee6cff 45%,  /* near-black violet */
+      #a8ee7cff 100%    /* pure black */
+  `,
+          }}
+        ></div>
         {/* Navigation is now global, do not render Navbar here */}
         <div className="pt-16">
           {/* Main Layout */}
           {enhancedKidsContent.all.length > 0 ? (
             <>
               {/* Top Section */}
-              <div className="max-w-full  sm:px-0 md:px-2 pt-4 relative">
+              <div className="max-w-full sm:px-0 md:px-2 pt-4 relative">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 sm:px-0 md:px-4">
                   {/* Left - Hero Banner */}
                   <div className="lg:col-span-2 relative">
@@ -157,7 +169,7 @@ const Kids = () => {
                   </div>
                   {/* Right - Top Ranked */}
                   <div className="px-4 pl-6 md:px-0 md:pl-0">
-                    <h2 className="text-2xlold mb-3 text-blue-800">
+                    <h2 className="text-2xl font-bold mb-3 text-blue-800">
                       Top Kids Shows
                     </h2>
                     <div

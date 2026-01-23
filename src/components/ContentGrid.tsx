@@ -13,7 +13,7 @@ const ContentGrid: React.FC<ContentGridProps> = ({
   isMoreLikeThis = false,
 }) => {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-0">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-10">
       {items.map((item) => (
         <div key={item.id} className="w-full relative aspect-[16/9]">
           <div className="absolute inset-0">
@@ -23,7 +23,7 @@ const ContentGrid: React.FC<ContentGridProps> = ({
               autoDetectKids={true}
               isMoreLikeThis={isMoreLikeThis}
               // className="w-96 h-96"
-              
+
               onOpen={() => onCardClick?.(item)}
             />
           </div>

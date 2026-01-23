@@ -220,7 +220,7 @@ const ChannelModal = ({ isOpen, onClose, channel }: ChannelModalProps) => {
                 <div className="flex items-center space-x-4 flex-1">
                   {(channel.logo_url || channel.logoUrl) && (
                     <img
-                      src={getOptimizedImageUrl(channel.logo_url || channel.logoUrl, 400)}
+                      src={channel.logo_url || channel.logoUrl}
                       alt={channel.name}
                       className="w-12 h-12 object-contain rounded"
                     />

@@ -280,8 +280,8 @@ const PlaylistDetail = () => {
       ></div>
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4 cursor-pointer" onClick={() => navigate('/playlists')}>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-4 cursor-pointer z-10" onClick={() => navigate('/playlists')}>
           <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
@@ -363,7 +363,7 @@ const PlaylistDetail = () => {
       </div>
 
       {/* Autoplay Toggle */}
-      <div className="flex items-center gap-3 mb-6 p-4 rounded-lg border-2 border-muted-foreground bg-foreground">
+      {/* <div className="flex items-center gap-3 mb-4 p-4 rounded-lg border-2 border-muted-foreground bg-foreground z-150">
         <input
           type="checkbox"
           id="autoplay-toggle"
@@ -374,7 +374,7 @@ const PlaylistDetail = () => {
         <label htmlFor="autoplay-toggle" className="cursor-pointer text-sm text-white font-medium">
           Autoplay next video in playlist
         </label>
-      </div>
+      </div> */}
 
       {/* Loading State */}
       <div className='flex items-center gap-8 justify-start w-full'>
