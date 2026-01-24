@@ -9,7 +9,17 @@ const MovieDetailSection = ({ contents }: { contents: any }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [triggerContentById] = useLazyGetContentByIdQuery();
 
+    // Reset internal state when contents prop changes to update immediately
     useEffect(() => {
+        if (contents) {
+            setCurrentMovieState(null);
+        }
+    }, [contents?.id]); // specific dependency to detect item change
+
+    useEffect(() => {
+        // Only fetch if we don't have contents passed in
+        if (contents) return;
+
         const fetchContentById = async () => {
             if (!contentId) return;
             setIsLoading(true);
@@ -25,11 +35,9 @@ const MovieDetailSection = ({ contents }: { contents: any }) => {
             }
         };
         fetchContentById();
-    }, [contentId, triggerContentById]);
+    }, [contentId, triggerContentById, contents]);
 
-    const movie = currentMovieState
-        ? (Array.isArray(currentMovieState) ? currentMovieState[0] : currentMovieState)
-        : contents;
+    const movie = contents || (Array.isArray(currentMovieState) ? currentMovieState[0] : currentMovieState);
 
     // Show loading only if we have no data at all (neither from state nor from props)
     if (isLoading && !movie) {
