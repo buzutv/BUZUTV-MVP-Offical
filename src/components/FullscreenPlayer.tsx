@@ -341,7 +341,7 @@ const FullscreenPlayer = ({
       if (!queryUrl || typeof queryUrl === 'object') return;
 
       const { data, error } = await supabase
-        .from("content")
+        .from(`content?select=*,user_watch_history(*,movie_id)&user_watch_history.user_id=eq.${user?.id}`)
         .select("*")
         .eq("video_url", queryUrl);
 
@@ -453,7 +453,7 @@ const FullscreenPlayer = ({
   }, [selectedGenre, selectedYear, selectedType, currentMovie?.id, triggerRelatedContent]);
 
 
-  console.log("Current Movie in FullscreenPlayer:", currentMovie);
+  console.log("Current Movie in FullscreenPlayer:", selectedContent);
   console.log("Related Content in FullscreenPlayer:", relatedContent);
   console.log("Movies in FullscreenPlayer:", movies);
   console.log("Actual Video URL in FullscreenPlayer:", actualVideoUrl);
@@ -699,7 +699,7 @@ const FullscreenPlayer = ({
           )}
 
           {/* Movie Details Section */}
-          <MovieDetailSection contents={currentMovie} />
+          <MovieDetailSection />
 
           {/* Filters Section */}
           <div className="mb-8">

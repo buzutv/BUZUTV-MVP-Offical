@@ -370,7 +370,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
         selectedVideo: selectedFromRecommendations || currentContentItem || currentItem,
         selectedVideoTitle: normalizedItem.title,
         videoUrl: currentVideoUrl,
-        contentId: currentItem?.id,
+        contentId: normalizedItem,
         poster_url: currentContentItem?.poster_url || normalizedItem.posterUrl
       }))
       setIsMovieOpen(true)
@@ -411,7 +411,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
         selectedVideo: firstEpisode,
         currentVideoIndex: 0,
         seriesData: firstSeason,
-        contentId: normalizedItem?.id,
+        contentId: currentItem,
         poster_url: currentContentItem?.poster_url || normalizedItem.posterUrl
       }))
 
@@ -429,7 +429,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
         selectedVideo: episode,
         currentVideoIndex: index,
         seriesData: seasonData,
-        contentId: normalizedItem?.id,
+        contentId: currentItem,
         poster_url: currentContentItem?.poster_url || normalizedItem.posterUrl
       }))
 
@@ -469,7 +469,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
       isSeries: clickedItem?.type === "series",
       selectedVideo: clickedItem,
       seriesData: clickedItem?.type === "series" ? fetchSeasonWithEpisodes[0] : null,
-      contentId: clickedItem.id
+      contentId: currentItem
     }))
 
 

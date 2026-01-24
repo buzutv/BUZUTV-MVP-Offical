@@ -3,28 +3,43 @@ import { useSelector } from 'react-redux';
 import { getOptimizedImageUrl } from '../utils/youtubeUtils';
 import { useEffect, useRef, useState } from 'react';
 import { useLazyGetContentByIdQuery } from '@/store/contentSlice';
-const MovieDetailSection = ({ contents }: { contents: any }) => {
-    const contentId = useSelector((state: any) => state.screenPlayer.contentId);
+const MovieDetailSection = ({ contents }: { contents?: any }) => {
+    const selectedVideo = useSelector((state: any) => state.screenPlayer.selectedVideo);
+    const contentIdFromRedux = useSelector((state: any) => state.screenPlayer.contentId);
+
+    // Derived item from best available source
+    const bestSource = contents || (typeof contentIdFromRedux === 'object' ? contentIdFromRedux : null);
+    console.log("Best source", contentIdFromRedux)
     const [currentMovieState, setCurrentMovieState] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [triggerContentById] = useLazyGetContentByIdQuery();
 
-    // Reset internal state when contents prop changes to update immediately
+    // Extract ID safely for fetching
+    const actualId = bestSource?.id || (typeof contentIdFromRedux === 'string' ? contentIdFromRedux : contentIdFromRedux?.id);
+
+    // Reset external state when the item changes to avoid stale display
     useEffect(() => {
-        if (contents) {
+        if (bestSource?.id || actualId) {
             setCurrentMovieState(null);
         }
-    }, [contents?.id]); // specific dependency to detect item change
+    }, [bestSource?.id, actualId]);
 
     useEffect(() => {
-        // Only fetch if we don't have contents passed in
-        if (contents) return;
+        // If we already have a description and title from props/Redux, don't fetch!
+        if (bestSource?.description && (bestSource?.title || bestSource?.content_title)) {
+            return;
+        }
 
         const fetchContentById = async () => {
-            if (!contentId) return;
+            if (!actualId) return;
+
             setIsLoading(true);
             try {
-                const { data } = await triggerContentById(contentId);
+                // Determine if actualId is string or object (fallback)
+                const targetId = typeof actualId === 'string' ? actualId : actualId?.id;
+                if (!targetId) return;
+
+                const data = await triggerContentById(targetId).unwrap();
                 if (data) {
                     setCurrentMovieState(data);
                 }
@@ -34,10 +49,14 @@ const MovieDetailSection = ({ contents }: { contents: any }) => {
                 setIsLoading(false);
             }
         };
-        fetchContentById();
-    }, [contentId, triggerContentById, contents]);
 
-    const movie = contents || (Array.isArray(currentMovieState) ? currentMovieState[0] : currentMovieState);
+        fetchContentById();
+    }, [actualId, bestSource?.id, triggerContentById]);
+
+    // Final derived movie object
+    const movie = bestSource || (Array.isArray(currentMovieState) ? currentMovieState[0] : currentMovieState);
+
+    console.log("Current Movie in movie detail section", movie);
 
     // Show loading only if we have no data at all (neither from state nor from props)
     if (isLoading && !movie) {
