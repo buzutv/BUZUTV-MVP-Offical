@@ -56,7 +56,7 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
       dispatch(openScreenPlayer({
         selectedVideo: content,
         isSeries: true,
-        contentId: content?.id,
+        contentId: content,
         seriesData: data,
         poster_url: content?.poster_url
       }));
@@ -82,7 +82,7 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
     }, {});
   }, [recommendations, contentId]);
 
-  console.log("Grouped Recommendations:", groupedRecommendations);
+  console.log("Grouped Recommendations:", recommendations);
 
   if (isLoading || isFetching) {
     return (

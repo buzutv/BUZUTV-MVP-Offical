@@ -216,13 +216,14 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
                                             <Film className="w-5 h-5 text-brand-500" />
                                             <h2>Movies</h2>
                                         </div>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 flex justify-between items-center flex-wrap">
                                             {formattedResults.movies.map((movie) => (
-                                                <div key={movie.id} className="group hover:scale-105 transition-transform duration-200">
+                                                <div key={movie.id} className="flex-1 group hover:scale-105 transition-transform duration-200">
                                                     <ContentCard
                                                         item={movie}
                                                         variant="movie"
                                                         autoDetectKids={true}
+                                                        className="w-full"
                                                         onItemClick={(item) => handleContentClick(item)}
                                                     />
                                                 </div>
