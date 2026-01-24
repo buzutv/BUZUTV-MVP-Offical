@@ -182,7 +182,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent md:hidden" />
 
                 {/* Content */}
-                <div className="relative bottom-[5rem] z-10 flex flex-col h-full px-4 md:px-16 lg:px-24 max-w-4xl pb-48">
+                <div className="relative bottom-[4rem] z-10 flex flex-col h-full px-4 md:px-16 lg:px-24 max-w-4xl pb-48">
                   <div className="space-y-4 md:space-y-6 mt-auto md: pb-8">
                     {/* Movie Title */}
                     <h1 className="text-3xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
@@ -314,8 +314,8 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
       </div>
 
       {/* Bottom Channels Section */}
-      <div className="absolute -bottom-20 left-0 right-0 z-10 bg-gradient-to-t from-black/90 via-black/70 to-transparent">
-        <div className="px-8 pt-6">
+      <div className="absolute -bottom-4 left-0 right-0 z-10 bg-gradient-to-t from-black/90 via-black/70 to-transparent">
+        <div className="px-8 pt-4">
           {/* Channels Header */}
           <div className="mb-4">
             <h2 className="text-white text-xl md:text-2xl">Top Channels</h2>

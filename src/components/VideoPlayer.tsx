@@ -34,6 +34,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
     const selectedVideo = useSelector((state: any) => state.screenPlayer.selectedVideo);
     const selectedVideoRef = useRef(selectedVideo);
     const playlistFullObject = useSelector((state: any) => state?.screenPlayer?.playlistInfo) || {};
+    const seriesData = useSelector((state: any) => state?.screenPlayer?.seriesData) || {};
     const episodes = useSelector((state: any) => state?.screenPlayer?.seriesData?.episodes) || [];
     const isSeries = useSelector((state: any) => state?.screenPlayer?.isSeries) || false;
     const currentVideoIndex = useSelector((state: any) => state?.screenPlayer?.currentVideoIndex) || 0;
@@ -213,26 +214,26 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
     }, [videoId, getVideoId, userid, getResumePosition]);
 
     // --- EARLY COUNTDOWN POLLING ---
-    useEffect(() => {
-      const checkThreshold = setInterval(() => {
-        if (
-          playerInstanceRef.current &&
-          playerInstanceRef.current.getPlayerState() === window.YT.PlayerState.PLAYING &&
-          hasNextVideo &&
-          !isCountdownStartedRef.current
-        ) {
-          const currentTime = playerInstanceRef.current.getCurrentTime();
-          const duration = playerInstanceRef.current.getDuration();
+    // useEffect(() => {
+    //   const checkThreshold = setInterval(() => {
+    //     if (
+    //       playerInstanceRef.current &&
+    //       playerInstanceRef.current.getPlayerState() === window.YT.PlayerState.PLAYING &&
+    //       hasNextVideo &&
+    //       !isCountdownStartedRef.current
+    //     ) {
+    //       const currentTime = playerInstanceRef.current.getCurrentTime();
+    //       const duration = playerInstanceRef.current.getDuration();
 
-          if (duration > 0 && duration - currentTime <= 20) {
-            console.log("Starting early countdown (20s remaining, 5s duration)");
-            startCountdown(5);
-          }
-        }
-      }, 1000);
+    //       if (duration > 0) {
+    //         console.log("Starting early countdown (20s remaining, 5s duration)");
+    //         startCountdown(5);
+    //       }
+    //     }
+    //   }, 1000);
 
-      return () => clearInterval(checkThreshold);
-    }, [hasNextVideo]);
+    //   return () => clearInterval(checkThreshold);
+    // }, [hasNextVideo]);
 
     // --- COUNTDOWN HELPERS ---
     const clearCountdownTimer = () => {
@@ -307,7 +308,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
         currentVideoIndex: nextIndex,
         selectedVideo: nextVideoData,
         isSeries: isSeries,
-        seriesData: isSeries ? { episodes } : undefined,
+        seriesData: isSeries ? seriesData : undefined,
       }));
 
       if (setCurrentMovie) {
@@ -338,7 +339,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
         currentVideoIndex: prevIndex,
         selectedVideo: prevVideoData,
         isSeries: isSeries,
-        seriesData: isSeries ? { episodes } : undefined,
+        seriesData: isSeries ? seriesData : undefined,
       }));
 
       if (setCurrentMovie) {

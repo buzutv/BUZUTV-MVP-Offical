@@ -28,7 +28,7 @@ const ChannelCard = ({ channel }: ChannelCardProps) => {
   };
 
   return (
-    <div className="group w-full max-w-[420px] h-[260px] cursor-pointer">
+    <div className="group w-10/11 max-w-[320px] h-[200px] cursor-pointer">
       <div className="relative h-full w-full overflow-hidden rounded-xl">
 
         {/* Background image */}

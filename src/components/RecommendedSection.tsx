@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo } from "react";
 import { useGetRecommendationsWtihContentEmbeddedQuery, useLazyGetRecommendationsWtihContentEmbeddedQuery } from "@/store/recommendationSlice";
 import { openScreenPlayer } from "@/store/screenPlayerSlice";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import ContentGridItem from "./ContentGridItem";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLazyGetSeasonWithEpisodesQuery } from "@/store/seasonSlice";
 
 // Section title helper
 const sectionTitles: Record<string, string> = {
@@ -36,7 +37,7 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
   const { user } = useAuth()
   const [triggerRecommendations, { data, isFetching }] =
     useLazyGetRecommendationsWtihContentEmbeddedQuery();
-
+  const contentId = useSelector((state: any) => state.screenPlayer.contentId);
   const { data: recommendations, refetch } = useGetRecommendationsWtihContentEmbeddedQuery(
     {
       userId: user?.id,
@@ -50,23 +51,44 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
   console.log("Recommendations", recommendations)
   const dispatch = useDispatch();
 
+  const [triggerSeasonWithEpisode] = useLazyGetSeasonWithEpisodesQuery()
+  const fetchSeriesData = async (content: any) => {
+    if (content.type === "series") {
+      const data = await triggerSeasonWithEpisode({ contentId: content?.id, userId: user?.id }).unwrap()
+      dispatch(openScreenPlayer({
+        selectedVideo: content,
+        isSeries: true,
+        contentId: content?.id,
+        seriesData: data, // Dispatch all seasons
+        poster_url: content?.poster_url // Include series poster
+      }))
+    }
+    else {
+      dispatch(openScreenPlayer({
+        selectedVideo: content,
+        isSeries: false,
+        contentId: content?.id,
+      }))
+    }
+  }
+
   useEffect(() => {
     triggerRecommendations({
       userId: user?.id,
     });
   }, []);
-
+  const filteredRecommendations = recommendations?.filter((rec: any) => rec.content.id !== contentId);
   // 🔹 Group recommendations by recommendation_type
-  const groupedRecommendations = useMemo(() => {
+  const groupedRecommendations = () => {
     if (!data) return {};
 
-    return recommendations?.reduce((acc: any, rec: any) => {
+    return filteredRecommendations?.reduce((acc: any, rec: any) => {
       const key = rec.recommendation_type || "default";
       if (!acc[key]) acc[key] = [];
       acc[key].push(rec.content);
       return acc;
     }, {}) || {};
-  }, [recommendations, data]);
+  };
 
   console.log("Recommendations", groupedRecommendations)
 
@@ -113,18 +135,14 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
                   <ContentGridItem
                     key={rec.id}
                     item={rec}
-                    onClick={(item) => {
+                    onClick={async (item) => {
+                      await fetchSeriesData(item);
                       handleRelatedClick(item.id);
                       setMovieid(item.id);
                       setActualVideoUrl(item.video_url);
                       setMovies([item]);
                       setVideoEnded(false);
                       setPlaylists([]);
-                      dispatch(openScreenPlayer({
-                        selectedVideo: item,
-                        currentVideoIndex: null,
-                        playlistInfo: null
-                      }))
                       refetch()
                     }}
                   />

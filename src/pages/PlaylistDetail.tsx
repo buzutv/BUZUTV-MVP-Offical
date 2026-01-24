@@ -408,11 +408,10 @@ const PlaylistDetail = () => {
               dispatch(openScreenPlayer({
                 isOpen: true,
                 contentItems: displayItems,
-                // contentId: item.id,
-                // startIndex: idx,
                 currentVideoIndex: idx,
                 selectedVideo: item,
-                playlistId: id
+                playlistId: id,
+                isSeries: item.type === 'series'
               }))
               dispatch(setContentId({ contentId: item.id }));
             }}

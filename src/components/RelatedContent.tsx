@@ -1,8 +1,9 @@
 import { openScreenPlayer } from '@/store/screenPlayerSlice'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 import ContentGridItem from './ContentGridItem'
 import { useAuth } from '@/contexts/AuthContext'
+import { useLazyGetSeasonWithEpisodesQuery } from '@/store/seasonSlice'
 
 const RelatedContent = ({
   setMovieid,
@@ -16,6 +17,31 @@ const RelatedContent = ({
 }) => {
   const dispatch = useDispatch();
   const { user } = useAuth()
+
+  const [triggerSeasonWithEpisode] = useLazyGetSeasonWithEpisodesQuery()
+  const fetchSeriesData = async (content: any) => {
+    console.log("content here", content)
+    if (content.type === "series") {
+      const data = await triggerSeasonWithEpisode({ contentId: content?.id, userId: user?.id }).unwrap()
+      console.log("Called fetchSeriesData", data, content)
+      dispatch(openScreenPlayer({
+        selectedVideo: content,
+        isSeries: true,
+        contentId: content?.id,
+        seriesData: data[0],
+        // poster_url: content?.poster_url
+      }))
+    }
+    else {
+      dispatch(openScreenPlayer({
+        selectedVideo: content,
+        isSeries: false,
+        contentId: content?.id,
+        // seasonData: data
+      }))
+    }
+
+  }
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
@@ -34,7 +60,7 @@ const RelatedContent = ({
     return <div className="text-white/50 text-center py-8">No related content found</div>;
   }
 
-  // console.log("RELATED CONTENT PROPS:", relatedContent)
+  console.log("RELATED CONTENT PROPS:", relatedContent)
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
@@ -43,16 +69,16 @@ const RelatedContent = ({
           key={content.id}
           item={content}
           showWatchProgress={true}
-          onClick={(item) => {
-            handleRelatedClick(item.id)
-            setMovieid(item.id)
-            setActualVideoUrl(item.video_url);
-            setMovies([item]);
+          onClick={async (content) => {
+            console.log("ITEM CLICKED:", content)
+            await fetchSeriesData(content)
+            handleRelatedClick(content.id)
+            setMovieid(content.id)
+            setActualVideoUrl(content.video_url);
+            setMovies([content]);
             setVideoEnded(false);
             setPlaylists([])
-            dispatch(openScreenPlayer({
-              selectedVideo: item,
-            }))
+
           }}
         />
       ))}

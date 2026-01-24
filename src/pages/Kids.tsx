@@ -10,6 +10,7 @@ import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
 import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
+import { Spinner } from "@/components/ui/spinner";
 
 const Kids = () => {
   const { kidsContent, isLoading } = useAppContent();
@@ -116,17 +117,18 @@ const Kids = () => {
             style={{
               background: `
                 linear-gradient(
-                  200deg,
-                  #311066 0%,   /* very dark violet */
-                  #1D0833 20%,  /* deep blackish purple */
-                  #120222 45%,  /* near-black violet */
-                  black 100%    /* pure black */
-                )`,
+                  180deg,
+                  #eaf0c2ff 0%,   /* very dark violet */
+                  #ede9b1ff 20%,  /* deep blackish purple */
+                  #e5ee6cff 45%,  /* near-black violet */
+                  #a59cf8ff 100%    /* pure black */
+              `,
             }}
           ></div>
           <div className="relative flex items-center justify-center min-h-screen">
             <div className="text-2xlold text-white">
-              Loading Kids Content...
+              Loading Kids Content
+              <Spinner />
             </div>
           </div>
         </div>
@@ -137,19 +139,20 @@ const Kids = () => {
 
   return (
     <ProtectedRoute>
-
       <div className="min-h-screen bg-gradient-to-tl from-yellow-300 via-blue-300 to-sky-400 text-white">
         <div
           className="fixed inset-0"
           style={{
             background: `
-    linear-gradient(
-      180deg,
-      #d732f8ff 0%,   /* very dark violet */
-      #a09ca3ff 20%,  /* deep blackish purple */
-      #e5ee6cff 45%,  /* near-black violet */
-      #a8ee7cff 100%    /* pure black */
-  `,
+                linear-gradient(
+                  180deg,
+                  #a59cf8ff 0%, 
+                   #8b7ff2ff 10%,/* very dark violet */
+                    
+                  #ede9b1ff 20%,  /* deep blackish purple */
+                  #e5ee6cff 45%,  /* near-black violet */
+                  #ecf8bcff 100%    /* pure black */
+              `,
           }}
         ></div>
         {/* Navigation is now global, do not render Navbar here */}

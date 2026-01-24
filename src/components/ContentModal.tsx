@@ -367,7 +367,9 @@ const ContentModal: React.FC<ContentModalProps> = ({
         isOpen: true,
         selectedVideo: selectedFromRecommendations || currentContentItem || currentItem,
         selectedVideoTitle: normalizedItem.title,
-        videoUrl: currentVideoUrl
+        videoUrl: currentVideoUrl,
+        contentId: currentItem?.id,
+        poster_url: currentContentItem?.poster_url || normalizedItem.posterUrl
       }))
       setIsMovieOpen(true)
 
@@ -425,7 +427,8 @@ const ContentModal: React.FC<ContentModalProps> = ({
       isSeries: true,
       selectedVideo: seasonWithEpisodes[0]?.episodes[0],
       seriesData: seasonWithEpisodes[0],
-      contentId: movie
+      contentId: normalizedItem?.id,
+      poster_url: currentContentItem?.poster_url || normalizedItem.posterUrl
     }))
 
 
@@ -532,13 +535,13 @@ const ContentModal: React.FC<ContentModalProps> = ({
   if ((isSeriesPlayerOpen && currentEpisode && seasonWithEpisodes.length > 0) || isMovieOpen) {
     return (
       <Dialog open={true} onOpenChange={(open) => !open && handleCloseSeriesPlayer()}>
-        <DialogContent className="max-w-[100vw] w-screen h-screen p-0 m-0 border-none bg-black z-[99999]" onInteractOutside={(e) => e.preventDefault()}>
+        <DialogContent className="max-w-[100vw] w-screen h-screen p-0 m-0 border-none overflow-y-hiddenbg-black z-[99999]" onInteractOutside={(e) => e.preventDefault()}>
           <FullscreenPlayer
             isOpen={true}
             onClose={handleCloseSeriesPlayer} // This returns us to the Modal
-            videoUrl={item?.type === "movie" ? item?.video_url : currentEpisode?.video_url}
-            type={item?.type}
-            title={item?.type === "movie" ? item?.title : currentEpisode.title}
+            videoUrl={currentItem?.type === "movie" ? currentItem?.video_url : currentEpisode?.video_url}
+            type={currentItem?.type}
+            title={currentItem?.type === "movie" ? currentItem?.title : currentEpisode?.title}
             userId={user?.id}
             poster_url={currentContentItem?.poster_url || normalizedItem.posterUrl}
 
@@ -739,10 +742,11 @@ const ContentModal: React.FC<ContentModalProps> = ({
                               dispatch(openScreenPlayer({
                                 isOpen: true,
                                 currentVideoIndex: index,
-                                // contentItems: displayItems,
-                                // startIndex: idx,
                                 selectedVideo: episode,
-                                // playlistId:id
+                                isSeries: true,
+                                seriesData: seasonWithEpisodes, // Send all seasons
+                                contentId: item?.id,
+                                poster_url: currentContentItem?.poster_url || normalizedItem.posterUrl
                               }))
                             }
                             }
@@ -774,10 +778,9 @@ const ContentModal: React.FC<ContentModalProps> = ({
                                 dispatch(openScreenPlayer({
                                   isOpen: true,
                                   currentVideoIndex: index,
-                                  // contentItems: displayItems,
-                                  // startIndex: idx,
                                   selectedVideo: episode,
-                                  // playlistId:id
+                                  isSeries: true,
+                                  seriesData: season
                                 }))
                               }}
                               className="ml-3 p-2 rounded-full transition-colors bg-white/10 hover:bg-white/20 text-white flex-shrink-0"

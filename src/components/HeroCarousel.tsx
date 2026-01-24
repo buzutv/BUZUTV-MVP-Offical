@@ -54,7 +54,7 @@ const HeroCarousel: React.FC<HeroCarouselProps> = React.memo(({ items, allConten
         if (typeof seasonsData === 'string') {
           try {
             seasonsData = JSON.parse(seasonsData);
-          } catch {}
+          } catch { }
         }
         if (Array.isArray(seasonsData) && seasonsData.length > 0 && seasonsData[0].episodes && seasonsData[0].episodes.length > 0) {
           videoUrl = seasonsData[0].episodes[0].videoUrl || seasonsData[0].episodes[0].video_url;
@@ -198,11 +198,11 @@ const HeroCarousel: React.FC<HeroCarouselProps> = React.memo(({ items, allConten
         // Find the backend content item and channel
         const backendContentItem = content.find(item => item.id === modalItem.id);
         const backendChannel = channels.find(ch => ch.id === modalItem.channelId);
-        
+
         return (
-          <ContentModal 
-            isOpen={modalOpen} 
-            onClose={(open) => !open && handleCloseModal()} 
+          <ContentModal
+            isOpen={modalOpen}
+            onClose={(open) => !open && handleCloseModal()}
             item={modalItem as any}
             variant={modalType || "auto"}
             autoDetectKids={true}
@@ -210,10 +210,10 @@ const HeroCarousel: React.FC<HeroCarouselProps> = React.memo(({ items, allConten
               setFullscreenUrl(url);
               setFullscreenTitle(episodeTitle);
               setFullscreenOpen(true);
-            }} 
-            videoUrl={backendContentItem?.video_url || modalItem.videoUrl} 
-            contentItem={backendContentItem} 
-            channel={backendChannel} 
+            }}
+            videoUrl={backendContentItem?.video_url || modalItem.videoUrl}
+            contentItem={backendContentItem}
+            channel={backendChannel}
           />
         );
       })()}

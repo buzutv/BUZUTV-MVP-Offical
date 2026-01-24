@@ -401,14 +401,14 @@ const ChannelModal = ({ isOpen, onClose, channel }: ChannelModalProps) => {
                 <div className="px-4 py-6">
                   {filteredAndSortedContent.length > 0 ? (
                     <div className="flex flex-wrap gap-4">
-                      <div className="flex flex-wrap gap-4 w-full py-2">
+                      <div className="flex flex-wrap flex-row gap-4 w-full py-2">
                         {filteredAndSortedContent.map((movie) => (
-                          <div key={movie.id} className="flex-shrink-0 w-64">
+                          <div key={movie.id} className="flex-shrink-0 w-full flex-1">
                             <ContentCard
                               item={movie}
                               variant="auto"
                               autoDetectKids={true}
-                              width="w-64"
+                              width="w-full"
                               onPlayFullscreen={(videoUrl) => {
                                 const embedUrl =
                                   getYouTubeEmbedUrl(videoUrl) || videoUrl;
