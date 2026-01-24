@@ -512,7 +512,7 @@ const FullscreenPlayer = ({
     }}>
 
 
-      <div className="w-screen mx-auto p-8 h-full overflow-y-auto">
+      <div className="w-full mx-auto p-8 h-full overflow-y-auto">
         <div className="w-full x-auto px-4 py-12">
           <div className="flex justify-center items-center gap-4 mb-4">
             <div className="flex items-center justify-start gap-4 cursor-pointer flex-1 ml-36" onClick={() => {
