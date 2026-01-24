@@ -85,8 +85,6 @@ const App = () => {
           <BrowserRouter>
             <RouteChangeMonitor />
             <LoginModal />
-            <RouteChangeMonitor />
-            <LoginModal />
             {/* Global Search Modal */}
             <SearchModal
               isOpen={isSearchOpen}

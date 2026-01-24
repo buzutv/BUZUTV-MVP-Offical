@@ -18,6 +18,7 @@ import { openScreenPlayer, setContentId, setisSeries, setSeriesData } from "@/st
 import { useDispatch, useSelector } from "react-redux";
 import { useLazyGetPlaylistContentWithWatchHistoryQuery } from "@/store/contentSlice";
 import { useAuth } from "@/contexts/AuthContext";
+import MovieDetailSection from "./MovieDetailSection";
 
 // Type guards to safely access properties
 const isMovie = (item: Movie | Content): item is Movie => {
@@ -155,6 +156,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
   //   refetchOnReconnect: true
   // })
 
+  console.log("Content Modal item", currentItem)
 
   const [triggerSeasonWithEpisode] = useLazyGetSeasonWithEpisodesQuery()
   // console.log("Season with Episode", seasonWithEpisode)
@@ -795,7 +797,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
                   </Tabs>
                 </div>
               )}
-
+              <MovieDetailSection contents={currentItem} />
               {/* More Like This Section */}
               {normalizedRecommendedContent.length > 0 && (
                 <ContentRow
