@@ -507,7 +507,7 @@ const FullscreenPlayer = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] overflow-y-hidden" style={{
+    <div className="fixed inset-0 z-[9999] overflow-y-hidden overflow-x-hidden" style={{
       background: `linear-gradient(200deg, #311066 0%, #1D0833 20%, #120222 45%, black 100%)`,
     }}>
 
@@ -714,80 +714,88 @@ const FullscreenPlayer = ({
               setPlaylists={setPlaylists}
               getOptimizedImageUrl={getOptimizedImageUrl}
             />
+            <div className="gradient-border rounded-lg w-full">
 
-            <h2 className="text-white text-2xl font-bold mb-4">More Like This</h2>
-            <div className="flex flex-col gap-8 w-full">
-              {/* Genre Filter - Interactive Pills */}
-              <div className="flex flex-col gap-4">
-                <label className="text-white/60 text-sm font-semibold ml-1 uppercase tracking-wider flex items-center gap-2">
-                  <span className="w-1 h-4 bg-blue-500 rounded-full"></span>
-                  Genre
-                </label>
-                <ScrollArea className="w-full pb-4">
-                  <div className="flex w-max gap-3">
-                    {genres.map(genre => (
-                      <button
-                        key={genre}
-                        onClick={() => setSelectedGenre(genre)}
-                        className={`px-6 py-3 rounded-full text-base font-medium transition-all duration-300 transform border hover:scale-105 active:scale-95 ${selectedGenre === genre
-                          ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white border-blue-400 shadow-[0_0_20px_rgba(37,99,235,0.3)]'
-                          : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border-white/5 hover:border-white/20'
-                          }`}
-                      >
-                        {genre}
-                      </button>
-                    ))}
+              <div className="p-4 rounded-md bg-gradient-to-r from-blue-800 via-purple-900 to-purple-700 w-full">
+
+                <h2 className="text-white text-2xl font-bold mb-4">More Like This</h2>
+                <div className="flex flex-col gap-8 w-full">
+                  {/* Genre Filter - Interactive Pills */}
+
+                  <div className="flex flex-col gap-4">
+                    <label className="text-white/60 text-sm font-semibold ml-1 uppercase tracking-wider flex items-center gap-2">
+                      <span className="w-1 h-4 bg-blue-500 rounded-full"></span>
+                      Genre
+                    </label>
+                    <ScrollArea className="w-full pb-4">
+                      <div className="flex w-max gap-3">
+                        {genres.map(genre => (
+                          <button
+                            key={genre}
+                            onClick={() => setSelectedGenre(genre)}
+                            className={`px-6 py-3 rounded-full text-base font-medium transition-all duration-300 transform border hover:scale-105 active:scale-95 ${selectedGenre === genre
+                              ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white border-blue-400 shadow-[0_0_20px_rgba(37,99,235,0.3)]'
+                              : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border-white/5 hover:border-white/20'
+                              }`}
+                          >
+                            {genre}
+                          </button>
+                        ))}
+                      </div>
+                      <ScrollBar orientation="horizontal" className="hidden" />
+                    </ScrollArea>
                   </div>
-                  <ScrollBar orientation="horizontal" className="hidden" />
-                </ScrollArea>
-              </div>
 
-              {/* Type Pills & Year Selector Row */}
-              <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-8 items-end">
-                {/* Type Filter - Pills */}
-                <div className="flex flex-col gap-4">
-                  <label className="text-white/60 text-sm font-semibold ml-1 uppercase tracking-wider flex items-center gap-2">
-                    <span className="w-1 h-4 bg-purple-500 rounded-full"></span>
-                    Type
-                  </label>
-                  <div className="flex flex-wrap gap-3">
-                    {types.map(type => (
-                      <button
-                        key={type}
-                        onClick={() => setSelectedType(type)}
-                        className={`px-8 py-3 rounded-full text-base font-medium transition-all duration-300 transform border hover:scale-105 active:scale-95 capitalize ${selectedType === type
-                          ? 'bg-gradient-to-r from-purple-600 to-purple-500 text-white border-purple-400 shadow-[0_0_20px_rgba(147,51,234,0.3)]'
-                          : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border-white/5 hover:border-white/20'
-                          }`}
-                      >
-                        {type}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Year Filter - Selector */}
-                <div className="flex flex-col gap-4 min-w-[240px]">
-                  <label className="text-white/60 text-sm font-semibold ml-1 uppercase tracking-wider flex items-center gap-2">
-                    <span className="w-1 h-4 bg-emerald-500 rounded-full"></span>
-                    Year
-                  </label>
-                  <div className="relative group">
-                    <select
-                      value={selectedYear}
-                      onChange={(e) => setSelectedYear(e.target.value)}
-                      className="w-full appearance-none bg-white/5 hover:bg-white/10 text-white px-6 py-3 rounded-full border border-white/10 hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all cursor-pointer text-base font-medium shadow-lg"
-                    >
-                      {years.map(year => (
-                        <option key={year} value={year} className="bg-[#1a1a1a]">{year}</option>
-                      ))}
-                    </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/50 group-hover:text-white transition-colors">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                  {/* Type Pills & Year Selector Row */}
+                  <div className="flex items-center justify-start gap-4">
+                    {/* Type Filter - Pills */}
+                    <div className="flex flex-col gap-4">
+                      <label className="text-white/60 text-sm font-semibold ml-1 uppercase tracking-wider flex items-center gap-2">
+                        <span className="w-1 h-4 bg-purple-500 rounded-full"></span>
+                        Type
+                      </label>
+                      <div className="flex flex-wrap gap-3">
+                        {types.map(type => (
+                          <button
+                            key={type}
+                            onClick={() => setSelectedType(type)}
+                            className={`px-8 py-3 rounded-full text-base font-medium transition-all duration-300 transform border hover:scale-105 active:scale-95 capitalize ${selectedType === type
+                              ? 'bg-gradient-to-r from-purple-600 to-purple-500 text-white border-purple-400 shadow-[0_0_20px_rgba(147,51,234,0.3)]'
+                              : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border-white/5 hover:border-white/20'
+                              }`}
+                          >
+                            {type}
+                          </button>
+                        ))}
+                      </div>
                     </div>
+                    {/* Year Filter - Selector */}
+                    <div className="flex flex-col gap-4 min-w-[240px]">
+                      <label className="text-white/60 text-sm font-semibold ml-1 uppercase tracking-wider flex items-center gap-2">
+                        <span className="w-1 h-4 bg-emerald-500 rounded-full"></span>
+                        Year
+                      </label>
+                      <div className="relative group">
+                        <select
+                          value={selectedYear}
+                          onChange={(e) => setSelectedYear(e.target.value)}
+                          className="w-full appearance-none bg-white/5 hover:bg-white/10 text-white px-6 py-3 rounded-full border border-white/10 hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all cursor-pointer text-base font-medium shadow-lg"
+                        >
+                          {years.map(year => (
+                            <option key={year} value={year} className="bg-[#1a1a1a]">{year}</option>
+                          ))}
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/50 group-hover:text-white transition-colors">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                        </div>
+                      </div>
+                    </div>
+
+
                   </div>
                 </div>
               </div>
+
             </div>
           </div>
 

@@ -141,6 +141,41 @@ body {
     scrollbar-width: none;
 }
 
+.gradient-border {
+    position: relative;
+    border-radius: 12px;
+}
+
+.gradient-border::before {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    border-radius: inherit;
+    background: linear-gradient(45deg,
+            #506be3,
+            #5974ef,
+            #8a12cf,
+            #8a12cf);
+    background-size: 600% 600%;
+    animation: gradientMove 6s ease infinite;
+    z-index: -1;
+}
+
+@keyframes gradientMove {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+
 .scrollbar-hide::-webkit-scrollbar {
     display: none;
 }

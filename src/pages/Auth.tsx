@@ -6,6 +6,7 @@ import BrandButton from "@/components/ui/BrandButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import ForgotPassword from "@/components/auth/ForgotPassword";
+import { Button } from "@/components/ui/button";
 
 const Auth = () => {
   const { login, signup, signInWithGoogle } = useAuth();
@@ -264,7 +265,7 @@ const Auth = () => {
                   Password
                 </label>
                 {errors.password && <p className="text-red-500 text-xs">{errors.password}</p>}
-                <div onClick={() => setShowPassword(!showPassword)} className="flex items-center px-3 py-1  justify-end gap-2 border border-white/30 rounded-lg">
+                <div className="flex items-center px-3 py-1 justify-end gap-2 border border-white/30 rounded-lg">
                   <input
                     id="password"
                     type={showPassword ? "password" : "text"}
@@ -273,7 +274,9 @@ const Auth = () => {
                     className="text-sm w-full bg-black/30  text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
                     placeholder="Enter your password"
                   />
-                  <Eye size={15} />
+                  <div onClick={() => setShowPassword(!showPassword)} className="p-0 h-full bg-transparent">
+                    <Eye size={15} />
+                  </div>
                 </div>
                 {!isSignUp && (
                   <div className="mt-2">
@@ -298,7 +301,7 @@ const Auth = () => {
                   </label>
                   {errors.confirmPassword && <p className="text-red-500 text-xs">{errors.confirmPassword}</p>}
 
-                  <div onClick={() => setShowPassword(!showPassword)} className="flex items-center px-3 py-1  justify-end gap-2 border border-white/30 rounded-lg">
+                  <div className="flex items-center px-3 py-1  justify-end gap-2 border border-white/30 rounded-lg">
                     <input
                       id="confirmPassword"
                       type={showPassword ? "password" : "text"}
@@ -307,7 +310,9 @@ const Auth = () => {
                       className="text-sm w-full  bg-black/30  text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
                       placeholder="Confirm your password"
                     />
-                    <Eye size={15} />
+                    <div onClick={() => setShowPassword(!showPassword)} className="p-0 h-full bg-transparent">
+                      <Eye size={15} />
+                    </div>
 
                   </div>
                 </div>
