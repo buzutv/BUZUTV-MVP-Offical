@@ -106,6 +106,110 @@ const FullscreenPlayer = ({
     }));
   };
 
+  // Callback to advance to the next item in the playlist (e.g. after a series finishes)
+  const handlePlaylistAdvance = async () => {
+    console.log("Handling playlist advance...");
+    const playlistItems = Array.isArray(contentIds) ? contentIds[0]?.playlist_items : contentIds?.playlist_items || [];
+
+    if (!playlistItems || playlistItems.length === 0) {
+      console.log("No playlist items to advance to.");
+      return;
+    }
+
+    // Find current index based on the *parent* content ID (movie ID or series ID)
+    // If we are deep in a series, selectedContent might be an episode, so we check series_id
+    const currentId = isSeries ? (selectedContent?.series_id || selectedContent?.id) : selectedContent?.id;
+
+    // Note: playlistItems structure depends on the join. Usually it has 'content' object or is the content object.
+    const currentIndex = playlistItems.findIndex((item: any) => {
+      const itemId = item.content?.id || item.id;
+      return itemId === currentId;
+    });
+
+    console.log("Playlist Advance Debug:", { currentId, currentIndex, total: playlistItems.length });
+
+    if (currentIndex === -1 || currentIndex >= playlistItems.length - 1) {
+      console.log("End of playlist or current item not found.");
+      return;
+    }
+
+    const nextItemWrapper = playlistItems[currentIndex + 1];
+    const nextContent = nextItemWrapper.content || nextItemWrapper; // Handle nested structure
+
+    if (!nextContent) return;
+
+    // Transition to next item
+    if (nextContent.type === 'series') {
+      // Fetch seasons/episodes for the next series
+      setIsLoadingEpisodes(true);
+      try {
+        // Re-use logic to fetch season with history
+        const { data, error } = await supabase
+          .from('seasons')
+          .select('*, episodes(*, user_watch_history(*))')
+          .eq('series_id', nextContent.id)
+          .order('season_number', { ascending: true });
+
+        if (data && data.length > 0) {
+          const sortedSeasons = data.map((s: any) => ({
+            ...s,
+            episodes: s.episodes?.map((ep: any) => {
+              const history = Array.isArray(ep.user_watch_history)
+                ? ep.user_watch_history.find((h: any) => h.user_id === user?.id)
+                : ep.user_watch_history;
+
+              return {
+                ...ep,
+                watch_percentage: history?.watch_percentage || 0,
+                last_position: history?.last_position || 0,
+                completed: history?.completed || false,
+                user_watch_history: undefined
+              };
+            }).sort((a: any, b: any) => a.episode_number - b.episode_number)
+          }));
+
+          const firstSeason = sortedSeasons[0];
+          const firstEpisode = firstSeason?.episodes?.[0];
+
+          if (firstSeason && firstEpisode) {
+            dispatch(openScreenPlayer({
+              isOpen: true,
+              isSeries: true,
+              selectedVideo: firstEpisode,
+              currentVideoIndex: 0, // Start at beginning of new series
+              seriesData: firstSeason,
+              contentId: nextContent.id, // Set new series ID
+              poster_url: nextContent.poster_url,
+              // Keep playlist info!
+              playlistInfo: contentIds
+            }));
+            setSeasons(sortedSeasons);
+            setSelectedSeasonId(firstSeason.id);
+          }
+        }
+      } catch (e) {
+        console.error("Error fetching next series:", e);
+      } finally {
+        setIsLoadingEpisodes(false);
+      }
+    } else {
+      // Next item is a movie
+      dispatch(openScreenPlayer({
+        isOpen: true,
+        isSeries: false,
+        selectedVideo: nextContent,
+        contentId: nextContent.id,
+        poster_url: nextContent.poster_url,
+        // We don't track 'index' for playlist in the same way VideoPlayer tracks episodes, 
+        // but VideoPlayer will see 'isSeries: false' and use playlistItems.
+        // If isSeries=false, queue=playlistItems. So we must set index to currentIndex + 1.
+        currentVideoIndex: currentIndex + 1,
+        playlistInfo: contentIds
+      }));
+      setSeasons([]);
+    }
+  };
+
   // const MemoizedVideoPlayer = memo(VideoPlayer);
   useEffect(() => {
     moviesRef.current = movies;
@@ -154,15 +258,28 @@ const FullscreenPlayer = ({
         try {
           const { data, error } = await supabase
             .from('seasons')
-            .select('*, episodes(*)')
+            .select('*, episodes(*, user_watch_history(*))')
             .eq('series_id', selectedContent.id)
             .order('season_number', { ascending: true });
 
           if (data) {
-            // Sort episodes by episode_number
-            const sortedSeasons = data.map(s => ({
+            // Sort episodes and flatten history
+            const sortedSeasons = data.map((s: any) => ({
               ...s,
-              episodes: s.episodes?.sort((a: any, b: any) => a.episode_number - b.episode_number)
+              episodes: s.episodes?.map((ep: any) => {
+                // Find history for this specific user if multiple returned (though RLS/filtering usually handles this)
+                const history = Array.isArray(ep.user_watch_history)
+                  ? ep.user_watch_history.find((h: any) => h.user_id === user?.id)
+                  : ep.user_watch_history;
+
+                return {
+                  ...ep,
+                  watch_percentage: history?.watch_percentage || 0,
+                  last_position: history?.last_position || 0,
+                  completed: history?.completed || false,
+                  user_watch_history: undefined // Cleanup
+                };
+              }).sort((a: any, b: any) => a.episode_number - b.episode_number)
             }));
             setSeasons(sortedSeasons);
 
@@ -443,6 +560,8 @@ const FullscreenPlayer = ({
                   playlistInfo={playlistInfo}
                   ref={parentRef}
                   onProgressUpdate={handleProgressUpdate}
+                  localProgress={localProgress}
+                  onPlaylistAdvance={handlePlaylistAdvance}
                 />
               }
 
@@ -580,7 +699,7 @@ const FullscreenPlayer = ({
           )}
 
           {/* Movie Details Section */}
-          <MovieDetailSection />
+          <MovieDetailSection contents={currentMovie} />
 
           {/* Filters Section */}
           <div className="mb-8">

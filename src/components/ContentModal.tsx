@@ -400,51 +400,39 @@ const ContentModal: React.FC<ContentModalProps> = ({
     ) : false);
   }
 
-  const onNext = () => {
-    if (seasonWithEpisodes.length === 0 || !currentEpisode) return;
-    for (let i = 0; i < seasonWithEpisodes.length; i++) {
-      const season = seasonWithEpisodes[i];
-      for (let j = 0; j < season.episodes.length; j++) {
-        const episode = season.episodes[j];
-        if (episode.id === currentEpisode.id) {
-          // Found current episode
-          if (j + 1 < season.episodes.length) {
-            // Next episode in the same season
-            setCurrentEpisode(season.episodes[j + 1]);
-            return;
-          } else if (i + 1 < seasons.length) {
-            // First episode of the next season
-            setCurrentEpisode(seasons[i + 1].episodes[0]);
-            setCurrentSeasonNumber(seasons[i + 1].season_number);
-            return;
-          }
-        }
-      }
-    }
-  }
-
   const handlePlayFirstEpisode = () => {
-    dispatch(openScreenPlayer({
-      isOpen: true,
-      isSeries: true,
-      selectedVideo: seasonWithEpisodes[0]?.episodes[0],
-      seriesData: seasonWithEpisodes[0],
-      contentId: normalizedItem?.id,
-      poster_url: currentContentItem?.poster_url || normalizedItem.posterUrl
-    }))
+    const firstSeason = seasonWithEpisodes[0];
+    const firstEpisode = firstSeason?.episodes[0];
 
+    if (firstEpisode && firstSeason) {
+      dispatch(openScreenPlayer({
+        isOpen: true,
+        isSeries: true,
+        selectedVideo: firstEpisode,
+        currentVideoIndex: 0,
+        seriesData: firstSeason,
+        contentId: normalizedItem?.id,
+        poster_url: currentContentItem?.poster_url || normalizedItem.posterUrl
+      }))
 
-
-    const firstEpisode = seasonWithEpisodes[0]?.episodes[0];
-    if (firstEpisode && seasonWithEpisodes.length > 0) {
       setCurrentEpisode(firstEpisode);
-      setCurrentSeasonNumber(seasonWithEpisodes[0].season_number);
+      setCurrentSeasonNumber(firstSeason.season_number);
       setIsSeriesPlayerOpen(true);
     }
   };
 
-  const handlePlayEpisode = (episode: Episode, seasonNumber: number) => {
+  const handlePlayEpisode = (episode: Episode, seasonNumber: number, index: number, seasonData: any) => {
     if (episode.video_url && seasonWithEpisodes.length > 0) {
+      dispatch(openScreenPlayer({
+        isOpen: true,
+        isSeries: true,
+        selectedVideo: episode,
+        currentVideoIndex: index,
+        seriesData: seasonData,
+        contentId: normalizedItem?.id,
+        poster_url: currentContentItem?.poster_url || normalizedItem.posterUrl
+      }))
+
       setCurrentEpisode(episode);
       setCurrentSeasonNumber(seasonNumber);
       setIsSeriesPlayerOpen(true);
@@ -546,19 +534,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
             title={currentItem?.type === "movie" ? currentItem?.title : currentEpisode?.title}
             userId={user?.id}
             poster_url={currentContentItem?.poster_url || normalizedItem.posterUrl}
-
-            // Your Series Logic
-            onVideoEnd={() => {
-              if (hasNext()) {
-                onNext(); // Plays next episode
-              } else {
-                handleCloseSeriesPlayer(); // Goes back to modal if finished
-              }
-            }}
             movieId={currentContentItem?.id}
-            hasNext={hasNext()}
-            onNext={onNext}
-            onPrevious={() => { }}
             season={seasonWithEpisodes}
           />
         </DialogContent>
@@ -740,16 +716,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
                           <div
                             key={episode.id}
                             onClick={() => {
-                              handlePlayEpisode(episode, season.season_number)
-                              dispatch(openScreenPlayer({
-                                isOpen: true,
-                                currentVideoIndex: index,
-                                selectedVideo: episode,
-                                isSeries: true,
-                                seriesData: seasonWithEpisodes, // Send all seasons
-                                contentId: item?.id,
-                                poster_url: currentContentItem?.poster_url || normalizedItem.posterUrl
-                              }))
+                              handlePlayEpisode(episode, season.season_number, index, season)
                             }
                             }
                             className={`border flex items-center space-x-3 rounded-lg p-3 transition-all duration-300 group h-12 cursor-pointer ${effectiveKidsMode
@@ -776,14 +743,9 @@ const ContentModal: React.FC<ContentModalProps> = ({
                                 handlePlayEpisode(
                                   episode,
                                   season.season_number,
+                                  index,
+                                  season
                                 );
-                                dispatch(openScreenPlayer({
-                                  isOpen: true,
-                                  currentVideoIndex: index,
-                                  selectedVideo: episode,
-                                  isSeries: true,
-                                  seriesData: season
-                                }))
                               }}
                               className="ml-3 p-2 rounded-full transition-colors bg-white/10 hover:bg-white/20 text-white flex-shrink-0"
                               aria-label={`Play ${episode.title}`}

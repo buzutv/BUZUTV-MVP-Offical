@@ -50,9 +50,11 @@ const PlaylistDetail = () => {
 
   // 1. FIXED: Added 'playlistWithItems' to dependencies so UI updates when data is refetched
   useEffect(() => {
-    const contentfromPlaylist = playlistWithItems?.find(playlist => playlist.id === id)?.playlist_items?.map(item => item.content) || [];
+    const currentPlaylist = playlistWithItems?.find(playlist => playlist.id === id);
+    const contentfromPlaylist = currentPlaylist?.playlist_items?.map((item: any) => item.content) || [];
+
     dispatch(openScreenPlayer({
-      playlistInfo: content.map(item => item.id),
+      playlistInfo: currentPlaylist, // Pass the full playlist object structure
       playlistId: id || null
     }))
     setContent(contentfromPlaylist);

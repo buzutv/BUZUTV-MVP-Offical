@@ -4,6 +4,13 @@ import { getYouTubeEmbedUrl, normalizer, onReadyVideoLoader, saveWatchHistory } 
 import { useDispatch, useSelector } from "react-redux";
 import { openScreenPlayer, setCurrentVideoIndex } from "@/store/screenPlayerSlice";
 
+declare global {
+  interface Window {
+    YT: any;
+    onYouTubeIframeAPIReady: () => void;
+  }
+}
+
 interface VideoPlayerProps {
   videoId: string;
   setActualVideoUrl?: (videoId: string) => void;
@@ -16,10 +23,12 @@ interface VideoPlayerProps {
   userid: string;
   setFinal?: (any: any) => void;
   onProgressUpdate?: (data: { id: string, watch_percentage: number, last_position: number }) => void;
+  localProgress?: Record<string, { watch_percentage: number, last_position: number }>;
+  onPlaylistAdvance?: () => void;
 }
 
 const VideoPlayer = forwardRef<any, VideoPlayerProps>(
-  ({ videoId, playlistItems, setCurrentMovie, movieId, episodeId, setFinal, type, userid, playlistInfo, onProgressUpdate }, ref) => {
+  ({ videoId, playlistItems, setCurrentMovie, movieId, episodeId, setFinal, type, userid, playlistInfo, onProgressUpdate, localProgress, onPlaylistAdvance }, ref) => {
     const playerContainerRef = useRef<HTMLDivElement>(null);
     const playerInstanceRef = useRef<any>(null);
 
@@ -45,20 +54,30 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
 
     const dispatch = useDispatch();
 
-    // Playlist items from Redux
-    const playlist_items = playlistFullObject[0]?.playlist_items || [];
+    // Playlist items from Redux - Handle array or object structure
+    const playlist_items = Array.isArray(playlistFullObject)
+      ? playlistFullObject[0]?.playlist_items
+      : playlistFullObject?.playlist_items || [];
 
     // Determine current queue based on content type
-    const currentQueue = isSeries ? episodes : playlist_items;
+    const currentQueue = isSeries ? episodes : playlist_items || [];
 
-    const hasNextVideo = currentVideoIndex < currentQueue.length - 1;
+    // If we are in a series, we might have a next episode.
+    // If not, we might have a next PLAYLIST item (handled via onPlaylistAdvance).
+    // So hasNextVideo should form a composite check for UI purposes?
+    // For now, let's keep it based on current queue, but maybe always show 'Next' if onPlaylistAdvance is present?
+    // Actually, UI usually just hides the button if false.
+    // Let's assume if it's the last episode, we can still click next to trigger playlist advance.
+    const hasNextVideo = (currentQueue?.length > 0 && currentVideoIndex < currentQueue.length - 1) || (isSeries && !!onPlaylistAdvance);
 
     console.log("VideoPlayer State:", {
       isSeries,
-      episodesCount: episodes.length,
-      playlistItemsCount: playlist_items.length,
+      episodesCount: episodes?.length,
+      playlistItemsCount: playlist_items?.length,
       currentVideoIndex,
-      videoId
+      videoId,
+      localProgress,
+      hasNextVideo
     });
 
     // --- SYNC REFS ---
@@ -116,6 +135,19 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
     // --- RESUME LOGIC ---
     const getResumePosition = useCallback(() => {
       const currentVidData = selectedVideoRef.current;
+      const vidId = currentVidData?.id;
+
+      // 1. Check local session progress first (highest priority)
+      if (vidId && localProgress?.[vidId]) {
+        const local = localProgress[vidId];
+        console.log("Resuming from local progress:", local);
+        if (local.watch_percentage < 95) { // Only resume if not almost done
+          return local.last_position;
+        }
+        return 0; // If they finished it locally, start over
+      }
+
+      // 2. Fallback to Redux state / DB history
       if (!currentVidData) return 0;
 
       const history = Array.isArray(currentVidData.user_watch_history)
@@ -128,13 +160,13 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
 
       console.log("Resuming logic calculated position:", { isCompleted, watchPct, lastPos });
 
-      if (isCompleted || watchPct >= 99) {
+      if (isCompleted || watchPct >= 95) {
         return 0;
       } else if (lastPos > 0) {
         return lastPos;
       }
       return 0;
-    }, []);
+    }, [localProgress]);
 
     const resumeVideoPosition = (player: any) => {
       const startSeconds = getResumePosition();
@@ -275,12 +307,20 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
 
     // --- NAVIGATION ---
     const playNext = () => {
-      if (!currentQueue || currentQueue.length === 0) return;
+      // Logic:
+      // 1. If we have a next item in CURRENT queue (e.g. next episode), play it.
+      // 2. If not, and we are in a series, try to advance playlist (movie -> movie is same queue, series -> next item is context switch)
 
       const nextIndex = currentVideoIndex + 1;
 
-      if (nextIndex >= currentQueue.length) {
-        console.log("End of queue reached");
+      if (!currentQueue || nextIndex >= currentQueue.length) {
+        console.log("End of current queue reached.");
+        if (isSeries && onPlaylistAdvance) {
+          console.log("Attempting to advance playlist context...");
+          clearCountdownTimer();
+          setVideoEnded(false);
+          onPlaylistAdvance();
+        }
         return;
       }
 
@@ -300,7 +340,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
         return;
       }
 
-      console.log("Playing next:", { nextIndex, nextVideoData, isSeries });
+      console.log("Playing next in queue:", { nextIndex, nextVideoData, isSeries });
 
       // Update Redux with new video
       dispatch(openScreenPlayer({

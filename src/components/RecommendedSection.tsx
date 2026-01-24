@@ -34,66 +34,57 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
   setPlaylists,
   getOptimizedImageUrl,
 }) => {
-  const { user } = useAuth()
-  const [triggerRecommendations, { data, isFetching }] =
-    useLazyGetRecommendationsWtihContentEmbeddedQuery();
+  const { user } = useAuth();
+  const dispatch = useDispatch();
   const contentId = useSelector((state: any) => state.screenPlayer.contentId);
-  const { data: recommendations, refetch } = useGetRecommendationsWtihContentEmbeddedQuery(
+  const [triggerSeasonWithEpisode] = useLazyGetSeasonWithEpisodesQuery();
+
+  const { data: recommendations, isLoading, isFetching, refetch } = useGetRecommendationsWtihContentEmbeddedQuery(
     {
       userId: user?.id,
-    }, {
-    refetchOnFocus: true,
-    refetchOnMountOrArgChange: true,
-    refetchOnReconnect: true
-  }
+    },
+    {
+      refetchOnFocus: true,
+      refetchOnMountOrArgChange: true,
+      refetchOnReconnect: true
+    }
   );
 
-  console.log("Recommendations", recommendations)
-  const dispatch = useDispatch();
-
-  const [triggerSeasonWithEpisode] = useLazyGetSeasonWithEpisodesQuery()
   const fetchSeriesData = async (content: any) => {
     if (content.type === "series") {
-      const data = await triggerSeasonWithEpisode({ contentId: content?.id, userId: user?.id }).unwrap()
+      const data = await triggerSeasonWithEpisode({ contentId: content?.id, userId: user?.id }).unwrap();
       dispatch(openScreenPlayer({
         selectedVideo: content,
         isSeries: true,
         contentId: content?.id,
-        seriesData: data, // Dispatch all seasons
-        poster_url: content?.poster_url // Include series poster
-      }))
-    }
-    else {
+        seriesData: data,
+        poster_url: content?.poster_url
+      }));
+    } else {
       dispatch(openScreenPlayer({
         selectedVideo: content,
         isSeries: false,
         contentId: content?.id,
-      }))
+      }));
     }
-  }
+  };
 
-  useEffect(() => {
-    triggerRecommendations({
-      userId: user?.id,
-    });
-  }, []);
-  const filteredRecommendations = recommendations?.filter((rec: any) => rec.content.id !== contentId);
-  // 🔹 Group recommendations by recommendation_type
-  const groupedRecommendations = () => {
-    if (!data) return {};
+  const groupedRecommendations = useMemo(() => {
+    if (!recommendations) return {};
 
-    return filteredRecommendations?.reduce((acc: any, rec: any) => {
+    const filtered = recommendations.filter((rec: any) => rec.content.id !== contentId);
+
+    return filtered.reduce((acc: any, rec: any) => {
       const key = rec.recommendation_type || "default";
       if (!acc[key]) acc[key] = [];
       acc[key].push(rec.content);
       return acc;
-    }, {}) || {};
-  };
+    }, {});
+  }, [recommendations, contentId]);
 
-  console.log("Recommendations", groupedRecommendations)
+  console.log("Grouped Recommendations:", groupedRecommendations);
 
-  // 🔹 Loading skeleton
-  if (isFetching || !data) {
+  if (isLoading || isFetching) {
     return (
       <div className="mt-8 mb-8">
         {[1, 2].map((i) => (
@@ -117,7 +108,7 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
   // 🔹 Render data
   return (
     <div className="mt-8 mb-8">
-      {Object.entries(groupedRecommendations).map(([key, recs]: any) => {
+      {Object.entries(groupedRecommendations).map(([key, recs]: [string, any[]]) => {
         if (!recs.length) return null;
 
         return (
@@ -128,7 +119,6 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
 
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
               {recs.map((rec: any) => {
-
                 if (!rec) return null;
 
                 return (
@@ -143,7 +133,6 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
                       setMovies([item]);
                       setVideoEnded(false);
                       setPlaylists([]);
-                      refetch()
                     }}
                   />
                 );
@@ -154,6 +143,6 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
       })}
     </div>
   );
-};
+};;
 
 export default RecommendedSection;
