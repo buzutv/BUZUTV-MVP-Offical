@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Eye, X } from "lucide-react";
 import BrandButton from "@/components/ui/BrandButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false)
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -25,76 +26,76 @@ const Auth = () => {
     if (mode === "signup") setIsSignUp(true);
   }, [searchParams]);
 
-  
+
   console.log("Erros", errors)
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const newErrors: { [key: string]: string } = {};
+    const newErrors: { [key: string]: string } = {};
 
-  const trimmedFullName = fullName.trim();
+    const trimmedFullName = fullName.trim();
 
-  // ----------------------------
-  // VALIDATION
-  // ----------------------------
-  if (isSignUp) {
-    if (!trimmedFullName) newErrors.fullName = "Full Name is required";
-    if (!email.trim()) newErrors.email = "Email is required";
-    if (!phone.trim()) newErrors.phone = "Phone number is required";
-    if (!password.trim()) newErrors.password = "Password is required";
-    if (!confirmPassword.trim())
-      newErrors.confirmPassword = "Confirm Password is required";
-
-    if (password && password.length < 6)
-      newErrors.password = "Password must be at least 6 characters long";
-
-    if (password && confirmPassword && password !== confirmPassword)
-      newErrors.confirmPassword = "Passwords do not match";
-  } else {
-    if (!email.trim()) newErrors.email = "Email is required";
-    if (!password.trim()) newErrors.password = "Password is required";
-  }
-
-  // Apply all errors at once
-  setErrors(newErrors);
-
-  // Stop execution if any validation failed
-  if (Object.keys(newErrors).length > 0) {
-    toast.error("Please fix the highlighted fields");
-    return;
-  }
-
-  // ----------------------------
-  // SUBMIT LOGIC
-  // ----------------------------
-  setIsLoading(true);
-  try {
+    // ----------------------------
+    // VALIDATION
+    // ----------------------------
     if (isSignUp) {
-      const result = await signup(email, password, trimmedFullName, phone);
-      if (result.success) {
-        toast.success("Account created successfully!");
-        navigate("/");
-        resetForm();
-      } else {
-        toast.error(result.error || "User already exists");
-      }
+      if (!trimmedFullName) newErrors.fullName = "Full Name is required";
+      if (!email.trim()) newErrors.email = "Email is required";
+      if (!phone.trim()) newErrors.phone = "Phone number is required";
+      if (!password.trim()) newErrors.password = "Password is required";
+      if (!confirmPassword.trim())
+        newErrors.confirmPassword = "Confirm Password is required";
+
+      if (password && password.length < 6)
+        newErrors.password = "Password must be at least 6 characters long";
+
+      if (password && confirmPassword && password !== confirmPassword)
+        newErrors.confirmPassword = "Passwords do not match";
     } else {
-      const result = await login(email, password);
-      if (result.success) {
-        toast.success("Logged in successfully!");
-        navigate("/");
-        resetForm();
-      } else {
-        toast.error("Invalid credentials");
-      }
+      if (!email.trim()) newErrors.email = "Email is required";
+      if (!password.trim()) newErrors.password = "Password is required";
     }
-  } catch (error) {
-    toast.error("An error occurred. Please try again.");
-  } finally {
-    setIsLoading(false);
-  }
-};
+
+    // Apply all errors at once
+    setErrors(newErrors);
+
+    // Stop execution if any validation failed
+    if (Object.keys(newErrors).length > 0) {
+      toast.error("Please fix the highlighted fields");
+      return;
+    }
+
+    // ----------------------------
+    // SUBMIT LOGIC
+    // ----------------------------
+    setIsLoading(true);
+    try {
+      if (isSignUp) {
+        const result = await signup(email, password, trimmedFullName, phone);
+        if (result.success) {
+          toast.success("Account created successfully!");
+          navigate("/");
+          resetForm();
+        } else {
+          toast.error(result.error || "User already exists");
+        }
+      } else {
+        const result = await login(email, password);
+        if (result.success) {
+          toast.success("Logged in successfully!");
+          navigate("/");
+          resetForm();
+        } else {
+          toast.error("Invalid credentials");
+        }
+      }
+    } catch (error) {
+      toast.error("An error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
 
   const handleGoogleSignIn = async () => {
@@ -171,6 +172,10 @@ const handleSubmit = async (e: React.FormEvent) => {
                 {isSignUp ? "Sign Up" : "Log In"} to{" "}
                 <img src="/logo.png" alt="BUZUTV" className="h-8 w-auto" />
               </h1>
+              <div onClick={() => navigate("/")} className="cursor-pointer absolute top-4 right-4">
+                <X size={15} />
+
+              </div>
               <p className="text-gray-400 mt-2 text-sm">
                 {isSignUp ? "Create your account" : "Welcome back"}
               </p>
@@ -201,15 +206,15 @@ const handleSubmit = async (e: React.FormEvent) => {
                     >
                       Full Name
                     </label>
-                  {errors.fullName && <p className="text-red-500 text-xs">{errors.fullName}</p>}                    
-                  <input
+                    {errors.fullName && <p className="text-red-500 text-xs">{errors.fullName}</p>}
+                    <input
                       id="fullName"
                       type="text"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
                       placeholder="Enter your full name"
-                      // required
+                    // required
                     />
                   </div>
 
@@ -259,14 +264,17 @@ const handleSubmit = async (e: React.FormEvent) => {
                   Password
                 </label>
                 {errors.password && <p className="text-red-500 text-xs">{errors.password}</p>}
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
-                  placeholder="Enter your password"
-                />
+                <div onClick={() => setShowPassword(!showPassword)} className="flex items-center px-3 py-1  justify-end gap-2 border border-white/30 rounded-lg">
+                  <input
+                    id="password"
+                    type={showPassword ? "password" : "text"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="text-sm w-full bg-black/30  text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
+                    placeholder="Enter your password"
+                  />
+                  <Eye size={15} />
+                </div>
                 {!isSignUp && (
                   <div className="mt-2">
                     <button
@@ -289,14 +297,19 @@ const handleSubmit = async (e: React.FormEvent) => {
                     Confirm Password
                   </label>
                   {errors.confirmPassword && <p className="text-red-500 text-xs">{errors.confirmPassword}</p>}
-                  <input
-                    id="confirmPassword"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
-                    placeholder="Confirm your password"
-                  />
+
+                  <div onClick={() => setShowPassword(!showPassword)} className="flex items-center px-3 py-1  justify-end gap-2 border border-white/30 rounded-lg">
+                    <input
+                      id="confirmPassword"
+                      type={showPassword ? "password" : "text"}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="text-sm w-full  bg-black/30  text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
+                      placeholder="Confirm your password"
+                    />
+                    <Eye size={15} />
+
+                  </div>
                 </div>
               )}
 
@@ -362,15 +375,15 @@ const handleSubmit = async (e: React.FormEvent) => {
             </BrandButton>
           </div>
         </div>
-      </div>
+      </div >
 
       {/* Forgot Password Modal */}
-      <ForgotPassword
+      < ForgotPassword
         isOpen={showForgotPassword}
         onClose={() => setShowForgotPassword(false)}
         onBackToLogin={() => setShowForgotPassword(false)}
       />
-    </div>
+    </div >
   );
 };
 
