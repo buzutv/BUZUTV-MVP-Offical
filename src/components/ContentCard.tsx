@@ -16,6 +16,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import usePlaylists from "@/hooks/usePlaylists";
 import { toast } from "sonner";
+import { useDispatch } from "react-redux";
+import { openScreenPlayer, closeScreenPlayer } from "@/store/screenPlayerSlice";
 import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
 import { Content } from "@/types";
 
@@ -54,6 +56,7 @@ const ContentCard = ({
   width = "auto",
   playlists
 }: ContentCardProps) => {
+  const dispatch = useDispatch();
   const location = useLocation();
   const { isLoggedIn, setShowLoginModal, user } = useAuth();
   const { favoriteIds, addToFavorites, removeFromFavorites } = useUserFavorites();
@@ -170,18 +173,31 @@ const ContentCard = ({
   const handleModalPlayClick = useCallback(() => {
     if (!contentItem?.video_url) return;
 
+    const vidUrl = contentItem.video_url;
+    const vidTitle = actualItem.title;
+
+    dispatch(openScreenPlayer({
+      isOpen: true,
+      selectedVideo: contentItem || actualItem,
+      selectedVideoTitle: vidTitle,
+      videoUrl: vidUrl,
+      contentId: actualItem.id,
+      poster_url: actualItem.poster_url || actualItem.posterUrl,
+      isSeries: actualItem.type === 'series'
+    }));
+
     if (onPlayFullscreen) {
-      onPlayFullscreen(contentItem.video_url);
+      onPlayFullscreen(vidUrl);
       setCurrentModalItem(null);
     } else {
       setCurrentModalItem(null);
       setTimeout(() => {
-        setCurrentVideoUrl(contentItem.video_url);
-        setCurrentVideoTitle(actualItem.title);
+        setCurrentVideoUrl(vidUrl);
+        setCurrentVideoTitle(vidTitle);
         setIsFullscreen(true);
       }, 200);
     }
-  }, [contentItem?.video_url, onPlayFullscreen, actualItem.title]);
+  }, [contentItem, onPlayFullscreen, actualItem, dispatch]);
 
 
   const handleSubmitPlaylist = async (e) => {
@@ -216,6 +232,16 @@ const ContentCard = ({
 
   const handlePlayEpisode = useCallback(
     (videoUrl: string, episodeTitle: string) => {
+      dispatch(openScreenPlayer({
+        isOpen: true,
+        selectedVideo: actualItem, // Current series
+        selectedVideoTitle: episodeTitle,
+        videoUrl: videoUrl,
+        contentId: actualItem.id,
+        poster_url: actualItem.poster_url || actualItem.posterUrl,
+        isSeries: true
+      }));
+
       if (onPlayFullscreen) {
         onPlayFullscreen(videoUrl);
         setCurrentModalItem(null);
@@ -228,10 +254,11 @@ const ContentCard = ({
         }, 200);
       }
     },
-    [onPlayFullscreen]
+    [onPlayFullscreen, actualItem, dispatch]
   );
 
   const handleExitFullscreen = () => {
+    dispatch(closeScreenPlayer());
     setIsFullscreen(false);
     setCurrentVideoUrl("");
     setCurrentVideoTitle("");
@@ -465,6 +492,7 @@ const ContentCard = ({
           onSave={handleSaveModal}
           onPlayEpisode={handlePlayEpisode}
           videoUrl={videoUrl}
+          movieId={actualItem.id}
           contentItem={contentItem}
           channel={channel}
           recommendedContent={recommendedContent}

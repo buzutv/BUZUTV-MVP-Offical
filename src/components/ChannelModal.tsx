@@ -6,8 +6,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Filter, UserCheck, UserPlus, X } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import ContentCard from "@/components/ContentCard";
+import FullscreenPlayer from "./FullscreenPlayer";
+import { useDispatch } from "react-redux";
+import { openScreenPlayer, closeScreenPlayer } from "@/store/screenPlayerSlice";
+import { useAuth } from "@/contexts/AuthContext";
 
 import { useContent } from "@/hooks/useContent";
 import { useUserChannelFavorites } from "@/hooks/useUserChannelFavorites";
@@ -54,6 +57,11 @@ const ChannelModal = ({ isOpen, onClose, channel }: ChannelModalProps) => {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string>("");
+  const [currentVideoTitle, setCurrentVideoTitle] = useState<string>("");
+  const [currentVideoItem, setCurrentVideoItem] = useState<any>(null);
+
+  const dispatch = useDispatch();
+  const { user } = useAuth();
 
   const { content } = useContent();
   const {
@@ -169,46 +177,29 @@ const ChannelModal = ({ isOpen, onClose, channel }: ChannelModalProps) => {
   }, [channelContent]);
 
   const handleCloseVideo = () => {
+    dispatch(closeScreenPlayer());
     setIsPlaying(false);
     setCurrentVideoUrl("");
+    setCurrentVideoTitle("");
+    setCurrentVideoItem(null);
   };
 
   if (!channel) return null;
 
   return (
     <>
-      {/* Full Screen Video Player */}
-      {isPlaying && currentVideoUrl && (
-        <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center">
-          <button
-            onClick={handleCloseVideo}
-            className="absolute top-4 right-4 z-[10000] bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
-
-          <div className="w-full h-full flex items-center justify-center">
-            {currentVideoUrl.includes("youtube.com/embed") ? (
-              <iframe
-                src={`${currentVideoUrl}?autoplay=1&controls=1&rel=0&fs=1&playsinline=1`}
-                className="w-full h-full"
-                allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-                allowFullScreen
-                sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-              />
-            ) : (
-              <video
-                src={currentVideoUrl}
-                controls
-                autoPlay
-                className="w-full h-full object-contain"
-                onError={() => {
-                  setIsPlaying(false);
-                }}
-              />
-            )}
-          </div>
-        </div>
+      {/* Fullscreen Video Player */}
+      {isPlaying && (
+        <FullscreenPlayer
+          isOpen={isPlaying}
+          onClose={handleCloseVideo}
+          videoUrl={currentVideoUrl}
+          title={currentVideoTitle || "Video Player"}
+          userId={user?.id}
+          movieId={currentVideoItem?.id}
+          type={currentVideoItem?.type || "movie"}
+          poster_url={currentVideoItem?.poster_url || currentVideoItem?.posterUrl}
+        />
       )}
 
       <Dialog open={isOpen && !isPlaying} onOpenChange={onClose}>
@@ -410,9 +401,21 @@ const ChannelModal = ({ isOpen, onClose, channel }: ChannelModalProps) => {
                               autoDetectKids={true}
                               width="w-full"
                               onPlayFullscreen={(videoUrl) => {
-                                const embedUrl =
-                                  getYouTubeEmbedUrl(videoUrl) || videoUrl;
+                                const embedUrl = getYouTubeEmbedUrl(videoUrl) || videoUrl;
                                 setCurrentVideoUrl(embedUrl);
+                                setCurrentVideoTitle(movie.title);
+                                setCurrentVideoItem(movie);
+
+                                dispatch(openScreenPlayer({
+                                  isOpen: true,
+                                  selectedVideo: movie,
+                                  selectedVideoTitle: movie.title,
+                                  videoUrl: embedUrl,
+                                  contentId: movie.id,
+                                  poster_url: movie.poster_url || movie.posterUrl,
+                                  isSeries: movie.type === 'series'
+                                }));
+
                                 setIsPlaying(true);
                               }}
                             />

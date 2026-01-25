@@ -50,6 +50,8 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
     }
   );
 
+  console.log("UnGrouped Recommendations", recommendations)
+
   const fetchSeriesData = async (content: any) => {
     if (content.type === "series") {
       const data = await triggerSeasonWithEpisode({ contentId: content?.id, userId: user?.id }).unwrap();

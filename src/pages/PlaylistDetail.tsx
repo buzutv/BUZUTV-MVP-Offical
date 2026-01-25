@@ -348,7 +348,7 @@ const PlaylistDetail = () => {
             </DialogContent>
           </Dialog>
 
-          {content?.length > 0 && (
+          {/* {content?.length > 0 && (
             <button
               onClick={playPlaylist}
               className="flex items-center gap-2 px-6 py-3 bg-white rounded-lg hover:bg-foreground/90 hover:text-white transition font-semibold shadow-lg"
@@ -358,7 +358,7 @@ const PlaylistDetail = () => {
               </svg>
               Play All ({content.length})
             </button>
-          )}
+          )} */}
         </div>
       </div>
 

@@ -424,6 +424,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
               setFullscreenOpen(true);
             }}
             videoUrl={backendContentItem?.video_url || modalItem.videoUrl}
+            movieId={modalItem.id}
             contentItem={backendContentItem as any}
             channel={backendChannel}
           />
