@@ -529,7 +529,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
           <FullscreenPlayer
             isOpen={true}
             onClose={handleCloseSeriesPlayer} // This returns us to the Modal
-            videoUrl={currentItem?.type === "movie" ? currentItem?.video_url : currentEpisode?.video_url}
+            videoUrl={currentItem?.type === "movie" ? (currentItem as any)?.video_url : currentEpisode?.video_url}
             type={currentItem?.type}
             title={currentItem?.type === "movie" ? currentItem?.title : currentEpisode?.title}
             userId={user?.id}

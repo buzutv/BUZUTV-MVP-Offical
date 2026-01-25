@@ -113,8 +113,9 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
 
         return (
           <div key={key} className="mb-12">
-            <h2 className="mb-6 inline-block rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-white/90 backdrop-blur capitalize">
-              {sectionTitles[key] || sectionTitles.default}
+            <h2 className="mb-6 inline-block rounded-full bg-white/10 px-4 py-1.5 text-md font-semibold text-white/90 backdrop-blur capitalize">
+              {/* {sectionTitles[key] || sectionTitles.default} */}
+              More Like This
             </h2>
 
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">

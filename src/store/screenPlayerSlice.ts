@@ -35,6 +35,7 @@ export const screenPlayer = createSlice({
             if (action.payload.playlistId !== undefined) state.playlistId = action.payload.playlistId;
             if (action.payload.isSeries !== undefined) state.isSeries = action.payload.isSeries;
             if (action.payload.seriesData !== undefined) state.seriesData = action.payload.seriesData;
+            if (action.payload.playlistInfo !== undefined) state.playlistInfo = action.payload.playlistInfo;
         },
         closeScreenPlayer: (state) => {
             state.isOpen = false;

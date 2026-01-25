@@ -53,10 +53,8 @@ const PlaylistDetail = () => {
     const currentPlaylist = playlistWithItems?.find(playlist => playlist.id === id);
     const contentfromPlaylist = currentPlaylist?.playlist_items?.map((item: any) => item.content) || [];
 
-    dispatch(openScreenPlayer({
-      playlistInfo: currentPlaylist, // Pass the full playlist object structure
-      playlistId: id || null
-    }))
+    // Removed openScreenPlayer from effect to avoid early state pollution
+    // We only set the playlist items mapping here
     setContent(contentfromPlaylist);
   }, [id, playlistWithItems])
 
@@ -406,13 +404,14 @@ const PlaylistDetail = () => {
               }`}
             onClick={() => {
               setCurrentVideoIndex(idx);
-              setIndex(idx);
+              const currentPlaylist = playlistWithItems?.find(playlist => playlist.id === id);
               dispatch(openScreenPlayer({
                 isOpen: true,
                 contentItems: displayItems,
                 currentVideoIndex: idx,
                 selectedVideo: item,
                 playlistId: id,
+                playlistInfo: currentPlaylist, // Re-provide playlistInfo on click
                 isSeries: item.type === 'series'
               }))
               dispatch(setContentId({ contentId: item.id }));

@@ -12,6 +12,10 @@ import { useChannels } from "@/hooks/useChannels";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import BrandButton from "@/components/ui/BrandButton";
 import ContentModal from "./ContentModal";
+import FullscreenPlayer from "./FullscreenPlayer";
+import { useAuth } from "@/contexts/AuthContext";
+import { useDispatch } from "react-redux";
+import { openScreenPlayer, closeScreenPlayer } from "@/store/screenPlayerSlice";
 
 interface HeroBannerProps {
   movies: Movie[];
@@ -45,6 +49,8 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
   const { channels } = useChannels();
   const { favoriteIds, addToFavorites, removeFromFavorites } =
     useUserFavorites();
+  const { user } = useAuth();
+  const dispatch = useDispatch();
 
   // Helper to get first episode video for series
   const getFirstEpisodeVideo = (item: any) => {
@@ -75,6 +81,14 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
     if (!currentMovie) return;
     const contentItem = content.find((item) => item.id === currentMovie.id);
     if (contentItem?.video_url) {
+      dispatch(openScreenPlayer({
+        isOpen: true,
+        selectedVideo: contentItem,
+        selectedVideoTitle: currentMovie.title,
+        videoUrl: contentItem.video_url,
+        contentId: contentItem,
+        poster_url: contentItem.poster_url || currentMovie.posterUrl
+      }));
       setIsPlaying(true);
     }
   };
@@ -91,18 +105,12 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
     null,
   );
   const handleCloseVideo = () => {
+    dispatch(closeScreenPlayer());
     setIsPlaying(false);
     setCurrentVideoUrl(null);
     setCurrentVideoTitle(null);
   };
 
-  const handleModalPlayClick = () => {
-    // Find the content item from backend data
-    const contentItem = content.find((item) => item.id === modalMovie?.id);
-    if (contentItem?.video_url) {
-      setIsPlaying(true);
-    }
-  };
 
   const handleSave = () => {
     if (!modalMovie) return;
@@ -223,20 +231,18 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                 >
                   {/* Left-to-right overlay */}
                   <div
-                    className={`absolute inset-0 ${
-                      isKidsVariant
-                        ? ""
-                        : "bg-gradient-to-r from-black/50 via-black/30 to-transparent"
-                    }`}
+                    className={`absolute inset-0 ${isKidsVariant
+                      ? ""
+                      : "bg-gradient-to-r from-black/50 via-black/30 to-transparent"
+                      }`}
                   />
 
                   {/* Bottom-to-top overlay – make bottom darker */}
                   <div
-                    className={`absolute inset-0 ${
-                      isKidsVariant
-                        ? "bg-[linear-gradient(to_top,_rgba(37,99,235,0.9)_0%,_rgba(37,99,235,0.5)_20%,_transparent_70%)]"
-                        : "bg-gradient-to-t from-black via-black/30 to-transparent"
-                    }`}
+                    className={`absolute inset-0 ${isKidsVariant
+                      ? "bg-[linear-gradient(to_top,_rgba(37,99,235,0.9)_0%,_rgba(37,99,235,0.5)_20%,_transparent_70%)]"
+                      : "bg-gradient-to-t from-black via-black/30 to-transparent"
+                      }`}
                   />
                 </div>
 
@@ -267,7 +273,7 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                                   typeof contentItem.seasons_data === "string"
                                     ? JSON.parse(contentItem.seasons_data)
                                     : contentItem.seasons_data;
-                                
+
                                 if (Array.isArray(seasonsData) && seasonsData.length > 0) {
                                   const seasonCount = seasonsData.length;
                                   return (
@@ -280,7 +286,7 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
                                 console.error("Error parsing seasons data for duration display:", error);
                               }
                             }
-                            
+
                             // Fallback for series
                             return (
                               <span className="text-white text-sm">
@@ -366,13 +372,13 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
         {/* Navigation buttons */}
         {movies.length > 1 && (
           <>
-            <button 
+            <button
               className="hero-prev-movies absolute left-4 top-1/2 transform -translate-y-1/2 z-20 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
               aria-label="Previous movie"
             >
               <ChevronLeft className="w-5 h-5" aria-hidden="true" />
             </button>
-            <button 
+            <button
               className="hero-next-movies absolute right-4 top-1/2 transform -translate-y-1/2 z-20 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
               aria-label="Next movie"
             >
@@ -382,64 +388,18 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
         )}
       </div>
 
-      {/* Full Screen Video Player - Fixed positioning */}
+      {/* Full Screen Video Player */}
       {isPlaying && (
-        <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center">
-          {/* Close Button */}
-          <button
-            onClick={handleCloseVideo}
-            className="absolute top-4 right-4 z-[10000] bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
-          {/* Video Player */}
-          <div className="w-full h-full flex items-center justify-center">
-            {(() => {
-              // Use currentVideoUrl if available (from modal), otherwise use hero's embedUrl
-              const videoToPlay = currentVideoUrl || embedUrl;
-              const videoTitle = currentVideoTitle || currentMovie?.title;
-
-
-              if (!videoToPlay) {
-                return (
-                  <div className="text-white text-center">
-                    <p>No video available</p>
-                    <button
-                      onClick={handleCloseVideo}
-                      className="mt-4 px-4 py-2 bg-gray-600 rounded text-white"
-                    >
-                      Close
-                    </button>
-                  </div>
-                );
-              }
-
-              const finalEmbedUrl = videoToPlay.includes("youtube.com/embed")
-                ? videoToPlay
-                : getYouTubeEmbedUrl(videoToPlay) || videoToPlay;
-
-              return finalEmbedUrl.includes("youtube.com/embed") ? (
-                <iframe
-                  src={`${finalEmbedUrl}?autoplay=1&controls=1&rel=0&fs=1&playsinline=1`}
-                  className="w-full h-full"
-                  allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-                  allowFullScreen
-                  sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-                />
-              ) : (
-                <video
-                  src={finalEmbedUrl}
-                  controls
-                  autoPlay
-                  className="w-full h-full object-contain"
-                  onError={() => {
-                    setIsPlaying(false);
-                  }}
-                />
-              );
-            })()}
-          </div>
-        </div>
+        <FullscreenPlayer
+          isOpen={true}
+          onClose={handleCloseVideo}
+          videoUrl={currentVideoUrl || embedUrl}
+          type={currentMovie?.type || "movie"}
+          title={currentVideoTitle || currentMovie?.title}
+          userId={user?.id}
+          poster_url={contentItem?.poster_url || currentMovie?.posterUrl}
+          movieId={contentItem?.id}
+        />
       )}
 
       {/* More Info Modal - Using unified ContentModal */}
@@ -459,7 +419,7 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
           contentItem={{
             ...modalContentItem,
             seasons_data: modalSeasonsData,
-          }}
+          } as any}
           channel={channel}
           seasons={modalSeasonsData}
           customBackground={

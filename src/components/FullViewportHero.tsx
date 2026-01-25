@@ -15,6 +15,8 @@ import FullscreenPlayer from "./FullscreenPlayer";
 import ChannelCard from "./ChannelCard";
 import BrandButton from "./ui/BrandButton";
 import { Channel } from "@/data/mockMovies";
+import { useDispatch } from "react-redux";
+import { openScreenPlayer, closeScreenPlayer } from "@/store/screenPlayerSlice";
 
 
 export interface HeroCarouselItem {
@@ -45,7 +47,8 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
   channels,
   onChannelClick,
 }) => {
-  const { isLoggedIn, setShowLoginModal } = useAuth();
+  const { isLoggedIn, user, setShowLoginModal } = useAuth();
+  const dispatch = useDispatch();
   const { favoriteIds, addToFavorites, removeFromFavorites } =
     useUserFavorites();
   const { content } = useContent();
@@ -61,17 +64,20 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
   const [fullscreenTitle, setFullscreenTitle] = useState<string | null>(null);
 
   // Play video in fullscreen
-  const handlePlay = (item: HeroCarouselItem) => {
+  const handlePlay = async (item: HeroCarouselItem) => {
+    const currentBackendItem = content.find((c) => c.id === item.id);
+
     if (item.type === "series") {
       let videoUrl = "";
       let title = item.title;
-      let seasonsData = item.seasons_data;
+      let seasonsData = item.seasons_data || currentBackendItem?.seasons_data;
+
       if (seasonsData) {
         if (typeof seasonsData === "string") {
           try {
             seasonsData = JSON.parse(seasonsData);
           } catch {
-            // Parsing failed, continue with original data
+            // Parsing failed
           }
         }
         if (
@@ -80,21 +86,42 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
           seasonsData[0].episodes &&
           seasonsData[0].episodes.length > 0
         ) {
-          videoUrl =
-            seasonsData[0].episodes[0].videoUrl ||
-            seasonsData[0].episodes[0].video_url;
-          title = `${item.title} - ${seasonsData[0].episodes[0].title}`;
+          const firstEpisode = seasonsData[0].episodes[0];
+          videoUrl = firstEpisode.videoUrl || firstEpisode.video_url;
+          title = `${item.title} - ${firstEpisode.title}`;
+
+          dispatch(openScreenPlayer({
+            isOpen: true,
+            selectedVideo: firstEpisode,
+            selectedVideoTitle: title,
+            videoUrl: videoUrl,
+            contentId: item.id,
+            poster_url: item.posterUrl || currentBackendItem?.poster_url,
+            isSeries: true,
+            seriesData: seasonsData[0]
+          }));
+
+          setFullscreenUrl(videoUrl);
+          setFullscreenTitle(title);
+          setFullscreenOpen(true);
         }
-      }
-      if (videoUrl) {
-        setFullscreenUrl(videoUrl);
-        setFullscreenTitle(title);
-        setFullscreenOpen(true);
       }
       return;
     }
-    if (!item.videoUrl) return;
-    setFullscreenUrl(item.videoUrl);
+
+    const videoToPlay = item.videoUrl || currentBackendItem?.video_url;
+    if (!videoToPlay) return;
+
+    dispatch(openScreenPlayer({
+      isOpen: true,
+      selectedVideo: currentBackendItem || item,
+      selectedVideoTitle: item.title,
+      videoUrl: videoToPlay,
+      contentId: item.id,
+      poster_url: item.posterUrl || currentBackendItem?.poster_url
+    }));
+
+    setFullscreenUrl(videoToPlay);
     setFullscreenTitle(item.title);
     setFullscreenOpen(true);
   };
@@ -116,6 +143,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
   };
 
   const handleCloseFullscreen = () => {
+    dispatch(closeScreenPlayer());
     setFullscreenOpen(false);
     setFullscreenUrl(null);
     setFullscreenTitle(null);
@@ -364,12 +392,16 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
       </div>
 
       {/* Fullscreen Player */}
-      {fullscreenOpen && fullscreenUrl && (
+      {fullscreenOpen && (
         <FullscreenPlayer
           isOpen={fullscreenOpen}
           onClose={handleCloseFullscreen}
-          videoUrl={fullscreenUrl}
+          videoUrl={fullscreenUrl || ""}
           title={fullscreenTitle || ""}
+          userId={user?.id}
+          movieId={modalItem?.id || items.find(i => i.videoUrl === fullscreenUrl || i.title === fullscreenTitle)?.id}
+          type={modalItem?.type || (items.find(i => i.videoUrl === fullscreenUrl || i.title === fullscreenTitle)?.type as any) || "movie"}
+          poster_url={modalItem?.posterUrl || items.find(i => i.videoUrl === fullscreenUrl || i.title === fullscreenTitle)?.posterUrl}
         />
       )}
 
@@ -392,7 +424,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
               setFullscreenOpen(true);
             }}
             videoUrl={backendContentItem?.video_url || modalItem.videoUrl}
-            contentItem={backendContentItem}
+            contentItem={backendContentItem as any}
             channel={backendChannel}
           />
         );
