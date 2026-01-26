@@ -39,7 +39,8 @@ const FullscreenPlayer = ({
   hasPrevious = false,
   onNext,
   onPrevious,
-  playlistInfo
+  playlistInfo,
+  playlistId
 }: FullscreenPlayerProps) => {
 
   const playerRef = useRef<HTMLDivElement>()
@@ -90,7 +91,6 @@ const FullscreenPlayer = ({
   const contentIds = useSelector((state: any) => state.screenPlayer.playlistInfo);
   const seriesContentId = useSelector((state: any) => state.screenPlayer.contentId);
   const seriesPosterUrl = useSelector((state: any) => state.screenPlayer.poster_url);
-  const playlistId = useSelector((state: any) => state.screenPlayer.playlistId)
   const seriesDataFromRedux = useSelector((state: any) => state.screenPlayer.seriesData);
   const [isLoadingEpisodes, setIsLoadingEpisodes] = useState(false);
   const [triggerGetSearchContentWithWatchHistory, resultGetSearchContentWithWatchHistory] = useLazyGetSearchContentWithWatchHistoryQuery()
@@ -548,7 +548,6 @@ const FullscreenPlayer = ({
                 actualVideoUrl && (
                   (playlistId || contentIds) ? (
                     <PlaylistVideoPlayer
-                      key={selectedContent?.id || selectedContent?.video_url}
                       videoId={selectedContent?.video_url}
                       setCurrentMovie={setCurrentMovie}
                       type={type}
@@ -563,6 +562,7 @@ const FullscreenPlayer = ({
                       onProgressUpdate={handleProgressUpdate}
                       localProgress={localProgress}
                       onPlaylistAdvance={handlePlaylistAdvance}
+                      playlistId={playlistId}
                     />
                   ) : (
                     <VideoPlayer

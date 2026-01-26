@@ -9,11 +9,12 @@ import { usePlaylistDetail } from '@/hooks/usePlaylistDetail'
 import usePlaylists from '@/hooks/usePlaylists'
 import { supabase } from '@/integrations/supabase/client'
 import { useLazyGetPlaylistContentWithWatchHistoryQuery } from '@/store/contentSlice'
-import { openScreenPlayer, setContentId } from '@/store/screenPlayerSlice'
+import { openScreenPlayer, setContentId, setPlaylistInfo } from '@/store/screenPlayerSlice'
 import { useLazyGetSeasonWithEpisodesQuery } from '@/store/seasonSlice'
 import { fetchSeriesSeasons, getOptimizedImageUrl } from '@/utils/youtubeUtils'
-import { Dialog, DialogContent } from '@radix-ui/react-dialog'
-import { Plus, Trash } from 'lucide-react'
+import { Dialog, DialogContent, DialogOverlay, DialogPortal } from '@radix-ui/react-dialog'
+import { Plus, Trash, Search, X, CheckCircle2 } from 'lucide-react'
+import { useAddPlaylistItemMutation, useRemovePlaylistItemMutation } from '@/store/playlistSlice'
 import { useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -37,12 +38,16 @@ const PlaylistDetail = () => {
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [selectedMovies, setSelectedMovies] = useState<string[]>([]);
   const [index, setIndex] = useState<number | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<any>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const [seasons, setSeasons] = useState<any[]>([]);
   const dispatch = useDispatch();
   const { user } = useAuth()
   const [triggerGetContentWithWatchHistory, result] = useLazyGetPlaylistContentWithWatchHistoryQuery()
-  // const [triggerGetSeasonWithEpisodes] = useLazyGetSeasonWithEpisodesQuery()
+  const [addPlaylistItem] = useAddPlaylistItemMutation()
+  const [removePlaylistItem] = useRemovePlaylistItemMutation()
+
   const { refetch } = usePlaylistDetail(
     content.length ? content.map(c => c.id) : undefined
   );
@@ -53,10 +58,13 @@ const PlaylistDetail = () => {
     const currentPlaylist = playlistWithItems?.find(playlist => playlist.id === id);
     const contentfromPlaylist = currentPlaylist?.playlist_items?.map((item: any) => item.content) || [];
 
-    // Removed openScreenPlayer from effect to avoid early state pollution
-    // We only set the playlist items mapping here
     setContent(contentfromPlaylist);
-  }, [id, playlistWithItems])
+
+    // Sync with Redux for the active player
+    if (currentPlaylist) {
+      dispatch(setPlaylistInfo({ playlistInfo: currentPlaylist }));
+    }
+  }, [id, playlistWithItems, dispatch])
 
   useEffect(() => {
     if (id) triggerPlaylistWithItemsById({ userId: user?.id, playlist_id: id })
@@ -85,10 +93,11 @@ const PlaylistDetail = () => {
           contentIds: content.map(item => item.id)
         }).unwrap()
 
-        const normalized = data?.map((item) => {
-          const [history] = item.user_watch_history ?? [];
+        const normalized = content.map((contentItem) => {
+          const refreshedItem = data?.find((item: any) => item.id === contentItem.id);
+          const [history] = refreshedItem?.user_watch_history ?? [];
           return {
-            ...item,
+            ...(refreshedItem || contentItem),
             watch_percentage: history?.watch_percentage ?? 0,
             last_position: history?.last_position ?? 0,
             completed: history?.completed ?? false,
@@ -110,6 +119,8 @@ const PlaylistDetail = () => {
     ? (user_watch_history[currentVideoIndex] || content[currentVideoIndex])
     : null;
 
+
+  console.log('Playlist Detail user watch his', user_watch_history)
   // Fetch Seasons if Series
   useEffect(() => {
     async function fetchAndSetSeasonsData() {
@@ -184,10 +195,11 @@ const PlaylistDetail = () => {
       contentIds: content.map(item => item.id)
     }).unwrap()
 
-    const normalized = data?.map((item) => {
-      const [history] = item.user_watch_history ?? [];
+    const normalized = content.map((contentItem) => {
+      const refreshedItem = data?.find((item: any) => item.id === contentItem.id);
+      const [history] = refreshedItem?.user_watch_history ?? [];
       return {
-        ...item,
+        ...(refreshedItem || contentItem),
         watch_percentage: history?.watch_percentage ?? 0,
         last_position: history?.last_position ?? 0,
         completed: history?.completed ?? false,
@@ -205,18 +217,13 @@ const PlaylistDetail = () => {
       position: 0
     }));
 
-    const { error } = await supabase
-      .from("playlist_items")
-      .insert(inserts);
-
-    if (error) {
+    try {
+      await addPlaylistItem(inserts).unwrap();
+      toast.success("Movies added successfully!");
+    } catch (error) {
       console.error("Error adding movies:", error);
-      return;
+      toast.error("Failed to add movies");
     }
-
-    // Refresh after adding
-    if (id) triggerPlaylistWithItemsById({ userId: user?.id, playlist_id: id });
-    await refetch(id);
   }
 
   const playPlaylist = () => {
@@ -245,29 +252,17 @@ const PlaylistDetail = () => {
     toast.success("Movies added successfully!");
   };
 
-  const handleDelete = async (e: any, item: any) => {
-    e.stopPropagation();
-    const { error } = await supabase
-      .from("playlist_items")
-      .delete()
-      .match({
-        content_id: item.id,
-        playlist_id: id
-      });
-
-    if (!error) {
-      toast.success("Item removed!");
-      // Refetch logic
-      if (id) triggerPlaylistWithItemsById({ userId: user?.id, playlist_id: id });
-      refetch(id);
-    } else {
-      console.error("Delete error:", error.message);
-      return;
+  const handleDelete = async (item: any) => {
+    if (!item) return;
+    try {
+      await removePlaylistItem({ contentId: item.id, playlistId: id! }).unwrap();
+      toast.success(`${item.title} removed from playlist`);
+      setItemToDelete(null);
+      setShowDeleteConfirm(false);
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error("Failed to remove item");
     }
-
-    // Optimistic UI update
-    setUserWatchHistory(prev => prev.filter(i => i.id !== item.id));
-    setContent(prev => prev.filter(i => i.id !== item.id));
   };
 
 
@@ -297,55 +292,99 @@ const PlaylistDetail = () => {
           </button>
 
           <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-            <DialogContent className="bg-zinc-900 text-white p-6 rounded-xl min-w-[50%] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-40 h-auto overflow-y-auto border-2 border-white/10 max-h-[85vh]">
-              <div className="fixed inset-0 -z-10"
-                style={{
-                  background: `linear-gradient(200deg, #311066 0%, #1D0833 20%, #120222 45%, black 100%)`,
-                }}
-              ></div>
-              <h2 className="text-xl font-bold mb-4">Add Movies to Playlist</h2>
+            <DialogPortal>
+              <DialogOverlay className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50" />
+              <DialogContent className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl bg-[#120222] border border-white/10 rounded-3xl shadow-2xl z-[60] overflow-hidden">
+                <div className="absolute inset-0 -z-10 opacity-50"
+                  style={{
+                    background: `radial-gradient(circle at top left, #311066 0%, transparent 70%)`,
+                  }}
+                ></div>
 
-              <input
-                type="text"
-                placeholder="Search movies..."
-                value={search}
-                onChange={handleSearch}
-                className="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 mb-4"
-              />
-
-              <div className="grid grid-cols-3 gap-8 overflow-y-auto h-[50vh] pr-2">
-                {searchResults.map((movie) => {
-                  const isSelected = selectedMovies.includes(movie.id);
-                  return (
-                    <div
-                      key={movie.id}
-                      className={`relative h-48 rounded-xl cursor-pointer overflow-hidden shadow-md transition-transform ${isSelected ? "ring-4 ring-primary/70 scale-105 bg-black opacity-1 border-4 border-white" : "hover:scale-105"}`}
-                      style={{
-                        backgroundImage: `url(${movie.poster_url || movie.backdrop_url || "/placeholder.jpg"})`,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }}
-                      onClick={() => toggleMovieSelection(movie.id)}
-                    >
-                      <div className="absolute inset-0 bg-black/40 flex flex-col justify-end p-3">
-                        <p className="font-bold text-white line-clamp-1">{movie.title}</p>
-                        <p className="text-xs text-zinc-300">
-                          {movie.year || "—"} • {movie.type || "Unknown"}
-                        </p>
-                      </div>
+                <div className="p-8">
+                  <div className="flex items-center justify-between mb-8">
+                    <div>
+                      <h2 className="text-3xl font-bold text-white mb-2">Add Content</h2>
+                      <p className="text-white/60">Expand your collection with new movies and series</p>
                     </div>
-                  );
-                })}
-              </div>
+                    <button
+                      onClick={() => setOpenDialog(false)}
+                      className="p-2 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition"
+                    >
+                      <X className="w-6 h-6" />
+                    </button>
+                  </div>
 
-              <button
-                onClick={handleSubmitMovies}
-                disabled={selectedMovies.length === 0}
-                className="w-full mt-6 px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/80 shadow-lg transition"
-              >
-                Add Selected ({selectedMovies.length})
-              </button>
-            </DialogContent>
+                  <div className="relative mb-8 group">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40 group-focus-within:text-blue-400 transition-colors" />
+                    <input
+                      type="text"
+                      placeholder="Search for movies, series..."
+                      value={search}
+                      onChange={handleSearch}
+                      className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-h-[50vh] overflow-y-auto pr-4 custom-scrollbar">
+                    {searchResults.length === 0 && search && (
+                      <div className="col-span-full py-12 text-center text-white/40">
+                        No results found for "{search}"
+                      </div>
+                    )}
+                    {searchResults.map((movie) => {
+                      const isSelected = selectedMovies.includes(movie.id);
+                      return (
+                        <div
+                          key={movie.id}
+                          className={`relative aspect-[2/3] rounded-2xl cursor-pointer overflow-hidden transition-all duration-300 group/item ${isSelected
+                            ? 'ring-2 ring-blue-500 scale-[0.98]'
+                            : 'hover:scale-[1.02] hover:shadow-2xl hover:shadow-blue-500/10'
+                            }`}
+                          onClick={() => toggleMovieSelection(movie.id)}
+                        >
+                          <img
+                            src={getOptimizedImageUrl(movie.poster_url || movie.backdrop_url, 400)}
+                            alt={movie.title}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className={`absolute inset-0 bg-black/40 flex flex-col justify-end p-4 transition-opacity duration-300 ${isSelected ? 'opacity-100' : 'opacity-0 group-hover/item:opacity-100'}`}>
+                            {isSelected && (
+                              <div className="absolute top-2 right-2 text-blue-400">
+                                <CheckCircle2 className="w-6 h-6 fill-blue-500 text-[#120222]" />
+                              </div>
+                            )}
+                            <h4 className="font-bold text-white text-sm line-clamp-2">{movie.title}</h4>
+                            <span className="text-xs text-white/60">{movie.year || "—"} • {movie.type}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-8 flex items-center justify-between">
+                    <p className="text-sm text-white/40">
+                      {selectedMovies.length} items selected
+                    </p>
+                    <div className="flex gap-4">
+                      <button
+                        onClick={() => setOpenDialog(false)}
+                        className="px-6 py-3 rounded-xl hover:bg-white/5 text-white font-semibold transition"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSubmitMovies}
+                        disabled={selectedMovies.length === 0}
+                        className="px-8 py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-white/5 disabled:text-white/20 text-white font-bold rounded-xl shadow-lg shadow-blue-600/20 transition-all active:scale-95"
+                      >
+                        Add to Playlist
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </DialogContent>
+            </DialogPortal>
           </Dialog>
 
           {/* {content?.length > 0 && (
@@ -433,42 +472,17 @@ const PlaylistDetail = () => {
                   </svg>
                 </div>
 
-                {/* Delete Button */}
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevents the card's onClick from firing
-                        handleDelete(e, item);
-                      }}
-                      className="p-3 rounded-full bg-red-600 text-white hover:bg-red-700 transition shadow-lg"
-                    >
-                      <Trash className="w-6 h-6" />
-                    </button>
-                  </DialogTrigger>
-                  <DialogContent className="bg-zinc-900 text-white p-6 rounded-xl min-w-[300px] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-40 h-auto overflow-y-auto border-2 border-white/10">
-                    <div>
-                      <h2 className="text-xl font-bold mb-4">Confirm Deletion</h2>
-                      <p className="mb-6">Are you sure you want to remove <strong>{item.title}</strong> from this playlist?</p>
-                      <div className="flex justify-end gap-4">
-
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation(); // Prevents the card's onClick from firing
-                            handleDelete(e, item);
-                          }}
-                          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
-                          Yes, Remove
-                        </button>
-                        <button onClick={handleClose} className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
-                          Cancel
-                        </button>
-                      </div>
-
-                    </div>
-                  </DialogContent>
-                </Dialog>
-
+                {/* Trash Icon Button - ONLY opens dialog */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setItemToDelete(item);
+                    setShowDeleteConfirm(true);
+                  }}
+                  className="p-3 rounded-full bg-red-600/80 text-white hover:bg-red-600 transition shadow-lg backdrop-blur-sm"
+                >
+                  <Trash className="w-6 h-6" />
+                </button>
               </div>
               {/* --- End Overlay --- */}
 
@@ -536,6 +550,7 @@ const PlaylistDetail = () => {
             onVideoEnd={handleVideoEnd}
             setSelectedVideo={setCurrentVideoIndex}
             movieId={selectedVideo?.id}
+            playlistId={id}
             hasNext={currentVideoIndex! < content?.length - 1}
             hasPrevious={currentVideoIndex! > 0}
             onNext={handleNext}
@@ -552,6 +567,37 @@ const PlaylistDetail = () => {
         )
       )}
 
+      {/* Global Deletion Confirmation Dialog */}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogPortal>
+          <DialogOverlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]" />
+          <DialogContent className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-[#1a0b2e] border border-white/10 rounded-3xl shadow-2xl p-8 z-[110] outline-none">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Trash className="w-8 h-8 text-red-500" />
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-4">Remove from Playlist?</h2>
+              <p className="text-white/60 mb-8">
+                Are you sure you want to remove <span className="text-white font-semibold">"{itemToDelete?.title}"</span>? This action cannot be undone.
+              </p>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-semibold transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDelete(itemToDelete)}
+                  className="flex-1 px-6 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold shadow-lg shadow-red-600/20 transition-all active:scale-95"
+                >
+                  Yes, Remove
+                </button>
+              </div>
+            </div>
+          </DialogContent>
+        </DialogPortal>
+      </Dialog>
     </div>
   )
 }

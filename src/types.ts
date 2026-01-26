@@ -173,4 +173,5 @@ export interface FullscreenPlayerProps {
     autoPlay: boolean;
     totalMovies: number;
   };
+  playlistId?: string;
 }

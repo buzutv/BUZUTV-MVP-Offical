@@ -6,7 +6,7 @@ interface GetPlaylistsByUserArgs {
   playlist_id?: string;
 }
 export const playlistsSlice = supabaseApi.injectEndpoints({
-     endpoints: (builder) => ({
+  endpoints: (builder) => ({
     getPlaylistsByUser: builder.query<Playlist[], string>({
       query: (userId) =>
         `playlists?created_by=eq.${userId}&order=created_at.desc&select=*`,
@@ -23,7 +23,7 @@ export const playlistsSlice = supabaseApi.injectEndpoints({
         `playlists?created_by=eq.${userId}&order=created_at.desc&select=*,playlist_items(*,content(*))`,
       providesTags: ['playlists', 'playlistitems', 'Content'],
     }),
-      getPlaylistsWithItemsById: builder.query<PlaylistItem[], GetPlaylistsByUserArgs>({
+    getPlaylistsWithItemsById: builder.query<PlaylistItem[], GetPlaylistsByUserArgs>({
       query: ({ userId, playlist_id }) =>
         `playlists?created_by=eq.${userId}&id=eq.${playlist_id}&order=created_at.desc&select=*,playlist_items(*,content(*,user_watch_history(*)))`,
       providesTags: ['playlists', 'playlistitems', 'Content'],
@@ -63,6 +63,27 @@ export const playlistsSlice = supabaseApi.injectEndpoints({
       }),
       invalidatesTags: ['playlists'],
     }),
+    addPlaylistItem: builder.mutation<any, any[]>({
+      query: (items) => ({
+        url: 'playlist_items',
+        method: 'POST',
+        body: items,
+        headers: {
+          Prefer: 'return=representation',
+        },
+      }),
+      invalidatesTags: ['playlistitems', 'playlists'],
+    }),
+    removePlaylistItem: builder.mutation<void, { contentId: string; playlistId: string }>({
+      query: ({ contentId, playlistId }) => ({
+        url: `playlist_items?content_id=eq.${contentId}&playlist_id=eq.${playlistId}`,
+        method: 'DELETE',
+        headers: {
+          Prefer: 'return=representation',
+        },
+      }),
+      invalidatesTags: ['playlistitems', 'playlists'],
+    }),
   }),
 
 
@@ -71,14 +92,16 @@ export const playlistsSlice = supabaseApi.injectEndpoints({
 
 
 export const {
-    useGetPlaylistsByUserQuery,
-    useLazyGetPlaylistsByUserQuery,
-    useGetPlaylistByIdQuery,
-    useGetPlaylistsWithItemsQuery,
-    useGetPlaylistsWithItemsByIdQuery,
-    useLazyGetPlaylistsWithItemsByIdQuery,
-    useLazyGetPlaylistByIdQuery,
-    useCreatePlaylistMutation,
-    useUpdatePlaylistMutation,
-    useDeletePlaylistMutation,
+  useGetPlaylistsByUserQuery,
+  useLazyGetPlaylistsByUserQuery,
+  useGetPlaylistByIdQuery,
+  useGetPlaylistsWithItemsQuery,
+  useGetPlaylistsWithItemsByIdQuery,
+  useLazyGetPlaylistsWithItemsByIdQuery,
+  useLazyGetPlaylistByIdQuery,
+  useCreatePlaylistMutation,
+  useUpdatePlaylistMutation,
+  useDeletePlaylistMutation,
+  useAddPlaylistItemMutation,
+  useRemovePlaylistItemMutation,
 } = playlistsSlice;
