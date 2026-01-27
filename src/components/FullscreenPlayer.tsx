@@ -516,7 +516,7 @@ const FullscreenPlayer = ({
       <div className="w-full mx-auto p-8 h-full overflow-y-auto">
         <div className="w-full x-auto px-4 py-12">
           <div className="flex justify-center items-center gap-4 mb-4">
-            <div className="flex items-center justify-start gap-4 cursor-pointer flex-1 ml-36" onClick={() => {
+            <div className="flex items-center justify-start gap-4 cursor-pointer flex-1" onClick={() => {
               // Trigger refetch without awaiting to avoid lag
               refetchContentWithWatchHistory();
 
@@ -541,7 +541,7 @@ const FullscreenPlayer = ({
             /> */}
           </div>
 
-          <div className="flex items-center  mx-auto justify-center aspect-video w-[80%]  bg-black rounded-2xl overflow-hidden mb-8 relative shadow-2xl border border-white/10">
+          <div className="flex items-center mx-auto justify-center aspect-video w-full bg-black rounded-2xl overflow-hidden mb-8 relative shadow-2xl border border-white/10">
             {/* <div ref={playerContainerRef} className="w-full h-full" /> */}
             <div ref={playerRef} className="flex items-center justify-center h-full w-full sm:min-w-full md:sm:min-w-full">
               {

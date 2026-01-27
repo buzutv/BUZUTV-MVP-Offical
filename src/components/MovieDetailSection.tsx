@@ -91,7 +91,7 @@ const MovieDetailSection = ({ contents }: { contents?: any }) => {
                 backgroundPosition: 'center',
             }}
         >
-            <div className="p-8 flex gap-8">
+            <div className="p-8 flex flex-col md:flex-row gap-8">
                 {/* Poster */}
                 <div className="flex-shrink-0">
                     <img

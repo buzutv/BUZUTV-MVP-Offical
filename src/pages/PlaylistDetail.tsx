@@ -355,8 +355,8 @@ const PlaylistDetail = () => {
                                 <CheckCircle2 className="w-6 h-6 fill-blue-500 text-[#120222]" />
                               </div>
                             )}
-                            <h4 className="font-bold text-white text-sm line-clamp-2">{movie.title}</h4>
-                            <span className="text-xs text-white/60">{movie.year || "—"} • {movie.type}</span>
+                            <h4 className="font-bold text-white text-lg line-clamp-2 opacity-100">{movie?.title}</h4>
+                            <span className="text-xs text-white/60 opacity-100">{movie.year || "—"} • {movie.type}</span>
                           </div>
                         </div>
                       );
