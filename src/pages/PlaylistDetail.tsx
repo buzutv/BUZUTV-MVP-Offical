@@ -149,7 +149,10 @@ const PlaylistDetail = () => {
     }
 
     const data = await searchContentData(value)
-    setSearchResults(data || [])
+    // Filter out items already in the playlist
+    const existingIds = new Set(content.map(c => c.id))
+    const filtered = (data || []).filter((item: any) => !existingIds.has(item.id))
+    setSearchResults(filtered)
   }
 
   const handleVideoEnd = () => {
@@ -349,14 +352,14 @@ const PlaylistDetail = () => {
                             alt={movie.title}
                             className="w-full h-full object-cover"
                           />
-                          <div className={`absolute inset-0 bg-black/40 flex flex-col justify-end p-4 transition-opacity duration-300 ${isSelected ? 'opacity-100' : 'opacity-0 group-hover/item:opacity-100'}`}>
+                          <div className={`absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex flex-col justify-end p-4 transition-opacity duration-300`}>
                             {isSelected && (
                               <div className="absolute top-2 right-2 text-blue-400">
                                 <CheckCircle2 className="w-6 h-6 fill-blue-500 text-[#120222]" />
                               </div>
                             )}
-                            <h4 className="font-bold text-white text-lg line-clamp-2 opacity-100">{movie?.title}</h4>
-                            <span className="text-xs text-white/60 opacity-100">{movie.year || "—"} • {movie.type}</span>
+                            <h4 className="font-bold text-white text-lg line-clamp-2">{movie?.title}</h4>
+                            <span className="text-xs text-white/60">{movie.year || "—"} • {movie.type}</span>
                           </div>
                         </div>
                       );
