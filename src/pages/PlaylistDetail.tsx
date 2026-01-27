@@ -149,7 +149,10 @@ const PlaylistDetail = () => {
     }
 
     const data = await searchContentData(value)
-    setSearchResults(data || [])
+    // Filter out items already in the playlist
+    const existingIds = new Set(content.map(c => c.id))
+    const filtered = (data || []).filter((item: any) => !existingIds.has(item.id))
+    setSearchResults(filtered)
   }
 
   const handleVideoEnd = () => {
