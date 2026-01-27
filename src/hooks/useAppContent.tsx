@@ -46,7 +46,7 @@ const transformDatabaseChannels = (dbChannels: any[]) => {
 };
 
 export const useAppContent = () => {
-  const { content: dbContent, isLoading: dbContentLoading } = useContent();
+  const { content: dbContent, isLoading: dbContentLoading, refetch } = useContent();
   const { channels: dbChannels, isLoading: dbChannelsLoading } = useChannels();
 
 
@@ -117,9 +117,22 @@ export const useAppContent = () => {
     );
     const kids = transformedContent.filter((item) => item.isKids === true);
 
+    const filterContinueWatching = (items: any[]) =>
+      items.filter((item) => {
+        const history = Array.isArray(item.user_watch_history)
+          ? item.user_watch_history[0]
+          : item.user_watch_history;
+        return history && history.watch_percentage > 0 && history.watch_percentage < 95;
+      }).sort((a, b) => {
+        const historyA = Array.isArray(a.user_watch_history) ? a.user_watch_history[0] : a.user_watch_history;
+        const historyB = Array.isArray(b.user_watch_history) ? b.user_watch_history[0] : b.user_watch_history;
+        return new Date(historyB?.watched_at || 0).getTime() - new Date(historyA?.watched_at || 0).getTime();
+      });
+
     return {
       movies: {
         all: movies,
+        continueWatching: filterContinueWatching(movies),
         kids: movies.filter((movie) => movie.isKids === true),
         featured: movies.filter((movie) => movie.isFeatured),
         trending: movies.filter((movie) => movie.isTrending),
@@ -130,8 +143,6 @@ export const useAppContent = () => {
           (acc, genre) => {
             const genreMovies = movies.filter((movie) => movie.genre === genre);
             acc[genre] = genreMovies;
-            if (genreMovies.length > 0) {
-            }
             return acc;
           },
           {} as Record<string, typeof movies>,
@@ -139,6 +150,7 @@ export const useAppContent = () => {
       },
       series: {
         all: series,
+        continueWatching: filterContinueWatching(series),
         kids: series.filter((show) => show.isKids === true),
         featured: series.filter((show) => show.isFeatured),
         trending: series.filter((show) => show.isTrending),
@@ -156,6 +168,7 @@ export const useAppContent = () => {
       },
       kids: {
         all: kids,
+        continueWatching: filterContinueWatching(kids),
         movies: kids.filter((item) => item.type === "movie"),
         series: kids.filter((item) => item.type === "series"),
         featured: kids.filter((item) => item.isFeatured),
@@ -208,5 +221,6 @@ export const useAppContent = () => {
     seriesContent: content.series,
     kidsContent: content.kids,
     homeContent: content.home,
+    refetch,
   };
 };

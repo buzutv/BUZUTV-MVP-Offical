@@ -516,8 +516,14 @@ const FullscreenPlayer = ({
       <div className="w-full mx-auto p-8 h-full overflow-y-auto">
         <div className="w-full x-auto px-4 py-12">
           <div className="flex justify-center items-center gap-4 mb-4">
-            <div className="flex items-center justify-start gap-4 cursor-pointer flex-1" onClick={() => {
-              // Trigger refetch without awaiting to avoid lag
+            <div className="flex items-center justify-start gap-4 cursor-pointer flex-1" onClick={async () => {
+              console.log("🔙 [FullscreenPlayer] Back button clicked, saving and refetching...");
+              // Ensure we save progress to the DB before fetching fresh data
+              if (parentRef.current && (parentRef.current as any).saveProgress) {
+                await (parentRef.current as any).saveProgress();
+              }
+
+              // Trigger direct refetch
               refetchContentWithWatchHistory();
 
               // Close immediately
@@ -548,14 +554,14 @@ const FullscreenPlayer = ({
                 actualVideoUrl && (
                   (playlistId || contentIds) ? (
                     <PlaylistVideoPlayer
-                      videoId={selectedContent?.video_url}
+                      videoId={actualVideoUrl}
                       setCurrentMovie={setCurrentMovie}
                       type={type}
                       setFinal={setFinal}
                       setActualVideoUrl={setActualVideoUrl}
                       playlistItems={playlists}
-                      movieId={selectedContent?.id}
-                      episodeId={seasons?.length > 0 ? selectedContent?.id : undefined}
+                      movieId={selectedContent?.id || movieId}
+                      episodeId={seasons?.length > 0 ? (selectedContent?.id || movieId) : undefined}
                       userid={user?.id}
                       playlistInfo={playlistInfo}
                       ref={parentRef}
@@ -566,15 +572,15 @@ const FullscreenPlayer = ({
                     />
                   ) : (
                     <VideoPlayer
-                      key={selectedContent?.id || selectedContent?.video_url}
-                      videoId={selectedContent?.video_url}
+                      key={(selectedContent?.id || movieId) || (actualVideoUrl || reduxVideoUrl)}
+                      videoId={actualVideoUrl}
                       setCurrentMovie={setCurrentMovie}
                       type={type}
                       setFinal={setFinal}
                       setActualVideoUrl={setActualVideoUrl}
                       playlistItems={playlists}
-                      movieId={selectedContent?.id}
-                      episodeId={seasons?.length > 0 ? selectedContent?.id : undefined}
+                      movieId={selectedContent?.id || movieId}
+                      episodeId={seasons?.length > 0 ? (selectedContent?.id || movieId) : undefined}
                       userid={user?.id}
                       playlistInfo={playlistInfo}
                       ref={parentRef}

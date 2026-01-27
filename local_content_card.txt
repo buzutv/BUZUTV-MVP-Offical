@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+﻿import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { EllipsisVertical, ListMinus, Play } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { Movie } from "@/data/mockMovies";
@@ -16,8 +16,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import usePlaylists from "@/hooks/usePlaylists";
 import { toast } from "sonner";
-import { useDispatch } from "react-redux";
-import { openScreenPlayer, closeScreenPlayer } from "@/store/screenPlayerSlice";
 import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
 import { Content } from "@/types";
 
@@ -56,7 +54,6 @@ const ContentCard = ({
   width = "auto",
   playlists
 }: ContentCardProps) => {
-  const dispatch = useDispatch();
   const location = useLocation();
   const { isLoggedIn, setShowLoginModal, user } = useAuth();
   const { favoriteIds, addToFavorites, removeFromFavorites } = useUserFavorites();
@@ -113,16 +110,6 @@ const ContentCard = ({
 
   const channel = channels.find((ch) => ch.id === actualItem.channelId);
 
-  const watchHistory = useMemo(() => {
-    const history = normalizedItem.user_watch_history;
-    if (!history) return null;
-    return Array.isArray(history) ? history[0] : history;
-  }, [normalizedItem.user_watch_history]);
-
-  const effectiveShowProgress = showProgress || (watchHistory && watchHistory.watch_percentage > 0 && watchHistory.watch_percentage < 95);
-  const effectiveProgressPercent = progressPercent || watchHistory?.watch_percentage || 0;
-  const effectiveShowResumeButton = showResumeButton || (watchHistory && watchHistory.watch_percentage > 0 && watchHistory.watch_percentage < 95);
-
   const handleSave = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
@@ -135,7 +122,7 @@ const ContentCard = ({
   );
 
   const handleCardClick = useCallback(() => {
-    if (onOpen && (onOpen as any)(actualItem) === true) return;
+    if (onOpen && onOpen() === true) return;
 
     if (onItemClick) {
       onItemClick(actualItem);
@@ -183,31 +170,18 @@ const ContentCard = ({
   const handleModalPlayClick = useCallback(() => {
     if (!contentItem?.video_url) return;
 
-    const vidUrl = contentItem.video_url;
-    const vidTitle = actualItem.title;
-
-    dispatch(openScreenPlayer({
-      isOpen: true,
-      selectedVideo: contentItem || actualItem,
-      selectedVideoTitle: vidTitle,
-      videoUrl: vidUrl,
-      contentId: actualItem.id,
-      poster_url: actualItem.poster_url || actualItem.posterUrl,
-      isSeries: actualItem.type === 'series'
-    }));
-
     if (onPlayFullscreen) {
-      onPlayFullscreen(vidUrl);
+      onPlayFullscreen(contentItem.video_url);
       setCurrentModalItem(null);
     } else {
       setCurrentModalItem(null);
       setTimeout(() => {
-        setCurrentVideoUrl(vidUrl);
-        setCurrentVideoTitle(vidTitle);
+        setCurrentVideoUrl(contentItem.video_url);
+        setCurrentVideoTitle(actualItem.title);
         setIsFullscreen(true);
       }, 200);
     }
-  }, [contentItem, onPlayFullscreen, actualItem, dispatch]);
+  }, [contentItem?.video_url, onPlayFullscreen, actualItem.title]);
 
 
   const handleSubmitPlaylist = async (e) => {
@@ -242,16 +216,6 @@ const ContentCard = ({
 
   const handlePlayEpisode = useCallback(
     (videoUrl: string, episodeTitle: string) => {
-      dispatch(openScreenPlayer({
-        isOpen: true,
-        selectedVideo: actualItem, // Current series
-        selectedVideoTitle: episodeTitle,
-        videoUrl: videoUrl,
-        contentId: actualItem.id,
-        poster_url: actualItem.poster_url || actualItem.posterUrl,
-        isSeries: actualItem.type === 'series'
-      }));
-
       if (onPlayFullscreen) {
         onPlayFullscreen(videoUrl);
         setCurrentModalItem(null);
@@ -264,11 +228,10 @@ const ContentCard = ({
         }, 200);
       }
     },
-    [onPlayFullscreen, actualItem, dispatch]
+    [onPlayFullscreen]
   );
 
   const handleExitFullscreen = () => {
-    dispatch(closeScreenPlayer());
     setIsFullscreen(false);
     setCurrentVideoUrl("");
     setCurrentVideoTitle("");
@@ -344,7 +307,7 @@ const ContentCard = ({
           }
         }}
       >
-        {/* ✅ Ellipsis Button in Top-Right Corner - ONLY FOR MOVIES */}
+        {/* Γ£à Ellipsis Button in Top-Right Corner - ONLY FOR MOVIES */}
         {(
           <Popover>
             <PopoverTrigger asChild>
@@ -447,11 +410,11 @@ const ContentCard = ({
               />
             </div>
 
-            {effectiveShowProgress && (
+            {showProgress && (
               <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-600">
                 <div
                   className="h-full bg-red-600 transition-all duration-300"
-                  style={{ width: `${effectiveProgressPercent}%` }}
+                  style={{ width: `${progressPercent}%` }}
                 />
               </div>
             )}
@@ -470,17 +433,9 @@ const ContentCard = ({
               </h3>
             </div>
 
-            {effectiveShowResumeButton && (
+            {showResumeButton && (
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                <button
-                  className="bg-white text-black px-4 py-2 rounded-lg font-semibold flex items-center space-x-2 hover:scale-105 transition-transform"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log("▶️ [ContentCard] Resume clicked, playing immediately");
-                    handleModalPlayClick();
-                  }}
-                >
+                <button className="bg-white text-black px-4 py-2 rounded-lg font-semibold flex items-center space-x-2">
                   <Play className="w-4 h-4" />
                   <span>Resume</span>
                 </button>
@@ -510,7 +465,6 @@ const ContentCard = ({
           onSave={handleSaveModal}
           onPlayEpisode={handlePlayEpisode}
           videoUrl={videoUrl}
-          movieId={actualItem.id}
           contentItem={contentItem}
           channel={channel}
           recommendedContent={recommendedContent}

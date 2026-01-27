@@ -148,23 +148,36 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
       }
 
       // 2. Fallback to Redux state / DB history
-      if (!currentVidData) return 0;
+      if (!currentVidData) {
+        console.log("🔍 [VideoPlayer] No video data for resume calculation, using 0");
+        return 0;
+      }
 
       const history = Array.isArray(currentVidData.user_watch_history)
         ? currentVidData.user_watch_history[0]
         : currentVidData.user_watch_history;
 
+      // Note: Some sources might have flatten values (watch_percentage) directly on currentVidData
       const isCompleted = currentVidData.completed || history?.completed;
-      const watchPct = currentVidData.watch_percentage || history?.watch_percentage || 0;
-      const lastPos = currentVidData.last_position || history?.last_position || 0;
+      const watchPct = (currentVidData.watch_percentage !== undefined ? currentVidData.watch_percentage : history?.watch_percentage) || 0;
+      const lastPos = (currentVidData.last_position !== undefined ? currentVidData.last_position : history?.last_position) || 0;
 
-      console.log("Resuming logic calculated position:", { isCompleted, watchPct, lastPos });
+      console.log(`🔍 [VideoPlayer] Resume calculation for ${currentVidData.title}:`, {
+        isCompleted,
+        watchPct,
+        lastPos,
+        hasHistory: !!history
+      });
 
       if (isCompleted || watchPct >= 95) {
+        console.log("🔍 [VideoPlayer] Video previously completed or >95%, starting from beginning");
         return 0;
       } else if (lastPos > 0) {
+        console.log(`🔍 [VideoPlayer] Resuming at ${lastPos}s (${watchPct}%)`);
         return lastPos;
       }
+
+      console.log("🔍 [VideoPlayer] No previous progress found, starting from 0");
       return 0;
     }, [localProgress]);
 
@@ -229,7 +242,11 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
           },
           events: {
             onReady: (e: any) => {
-              // We use start parameter in playerVars, but seekTo as a fallback/reinforcement
+              console.log(`✅ [VideoPlayer] YouTube Player Ready. Explicitly seeking to ${startPos}s`);
+              // Double reinforcement: ensure seek happens on ready
+              if (startPos > 0) {
+                e.target.seekTo(startPos, true);
+              }
               e.target.playVideo();
             },
             onStateChange: handlePlayerStateChange,
