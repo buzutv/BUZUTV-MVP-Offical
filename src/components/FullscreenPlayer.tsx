@@ -543,7 +543,7 @@ const FullscreenPlayer = ({
 
           <div className="flex items-center  mx-auto justify-center aspect-video w-[80%]  bg-black rounded-2xl overflow-hidden mb-8 relative shadow-2xl border border-white/10">
             {/* <div ref={playerContainerRef} className="w-full h-full" /> */}
-            <div ref={playerRef} className=" flex items-center justify-center h-full w-full">
+            <div ref={playerRef} className="flex items-center justify-center h-full w-full sm:min-w-full md:sm:min-w-full">
               {
                 actualVideoUrl && (
                   (playlistId || contentIds) ? (

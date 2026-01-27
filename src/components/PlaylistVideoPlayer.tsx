@@ -104,23 +104,39 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
         // Helper to check for next video using ONLY the latest ref values (Reliable in callbacks)
         const checkHasNextVideo = useCallback(() => {
             const playlist = sessionPlaylistRef.current;
-            const currentVidId = selectedVideoRef.current?.id || movieIdRef.current;
             const currentQueue = currentQueueRef.current;
+            const currentIdx = currentVideoIndexRef.current;
 
-            // 1. Check local queue (like series episodes)
-            let currentIdx = currentVideoIndexRef.current;
-            if (currentVidId && currentQueue.length > 0) {
-                const found = currentQueue.findIndex(item => (item?.id || item?.content?.id) === currentVidId);
-                if (found !== -1) currentIdx = found;
+            // 1. Check strict queue index first (most reliable source of truth)
+            if (currentQueue && currentQueue.length > 0) {
+                // If we are not at the last item, there is a next video
+                if (currentIdx < currentQueue.length - 1) {
+                    return true;
+                }
             }
-            if (currentQueue && currentQueue.length > 0 && currentIdx < currentQueue.length - 1) return true;
 
-            // 2. Check global playlist session
+            // 2. If we are at the end of the current queue...
+            // If the current queue is just episodes, check if there's another item in the global playlist
+            // But if the current queue IS the playlist (movies), then we are done.
+            if (!isSeriesRef.current) {
+                // We are at the end of the playlist queue
+                return false;
+            }
+
+            // 3. For Series: Check global playlist session if we are at the end of episodes
+            const currentVidId = selectedVideoRef.current?.id || movieIdRef.current;
             if (playlist && playlist.length > 0) {
+                // Determine current playlist index rigidly 
+                // Note: contentIds in playlist usually match the "series" ID, not the episode ID.
+                const seriesId = seriesDataRef.current?.series_id;
+                // Fallback to searching playlist for the current series/video
                 const globalIdx = playlist.findIndex((item: any) => {
                     const itemId = item?.id || item?.content?.id;
-                    return itemId === currentVidId;
+                    const contentIdOfSeries = seriesDataRef.current?.id; // Season ID? No. 
+                    // Best effort to find where we are in the main playlist:
+                    return itemId === currentVidId || (seriesId && itemId === seriesId);
                 });
+
                 return globalIdx !== -1 && globalIdx < playlist.length - 1;
             }
 
@@ -259,17 +275,15 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
             const currentVidId = selectedVideoRef.current?.id || movieIdRef.current;
             const currentQueue = currentQueueRef.current;
             const isSeries = isSeriesRef.current;
+            const currentIdx = currentVideoIndexRef.current;
 
-            // 1. Logic for WITHIN the current queue (next episode)
-            let currentIdx = currentVideoIndexRef.current;
-            if (currentVidId && currentQueue.length > 0) {
-                const found = currentQueue.findIndex(item => (item?.id || item?.content?.id) === currentVidId);
-                if (found !== -1) currentIdx = found;
-            }
+            console.log("PlayNext called. Index:", currentIdx, "Queue length:", currentQueue.length);
 
+            // 1. Strict Queue Navigation (Most Common)
             const nextIndexInQueue = currentIdx + 1;
+            if (nextIndexInQueue < currentQueue.length) {
+                console.log("Playing next item in strict queue:", nextIndexInQueue);
 
-            if (currentQueue && currentQueue.length > 0 && nextIndexInQueue < currentQueue.length) {
                 clearCountdownTimer();
                 setVideoEnded(false);
                 setVideoRestricted(false);
@@ -280,10 +294,14 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
                 const refreshedNextItem = playlist.find(item => (item.id || item.content?.id) === (nextItem.id || nextItem.content?.id));
                 const nextVideoData = isSeries ? nextItem : (refreshedNextItem || nextItem?.content || nextItem);
 
-                if (!nextVideoData) return;
+                if (!nextVideoData) {
+                    console.error("Next video data missing!");
+                    return;
+                }
 
                 // Handle transition TO a series from a movie in a playlist
                 if (!isSeries && nextVideoData.type === 'series') {
+                    // ... (Logic for handling series transition remains same)
                     const seasonsData = await fetchSeriesSeasons(nextVideoData.id);
                     if (seasonsData && seasonsData.length > 0) {
                         const firstSeason = seasonsData[0] as any;
@@ -316,51 +334,57 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
                 return;
             }
 
-            // 2. Logic for CROSSING queue boundaries or moving in Playlist
-            const currentIndexInPlaylist = playlist.findIndex((item: any) => {
-                const itemId = item?.id || item?.content?.id;
-                return itemId === currentVidId;
-            });
+            // 2. Logic for Crossing Boundaries (Series finished -> Back to Playlist)
+            // Only applicable if we are in a series and want to go to the next playlist item
+            if (isSeries && playlist && playlist.length > 0) {
+                const seriesId = seriesDataRef.current?.series_id || selectedVideoRef.current?.series_id;
+                const currentIndexInPlaylist = playlist.findIndex((item: any) => {
+                    const itemId = item?.id || item?.content?.id;
+                    return itemId === seriesId || itemId === currentVidId;
+                });
 
-            if (currentIndexInPlaylist !== -1 && currentIndexInPlaylist < playlist.length - 1) {
-                clearCountdownTimer();
-                setVideoEnded(false);
-                setVideoRestricted(false);
+                if (currentIndexInPlaylist !== -1 && currentIndexInPlaylist < playlist.length - 1) {
+                    console.log("Series ended, moving to next playlist item at index:", currentIndexInPlaylist + 1);
 
-                const nextPlaylistItem = playlist[currentIndexInPlaylist + 1];
-                const nextContent = nextPlaylistItem.content || nextPlaylistItem;
+                    clearCountdownTimer();
+                    setVideoEnded(false);
+                    setVideoRestricted(false);
 
-                console.log('PlaylistVideoPlayer advancing to next playlist item:', nextContent.title);
+                    const nextPlaylistItem = playlist[currentIndexInPlaylist + 1];
+                    const nextContent = nextPlaylistItem.content || nextPlaylistItem;
 
-                if (nextContent.type === 'series') {
-                    const seasonsData = await fetchSeriesSeasons(nextContent.id);
-                    if (seasonsData && seasonsData.length > 0) {
-                        const firstSeason = seasonsData[0] as any;
-                        const firstEpisode = firstSeason.episodes?.[0];
-                        if (firstEpisode) {
-                            dispatch(openScreenPlayer({
-                                isOpen: true,
-                                currentVideoIndex: 0,
-                                selectedVideo: firstEpisode,
-                                isSeries: true,
-                                seriesData: firstSeason,
-                            }));
-                            if (setCurrentMovie) setCurrentMovie(firstEpisode);
+                    if (nextContent.type === 'series') {
+                        // ... similar transition logic
+                        const seasonsData = await fetchSeriesSeasons(nextContent.id);
+                        if (seasonsData && seasonsData.length > 0) {
+                            const firstSeason = seasonsData[0] as any;
+                            const firstEpisode = firstSeason.episodes?.[0];
+                            if (firstEpisode) {
+                                dispatch(openScreenPlayer({
+                                    isOpen: true,
+                                    currentVideoIndex: 0,
+                                    selectedVideo: firstEpisode,
+                                    isSeries: true,
+                                    seriesData: firstSeason,
+                                }));
+                                if (setCurrentMovie) setCurrentMovie(firstEpisode);
+                            }
                         }
+                    } else {
+                        dispatch(openScreenPlayer({
+                            isOpen: true,
+                            currentVideoIndex: currentIndexInPlaylist + 1,
+                            selectedVideo: nextContent,
+                            isSeries: false,
+                        }));
+                        if (setCurrentMovie) setCurrentMovie(nextContent);
                     }
-                } else {
-                    dispatch(openScreenPlayer({
-                        isOpen: true,
-                        currentVideoIndex: currentIndexInPlaylist + 1,
-                        selectedVideo: nextContent,
-                        isSeries: false,
-                    }));
-                    if (setCurrentMovie) setCurrentMovie(nextContent);
+                    return;
                 }
-                return;
             }
 
             // 3. End of Playlist
+            console.log("End of playlist reached. Showing End Screen.");
             setVideoEnded(true);
             setCountdown(0);
         }, [dispatch, setCurrentMovie, onPlaylistAdvance]);
@@ -662,7 +686,7 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
                     <div ref={playerContainerRef} className="w-full h-full" />
                 </div>
 
-                {(isSeries || hasPlaylist) && (
+                {((isSeries && currentQueue.length > 0) || hasPlaylist) && (
                     <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 flex items-center gap-4 bg-black/70 px-6 py-3 rounded-full">
                         <button
                             onClick={playPrevious}

@@ -544,7 +544,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
         </div>
 
         {/* Navigation Controls */}
-        {(isSeries || hasPlaylist) && (
+        {((isSeries && currentQueue.length > 0) || hasPlaylist) && (
           <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 flex items-center gap-4 bg-black/70 px-6 py-3 rounded-full">
             <button
               onClick={playPrevious}

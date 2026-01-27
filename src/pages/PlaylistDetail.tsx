@@ -18,6 +18,7 @@ import { useAddPlaylistItemMutation, useRemovePlaylistItemMutation } from '@/sto
 import { useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { useNavigate, useParams } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
 
 const PlaylistDetail = () => {
   const { id } = useParams()
@@ -284,12 +285,12 @@ const PlaylistDetail = () => {
         </div>
 
         <div className='flex gap-4'>
-          <button
-            className="flex items-center gap-2 px-6 py-3 bg-white rounded-lg hover:bg-foreground/90 hover:text-white transition font-semibold shadow-lg"
+          <Button
+            // className="flex items-center gap-2 px-6 py-3 bg-white rounded-lg hover:bg-foreground/90 hover:text-white transition font-semibold shadow-lg"
             onClick={() => setOpenDialog(true)}>
             <Plus className="w-5 h-5" />
             Add More Movies
-          </button>
+          </Button>
 
           <Dialog open={openDialog} onOpenChange={setOpenDialog}>
             <DialogPortal>
@@ -418,7 +419,7 @@ const PlaylistDetail = () => {
       {/* Loading State */}
       <div className='flex items-center gap-8 justify-start w-full'>
         {user_watch_history.length === 0 && content.length === 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 w-full">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 gap-6 w-full">
             {Array.from({ length: 10 }).map((_, idx) => (
               <div key={idx} className="rounded-xl overflow-hidden bg-white/5 backdrop-blur-md border border-white/10 shadow-md">
                 <Skeleton className="w-full h-48" />
@@ -434,12 +435,12 @@ const PlaylistDetail = () => {
 
       {/* Video Grid */}
       {/* Video Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-2 xl:grid-cols-4 gap-6">
         {displayItems?.map((item, idx) => (
           <div
             key={item.id}
             // Added 'group' class here
-            className={`group z-10 w-full cursor-pointer rounded-xl overflow-hidden shadow-md hover:shadow-lg transition bg-white text-zinc-900 border-2 ${currentVideoIndex === idx ? 'border-primary ring-2 ring-primary/50' : 'border-transparent'
+            className={`group z-10 md:w-full cursor-pointer rounded-xl overflow-hidden shadow-md hover:shadow-lg transition bg-white text-zinc-900 border-2 ${currentVideoIndex === idx ? 'border-primary ring-2 ring-primary/50' : 'border-transparent'
               }`}
             onClick={() => {
               setCurrentVideoIndex(idx);

@@ -147,9 +147,9 @@ const PlayList = () => {
             </Dialog>
 
             {/* HEADER */}
-            <div className="flex items-center justify-between mb-8">
+            <div className="grid grid-cols-1 gap-10 mb-14 sm:grid-cols-2">
                 <h2 className="text-3xl font-bold text-white">Your Playlists</h2>
-                <div className="flex items-center gap-4">
+                <div className="flex justify-end gap-4">
                     <Button className="bg-slate-800 hover:bg-slate-700 text-white gap-2 px-6 py-3 animate" onClick={() => refetch()}>
                         <RefreshCcw className="w-4 h-4" />
                         Refresh Playlists
