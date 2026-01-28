@@ -169,7 +169,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
         hasHistory: !!history
       });
 
-      if (isCompleted || watchPct >= 95) {
+      if (isCompleted || watchPct >= 99) {
         console.log("🔍 [VideoPlayer] Video previously completed or >95%, starting from beginning");
         return 0;
       } else if (lastPos > 0) {
