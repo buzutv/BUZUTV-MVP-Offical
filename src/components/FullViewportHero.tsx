@@ -419,7 +419,11 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
             item={modalItem as any}
             variant={modalType || "auto"}
             autoDetectKids={true}
-            onPlayEpisode={() => { }}
+            onPlayEpisode={(url, episodeTitle) => {
+              setFullscreenUrl(url);
+              setFullscreenTitle(episodeTitle);
+              setFullscreenOpen(true);
+            }}
             videoUrl={backendContentItem?.video_url || modalItem.videoUrl}
             movieId={modalItem.id}
             contentItem={backendContentItem as any}

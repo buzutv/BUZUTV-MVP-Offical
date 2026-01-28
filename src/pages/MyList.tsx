@@ -88,7 +88,7 @@ const MyList = React.memo(() => {
           ></div>
           <div className="relative flex items-center justify-center min-h-screen">
             <div className="text-2xl font-bold text-white">
-              <Spinner className="w-12 h-12"/>
+              <Spinner className="w-12 h-12" />
             </div>
           </div>
         </div>
