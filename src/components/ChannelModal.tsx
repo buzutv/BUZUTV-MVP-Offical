@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useContent } from "@/hooks/useContent";
 import { useUserChannelFavorites } from "@/hooks/useUserChannelFavorites";
 import { Movie } from "@/data/mockMovies";
+import { ScrollArea } from "./ui/scroll-area";
 
 
 interface Channel {
@@ -116,6 +117,7 @@ const ChannelModal = ({ isOpen, onClose, channel }: ChannelModalProps) => {
           isFeatured: item.is_featured || false,
           isKids: item.is_kids || false,
           type: item.type,
+          user_watch_history: item.user_watch_history || [],
         }) as Movie,
     );
   }, [channel, content]);
