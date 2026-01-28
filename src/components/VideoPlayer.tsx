@@ -141,7 +141,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
       if (vidId && localProgress?.[vidId]) {
         const local = localProgress[vidId];
         console.log("Resuming from local progress:", local);
-        if (local.watch_percentage < 95) { // Only resume if not almost done
+        if (local.watch_percentage < 99) { // Only resume if not almost done
           return local.last_position;
         }
         return 0; // If they finished it locally, start over
