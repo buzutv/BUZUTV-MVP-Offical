@@ -34,6 +34,7 @@ const episodeSchema = z.object({
   posterUrl: z.string().optional(),
   airDate: z.string().optional(),
   rating: z.string().optional(),
+  completionThresholdSeconds: z.string().optional(),
 });
 
 const seasonSchema = z.object({
@@ -57,6 +58,7 @@ const movieSchema = z.object({
   isFeatured: z.boolean().default(false),
   isTrending: z.boolean().default(false),
   channelId: z.string().optional(),
+  completionThresholdSeconds: z.string().optional(),
 });
 
 type MovieFormData = z.infer<typeof movieSchema>;
@@ -106,6 +108,8 @@ const MovieForm: React.FC<MovieFormProps> = ({
 
   const watchType = form.watch("type");
 
+  const formWatch = form.watch()
+  console.log("watchType", formWatch);
   const addSeason = () => {
     appendSeason({
       seasonNumber: seasonFields.length + 1,
@@ -391,7 +395,32 @@ const MovieForm: React.FC<MovieFormProps> = ({
               </FormItem>
             )}
           />
+
         )}
+
+
+        {watchType === "movie" && <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <FormField
+            control={form.control}
+            name="completionThresholdSeconds"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-white">Completion Threshold (seconds)</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="Completion threshold in seconds"
+                    className="bg-gray-700 border-gray-600 text-white"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+
+        </div>}
+
 
         {watchType === "series" && (
           <div className="space-y-6">
@@ -585,6 +614,24 @@ const MovieForm: React.FC<MovieFormProps> = ({
                                 {...field}
                                 placeholder="8.5"
                                 className="bg-gray-500 border-gray-400 text-white"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name={`seasons.${seasonIndex}.episodes.${episodeIndex}.completionThresholdSeconds`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-white">Completion Threshold (seconds)</FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                placeholder="Completion threshold in seconds"
+                                className="bg-gray-700 border-gray-600 text-white"
                               />
                             </FormControl>
                             <FormMessage />
