@@ -470,7 +470,7 @@ const ContentCard = ({
               </h3>
             </div>
 
-            {effectiveShowResumeButton && (
+            {/* {effectiveShowResumeButton && (
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                 <button
                   className="bg-white text-black px-4 py-2 rounded-lg font-semibold flex items-center space-x-2 hover:scale-105 transition-transform"
@@ -485,7 +485,7 @@ const ContentCard = ({
                   <span>Resume</span>
                 </button>
               </div>
-            )}
+            )} */}
 
             {isMoreLikeThis && (
               <button
