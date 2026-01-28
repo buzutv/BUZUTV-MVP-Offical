@@ -51,7 +51,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
   const dispatch = useDispatch();
   const { favoriteIds, addToFavorites, removeFromFavorites } =
     useUserFavorites();
-  const { content } = useContent();
+  const { content, refetch: refetchContent } = useContent();
   const { channels: backendChannels } = useChannels();
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<"movie" | "series" | null>(null);
@@ -143,6 +143,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
   };
 
   const handleCloseFullscreen = () => {
+    refetchContent();
     dispatch(closeScreenPlayer());
     setFullscreenOpen(false);
     setFullscreenUrl(null);
@@ -418,11 +419,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
             item={modalItem as any}
             variant={modalType || "auto"}
             autoDetectKids={true}
-            onPlayEpisode={(url, episodeTitle) => {
-              setFullscreenUrl(url);
-              setFullscreenTitle(episodeTitle);
-              setFullscreenOpen(true);
-            }}
+            onPlayEpisode={() => { }}
             videoUrl={backendContentItem?.video_url || modalItem.videoUrl}
             movieId={modalItem.id}
             contentItem={backendContentItem as any}

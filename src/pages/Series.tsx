@@ -226,46 +226,20 @@ const Series = () => {
                           </div>
                         ))}
                     </div>
-                    {selectedSeries &&
-                      (() => {
-                        // Match SeriesCard modal logic
-                        const isSaved = favoriteIds.includes(selectedSeries.id);
-                        const contentItem = rawContent.find(
-                          (item) => item.id === selectedSeries.id,
-                        );
-                        const videoUrl = contentItem?.video_url;
-                        const channel = channels.find(
-                          (ch) => ch.id === selectedSeries.channelId,
-                        );
-
-                        // This will be handled internally by ContentModal using useMoreLikeThis hook
-                        const recommendedContent = [];
-                        const handleSaveModal = () => {
-                          if (isSaved) {
-                            removeFromFavorites(selectedSeries.id);
-                          } else {
-                            addToFavorites(selectedSeries.id);
-                          }
-                        };
-
-                        return (
-                          <>
-                            <ContentModal
-                              isOpen={!!selectedSeries}
-                              onClose={(open) => !open && setSelectedSeries(null)}
-                              item={selectedSeries}
-                              variant="series"
-                              autoDetectKids={true}
-                              onPlayEpisode={(videoUrl, episodeTitle) => {
-                                // console.log("Play clicked from Series page for:", episodeTitle);
-                              }}
-                              videoUrl={videoUrl}
-                              contentItem={contentItem}
-                              channel={channel}
-                            />
-                          </>
-                        );
-                      })()}
+                    {selectedSeries && (
+                      <ContentModal
+                        isOpen={!!selectedSeries}
+                        onClose={(open) => !open && setSelectedSeries(null)}
+                        item={selectedSeries}
+                        variant="series"
+                        autoDetectKids={true}
+                        onPlayEpisode={() => { }} // Reverts to modal on player close
+                        videoUrl={rawContent.find((i) => i.id === selectedSeries.id)?.video_url}
+                        movieId={selectedSeries.id}
+                        contentItem={rawContent.find((i) => i.id === selectedSeries.id) as any}
+                        channel={channels.find((ch) => ch.id === selectedSeries.channelId) as any}
+                      />
+                    )}
                   </div>
                 </div>
               </div>

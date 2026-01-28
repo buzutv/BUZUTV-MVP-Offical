@@ -60,7 +60,7 @@ const ContentCard = ({
   const location = useLocation();
   const { isLoggedIn, setShowLoginModal, user } = useAuth();
   const { favoriteIds, addToFavorites, removeFromFavorites } = useUserFavorites();
-  const { content } = useContent();
+  const { content, refetch: refetchContent } = useContent();
   const { channels } = useChannels();
 
   // State for playlist creation form
@@ -268,6 +268,7 @@ const ContentCard = ({
   );
 
   const handleExitFullscreen = () => {
+    refetchContent();
     dispatch(closeScreenPlayer());
     setIsFullscreen(false);
     setCurrentVideoUrl("");

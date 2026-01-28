@@ -3,7 +3,10 @@ import ChannelModal from "@/components/ChannelModal";
 import FullViewportHero from "@/components/FullViewportHero";
 import FilterBar from "@/components/FilterBar";
 import ContentGrid from "@/components/ContentGrid";
+import ContentModal from "@/components/ContentModal";
 import { useAppContent } from "@/hooks/useAppContent";
+import { useContent } from "@/hooks/useContent";
+import { useChannels } from "@/hooks/useChannels";
 import { useUserSubscriptions } from "@/hooks/useUserSubscriptions";
 import { useAuth } from "@/contexts/AuthContext";
 import ContentRow from "@/components/ContentRow";
@@ -17,6 +20,10 @@ interface Channel {
   bannerUrl?: string;
   logo_url?: string;
   banner_url?: string;
+  is_active?: boolean;
+  isActive?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 const Index = React.memo(() => {
@@ -26,6 +33,8 @@ const Index = React.memo(() => {
 
   const startTime = performance.now();
   const { homeContent, channels, isLoading, content, kidsContent } = useAppContent();
+  const { content: rawContent } = useContent();
+  const [selectedItem, setSelectedItem] = useState<any>(null);
 
   const availableGenresWithContent = useMemo((): string[] => {
     if (!content.allContent || content.allContent.length === 0) {
@@ -72,10 +81,14 @@ const Index = React.memo(() => {
     setSelectedChannel(null);
   }, []);
 
-  const handleContentRowCardClick = useCallback(() => {
+  const handleContentRowCardClick = useCallback((item?: any) => {
     if (!isLoggedIn) {
       setShowLoginModal(true);
       return true;
+    }
+    if (item) {
+      setSelectedItem(item);
+      return true; // Prevents the card's internal modal
     }
     return false;
   }, [isLoggedIn, setShowLoginModal]);
@@ -245,6 +258,21 @@ const Index = React.memo(() => {
           </footer>
         </div>
       </div>
+
+      {/* Page-level Content Modal */}
+      {selectedItem && (
+        <ContentModal
+          isOpen={!!selectedItem}
+          onClose={() => setSelectedItem(null)}
+          item={selectedItem}
+          variant="auto"
+          autoDetectKids={true}
+          onPlayEpisode={() => { }} // Enables internal player mode
+          movieId={selectedItem.id}
+          videoUrl={rawContent.find((i) => i.id === selectedItem.id)?.video_url}
+          channel={channels.find((c) => c.id === selectedItem.channelId) as any}
+        />
+      )}
     </div>
   );
 });

@@ -98,8 +98,12 @@ const Kids = () => {
 
   const filteredKidsContent = getFilteredKidsContent();
 
-  const handleContentRowCardClick = () => {
-    return false; // Kids page doesn't need login modal for card clicks
+  const handleContentRowCardClick = (item?: any) => {
+    if (item) {
+      setSelectedMovie(item);
+      return true;
+    }
+    return false;
   };
 
   // Add click logic for Top Ranked
@@ -221,45 +225,20 @@ const Kids = () => {
                           </div>
                         ))}
                     </div>
-                    {selectedMovie &&
-                      (() => {
-                        // Match MovieCard modal logic
-                        const isSaved = favoriteIds.includes(selectedMovie.id);
-                        const contentItem = content.find(
-                          (item) => item.id === selectedMovie.id,
-                        );
-                        const videoUrl = contentItem?.video_url;
-                        const channel = channels.find(
-                          (ch) => ch.id === selectedMovie.channelId,
-                        );
-                        // This will be handled internally by ContentModal using useMoreLikeThis hook
-                        const recommendedContent = [];
-                        const handleSaveModal = () => {
-                          if (isSaved) {
-                            removeFromFavorites(selectedMovie.id);
-                          } else {
-                            addToFavorites(selectedMovie.id);
-                          }
-                        };
-
-                        return (
-                          <>
-                            <ContentModal
-                              isOpen={!!selectedMovie}
-                              onClose={(open) => !open && setSelectedMovie(null)}
-                              item={selectedMovie}
-                              variant="auto"
-                              isKidsMode={true}
-                              onPlayEpisode={(url, episodeTitle) => {
-                                // console.log("Play clicked from Kids page for:", episodeTitle);
-                              }}
-                              videoUrl={videoUrl}
-                              contentItem={contentItem}
-                              channel={channel}
-                            />
-                          </>
-                        );
-                      })()}
+                    {selectedMovie && (
+                      <ContentModal
+                        isOpen={!!selectedMovie}
+                        onClose={(open) => !open && setSelectedMovie(null)}
+                        item={selectedMovie}
+                        variant="auto"
+                        isKidsMode={true}
+                        onPlayEpisode={() => { }} // Reverts to modal on player close
+                        videoUrl={content.find((i) => i.id === selectedMovie.id)?.video_url}
+                        movieId={selectedMovie.id}
+                        contentItem={content.find((i) => i.id === selectedMovie.id) as any}
+                        channel={channels.find((ch) => ch.id === selectedMovie.channelId) as any}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
