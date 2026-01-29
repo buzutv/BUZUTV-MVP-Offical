@@ -5,6 +5,8 @@ import { toast } from 'sonner';
 import AdminLayout from '@/components/admin/AdminLayout';
 import MovieForm from '@/components/forms/MovieForm';
 import { supabase } from '@/integrations/supabase/client';
+import { useCreateSeasonMutation, useUpdateSeasonMutation } from "@/store/seasonSlice";
+import { useCreateEpisodeMutation, useUpdateEpisodeMutation } from "@/store/episodeSlice";
 
 const AdminEditMovie = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -12,6 +14,11 @@ const AdminEditMovie = () => {
   const [fetchLoading, setFetchLoading] = useState(true);
   const navigate = useNavigate();
   const { id } = useParams();
+
+  const [triggerCreateSeason] = useCreateSeasonMutation();
+  const [triggerUpdateSeason] = useUpdateSeasonMutation();
+  const [triggerCreateEpisode] = useCreateEpisodeMutation();
+  const [triggerUpdateEpisode] = useUpdateEpisodeMutation();
 
   useEffect(() => {
     if (id) {
@@ -46,7 +53,7 @@ const AdminEditMovie = () => {
 
   const handleSubmit = async (data: any) => {
     setIsLoading(true);
-    
+
     try {
       const updateData: any = {
         title: data.title,
@@ -82,6 +89,91 @@ const AdminEditMovie = () => {
         console.error('Error updating movie:', error);
         toast.error('Failed to update movie');
         return;
+      }
+
+      // Sync seasons and episodes
+      if (data.seasonsData && data.seasonsData.length > 0) {
+        const seasons = data.seasonsData;
+
+        for (let season of seasons) {
+          // Check if season exists
+          const { data: existingSeason } = await (supabase as any)
+            .from('seasons')
+            .select('id')
+            .eq('content_id', id)
+            .eq('season_number', season.seasonNumber)
+            .maybeSingle();
+
+          let seasonId;
+
+          if (existingSeason) {
+            seasonId = existingSeason.id;
+            // Update season title if needed
+            await triggerUpdateSeason({
+              id: seasonId,
+              data: {
+                title: season.title || `Season ${season.seasonNumber}`
+              }
+            });
+          } else {
+            // Create new season
+            const seasonData = await triggerCreateSeason({
+              season_number: season.seasonNumber,
+              title: season.title || `Season ${season.seasonNumber}`,
+              content_id: id,
+            });
+
+            if (seasonData.error) {
+              console.error('Error adding season:', seasonData.error);
+              continue; // Skip episodes if season creation failed
+            }
+
+            // Handle response structure
+            const createdSeason = Array.isArray(seasonData.data) ? seasonData.data[0] : seasonData.data;
+            seasonId = createdSeason?.id;
+          }
+
+          if (!seasonId) {
+            console.error('No season ID found or created');
+            continue;
+          }
+
+          const episodes = season.episodes || [];
+          for (let episode of episodes) {
+            // Check if episode exists
+            const { data: existingEpisode } = await (supabase as any)
+              .from('episodes')
+              .select('id')
+              .eq('season_id', seasonId)
+              .eq('episode_number', episode.episodeNumber)
+              .maybeSingle();
+
+            const episodePayload: any = {
+              episode_number: episode.episodeNumber,
+              title: episode.title,
+              season_id: seasonId,
+            };
+
+            // Add optional fields
+            if (episode.description) episodePayload.description = episode.description;
+            if (episode.videoUrl) episodePayload.video_url = episode.videoUrl;
+            if (episode.posterUrl) episodePayload.thumbnail_url = episode.posterUrl;
+            // if (episode.airDate) episodePayload.air_date = episode.airDate;
+            // if (episode.rating) episodePayload.rating = parseFloat(episode.rating);
+            if (episode.completionThresholdSeconds) episodePayload.completion_threshold_seconds = episode.completionThresholdSeconds;
+
+            if (existingEpisode) {
+              // Update existing episode
+              await triggerUpdateEpisode({
+                id: existingEpisode.id,
+                data: episodePayload
+              });
+            } else {
+              // Create new episode
+              await triggerCreateEpisode(episodePayload);
+            }
+          }
+        }
       }
 
       toast.success('Movie updated successfully');

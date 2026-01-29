@@ -42,20 +42,37 @@ const AdminAddMovie = () => {
         completion_threshold_seconds: data.completionThresholdSeconds || null,
       };
 
-
-
       // Store detailed seasons data if provided
       if (data.seasonsData && data.seasonsData.length > 0) {
-        const seasons = data.seasonsData
-        // for each season create a season using seaons slice withthe content id
-        // for each episode with in each season create an episode using episodes slice with the season id
+        contentData.seasons_data = JSON.stringify(data.seasonsData);
+      }
+
+      // First, insert the content to get the content_id
+      const { data: insertedContent, error } = await supabase
+        .from('content')
+        .insert([contentData])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding content:', error);
+        toast.error('Failed to add content');
+        return;
+      }
+
+      // Now create seasons and episodes with the content_id
+      if (data.seasonsData && data.seasonsData.length > 0) {
+        const seasons = data.seasonsData;
+        // for each season create a season using seasons slice with the content id
+        // for each episode within each season create an episode using episodes slice with the season id
         for (let season of seasons) {
           const seasonData = await triggerCreateSeason({
-            season_number: season.season_number,
-            title: season.title,
-            content_id: contentData.id,
-          })
+            season_number: season.seasonNumber,
+            title: season.title || `Season ${season.seasonNumber}`,
+            content_id: insertedContent.id,
+          });
 
+          console.log('Season creation response:', seasonData);
 
           if (seasonData.error) {
             console.error('Error adding season:', seasonData.error);
@@ -63,15 +80,32 @@ const AdminAddMovie = () => {
             return;
           }
 
-          const seasonId = seasonData.data.id;
-          const episodes = season.episodes;
+          // The response structure from RTK Query mutations is { data: [...] }
+          // and Supabase returns an array, so we need to get the first item
+          const createdSeason = Array.isArray(seasonData.data) ? seasonData.data[0] : seasonData.data;
+          const seasonId = createdSeason?.id;
+
+          if (!seasonId) {
+            console.error('Failed to get season ID from response:', seasonData);
+            toast.error('Failed to create season - no ID returned');
+            return;
+          }
+          const episodes = season.episodes || [];
           for (let episode of episodes) {
-            const episodeData = await triggerCreateEpisode({
-              episode_number: episode.episode_number,
+            // Only include fields that exist in the database schema
+            const episodePayload: any = {
+              episode_number: episode.episodeNumber,
               title: episode.title,
               season_id: seasonId,
-              ...episode,
-            })
+              completion_threshold_seconds: episode.completionThresholdSeconds,
+            };
+
+            // Add optional fields if they exist
+            if (episode.description) episodePayload.description = episode.description;
+            if (episode.videoUrl) episodePayload.video_url = episode.videoUrl;
+            if (episode.posterUrl) episodePayload.thumbnail_url = episode.posterUrl;
+
+            const episodeData = await triggerCreateEpisode(episodePayload);
 
             if (episodeData.error) {
               console.error('Error adding episode:', episodeData.error);
@@ -80,18 +114,6 @@ const AdminAddMovie = () => {
             }
           }
         }
-
-        contentData.seasons_data = JSON.stringify(data.seasonsData);
-      }
-
-      const { error } = await supabase
-        .from('content')
-        .insert([contentData]);
-
-      if (error) {
-        console.error('Error adding content:', error);
-        toast.error('Failed to add content');
-        return;
       }
 
       toast.success(`${data.type === 'movie' ? 'Movie' : 'Series'} added successfully!`);

@@ -36,6 +36,7 @@ export interface Episode {
   thumbnail_url?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+  completion_threshold_seconds?: number | null;
 }
 export interface PlaylistItemWithContent {
   id: string;
