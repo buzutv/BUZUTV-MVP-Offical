@@ -32,6 +32,7 @@ const episodeSchema = z.object({
   episodeNumber: z.number().min(1),
   videoUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
   posterUrl: z.string().optional(),
+  durationMinutes: z.string().optional(),
   airDate: z.string().optional(),
   rating: z.string().optional(),
   completionThresholdSeconds: z.string().optional(),
@@ -359,7 +360,7 @@ const MovieForm: React.FC<MovieFormProps> = ({
           />
         </div>
 
-        <FormField
+        {watchType === "movie" && <FormField
           control={form.control}
           name="videoUrl"
           render={({ field }) => (
@@ -375,7 +376,7 @@ const MovieForm: React.FC<MovieFormProps> = ({
               <FormMessage />
             </FormItem>
           )}
-        />
+        />}
 
         {watchType === "movie" && (
           <FormField

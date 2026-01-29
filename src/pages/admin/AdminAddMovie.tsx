@@ -100,6 +100,7 @@ const AdminAddMovie = () => {
               title: episode.title,
               season_id: seasonId,
               completion_threshold_seconds: episode.completionThresholdSeconds,
+              duration_minutes: episode.durationMinutes,
             };
 
             // Add optional fields if they exist
