@@ -149,12 +149,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
   const [seasonWithEpisodes, setSeasonWithEpisodes] = useState([])
   const playlistId = useSelector((state: any) => state.screenPlayer.playlistId);
   const selectedFromRecommendations = useSelector((state: any) => state.screenPlayer.selectedVideo);
-  // const { data: seasonWithEpisode, error, refetch } = useGetSeasonWithEpisodesQuery({ contentId: movie, userId: user?.id }, {
-  //   skip: !movieId,
-  //   refetchOnMountOrArgChange: true,
-  //   refetchOnFocus: true,
-  //   refetchOnReconnect: true
-  // })
+
 
   console.log("Content Modal item", currentItem)
 
@@ -422,6 +417,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
   };
 
   const handlePlayEpisode = (episode: Episode, seasonNumber: number, index: number, seasonData: any) => {
+    console.log("Play first episode", index)
     if (episode.video_url && seasonWithEpisodes.length > 0) {
       dispatch(openScreenPlayer({
         isOpen: true,

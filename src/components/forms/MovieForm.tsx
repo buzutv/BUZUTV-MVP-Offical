@@ -623,6 +623,24 @@ const MovieForm: React.FC<MovieFormProps> = ({
 
                       <FormField
                         control={form.control}
+                        name={`seasons.${seasonIndex}.episodes.${episodeIndex}.durationMinutes`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-white">Duration in Minutes</FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                placeholder="Duration in Minutes"
+                                className="bg-gray-700 border-gray-600 text-white"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
                         name={`seasons.${seasonIndex}.episodes.${episodeIndex}.completionThresholdSeconds`}
                         render={({ field }) => (
                           <FormItem>

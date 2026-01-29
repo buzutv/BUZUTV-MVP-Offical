@@ -91,6 +91,8 @@ const AdminAddMovie = () => {
             return;
           }
           const episodes = season.episodes || [];
+
+          console.log("episodes", episodes)
           for (let episode of episodes) {
             // Only include fields that exist in the database schema
             const episodePayload: any = {

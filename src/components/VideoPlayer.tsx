@@ -45,8 +45,14 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
     const playlistFullObject = useSelector((state: any) => state?.screenPlayer?.playlistInfo) || {};
     const seriesData = useSelector((state: any) => state?.screenPlayer?.seriesData) || {};
     const episodes = useSelector((state: any) => state?.screenPlayer?.seriesData?.episodes) || [];
+
     const isSeries = useSelector((state: any) => state?.screenPlayer?.isSeries) || false;
-    const currentVideoIndex = useSelector((state: any) => state?.screenPlayer?.currentVideoIndex) || 0;
+    const currentVideoIndex = useSelector((state: any) => state?.screenPlayer?.currentVideoIndex) || 0
+
+    // Refs for stable values in callbacks
+    const isSeriesRef = useRef(isSeries);
+    const currentVideoIndexRef = useRef(currentVideoIndex);
+    const seriesDataRef = useRef(seriesData);
 
     const [countdown, setCountdown] = useState(5);
     const [videoEnded, setVideoEnded] = useState(false);
@@ -70,15 +76,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
     // Let's assume if it's the last episode, we can still click next to trigger playlist advance.
     const hasNextVideo = (currentQueue?.length > 0 && currentVideoIndex < currentQueue.length - 1) || (isSeries && !!onPlaylistAdvance);
 
-    console.log("VideoPlayer State:", {
-      isSeries,
-      episodesCount: episodes?.length,
-      playlistItemsCount: playlist_items?.length,
-      currentVideoIndex,
-      videoId,
-      localProgress,
-      hasNextVideo
-    });
+    console.log("VideoPlayer State CurrentIndex", currentVideoIndex, currentQueue[currentVideoIndex])
 
     // --- SYNC REFS ---
     useEffect(() => {
@@ -97,6 +95,18 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
     useEffect(() => {
       selectedVideoRef.current = selectedVideo;
     }, [selectedVideo]);
+
+    useEffect(() => {
+      isSeriesRef.current = isSeries;
+    }, [isSeries]);
+
+    useEffect(() => {
+      currentVideoIndexRef.current = currentVideoIndex;
+    }, [currentVideoIndex]);
+
+    useEffect(() => {
+      seriesDataRef.current = seriesData;
+    }, [seriesData]);
 
     // --- EXPOSE METHODS VIA REF ---
     useImperativeHandle(ref, () => ({
@@ -194,7 +204,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
 
       setVideoRestricted(false);
       const vid = getVideoId(videoId);
-
+      console.log("Video Player Id", vid)
       if (!vid) {
         console.warn("VideoPlayer: Invalid video ID", videoId);
         return;
@@ -205,11 +215,15 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
       // If player exists, load new video
       if (playerInstanceRef.current) {
         try {
-          console.log("Loading video:", vid, "at position:", startPos);
+          console.log("Loading videoById:", vid, "at position:", startPos);
           playerInstanceRef.current.loadVideoById({
             videoId: vid,
             startSeconds: startPos
           });
+          // Explicitly play to ensure autoplay follows through
+          setTimeout(() => {
+            playerInstanceRef.current?.playVideo();
+          }, 150);
         } catch (e) {
           console.error("Error loading video", e);
         }
@@ -304,6 +318,8 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
         setCountdown((prev) => {
           if (prev <= 1) {
             clearCountdownTimer();
+            // Don't set isCountdownStartedRef.current = false here yet, 
+            // the video change effect will reset it.
             setVideoEnded(false);
             // Use setTimeout to avoid calling playNext inside setState
             setTimeout(() => playNext(), 0);
@@ -324,19 +340,24 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
 
     // --- NAVIGATION ---
     const playNext = () => {
-      // Logic:
-      // 1. If we have a next item in CURRENT queue (e.g. next episode), play it.
-      // 2. If not, and we are in a series, try to advance playlist (movie -> movie is same queue, series -> next item is context switch)
+      const currentIdx = currentVideoIndexRef.current;
+      const queue = isSeriesRef.current ? (seriesDataRef.current?.episodes || []) : (playlistFullObject?.playlist_items || []);
 
-      const nextIndex = currentVideoIndex + 1;
+      const nextIndex = currentIdx + 1;
 
-      if (!currentQueue || nextIndex >= currentQueue.length) {
-        console.log("End of current queue reached.");
-        if (isSeries && onPlaylistAdvance) {
+      console.log("playNext triggering:", { currentIdx, nextIndex, queueLength: queue?.length });
+
+      if (!queue || nextIndex >= queue.length) {
+        if (isSeriesRef.current && onPlaylistAdvance) {
           console.log("Attempting to advance playlist context...");
           clearCountdownTimer();
           setVideoEnded(false);
+          isCountdownStartedRef.current = false;
           onPlaylistAdvance();
+        } else {
+          setVideoEnded(true);
+          setCountdown(0);
+          isCountdownStartedRef.current = false;
         }
         return;
       }
@@ -344,28 +365,30 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
       clearCountdownTimer();
       setVideoEnded(false);
       setVideoRestricted(false);
+      isCountdownStartedRef.current = false; // Allow next countdown for new video
 
       // Get next item from queue
-      const nextItem = currentQueue[nextIndex];
+      const nextItem = queue[nextIndex];
+      const isSer = isSeriesRef.current;
 
       // For series: episode object directly has video_url
       // For playlist: need to access .content
-      const nextVideoData = isSeries ? nextItem : nextItem?.content;
+      const nextVideoData = isSer ? nextItem : nextItem?.content;
 
       if (!nextVideoData) {
         console.error("No video data found for next item");
         return;
       }
 
-      console.log("Playing next in queue:", { nextIndex, nextVideoData, isSeries });
+      console.log("Playing next in queue:", { nextIndex, nextVideoData, isSeries: isSer });
 
       // Update Redux with new video
       dispatch(openScreenPlayer({
         isOpen: true,
         currentVideoIndex: nextIndex,
         selectedVideo: nextVideoData,
-        isSeries: isSeries,
-        seriesData: isSeries ? seriesData : undefined,
+        isSeries: isSer,
+        seriesData: isSer ? seriesDataRef.current : undefined,
       }));
 
       if (setCurrentMovie) {
@@ -374,15 +397,20 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
     };
 
     const playPrevious = () => {
-      if (!currentQueue || currentVideoIndex <= 0) return;
+      const currentIdx = currentVideoIndexRef.current;
+      const queue = isSeriesRef.current ? (seriesDataRef.current?.episodes || []) : (playlistFullObject?.playlist_items || []);
+
+      if (!queue || currentIdx <= 0) return;
 
       clearCountdownTimer();
       setVideoEnded(false);
       setVideoRestricted(false);
+      isCountdownStartedRef.current = false;
 
-      const prevIndex = currentVideoIndex - 1;
-      const prevItem = currentQueue[prevIndex];
-      const prevVideoData = isSeries ? prevItem : prevItem?.content;
+      const prevIndex = currentIdx - 1;
+      const prevItem = queue[prevIndex];
+      const isSer = isSeriesRef.current;
+      const prevVideoData = isSer ? prevItem : prevItem?.content;
 
       if (!prevVideoData) {
         console.error("No video data found for previous item");
@@ -395,8 +423,8 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
         isOpen: true,
         currentVideoIndex: prevIndex,
         selectedVideo: prevVideoData,
-        isSeries: isSeries,
-        seriesData: isSeries ? seriesData : undefined,
+        isSeries: isSer,
+        seriesData: isSer ? seriesDataRef.current : undefined,
       }));
 
       if (setCurrentMovie) {
@@ -409,6 +437,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
       const state = e.data;
 
       if (state === window.YT.PlayerState.ENDED) {
+        // Prevent any auto-replay edge cases when the iframe reports ENDED
         // Save watch history
         await saveWatchHistory(
           userid,

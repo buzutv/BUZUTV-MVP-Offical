@@ -39,7 +39,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
         <div className="p-6">
           <Link to="/" className="flex items-center space-x-2">
             <span className="text-2xl font-bold">
-              Bizu<span className="text-blue-500">TV</span>
+              BUZU<span className="text-blue-500">TV</span>
             </span>
           </Link>
           <p className="text-sm text-gray-400 mt-1">Admin Panel</p>

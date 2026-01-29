@@ -554,7 +554,7 @@ const FullscreenPlayer = ({
                 actualVideoUrl && (
                   (playlistId || contentIds) ? (
                     <PlaylistVideoPlayer
-                      videoId={actualVideoUrl}
+                      videoId={selectedContent?.video_url || selectedContent?.videoUrl || actualVideoUrl}
                       setCurrentMovie={setCurrentMovie}
                       type={type}
                       setFinal={setFinal}
@@ -573,7 +573,7 @@ const FullscreenPlayer = ({
                   ) : (
                     <VideoPlayer
                       key={(selectedContent?.id || movieId) || (actualVideoUrl || reduxVideoUrl)}
-                      videoId={actualVideoUrl}
+                      videoId={selectedContent?.video_url || selectedContent?.videoUrl || actualVideoUrl}
                       setCurrentMovie={setCurrentMovie}
                       type={type}
                       setFinal={setFinal}
