@@ -569,6 +569,7 @@ const FullscreenPlayer = ({
                       localProgress={localProgress}
                       onPlaylistAdvance={handlePlaylistAdvance}
                       playlistId={playlistId}
+                      completionThreshold={selectedContent?.completion_threshold_seconds || currentEpisode?.completion_threshold_seconds || currentMovie?.completion_threshold_seconds}
                     />
                   ) : (
                     <VideoPlayer
@@ -587,6 +588,7 @@ const FullscreenPlayer = ({
                       onProgressUpdate={handleProgressUpdate}
                       localProgress={localProgress}
                       onPlaylistAdvance={handlePlaylistAdvance}
+                      completionThreshold={selectedContent?.completion_threshold_seconds || currentEpisode?.completion_threshold_seconds || currentMovie?.completion_threshold_seconds || selectedContent?.content?.completion_threshold_seconds}
                     />
                   )
                 )

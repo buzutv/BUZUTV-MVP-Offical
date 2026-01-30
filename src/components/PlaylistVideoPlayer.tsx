@@ -27,10 +27,11 @@ interface PlaylistVideoPlayerProps {
     localProgress?: Record<string, { watch_percentage: number, last_position: number }>;
     onPlaylistAdvance?: () => void;
     playlistId?: string;
+    completionThreshold?: number | null;
 }
 
 const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
-    ({ videoId, playlistItems, setCurrentMovie, movieId, episodeId, setFinal, type, userid, playlistInfo, onProgressUpdate, localProgress, onPlaylistAdvance, playlistId }, ref) => {
+    ({ videoId, playlistItems, setCurrentMovie, movieId, episodeId, setFinal, type, userid, playlistInfo, onProgressUpdate, localProgress, onPlaylistAdvance, playlistId, completionThreshold }, ref) => {
         const playerContainerRef = useRef<HTMLDivElement>(null);
         const playerInstanceRef = useRef<any>(null);
 
@@ -40,6 +41,7 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
         const videoIdRef = useRef(videoId);
         const countdownRef = useRef<any>(null);
         const isCountdownStartedRef = useRef(false);
+        const completionThresholdRef = useRef(completionThreshold);
 
         // Redux State
         const selectedVideo = useSelector((state: any) => state.screenPlayer.selectedVideo);
@@ -158,6 +160,10 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
             currentVideoIndexRef.current = currentVideoIndex;
             seriesDataRef.current = seriesData;
         }, [playlist_items, episodes, currentQueue, isSeries, currentVideoIndex, seriesData]);
+
+        useEffect(() => {
+            completionThresholdRef.current = completionThreshold;
+        }, [completionThreshold]);
 
 
         // --- SYNC REFS ---
@@ -428,6 +434,48 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
             }
         }, [countdown, videoEnded, playNext]);
 
+
+        // --- EARLY COUNTDOWN POLLING ---
+        useEffect(() => {
+            const checkThreshold = setInterval(() => {
+                if (
+                    playerInstanceRef.current &&
+                    playerInstanceRef.current.getPlayerState() === window.YT.PlayerState.PLAYING &&
+                    !isCountdownStartedRef.current
+                ) {
+                    const currentTime = playerInstanceRef.current.getCurrentTime();
+                    const threshold = completionThresholdRef.current;
+
+                    if (threshold && threshold > 0 && currentTime >= threshold) {
+                        console.log(`[PlaylistVideoPlayer] Completion threshold reached: ${currentTime}s >= ${threshold}s. Triggering end.`);
+
+                        // Explicitly pause video to "end" it early
+                        playerInstanceRef.current?.pauseVideo();
+
+                        // Save as completed
+                        saveWatchHistory(
+                            userid,
+                            movieIdRef.current,
+                            episodeIdRef.current,
+                            videoIdRef.current,
+                            currentTime,
+                            true,
+                            playerInstanceRef,
+                            type
+                        );
+
+                        if (checkHasNextVideo()) {
+                            startCountdown();
+                        } else {
+                            setVideoEnded(true);
+                            setCountdown(0);
+                        }
+                    }
+                }
+            }, 1000);
+
+            return () => clearInterval(checkThreshold);
+        }, [checkHasNextVideo, type, userid]);
 
         // --- INITIALIZE & UPDATE PLAYER ---
         useEffect(() => {
