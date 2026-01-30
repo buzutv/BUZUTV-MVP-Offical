@@ -2,11 +2,12 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import ContentCard from "@/components/ContentCard";
 import usePlaylists from "@/hooks/usePlaylists";
+import ProtectedRoute from "./auth/ProtectedRoute";
 
 interface ContentRowProps {
   title: string;
   items: any[];
-  onCardClick?: () => boolean;
+  onCardClick?: (item: any) => boolean;
   onItemClick?: (movie: any) => void;
   isMoreLikeThis?: boolean;
   onOpenRelatedSeries?: (series: any) => void;
@@ -92,6 +93,7 @@ const ContentRow = React.memo(
     if (items.length === 0) return null;
 
     return (
+
       <section className="pb-6">
         <div className="px-4 mb-2">
           <h2 className="text-2xl">{title}</h2>
@@ -157,6 +159,7 @@ const ContentRow = React.memo(
           </div>
         </div>
       </section>
+
     );
   },
   (prevProps, nextProps) => {
@@ -164,6 +167,8 @@ const ContentRow = React.memo(
       prevProps.title === nextProps.title &&
       prevProps.items.length === nextProps.items.length &&
       prevProps.isMoreLikeThis === nextProps.isMoreLikeThis &&
+      prevProps.onCardClick === nextProps.onCardClick &&
+      prevProps.onItemClick === nextProps.onItemClick &&
       // Compare actual item IDs to detect content changes
       JSON.stringify(prevProps.items.map((item) => item.id)) ===
       JSON.stringify(nextProps.items.map((item) => item.id))

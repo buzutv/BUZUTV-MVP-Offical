@@ -31,7 +31,7 @@ export interface ContentCardProps {
   progressPercent?: number;
   showResumeButton?: boolean;
   onPlayFullscreen?: (videoUrl: string) => void;
-  onOpen?: () => boolean;
+  onOpen?: (item: any) => boolean;
   onItemClick?: (item: Movie | any) => void;
   className?: string;
   isMoreLikeThis?: boolean;

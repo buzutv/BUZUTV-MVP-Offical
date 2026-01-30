@@ -19,6 +19,7 @@ import { openScreenPlayer, closeScreenPlayer } from "@/store/screenPlayerSlice";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useAuth } from "@/contexts/AuthContext";
 import { useContent } from "@/hooks/useContent";
+import ProtectedRoute from "./auth/ProtectedRoute";
 //comment
 //comment 
 //
@@ -508,34 +509,35 @@ const FullscreenPlayer = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] overflow-y-hidden overflow-x-hidden" style={{
-      background: `linear-gradient(200deg, #311066 0%, #1D0833 20%, #120222 45%, black 100%)`,
-    }}>
+    <ProtectedRoute>
+      <div className="fixed inset-0 z-[9999] overflow-y-hidden overflow-x-hidden" style={{
+        background: `linear-gradient(200deg, #311066 0%, #1D0833 20%, #120222 45%, black 100%)`,
+      }}>
 
 
-      <div className="w-full mx-auto p-8 h-full overflow-y-auto">
-        <div className="max-w-6xl mx-auto px-4 py-12">
-          <div className="flex justify-center items-center gap-4 mb-4">
-            <div className="flex items-center justify-start gap-4 cursor-pointer flex-1" onClick={async () => {
-              console.log("🔙 [FullscreenPlayer] Back button clicked, saving and refetching...");
-              // Ensure we save progress to the DB before fetching fresh data
-              if (parentRef.current && (parentRef.current as any).saveProgress) {
-                await (parentRef.current as any).saveProgress();
-              }
+        <div className="w-full mx-auto p-8 h-full overflow-y-auto">
+          <div className="max-w-6xl mx-auto px-4 py-12">
+            <div className="flex justify-center items-center gap-4 mb-4">
+              <div className="flex items-center justify-start gap-4 cursor-pointer flex-1" onClick={async () => {
+                console.log("🔙 [FullscreenPlayer] Back button clicked, saving and refetching...");
+                // Ensure we save progress to the DB before fetching fresh data
+                if (parentRef.current && (parentRef.current as any).saveProgress) {
+                  await (parentRef.current as any).saveProgress();
+                }
 
-              // Trigger direct refetch
-              refetchContentWithWatchHistory();
+                // Trigger direct refetch
+                refetchContentWithWatchHistory();
 
-              // Close immediately
-              onClose();
-              dispatch(closeScreenPlayer());
-            }}>
-              <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              <p className="text-lg font-semibold text-white ">Back</p>
-            </div>
-            {/* <SearchBar
+                // Close immediately
+                onClose();
+                dispatch(closeScreenPlayer());
+              }}>
+                <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                <p className="text-lg font-semibold text-white ">Back</p>
+              </div>
+              {/* <SearchBar
               onSearch={handleSearch}
               onResultSelect={setActualVideoUrl}
               results={searchResults}
@@ -545,208 +547,208 @@ const FullscreenPlayer = ({
               setActualVideoUrl={setActualVideoUrl}
               setMovieid={setMovieid}
             /> */}
-          </div>
-
-          <div className="flex items-center mx-auto justify-center aspect-video w-full bg-black rounded-2xl overflow-hidden mb-8 relative shadow-2xl border border-white/10">
-            {/* <div ref={playerContainerRef} className="w-full h-full" /> */}
-            <div ref={playerRef} className="flex items-center justify-center h-full w-full sm:min-w-full md:sm:min-w-full">
-              {
-                actualVideoUrl && (
-                  (playlistId || contentIds) ? (
-                    <PlaylistVideoPlayer
-                      videoId={selectedContent?.video_url || selectedContent?.videoUrl || actualVideoUrl}
-                      setCurrentMovie={setCurrentMovie}
-                      type={type}
-                      setFinal={setFinal}
-                      setActualVideoUrl={setActualVideoUrl}
-                      playlistItems={playlists}
-                      movieId={selectedContent?.id || movieId}
-                      episodeId={seasons?.length > 0 ? (selectedContent?.id || movieId) : undefined}
-                      userid={user?.id}
-                      playlistInfo={playlistInfo}
-                      ref={parentRef}
-                      onProgressUpdate={handleProgressUpdate}
-                      localProgress={localProgress}
-                      onPlaylistAdvance={handlePlaylistAdvance}
-                      playlistId={playlistId}
-                      completionThreshold={selectedContent?.completion_threshold_seconds || currentEpisode?.completion_threshold_seconds || currentMovie?.completion_threshold_seconds}
-                    />
-                  ) : (
-                    <VideoPlayer
-                      key={(selectedContent?.id || movieId) || (actualVideoUrl || reduxVideoUrl)}
-                      videoId={selectedContent?.video_url || selectedContent?.videoUrl || actualVideoUrl}
-                      setCurrentMovie={setCurrentMovie}
-                      type={type}
-                      setFinal={setFinal}
-                      setActualVideoUrl={setActualVideoUrl}
-                      playlistItems={playlists}
-                      movieId={selectedContent?.id || movieId}
-                      episodeId={seasons?.length > 0 ? (selectedContent?.id || movieId) : undefined}
-                      userid={user?.id}
-                      playlistInfo={playlistInfo}
-                      ref={parentRef}
-                      onProgressUpdate={handleProgressUpdate}
-                      localProgress={localProgress}
-                      onPlaylistAdvance={handlePlaylistAdvance}
-                      completionThreshold={selectedContent?.completion_threshold_seconds || currentEpisode?.completion_threshold_seconds || currentMovie?.completion_threshold_seconds || selectedContent?.content?.completion_threshold_seconds}
-                    />
-                  )
-                )
-              }
             </div>
-          </div>
-          {isSeries && (
-            <div className="mb-8">
-              {isLoadingEpisodes ? (
-                <div className="space-y-8 animate-pulse">
-                  <div className="flex justify-center gap-2">
-                    {[1, 2, 3].map(i => <div key={i} className="h-10 w-24 bg-white/5 rounded-lg" />)}
-                  </div>
-                  <div className="h-8 w-32 bg-white/5 rounded mb-6" />
-                  <div className="flex gap-4 overflow-hidden">
-                    {[1, 2, 3].map(i => <div key={i} className="flex-shrink-0 w-80 aspect-video bg-white/5 rounded-lg" />)}
-                  </div>
-                </div>
-              ) : seasons?.length > 0 ? (
-                <>
-                  <div className="flex flex-col items-center mb-8">
-                    {/* Centered Season Tabs */}
-                    <div className="flex flex-wrap justify-center gap-2 p-1 bg-white/5 rounded-xl border border-white/10">
-                      {seasons.map((season) => {
-                        const isActive = selectedSeasonId === season.id;
-                        return (
-                          <button
-                            key={season.id}
-                            onClick={() => setSelectedSeasonId(season.id)}
-                            className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
-                              ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
-                              : 'text-white/60 hover:text-white hover:bg-white/10'
-                              }`}
-                          >
-                            {season.title || `Season ${season.season_number}`}
-                          </button>
-                        );
-                      })}
+
+            <div className="flex items-center mx-auto justify-center aspect-video w-full bg-black rounded-2xl overflow-hidden mb-8 relative shadow-2xl border border-white/10">
+              {/* <div ref={playerContainerRef} className="w-full h-full" /> */}
+              <div ref={playerRef} className="flex items-center justify-center h-full w-full sm:min-w-full md:sm:min-w-full">
+                {
+                  actualVideoUrl && (
+                    (playlistId || contentIds) ? (
+                      <PlaylistVideoPlayer
+                        videoId={selectedContent?.video_url || selectedContent?.videoUrl || actualVideoUrl}
+                        setCurrentMovie={setCurrentMovie}
+                        type={type}
+                        setFinal={setFinal}
+                        setActualVideoUrl={setActualVideoUrl}
+                        playlistItems={playlists}
+                        movieId={selectedContent?.id || movieId}
+                        episodeId={seasons?.length > 0 ? (selectedContent?.id || movieId) : undefined}
+                        userid={user?.id}
+                        playlistInfo={playlistInfo}
+                        ref={parentRef}
+                        onProgressUpdate={handleProgressUpdate}
+                        localProgress={localProgress}
+                        onPlaylistAdvance={handlePlaylistAdvance}
+                        playlistId={playlistId}
+                        completionThreshold={selectedContent?.completion_threshold_seconds || currentEpisode?.completion_threshold_seconds || currentMovie?.completion_threshold_seconds}
+                      />
+                    ) : (
+                      <VideoPlayer
+                        key={(selectedContent?.id || movieId) || (actualVideoUrl || reduxVideoUrl)}
+                        videoId={selectedContent?.video_url || selectedContent?.videoUrl || actualVideoUrl}
+                        setCurrentMovie={setCurrentMovie}
+                        type={type}
+                        setFinal={setFinal}
+                        setActualVideoUrl={setActualVideoUrl}
+                        playlistItems={playlists}
+                        movieId={selectedContent?.id || movieId}
+                        episodeId={seasons?.length > 0 ? (selectedContent?.id || movieId) : undefined}
+                        userid={user?.id}
+                        playlistInfo={playlistInfo}
+                        ref={parentRef}
+                        onProgressUpdate={handleProgressUpdate}
+                        localProgress={localProgress}
+                        onPlaylistAdvance={handlePlaylistAdvance}
+                        completionThreshold={selectedContent?.completion_threshold_seconds || currentEpisode?.completion_threshold_seconds || currentMovie?.completion_threshold_seconds || selectedContent?.content?.completion_threshold_seconds}
+                      />
+                    )
+                  )
+                }
+              </div>
+            </div>
+            {isSeries && (
+              <div className="mb-8">
+                {isLoadingEpisodes ? (
+                  <div className="space-y-8 animate-pulse">
+                    <div className="flex justify-center gap-2">
+                      {[1, 2, 3].map(i => <div key={i} className="h-10 w-24 bg-white/5 rounded-lg" />)}
+                    </div>
+                    <div className="h-8 w-32 bg-white/5 rounded mb-6" />
+                    <div className="flex gap-4 overflow-hidden">
+                      {[1, 2, 3].map(i => <div key={i} className="flex-shrink-0 w-80 aspect-video bg-white/5 rounded-lg" />)}
                     </div>
                   </div>
-                  <div>
-                    <h2 className="text-white text-2xl font-bold mb-6">Episodes</h2>
-                    {/* Episode Grid/List */}
-                    <ScrollArea className="w-full pb-4">
-                      <div className="flex w-max gap-4 pb-4">
-                        {currentSeasonEpisodes.map((episode: any, index) => (
-                          <div
-                            key={episode.id}
-                            className={`flex-shrink-0 w-80 cursor-pointer group snap-start transition-all duration-300 ${currentEpisode?.id === episode.id
-                              ? 'ring-2 ring-blue-500'
-                              : 'hover:ring-2 hover:ring-white/30'
-                              }`}
-                            onClick={() => {
-                              // Merge local progress if available to ensure player resumes correctly
-                              const progress = localProgress[episode.id];
-                              const updatedEpisode = progress ? {
-                                ...episode,
-                                watch_percentage: progress.watch_percentage,
-                                last_position: progress.last_position
-                              } : episode;
+                ) : seasons?.length > 0 ? (
+                  <>
+                    <div className="flex flex-col items-center mb-8">
+                      {/* Centered Season Tabs */}
+                      <div className="flex flex-wrap justify-center gap-2 p-1 bg-white/5 rounded-xl border border-white/10">
+                        {seasons.map((season) => {
+                          const isActive = selectedSeasonId === season.id;
+                          return (
+                            <button
+                              key={season.id}
+                              onClick={() => setSelectedSeasonId(season.id)}
+                              className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
+                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
+                                : 'text-white/60 hover:text-white hover:bg-white/10'
+                                }`}
+                            >
+                              {season.title || `Season ${season.season_number}`}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div>
+                      <h2 className="text-white text-2xl font-bold mb-6">Episodes</h2>
+                      {/* Episode Grid/List */}
+                      <ScrollArea className="w-full pb-4">
+                        <div className="flex w-max gap-4 pb-4">
+                          {currentSeasonEpisodes.map((episode: any, index) => (
+                            <div
+                              key={episode.id}
+                              className={`flex-shrink-0 w-80 cursor-pointer group snap-start transition-all duration-300 ${currentEpisode?.id === episode.id
+                                ? 'ring-2 ring-blue-500'
+                                : 'hover:ring-2 hover:ring-white/30'
+                                }`}
+                              onClick={() => {
+                                // Merge local progress if available to ensure player resumes correctly
+                                const progress = localProgress[episode.id];
+                                const updatedEpisode = progress ? {
+                                  ...episode,
+                                  watch_percentage: progress.watch_percentage,
+                                  last_position: progress.last_position
+                                } : episode;
 
-                              setCurrentEpisode(updatedEpisode);
-                              setActualVideoUrl(updatedEpisode.video_url || updatedEpisode.videoUrl);
-                              setVideoEnded(false);
-                              setMovieid(updatedEpisode?.id)
-                              setMovies([updatedEpisode])
-                              playerRef.current?.scrollIntoView({ behavior: "smooth" });
+                                setCurrentEpisode(updatedEpisode);
+                                setActualVideoUrl(updatedEpisode.video_url || updatedEpisode.videoUrl);
+                                setVideoEnded(false);
+                                setMovieid(updatedEpisode?.id)
+                                setMovies([updatedEpisode])
+                                playerRef.current?.scrollIntoView({ behavior: "smooth" });
 
-                              // Get all episodes from the current season for autoplay
-                              const allEpisodes = currentSeasonEpisodes || [];
-                              dispatch(openScreenPlayer({
-                                isOpen: true,
-                                selectedVideo: updatedEpisode,
-                                currentVideoIndex: index,
-                                isSeries: true,
-                                seriesData: { episodes: allEpisodes },
-                                poster_url: seriesPosterUrl
-                              }))
-                            }}
-                          >
-                            <div className="bg-white/5 rounded-lg overflow-hidden">
-                              <div className="relative aspect-video bg-slate-900">
-                                <img
-                                  src={getOptimizedImageUrl(episode.poster_url || seriesPosterUrl || poster_url, 400)}
-                                  alt={episode.title}
-                                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                                />
-                                {currentEpisode?.id === episode.id && (
-                                  <div className="absolute inset-0 bg-blue-600/20 flex items-center justify-center">
-                                    <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded shadow-lg">
-                                      Now Playing
+                                // Get all episodes from the current season for autoplay
+                                const allEpisodes = currentSeasonEpisodes || [];
+                                dispatch(openScreenPlayer({
+                                  isOpen: true,
+                                  selectedVideo: updatedEpisode,
+                                  currentVideoIndex: index,
+                                  isSeries: true,
+                                  seriesData: { episodes: allEpisodes },
+                                  poster_url: seriesPosterUrl
+                                }))
+                              }}
+                            >
+                              <div className="bg-white/5 rounded-lg overflow-hidden">
+                                <div className="relative aspect-video bg-slate-900">
+                                  <img
+                                    src={getOptimizedImageUrl(episode.poster_url || seriesPosterUrl || poster_url, 400)}
+                                    alt={episode.title}
+                                    className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                                  />
+                                  {currentEpisode?.id === episode.id && (
+                                    <div className="absolute inset-0 bg-blue-600/20 flex items-center justify-center">
+                                      <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded shadow-lg">
+                                        Now Playing
+                                      </div>
                                     </div>
+                                  )}
+                                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                                    <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                                    </svg>
                                   </div>
-                                )}
-                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
-                                  <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                                  </svg>
+
+                                  {/* Progress Bar with Live Update */}
+                                  {(localProgress[episode.id]?.watch_percentage > 0 || episode.watch_percentage > 0) && (
+                                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+                                      <div
+                                        className="h-full bg-blue-500 transition-all duration-300"
+                                        style={{ width: `${localProgress[episode.id]?.watch_percentage || episode.watch_percentage}%` }}
+                                      />
+                                    </div>
+                                  )}
                                 </div>
 
-                                {/* Progress Bar with Live Update */}
-                                {(localProgress[episode.id]?.watch_percentage > 0 || episode.watch_percentage > 0) && (
-                                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
-                                    <div
-                                      className="h-full bg-blue-500 transition-all duration-300"
-                                      style={{ width: `${localProgress[episode.id]?.watch_percentage || episode.watch_percentage}%` }}
-                                    />
+                                <div className="p-4">
+                                  <div className="text-blue-400 text-xs font-bold uppercase tracking-wider mb-1">
+                                    Episode {episode.episode_number}
                                   </div>
-                                )}
-                              </div>
-
-                              <div className="p-4">
-                                <div className="text-blue-400 text-xs font-bold uppercase tracking-wider mb-1">
-                                  Episode {episode.episode_number}
+                                  <h3 className="text-white font-semibold mb-2 line-clamp-1">
+                                    {episode.title}
+                                  </h3>
+                                  {episode.description && (
+                                    <p className="text-white/60 text-sm line-clamp-2">
+                                      {episode.description}
+                                    </p>
+                                  )}
                                 </div>
-                                <h3 className="text-white font-semibold mb-2 line-clamp-1">
-                                  {episode.title}
-                                </h3>
-                                {episode.description && (
-                                  <p className="text-white/60 text-sm line-clamp-2">
-                                    {episode.description}
-                                  </p>
-                                )}
                               </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                      <ScrollBar orientation="horizontal" />
-                    </ScrollArea>
-                  </div>
-                </>
-              ) : null}
+                          ))}
+                        </div>
+                        <ScrollBar orientation="horizontal" />
+                      </ScrollArea>
+                    </div>
+                  </>
+                ) : null}
+              </div>
+            )}
+
+            {/* Movie Details Section */}
+            <MovieDetailSection />
+
+            {/* Filters Section */}
+            <div className="mb-8">
+              {/* // In your Parent Page/Component */}
+              <RecommendedSection
+                // recommended={recommended} // The object { genre_based: [...], popular: [...] }
+                handleRelatedClick={handleRelatedClick}
+                setMovieid={setMovieid}
+                setActualVideoUrl={setActualVideoUrl}
+                setMovies={setMovies}
+                setVideoEnded={setVideoEnded}
+                setPlaylists={setPlaylists}
+                getOptimizedImageUrl={getOptimizedImageUrl}
+              />
+
             </div>
-          )}
-
-          {/* Movie Details Section */}
-          <MovieDetailSection />
-
-          {/* Filters Section */}
-          <div className="mb-8">
-            {/* // In your Parent Page/Component */}
-            <RecommendedSection
-              // recommended={recommended} // The object { genre_based: [...], popular: [...] }
-              handleRelatedClick={handleRelatedClick}
-              setMovieid={setMovieid}
-              setActualVideoUrl={setActualVideoUrl}
-              setMovies={setMovies}
-              setVideoEnded={setVideoEnded}
-              setPlaylists={setPlaylists}
-              getOptimizedImageUrl={getOptimizedImageUrl}
-            />
-
-          </div>
 
 
-          {/* Related Content Grid */}
-          {/* <RelatedContent
+            {/* Related Content Grid */}
+            {/* <RelatedContent
             handleRelatedClick={handleRelatedClick}
             setMovieid={setMovieid}
             setActualVideoUrl={setActualVideoUrl}
@@ -756,10 +758,11 @@ const FullscreenPlayer = ({
             relatedContent={relatedContent}
             isLoading={resultRelatedContent.isFetching}
           /> */}
+          </div>
         </div>
-      </div>
-      <AdToast isVisible={showAd} onClose={() => setShowAd(false)} />
-    </div >
+        <AdToast isVisible={showAd} onClose={() => setShowAd(false)} />
+      </div >
+    </ProtectedRoute>
   );
 };
 

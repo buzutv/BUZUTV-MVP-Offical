@@ -217,6 +217,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const logout = async () => {
     await supabase.auth.signOut();
+    localStorage.clear();
+    sessionStorage.clear()
   };
 
   const value: AuthContextType = {
