@@ -446,6 +446,13 @@ const ContentModal: React.FC<ContentModalProps> = ({
       contentIds: content.map(item => item.id)
     }).unwrap()
 
+    if (item.type === "series") {
+      const seasonData = await triggerSeasonWithEpisode({
+        contentId: item.id,
+        userId: user?.id
+      }).unwrap();
+      setSeasonWithEpisodes(seasonData);
+    }
   };
 
   // Use the unified More Like This content (already normalized with posterUrl)

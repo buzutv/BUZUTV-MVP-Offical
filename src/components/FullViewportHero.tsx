@@ -85,20 +85,21 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
         //   }
         // }
 
-        const firstEpisode = seasonWithEpisodes[0].episodes[0];
+        const firstEpisode = seasonWithEpisodes[0].episodes[0]
         videoUrl = firstEpisode.videoUrl || firstEpisode.video_url;
         title = `${item.title} - ${firstEpisode.title}`;
 
         dispatch(openScreenPlayer({
           isOpen: true,
           selectedVideo: firstEpisode,
-          selectedVideoTitle: title,
+          currentVideoIndex: 0,
           videoUrl: videoUrl,
           contentId: item.id,
           poster_url: item.posterUrl || currentBackendItem?.poster_url,
           isSeries: true,
-          seriesData: seasonWithEpisodes
+          seriesData: seasonWithEpisodes[0]
         }));
+
 
         setFullscreenUrl(videoUrl);
         setFullscreenTitle(title);

@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getYouTubeEmbedUrl, normalizer, onReadyVideoLoader, saveWatchHistory } from "@/utils/youtubeUtils";
 import { useDispatch, useSelector } from "react-redux";
 import { openScreenPlayer, setCurrentVideoIndex } from "@/store/screenPlayerSlice";
+import { useUpsertWatchHistoryMutation } from "@/store/userWatchHistorySlice";
 
 declare global {
   interface Window {
@@ -50,7 +51,6 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
     const playlistFullObject = useSelector((state: any) => state?.screenPlayer?.playlistInfo) || {};
     const seriesData = useSelector((state: any) => state?.screenPlayer?.seriesData) || {};
     const episodes = useSelector((state: any) => state?.screenPlayer?.seriesData?.episodes) || [];
-
     const isSeries = useSelector((state: any) => state?.screenPlayer?.isSeries) || false;
     const currentVideoIndex = useSelector((state: any) => state?.screenPlayer?.currentVideoIndex) || 0
 
@@ -62,6 +62,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
     const [countdown, setCountdown] = useState(5);
     const [videoEnded, setVideoEnded] = useState(false);
     const [videoRestricted, setVideoRestricted] = useState(false);
+    const [upsertWatchHistory] = useUpsertWatchHistoryMutation();
 
     const dispatch = useDispatch();
 
@@ -119,26 +120,33 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
       completionThresholdRef.current = completionThreshold;
     }, [completionThreshold]);
 
+    const handleSaveProgress = async (isCompOverride?: boolean) => {
+      if (playerInstanceRef.current && playerInstanceRef.current.getCurrentTime) {
+        const duration = playerInstanceRef.current.getDuration() || 1;
+        const current = playerInstanceRef.current.getCurrentTime() || 0;
+        const isComp = isCompOverride ?? (wasThresholdReachedRef.current || wasCompletedSavedRef.current);
+        const watchPercentage = isComp ? 100 : Math.floor((current / duration) * 100);
+
+        await upsertWatchHistory({
+          userId: userid,
+          movieId: episodeIdRef.current ? undefined : movieIdRef.current,
+          episodeId: episodeIdRef.current || undefined,
+          data: {
+            watched_at: new Date().toISOString(),
+            last_position: isComp ? 0 : Math.floor(current),
+            watch_percentage: watchPercentage,
+            completed: isComp,
+          }
+        }).unwrap().catch(err => console.error("Error saving watch history:", err));
+      }
+    };
+
     // --- EXPOSE METHODS VIA REF ---
     useImperativeHandle(ref, () => ({
       play: () => playerInstanceRef.current?.playVideo(),
       pause: () => playerInstanceRef.current?.pauseVideo(),
       getDuration: () => playerInstanceRef.current?.getDuration(),
-      saveProgress: async () => {
-        if (playerInstanceRef.current && playerInstanceRef.current.getCurrentTime) {
-          const isComp = wasThresholdReachedRef.current || wasCompletedSavedRef.current;
-          await saveWatchHistory(
-            userid,
-            movieIdRef.current,
-            episodeIdRef.current,
-            videoIdRef.current,
-            isComp ? 0 : playerInstanceRef.current.getCurrentTime(),
-            isComp,
-            playerInstanceRef,
-            type
-          );
-        }
-      }
+      saveProgress: handleSaveProgress
     }));
 
     // --- ID EXTRACTION ---
@@ -294,7 +302,8 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
         if (
           playerInstanceRef.current &&
           playerInstanceRef.current.getPlayerState() === window.YT.PlayerState.PLAYING &&
-          !isCountdownStartedRef.current
+          !isCountdownStartedRef.current &&
+          !wasThresholdReachedRef.current
         ) {
           const currentTime = playerInstanceRef.current.getCurrentTime();
           const duration = playerInstanceRef.current.getDuration();
@@ -306,22 +315,9 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
 
             wasThresholdReachedRef.current = true;
             wasCompletedSavedRef.current = true;
-            // Explicitly pause video to "end" it early
-            // playerInstanceRef.current?.pauseVideo();
-
-            playerInstanceRef.current.seekTo(duration, true);
 
             // Save as completed
-            await saveWatchHistory(
-              userid,
-              movieIdRef.current,
-              episodeIdRef.current,
-              videoIdRef.current,
-              duration,
-              true,
-              playerInstanceRef,
-              type
-            );
+            await handleSaveProgress(true);
 
             if (onProgressUpdate) {
               onProgressUpdate({
@@ -331,9 +327,15 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
               });
             }
 
-            if (currentVideoIndex < currentQueue.length - 1 || (isSeries && !!onPlaylistAdvance)) {
+            if (currentVideoIndex < currentQueue.length - 1) {
+              playerInstanceRef.current.seekTo(duration, true);
               startCountdown();
             } else {
+              // End of single video or playlist - pause to prevent flicker/grid
+              if (playerInstanceRef.current && playerInstanceRef.current.pauseVideo) {
+                playerInstanceRef.current.pauseVideo();
+              }
+              playerInstanceRef.current.seekTo(duration, true);
               setVideoEnded(true);
               setCountdown(0);
             }
@@ -483,39 +485,24 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
       const state = e.data;
 
       if (state === window.YT.PlayerState.ENDED) {
+        // If we already handled this via threshold polling, don't repeat the logic
+        if (wasThresholdReachedRef.current) return;
+
         // Prevent any auto-replay edge cases when the iframe reports ENDED
         // Save watch history
-        await saveWatchHistory(
-          userid,
-          movieIdRef.current,
-          episodeIdRef.current,
-          videoIdRef.current,
-          e.target.getCurrentTime(),
-          true,
-          playerInstanceRef,
-          type
-        );
+        await handleSaveProgress(true);
 
         // Check if there's a next video
         if (currentVideoIndex < currentQueue.length - 1) {
           startCountdown();
         } else {
           setVideoEnded(true);
-          setCountdown(0); // 0 indicates end of playlist/single video
+          setCountdown(0);
         }
       }
 
       if (state === window.YT.PlayerState.PAUSED && !wasThresholdReachedRef.current && !wasCompletedSavedRef.current) {
-        await saveWatchHistory(
-          userid,
-          movieIdRef.current,
-          episodeIdRef.current,
-          videoIdRef.current,
-          e.target.getCurrentTime(),
-          false,
-          playerInstanceRef,
-          type
-        );
+        await handleSaveProgress(false);
         if (onProgressUpdate && !wasThresholdReachedRef.current) {
           const currentTime = e.target.getCurrentTime();
           const duration = e.target.getDuration();
@@ -532,16 +519,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
         const currentTime = e.target.getCurrentTime();
         if (currentTime > 1) {
           if (setFinal) setFinal(currentTime);
-          await saveWatchHistory(
-            userid,
-            movieIdRef.current,
-            episodeIdRef.current,
-            videoIdRef.current,
-            currentTime,
-            false,
-            playerInstanceRef,
-            type
-          );
+          await handleSaveProgress(false);
           if (onProgressUpdate) {
             const duration = e.target.getDuration();
             const percentage = duration > 0 ? (currentTime / duration) * 100 : 0;

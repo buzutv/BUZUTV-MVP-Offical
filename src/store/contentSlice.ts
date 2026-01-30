@@ -45,8 +45,9 @@ export const contentSlice = supabaseApi.injectEndpoints({
     >({
       query: ({ userId, contentIds }) => {
         const ids = contentIds.join(",");
-        return `content?id=in.(${ids})&select=*,user_watch_history(watch_percentage,last_position,completed,movie_id)&user_watch_history.user_id=eq.${userId}`;
+        return `content?id=in.(${ids})&select=*,user_watch_history(*,movie_id)&user_watch_history.user_id=eq.${userId}`;
       },
+      providesTags: ['Content', 'user_watch_history'],
     }),
     getContentWithWatchHistoryFilters: builder.query<Content[], RelatedContentFilterProps & {
       userId: string
@@ -70,7 +71,8 @@ export const contentSlice = supabaseApi.injectEndpoints({
           method: 'GET',
 
         }
-      }
+      },
+      providesTags: ['Content', 'user_watch_history'],
     }),
 
     createContent: builder.mutation<Content, Partial<Content>>({
