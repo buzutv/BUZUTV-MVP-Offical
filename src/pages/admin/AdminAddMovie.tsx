@@ -20,7 +20,7 @@ const AdminAddMovie = () => {
     }
 
     setIsLoading(true);
-
+    const { seasonsData, ...formData } = data;
     try {
       const contentData: any = {
         title: data.title,
@@ -28,18 +28,18 @@ const AdminAddMovie = () => {
         type: data.type,
         is_kids: data.isKids || false,
         genre: data.genre || null,
-        year: data.year ? parseInt(data.year) : null,
-        rating: data.rating ? parseFloat(data.rating) : null,
+        year: data.year ? parseInt(data.year.toString()) : null,
+        rating: data.rating ? parseFloat(data.rating.toString()) : null,
         poster_url: data.posterUrl || null,
         backdrop_url: data.backdropUrl || null,
         video_url: data.videoUrl || null,
-        duration_minutes: data.type === 'movie' && data.durationMinutes ? parseInt(data.durationMinutes) : null,
-        seasons: data.type === 'series' && data.seasons ? parseInt(data.seasons) : null,
-        episodes: data.type === 'series' && data.episodes ? parseInt(data.episodes) : null,
+        duration_minutes: data.durationMinutes ? parseInt(data.durationMinutes.toString()) : null,
+        seasons: data.type === 'series' && data.seasons ? parseInt(data.seasons.toString()) : null,
+        episodes: data.type === 'series' && data.episodes ? parseInt(data.episodes.toString()) : null,
         is_featured: data.isFeatured || false,
         is_trending: data.isTrending || false,
         channel_id: data.channelId || null,
-        completion_threshold_seconds: +data.completionThresholdSeconds || null,
+        completion_threshold_seconds: data.completionThresholdSeconds ? parseInt(data.completionThresholdSeconds.toString()) : null,
       };
 
       // Store detailed seasons data if provided
@@ -99,8 +99,8 @@ const AdminAddMovie = () => {
               episode_number: episode.episodeNumber,
               title: episode.title,
               season_id: seasonId,
-              completion_threshold_seconds: +episode.completionThresholdSeconds,
-              duration_minutes: episode.durationMinutes,
+              duration_minutes: episode.durationMinutes ? parseInt(episode.durationMinutes) : null,
+              completion_threshold_seconds: episode.completionThresholdSeconds ? parseInt(episode.completionThresholdSeconds.toString()) : null,
             };
 
             // Add optional fields if they exist

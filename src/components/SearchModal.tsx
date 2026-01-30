@@ -7,7 +7,8 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ContentCard from "@/components/ContentCard";
-import ChannelCard, { Channel as ChannelType } from "@/components/ChannelCard";
+import ChannelCard from "@/components/ChannelCard";
+import { Channel as ChannelType } from "@/hooks/useChannels";
 import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
 import { Content } from "@/types"; // Ensure this import matches your types.ts
@@ -54,8 +55,7 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
         const channelResults = channels.filter(
             (channel) =>
                 channel.name.toLowerCase().includes(query) ||
-                channel.description?.toLowerCase().includes(query) ||
-                channel.genre?.toLowerCase().includes(query)
+                channel.description?.toLowerCase().includes(query)
         );
 
         const contentResults = content.filter((item) => {
@@ -99,7 +99,7 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
                 name: ch.name,
                 logoUrl: ch.logo_url || "/placeholder.svg",
                 description: ch.description,
-                genre: ch.genre || "", // Fix for 'genre does not exist' if it's used
+                genre: "", // Fix for 'genre does not exist' if it's used
                 contentCount: 0,
             })),
             movies: searchResults.movies.map(formatContentItem),
@@ -157,10 +157,12 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
                     }}
                 ></div>
             )}
-            <DialogContent className="max-w-[90vw] w-full h-[85vh] p-0 bg-black/95 border-white/10 backdrop-blur-xl gap-0 overflow-hidden flex flex-col">
+            <DialogContent
+                hideCloseButton={true}
+                className="max-w-[90vw] w-full h-[85vh] p-0 bg-black/95 border-white/10 backdrop-blur-xl gap-0 overflow-hidden flex flex-col"
+            >
                 {/* Header */}
                 <div className="flex items-center gap-4 px-6 py-4 border-b border-white/10 shrink-0">
-
                     <Search className="w-5 h-5 text-gray-400" />
                     <input
                         autoFocus
@@ -169,7 +171,13 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
-                    {/* Close button is handled by DialogPrimitive internally usually, but we can add explicit one or rely on X */}
+                    <button
+                        onClick={onClose}
+                        className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white"
+                        aria-label="Close search"
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
                 </div>
 
                 <ScrollArea className="flex-1">
@@ -283,6 +291,7 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
                         console.log("Starting playback from SearchModal for:", title);
                     }}
                     // Pass minimal required props, content modal fetches details internally mostly
+                    movieId={selectedItem.id}
                     videoUrl={content.find(c => c.id === selectedItem.id)?.video_url}
                     contentItem={content.find(c => c.id === selectedItem.id)}
                 />

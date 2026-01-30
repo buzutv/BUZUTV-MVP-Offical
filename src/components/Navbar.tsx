@@ -143,14 +143,14 @@ const Navbar = React.memo(
               "border-radius 300ms ease, border-bottom-color 300ms ease",
           }}
         >
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 min-w-max">
             <Link to="/" className="flex items-center">
               <img src="/logo.png" alt="BUZUTV - Home" className="h-10 w-auto" />
             </Link>
           </div>
 
-          <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
-            <div className="hidden min-[1100px]:flex items-center gap-4 whitespace-nowrap">
+          <div className="hidden min-[1100px]:flex flex-1 justify-center px-4 overflow-hidden mx-4">
+            <div className="flex items-center gap-2 min-[1200px]:gap-4 whitespace-nowrap pr-4">
               {navItems.map(({ to, label }) => (
                 <Link
                   key={to}
@@ -211,7 +211,7 @@ const Navbar = React.memo(
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {/* Desktop search - Fake Input Trigger */}
             <div className="relative rounded-full px-2 py-1 hidden min-[1100px]:block">
               <div

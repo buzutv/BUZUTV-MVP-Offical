@@ -449,15 +449,16 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
                     !isCountdownStartedRef.current
                 ) {
                     const currentTime = playerInstanceRef.current.getCurrentTime();
-                    const threshold = completionThresholdRef.current;
+                    const duration = playerInstanceRef.current.getDuration();
+                    const offset = completionThresholdRef.current || 0;
+                    const triggerPoint = Math.max(0, duration - offset);
 
-                    if (threshold && threshold > 0 && currentTime >= threshold) {
-                        console.log(`[PlaylistVideoPlayer] Completion threshold reached: ${currentTime}s >= ${threshold}s. Triggering end.`);
+                    if (offset > 0 && duration > 0 && currentTime >= triggerPoint) {
+                        console.log(`[PlaylistVideoPlayer] Completion threshold reached: ${currentTime}s >= ${triggerPoint}s (Duration: ${duration}s, Offset: ${offset}s). Triggering end.`);
 
                         wasThresholdReachedRef.current = true;
                         wasCompletedSavedRef.current = true;
 
-                        const duration = playerInstanceRef.current.getDuration();
                         playerInstanceRef.current.seekTo(duration, true);
 
                         // Save as completed

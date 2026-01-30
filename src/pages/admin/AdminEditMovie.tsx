@@ -53,7 +53,7 @@ const AdminEditMovie = () => {
 
   const handleSubmit = async (data: any) => {
     setIsLoading(true);
-
+    console.log("Admin edit data", data)
     try {
       const updateData: any = {
         title: data.title,
@@ -61,19 +61,19 @@ const AdminEditMovie = () => {
         type: data.type,
         is_kids: data.isKids || false,
         genre: data.genre || null,
-        year: data.year ? parseInt(data.year) : null,
-        rating: data.rating ? parseFloat(data.rating) : null,
+        year: data.year ? parseInt(data.year.toString()) : null,
+        rating: data.rating ? parseFloat(data.rating.toString()) : null,
         poster_url: data.posterUrl || null,
         backdrop_url: data.backdropUrl || null,
         video_url: data.videoUrl || null,
-        duration_minutes: data.durationMinutes ? parseInt(data.durationMinutes) : null,
-        seasons: data.seasons ? parseInt(data.seasons) : null,
-        episodes: data.episodes ? parseInt(data.episodes) : null,
+        duration_minutes: data.durationMinutes ? parseInt(data.durationMinutes.toString()) : null,
+        seasons: data.seasons ? parseInt(data.seasons.toString()) : null,
+        episodes: data.episodes ? parseInt(data.episodes.toString()) : null,
         is_featured: data.isFeatured || false,
         is_trending: data.isTrending || false,
         channel_id: data.channelId || null,
         updated_at: new Date().toISOString(),
-        completion_threshold_seconds: +data.completionThresholdSeconds || null,
+        completion_threshold_seconds: data.completionThresholdSeconds || null,
       };
 
       // Store detailed seasons data in a separate field if needed
@@ -153,6 +153,8 @@ const AdminEditMovie = () => {
               episode_number: episode.episodeNumber,
               title: episode.title,
               season_id: seasonId,
+              duration_minutes: episode.durationMinutes ? parseInt(episode.durationMinutes.toString()) : null,
+              completion_threshold_seconds: episode.completionThresholdSeconds || null,
             };
 
             // Add optional fields
@@ -161,7 +163,6 @@ const AdminEditMovie = () => {
             if (episode.posterUrl) episodePayload.thumbnail_url = episode.posterUrl;
             // if (episode.airDate) episodePayload.air_date = episode.airDate;
             // if (episode.rating) episodePayload.rating = parseFloat(episode.rating);
-            if (episode.completionThresholdSeconds) episodePayload.completion_threshold_seconds = +episode.completionThresholdSeconds;
 
             if (existingEpisode) {
               // Update existing episode

@@ -78,32 +78,7 @@ const MovieForm: React.FC<MovieFormProps> = ({
   submitLabel = "Save Movie",
 }) => {
   // Process initial data to convert threshold back to offset for display
-  const processedInitialData = React.useMemo(() => {
-    if (!initialData) return initialData;
-
-    const convertToOffset = (threshold: number, durationMinutes: string | undefined) => {
-      if (!threshold || !durationMinutes) return threshold;
-      const durationSeconds = parseInt(durationMinutes) * 60;
-      if (isNaN(durationSeconds) || durationSeconds <= 0) return threshold;
-      return Math.max(0, durationSeconds - threshold);
-    };
-
-    const movieOffset = convertToOffset(initialData.completionThresholdSeconds || 0, initialData.durationMinutes);
-
-    const processedSeasons = initialData.seasons?.map(season => ({
-      ...season,
-      episodes: season.episodes?.map(episode => ({
-        ...episode,
-        completionThresholdSeconds: convertToOffset(episode.completionThresholdSeconds || 0, episode.durationMinutes)
-      }))
-    }));
-
-    return {
-      ...initialData,
-      completionThresholdSeconds: movieOffset,
-      seasons: processedSeasons
-    };
-  }, [initialData]);
+  const processedInitialData = initialData;
 
   const form = useForm<MovieFormData>({
     resolver: zodResolver(movieSchema),
@@ -174,29 +149,13 @@ const MovieForm: React.FC<MovieFormProps> = ({
   };
 
   const handleSubmit = (data: MovieFormData) => {
-    // Calculate actual thresholds from offsets
-    const computeThreshold = (offset: number | undefined, durationMinutes: string | undefined) => {
-      if (offset === undefined || offset === null || !durationMinutes) return offset;
-      const durationSeconds = parseInt(durationMinutes) * 60;
-      if (isNaN(durationSeconds) || durationSeconds <= 0) return offset;
-      return Math.max(0, durationSeconds - offset);
-    };
-
     // Calculate totals for series
     let totalSeasons = 0;
     let totalEpisodes = 0;
 
-    const movieThreshold = data.type === "movie"
-      ? computeThreshold(data.completionThresholdSeconds || 0, data.durationMinutes)
-      : undefined; // Set to undefined if not a movie
+    const movieThreshold = data.completionThresholdSeconds;
 
-    const processedSeasons = data.seasons?.map(season => ({
-      ...season,
-      episodes: season.episodes?.map(episode => ({
-        ...episode,
-        completionThresholdSeconds: computeThreshold(episode.completionThresholdSeconds || 0, episode.durationMinutes)
-      }))
-    }));
+    const processedSeasons = data.seasons;
 
     if (data.type === "series" && data.seasons) {
       totalSeasons = data.seasons.length;

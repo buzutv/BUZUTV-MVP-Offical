@@ -541,8 +541,13 @@ const ContentModal: React.FC<ContentModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
         onInteractOutside={(e) => {
-          if (isSeriesPlayerOpen) {
-            e.preventDefault(); // Only block outside clicks when player is open
+          if (isSeriesPlayerOpen || isMovieOpen) {
+            e.preventDefault();
+          }
+        }}
+        onEscapeKeyDown={(e) => {
+          if (isSeriesPlayerOpen || isMovieOpen) {
+            e.preventDefault();
           }
         }}
         className={`max-w-full md:max-w-[75vw] max-h-full md:max-h-[90vh] text-white border-none p-0 overflow-hidden transition-all duration-1000 ease-in-out opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 ${getBackgroundStyles()}`}

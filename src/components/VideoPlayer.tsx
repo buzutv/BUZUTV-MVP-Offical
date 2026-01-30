@@ -297,17 +297,18 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
           !isCountdownStartedRef.current
         ) {
           const currentTime = playerInstanceRef.current.getCurrentTime();
-          const threshold = completionThresholdRef.current;
+          const duration = playerInstanceRef.current.getDuration();
+          const offset = completionThresholdRef.current || 0;
+          const triggerPoint = Math.max(0, duration - offset);
 
-          if (threshold && threshold > 0 && currentTime >= threshold) {
-            console.log(`[VideoPlayer] Completion threshold reached: ${currentTime}s >= ${threshold}s. Triggering end.`);
+          if (offset > 0 && duration > 0 && currentTime >= triggerPoint) {
+            console.log(`[VideoPlayer] Completion threshold reached: ${currentTime}s >= ${triggerPoint}s (Duration: ${duration}s, Offset: ${offset}s). Triggering end.`);
 
             wasThresholdReachedRef.current = true;
             wasCompletedSavedRef.current = true;
             // Explicitly pause video to "end" it early
             // playerInstanceRef.current?.pauseVideo();
 
-            const duration = playerInstanceRef.current.getDuration();
             playerInstanceRef.current.seekTo(duration, true);
 
             // Save as completed
