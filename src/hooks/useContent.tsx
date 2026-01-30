@@ -4,28 +4,8 @@ import { useContentCache } from "@/hooks/useContentCache";
 import { useGetContentQuery, useGetContentWithWatchHistoryQuery } from "@/store/contentSlice";
 import { useAuth } from "@/contexts/AuthContext";
 
-export interface Content {
-  id: string;
-  title: string;
-  description: string | null;
-  type: "movie" | "series";
-  is_kids: boolean | null;
-  genre: string | null;
-  year: number | null;
-  rating: number | null;
-  poster_url: string | null;
-  backdrop_url: string | null;
-  video_url: string | null;
-  duration_minutes: number | null;
-  seasons: number | null;
-  episodes: number | null;
-  is_featured: boolean | null;
-  is_trending: boolean | null;
-  channel_id: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-  seasons_data?: any;
-}
+import { Content } from "@/types";
+export type { Content };
 
 const fetchContentData = async (): Promise<Content[]> => {
   const start = performance.now();
@@ -67,8 +47,7 @@ const searchContentData = async (query: string): Promise<Content[]> => {
     toast.error("Failed to search content");
     throw error;
   }
-  return data || [];
-
+  return (data as any) || [];
 }
 export const useContent = () => {
   const { user } = useAuth();

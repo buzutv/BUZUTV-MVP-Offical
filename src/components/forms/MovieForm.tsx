@@ -35,7 +35,7 @@ const episodeSchema = z.object({
   durationMinutes: z.string().optional(),
   airDate: z.string().optional(),
   rating: z.string().optional(),
-  completionThresholdSeconds: z.string().optional(),
+  completionThresholdSeconds: z.coerce.number().optional(),
 });
 
 const seasonSchema = z.object({
@@ -59,7 +59,7 @@ const movieSchema = z.object({
   isFeatured: z.boolean().default(false),
   isTrending: z.boolean().default(false),
   channelId: z.string().optional(),
-  completionThresholdSeconds: z.string().optional(),
+  completionThresholdSeconds: z.coerce.number().optional(),
 });
 
 type MovieFormData = z.infer<typeof movieSchema>;
@@ -77,24 +77,53 @@ const MovieForm: React.FC<MovieFormProps> = ({
   isLoading = false,
   submitLabel = "Save Movie",
 }) => {
+  // Process initial data to convert threshold back to offset for display
+  const processedInitialData = React.useMemo(() => {
+    if (!initialData) return initialData;
+
+    const convertToOffset = (threshold: number, durationMinutes: string | undefined) => {
+      if (!threshold || !durationMinutes) return threshold;
+      const durationSeconds = parseInt(durationMinutes) * 60;
+      if (isNaN(durationSeconds) || durationSeconds <= 0) return threshold;
+      return Math.max(0, durationSeconds - threshold);
+    };
+
+    const movieOffset = convertToOffset(initialData.completionThresholdSeconds || 0, initialData.durationMinutes);
+
+    const processedSeasons = initialData.seasons?.map(season => ({
+      ...season,
+      episodes: season.episodes?.map(episode => ({
+        ...episode,
+        completionThresholdSeconds: convertToOffset(episode.completionThresholdSeconds || 0, episode.durationMinutes)
+      }))
+    }));
+
+    return {
+      ...initialData,
+      completionThresholdSeconds: movieOffset,
+      seasons: processedSeasons
+    };
+  }, [initialData]);
+
   const form = useForm<MovieFormData>({
     resolver: zodResolver(movieSchema),
     defaultValues: {
-      isKids: initialData?.isKids ?? false,
-      title: initialData?.title || "",
-      description: initialData?.description || "",
-      type: initialData?.type || "movie",
-      genre: initialData?.genre || "",
-      year: initialData?.year || "",
-      rating: initialData?.rating || "",
-      posterUrl: initialData?.posterUrl || "",
-      backdropUrl: initialData?.backdropUrl || "",
-      videoUrl: initialData?.videoUrl || "",
-      durationMinutes: initialData?.durationMinutes || "",
-      seasons: initialData?.seasons || [],
-      isFeatured: initialData?.isFeatured ?? false,
-      isTrending: initialData?.isTrending ?? false,
-      channelId: initialData?.channelId || "",
+      isKids: processedInitialData?.isKids ?? false,
+      title: processedInitialData?.title || "",
+      description: processedInitialData?.description || "",
+      type: processedInitialData?.type || "movie",
+      genre: processedInitialData?.genre || "",
+      year: processedInitialData?.year || "",
+      rating: processedInitialData?.rating || "",
+      posterUrl: processedInitialData?.posterUrl || "",
+      backdropUrl: processedInitialData?.backdropUrl || "",
+      videoUrl: processedInitialData?.videoUrl || "",
+      durationMinutes: processedInitialData?.durationMinutes || "",
+      seasons: processedInitialData?.seasons || [],
+      isFeatured: processedInitialData?.isFeatured ?? false,
+      isTrending: processedInitialData?.isTrending ?? false,
+      channelId: processedInitialData?.channelId || "",
+      completionThresholdSeconds: processedInitialData?.completionThresholdSeconds || 0
     },
   });
 
@@ -145,9 +174,29 @@ const MovieForm: React.FC<MovieFormProps> = ({
   };
 
   const handleSubmit = (data: MovieFormData) => {
+    // Calculate actual thresholds from offsets
+    const computeThreshold = (offset: number | undefined, durationMinutes: string | undefined) => {
+      if (offset === undefined || offset === null || !durationMinutes) return offset;
+      const durationSeconds = parseInt(durationMinutes) * 60;
+      if (isNaN(durationSeconds) || durationSeconds <= 0) return offset;
+      return Math.max(0, durationSeconds - offset);
+    };
+
     // Calculate totals for series
     let totalSeasons = 0;
     let totalEpisodes = 0;
+
+    const movieThreshold = data.type === "movie"
+      ? computeThreshold(data.completionThresholdSeconds || 0, data.durationMinutes)
+      : undefined; // Set to undefined if not a movie
+
+    const processedSeasons = data.seasons?.map(season => ({
+      ...season,
+      episodes: season.episodes?.map(episode => ({
+        ...episode,
+        completionThresholdSeconds: computeThreshold(episode.completionThresholdSeconds || 0, episode.durationMinutes)
+      }))
+    }));
 
     if (data.type === "series" && data.seasons) {
       totalSeasons = data.seasons.length;
@@ -159,9 +208,10 @@ const MovieForm: React.FC<MovieFormProps> = ({
 
     const transformedData = {
       ...data,
+      completionThresholdSeconds: movieThreshold,
       seasons: data.type === "series" ? totalSeasons.toString() : undefined,
       episodes: data.type === "series" ? totalEpisodes.toString() : undefined,
-      seasonsData: data.type === "series" ? data.seasons : undefined,
+      seasonsData: data.type === "series" ? processedSeasons : undefined,
     };
     onSubmit(transformedData);
   };
@@ -406,14 +456,18 @@ const MovieForm: React.FC<MovieFormProps> = ({
             name="completionThresholdSeconds"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-white">Completion Threshold (seconds)</FormLabel>
+                <FormLabel className="text-white">Completion Offset (seconds before end)</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
-                    placeholder="Completion threshold in seconds"
+                    type="number"
+                    placeholder="e.g. 10"
                     className="bg-gray-700 border-gray-600 text-white"
                   />
                 </FormControl>
+                <div className="text-xs text-gray-400 mt-1">
+                  How many seconds before the end to mark as completed.
+                </div>
                 <FormMessage />
               </FormItem>
             )}
@@ -645,14 +699,18 @@ const MovieForm: React.FC<MovieFormProps> = ({
                         name={`seasons.${seasonIndex}.episodes.${episodeIndex}.completionThresholdSeconds`}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-white">Completion Threshold (seconds)</FormLabel>
+                            <FormLabel className="text-white">Completion Offset (seconds before end)</FormLabel>
                             <FormControl>
                               <Input
                                 {...field}
-                                placeholder="Completion threshold in seconds"
+                                type="number"
+                                placeholder="e.g. 10"
                                 className="bg-gray-700 border-gray-600 text-white"
                               />
                             </FormControl>
+                            <div className="text-xs text-gray-400 mt-1">
+                              Seconds before the end to mark as completed.
+                            </div>
                             <FormMessage />
                           </FormItem>
                         )}

@@ -17,6 +17,7 @@ import BrandButton from "./ui/BrandButton";
 import { Channel } from "@/data/mockMovies";
 import { useDispatch } from "react-redux";
 import { openScreenPlayer, closeScreenPlayer } from "@/store/screenPlayerSlice";
+import { useLazyGetSeasonWithEpisodesQuery } from "@/store/seasonSlice";
 
 
 export interface HeroCarouselItem {
@@ -62,50 +63,49 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
   const [fullscreenUrl, setFullscreenUrl] = useState<string | null>(null);
   const [fullscreenTitle, setFullscreenTitle] = useState<string | null>(null);
+  const [seasons, setSeasons] = useState<any[]>([]);
+  const [triggerSeasonWithEpisodesandWatchHistory] = useLazyGetSeasonWithEpisodesQuery()
 
   // Play video in fullscreen
   const handlePlay = async (item: HeroCarouselItem) => {
     const currentBackendItem = content.find((c) => c.id === item.id);
-
+    console.log("Handle Play Item", item, currentBackendItem)
     if (item.type === "series") {
+      const seasonWithEpisodes = await triggerSeasonWithEpisodesandWatchHistory({ contentId: currentBackendItem?.id, userId: user?.id }).unwrap()
       let videoUrl = "";
       let title = item.title;
-      let seasonsData = item.seasons_data || currentBackendItem?.seasons_data;
+      // let seasonsData = seasonWithEpisodes?.seasons_data || currentBackendItem?.seasons_data;
 
-      if (seasonsData) {
-        if (typeof seasonsData === "string") {
-          try {
-            seasonsData = JSON.parse(seasonsData);
-          } catch {
-            // Parsing failed
-          }
-        }
-        if (
-          Array.isArray(seasonsData) &&
-          seasonsData.length > 0 &&
-          seasonsData[0].episodes &&
-          seasonsData[0].episodes.length > 0
-        ) {
-          const firstEpisode = seasonsData[0].episodes[0];
-          videoUrl = firstEpisode.videoUrl || firstEpisode.video_url;
-          title = `${item.title} - ${firstEpisode.title}`;
+      if (seasonWithEpisodes) {
+        // if (typeof seasonsData === "string") {
+        //   try {
+        //     seasonsData = JSON.parse(seasonsData);
+        //   } catch {
+        //     // Parsing failed
+        //   }
+        // }
 
-          dispatch(openScreenPlayer({
-            isOpen: true,
-            selectedVideo: firstEpisode,
-            selectedVideoTitle: title,
-            videoUrl: videoUrl,
-            contentId: item.id,
-            poster_url: item.posterUrl || currentBackendItem?.poster_url,
-            isSeries: true,
-            seriesData: seasonsData[0]
-          }));
+        const firstEpisode = seasonWithEpisodes[0].episodes[0];
+        videoUrl = firstEpisode.videoUrl || firstEpisode.video_url;
+        title = `${item.title} - ${firstEpisode.title}`;
 
-          setFullscreenUrl(videoUrl);
-          setFullscreenTitle(title);
-          setFullscreenOpen(true);
-        }
+        dispatch(openScreenPlayer({
+          isOpen: true,
+          selectedVideo: firstEpisode,
+          selectedVideoTitle: title,
+          videoUrl: videoUrl,
+          contentId: item.id,
+          poster_url: item.posterUrl || currentBackendItem?.poster_url,
+          isSeries: true,
+          seriesData: seasonWithEpisodes
+        }));
+
+        setFullscreenUrl(videoUrl);
+        setFullscreenTitle(title);
+        setSeasons(seasonWithEpisodes);
+        setFullscreenOpen(true);
       }
+
       return;
     }
 
@@ -148,6 +148,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
     setFullscreenOpen(false);
     setFullscreenUrl(null);
     setFullscreenTitle(null);
+    setSeasons([]);
   };
 
   // Handle save/unsave for favorites
@@ -403,6 +404,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
           movieId={modalItem?.id || items.find(i => i.videoUrl === fullscreenUrl || i.title === fullscreenTitle)?.id}
           type={modalItem?.type || (items.find(i => i.videoUrl === fullscreenUrl || i.title === fullscreenTitle)?.type as any) || "movie"}
           poster_url={modalItem?.posterUrl || items.find(i => i.videoUrl === fullscreenUrl || i.title === fullscreenTitle)?.posterUrl}
+          season={seasons}
         />
       )}
 

@@ -72,7 +72,8 @@ const AdminEditMovie = () => {
         is_featured: data.isFeatured || false,
         is_trending: data.isTrending || false,
         channel_id: data.channelId || null,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        completion_threshold_seconds: +data.completionThresholdSeconds || null,
       };
 
       // Store detailed seasons data in a separate field if needed
@@ -160,7 +161,7 @@ const AdminEditMovie = () => {
             if (episode.posterUrl) episodePayload.thumbnail_url = episode.posterUrl;
             // if (episode.airDate) episodePayload.air_date = episode.airDate;
             // if (episode.rating) episodePayload.rating = parseFloat(episode.rating);
-            if (episode.completionThresholdSeconds) episodePayload.completion_threshold_seconds = episode.completionThresholdSeconds;
+            if (episode.completionThresholdSeconds) episodePayload.completion_threshold_seconds = +episode.completionThresholdSeconds;
 
             if (existingEpisode) {
               // Update existing episode
@@ -251,7 +252,8 @@ const AdminEditMovie = () => {
               seasons: seasonsData,
               isFeatured: movie.is_featured || false,
               isTrending: movie.is_trending || false,
-              channelId: movie.channel_id || ''
+              channelId: movie.channel_id || '',
+              completionThresholdSeconds: movie.completion_threshold_seconds || 0
             }}
             isLoading={isLoading}
             submitLabel={`Update ${movie.type === 'series' ? 'Series' : 'Movie'}`}

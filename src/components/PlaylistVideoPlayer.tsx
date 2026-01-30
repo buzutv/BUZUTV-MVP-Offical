@@ -42,6 +42,8 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
         const countdownRef = useRef<any>(null);
         const isCountdownStartedRef = useRef(false);
         const completionThresholdRef = useRef(completionThreshold);
+        const wasThresholdReachedRef = useRef(false);
+        const wasCompletedSavedRef = useRef(false);
 
         // Redux State
         const selectedVideo = useSelector((state: any) => state.screenPlayer.selectedVideo);
@@ -178,6 +180,8 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
         useEffect(() => {
             videoIdRef.current = videoId;
             isCountdownStartedRef.current = false; // Reset when video changes
+            wasThresholdReachedRef.current = false;
+            wasCompletedSavedRef.current = false;
             setVideoEnded(false); // Ensure UI overlay is cleared
         }, [videoId]);
 
@@ -192,13 +196,14 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
             getDuration: () => playerInstanceRef.current?.getDuration(),
             saveProgress: async () => {
                 if (playerInstanceRef.current && playerInstanceRef.current.getCurrentTime) {
+                    const isComp = wasThresholdReachedRef.current || wasCompletedSavedRef.current;
                     await saveWatchHistory(
                         userid,
                         movieIdRef.current,
                         episodeIdRef.current,
                         videoIdRef.current,
-                        playerInstanceRef.current.getCurrentTime(),
-                        false,
+                        isComp ? 0 : playerInstanceRef.current.getCurrentTime(),
+                        isComp,
                         playerInstanceRef,
                         type
                     );
@@ -273,7 +278,7 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
                 return lastPos;
             }
             return 0;
-        }, [localProgress]);
+        }, [localProgress, selectedVideo]);
 
         // --- NAVIGATION (Moved up so it's defined before usage) ---
         const playNext = useCallback(async () => {
@@ -437,7 +442,7 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
 
         // --- EARLY COUNTDOWN POLLING ---
         useEffect(() => {
-            const checkThreshold = setInterval(() => {
+            const checkThreshold = setInterval(async () => {
                 if (
                     playerInstanceRef.current &&
                     playerInstanceRef.current.getPlayerState() === window.YT.PlayerState.PLAYING &&
@@ -449,20 +454,31 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
                     if (threshold && threshold > 0 && currentTime >= threshold) {
                         console.log(`[PlaylistVideoPlayer] Completion threshold reached: ${currentTime}s >= ${threshold}s. Triggering end.`);
 
-                        // Explicitly pause video to "end" it early
-                        playerInstanceRef.current?.pauseVideo();
+                        wasThresholdReachedRef.current = true;
+                        wasCompletedSavedRef.current = true;
+
+                        const duration = playerInstanceRef.current.getDuration();
+                        playerInstanceRef.current.seekTo(duration, true);
 
                         // Save as completed
-                        saveWatchHistory(
+                        await saveWatchHistory(
                             userid,
                             movieIdRef.current,
                             episodeIdRef.current,
                             videoIdRef.current,
-                            currentTime,
+                            duration,
                             true,
                             playerInstanceRef,
                             type
                         );
+
+                        if (onProgressUpdate) {
+                            onProgressUpdate({
+                                id: episodeIdRef.current || movieIdRef.current,
+                                watch_percentage: 100,
+                                last_position: 0
+                            });
+                        }
 
                         if (checkHasNextVideo()) {
                             startCountdown();
@@ -603,7 +619,7 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
                 }
             }
 
-            if (state === window.YT.PlayerState.PAUSED) {
+            if (state === window.YT.PlayerState.PAUSED && !wasThresholdReachedRef.current && !wasCompletedSavedRef.current) {
                 // ... (Existing logic same as before)
                 await saveWatchHistory(
                     userid,
@@ -615,7 +631,7 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
                     playerInstanceRef,
                     type
                 );
-                if (onProgressUpdate) {
+                if (onProgressUpdate && !wasThresholdReachedRef.current) {
                     const currentTime = e.target.getCurrentTime();
                     const duration = e.target.getDuration();
                     const percentage = duration > 0 ? (currentTime / duration) * 100 : 0;
@@ -627,7 +643,7 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
                 }
             }
 
-            if (state === window.YT.PlayerState.BUFFERING) {
+            if (state === window.YT.PlayerState.BUFFERING && !wasThresholdReachedRef.current && !wasCompletedSavedRef.current) {
                 // ... (Existing logic same as before)
                 const currentTime = e.target.getCurrentTime();
                 if (currentTime > 1) {

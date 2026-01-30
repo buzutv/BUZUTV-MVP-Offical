@@ -39,7 +39,7 @@ const AdminAddMovie = () => {
         is_featured: data.isFeatured || false,
         is_trending: data.isTrending || false,
         channel_id: data.channelId || null,
-        completion_threshold_seconds: data.completionThresholdSeconds || null,
+        completion_threshold_seconds: +data.completionThresholdSeconds || null,
       };
 
       // Store detailed seasons data if provided
@@ -99,7 +99,7 @@ const AdminAddMovie = () => {
               episode_number: episode.episodeNumber,
               title: episode.title,
               season_id: seasonId,
-              completion_threshold_seconds: episode.completionThresholdSeconds,
+              completion_threshold_seconds: +episode.completionThresholdSeconds,
               duration_minutes: episode.durationMinutes,
             };
 

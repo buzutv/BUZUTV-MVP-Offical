@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
-import { ArrowLeft, Eye, X } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, X } from "lucide-react";
 import BrandButton from "@/components/ui/BrandButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -265,18 +265,26 @@ const Auth = () => {
                   Password
                 </label>
                 {errors.password && <p className="text-red-500 text-xs">{errors.password}</p>}
-                <div className="flex items-center px-3 py-1 justify-end gap-2 border border-white/30 rounded-lg">
+                <div className="relative">
                   <input
                     id="password"
-                    type={showPassword ? "password" : "text"}
+                    type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="text-sm w-full bg-black/30  text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
+                    className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors pr-10"
                     placeholder="Enter your password"
                   />
-                  <div onClick={() => setShowPassword(!showPassword)} className="p-0 h-full bg-transparent">
-                    <Eye size={15} />
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
                 </div>
                 {!isSignUp && (
                   <div className="mt-2">
@@ -301,19 +309,26 @@ const Auth = () => {
                   </label>
                   {errors.confirmPassword && <p className="text-red-500 text-xs">{errors.confirmPassword}</p>}
 
-                  <div className="flex items-center px-3 py-1  justify-end gap-2 border border-white/30 rounded-lg">
+                  <div className="relative">
                     <input
                       id="confirmPassword"
-                      type={showPassword ? "password" : "text"}
+                      type={showPassword ? "text" : "password"}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="text-sm w-full  bg-black/30  text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
+                      className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors pr-10"
                       placeholder="Confirm your password"
                     />
-                    <div onClick={() => setShowPassword(!showPassword)} className="p-0 h-full bg-transparent">
-                      <Eye size={15} />
-                    </div>
-
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
                   </div>
                 </div>
               )}

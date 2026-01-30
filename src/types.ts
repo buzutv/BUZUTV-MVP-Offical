@@ -17,7 +17,7 @@ export interface Content {
   channel_id?: string | null; // uuid
   created_at?: string | null; // ISO timestamp
   updated_at?: string | null; // ISO timestamp
-  seasons_data?: Record<string, any> | null; // jsonb
+  seasons_data?: any; // jsonb
   is_kids?: boolean | null;
   view_count?: number | null;
   trending_score?: number | null;

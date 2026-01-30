@@ -254,14 +254,14 @@ const FullscreenPlayer = ({
   useEffect(() => {
     const fetchNewSeasons = async () => {
       // Check if we switched to a series that matches selectedContent but differs from current seasons
-      const currentSeriesId = isSeries ? (selectedContent?.series_id || selectedContent?.id) : null;
+      const currentSeriesId = isSeries ? (seriesContentId || movieId || selectedContent?.series_id || selectedContent?.id) : null;
       if (isSeries && currentSeriesId && (!seasons.length || seasons[0]?.series_id !== currentSeriesId)) {
         setIsLoadingEpisodes(true);
         try {
           const { data, error } = await supabase
             .from('seasons')
             .select('*, episodes(*, user_watch_history(*))')
-            .eq('series_id', selectedContent.id)
+            .eq('series_id', currentSeriesId)
             .order('season_number', { ascending: true });
 
           if (data) {
@@ -285,17 +285,33 @@ const FullscreenPlayer = ({
             }));
             setSeasons(sortedSeasons);
 
+            // Find currently selected episode in the newly fetched seasons to get its history
+            const currentId = selectedContent?.id;
+            let enrichedEpisode = null;
+            if (currentId) {
+              for (const s of sortedSeasons) {
+                const match = s.episodes?.find((ep: any) => ep.id === currentId);
+                if (match) {
+                  enrichedEpisode = match;
+                  break;
+                }
+              }
+            }
+
             if (sortedSeasons.length > 0) {
               dispatch(openScreenPlayer({
                 isSeries: true,
-                seriesData: sortedSeasons[0]
+                seriesData: sortedSeasons[0],
+                selectedVideo: enrichedEpisode || selectedContent
               }));
             }
 
-            // Always select first season when series changes
+            // Always select first season when series changes if not already set
             if (sortedSeasons.length > 0) {
               const first = sortedSeasons[0];
-              setSelectedSeasonId(first.id);
+              if (!selectedSeasonId || (enrichedEpisode && enrichedEpisode.season_id !== selectedSeasonId)) {
+                setSelectedSeasonId(enrichedEpisode?.season_id || first.id);
+              }
             }
           }
         } catch (error) {
