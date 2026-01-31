@@ -1,4 +1,4 @@
-import React, { useEffect, useImperativeHandle, forwardRef, useRef, useState, memo, useCallback } from "react";
+import React, { useEffect, useImperativeHandle, forwardRef, useRef, useState, memo, useCallback, useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getYouTubeEmbedUrl, saveWatchHistory, fetchSeriesSeasons } from "@/utils/youtubeUtils";
 import { useDispatch, useSelector } from "react-redux";
@@ -50,10 +50,21 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
         const selectedVideo = useSelector((state: any) => state.screenPlayer.selectedVideo);
         const selectedVideoRef = useRef(selectedVideo);
         const playlistFullObject = useSelector((state: any) => state?.screenPlayer?.playlistInfo) || {};
-        const seriesData = useSelector((state: any) => state?.screenPlayer?.seriesData) || {};
-        const episodes = useSelector((state: any) => state?.screenPlayer?.seriesData?.episodes) || [];
+        const seriesData = useSelector((state: any) => state?.screenPlayer?.seriesData);
         const isSeries = useSelector((state: any) => state?.screenPlayer?.isSeries) || false;
         const currentVideoIndex = useSelector((state: any) => state?.screenPlayer?.currentVideoIndex) || 0;
+
+        // Flatten episodes if seriesData is an array of seasons
+        const episodes = useMemo(() => {
+            if (!isSeries || !seriesData) return [];
+            if (Array.isArray(seriesData)) {
+                return seriesData.flatMap(s => (s.episodes || []).map((ep: any) => ({
+                    ...ep,
+                    series_id: s.series_id || s.content_id // Ensure series_id is available
+                })));
+            }
+            return seriesData.episodes || [];
+        }, [seriesData, isSeries]);
 
         // Refs for playlist data to avoid stale closures in callbacks
         const playlistItemsRef = useRef<any[]>([]);
@@ -211,7 +222,8 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
             play: () => playerInstanceRef.current?.playVideo(),
             pause: () => playerInstanceRef.current?.pauseVideo(),
             getDuration: () => playerInstanceRef.current?.getDuration(),
-            saveProgress: handleSaveProgress
+            saveProgress: handleSaveProgress,
+            replay: handleReplay
         }));
 
         // --- ID EXTRACTION ---
@@ -341,8 +353,15 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
                     selectedVideo: nextVideoData,
                     isSeries: isSeries,
                     seriesData: isSeries ? seriesDataRef.current : undefined,
-                    contentId: isSeries ? (seriesDataRef.current?.content_id || seriesDataRef.current?.series_id || selectedVideoRef.current?.series_id) : nextVideoData.id,
-                    poster_url: isSeries ? (seriesDataRef.current?.poster_url || selectedVideoRef.current?.poster_url) : nextVideoData.poster_url,
+                    contentId: isSeries ? (
+                        (Array.isArray(seriesDataRef.current) ? seriesDataRef.current[0]?.content_id : seriesDataRef.current?.content_id) ||
+                        (Array.isArray(seriesDataRef.current) ? seriesDataRef.current[0]?.series_id : seriesDataRef.current?.series_id) ||
+                        selectedVideoRef.current?.series_id
+                    ) : nextVideoData.id,
+                    poster_url: isSeries ? (
+                        (Array.isArray(seriesDataRef.current) ? seriesDataRef.current[0]?.poster_url : seriesDataRef.current?.poster_url) ||
+                        selectedVideoRef.current?.poster_url
+                    ) : nextVideoData.poster_url,
                 }));
 
                 if (setCurrentMovie) {
@@ -565,11 +584,17 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
         }, [videoId, getVideoId, userid, getResumePosition]);
 
         const handleReplay = () => {
+            console.log("PlaylistVideoPlayer: handleReplay called");
+            clearCountdownTimer();
             setVideoEnded(false);
-            setCountdown(5); // Reset visual
-            isCountdownStartedRef.current = false; // Reset logical
-            playerInstanceRef.current?.seekTo(0);
-            playerInstanceRef.current?.playVideo();
+            setCountdown(0);
+            isCountdownStartedRef.current = false;
+            wasThresholdReachedRef.current = false;
+            wasCompletedSavedRef.current = false;
+            if (playerInstanceRef.current) {
+                playerInstanceRef.current.seekTo(0, true);
+                playerInstanceRef.current.playVideo();
+            }
         };
 
         const playPrevious = async () => {
@@ -619,8 +644,15 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
                 selectedVideo: prevVideoData,
                 isSeries: isSeries, // Keep current mode if traversing episodes
                 seriesData: isSeries ? seriesData : undefined,
-                contentId: isSeries ? (seriesData?.content_id || seriesData?.series_id || selectedVideo?.series_id) : prevVideoData.id,
-                poster_url: isSeries ? (seriesData?.poster_url || selectedVideo?.poster_url) : prevVideoData.poster_url,
+                contentId: isSeries ? (
+                    (Array.isArray(seriesData) ? seriesData[0]?.content_id : seriesData?.content_id) ||
+                    (Array.isArray(seriesData) ? seriesData[0]?.series_id : seriesData?.series_id) ||
+                    selectedVideo?.series_id
+                ) : prevVideoData.id,
+                poster_url: isSeries ? (
+                    (Array.isArray(seriesData) ? seriesData[0]?.poster_url : seriesData?.poster_url) ||
+                    selectedVideo?.poster_url
+                ) : prevVideoData.poster_url,
             }));
 
             if (setCurrentMovie) {

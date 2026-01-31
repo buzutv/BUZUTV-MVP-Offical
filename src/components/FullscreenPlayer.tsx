@@ -179,7 +179,7 @@ const FullscreenPlayer = ({
               isSeries: true,
               selectedVideo: firstEpisode,
               currentVideoIndex: 0, // Start at beginning of new series
-              seriesData: firstSeason,
+              seriesData: sortedSeasons,
               contentId: nextContent.id, // Set new series ID
               poster_url: nextContent.poster_url,
               // Keep playlist info!
@@ -254,12 +254,11 @@ const FullscreenPlayer = ({
   useEffect(() => {
     const fetchNewSeasons = async () => {
       // Check if we switched to a series that matches selectedContent but differs from current seasons
-      const currentSeriesId = isSeries ? (seriesContentId || movieId || selectedContent?.series_id || selectedContent?.id) : null;
       if (isSeries && currentSeriesId && (!seasons.length || seasons[0]?.series_id !== currentSeriesId)) {
         setIsLoadingEpisodes(true);
         try {
           const { data, error } = await supabase
-            .from('seasons')
+            .from('seasons' as any)
             .select('*, episodes(*, user_watch_history(*))')
             .eq('series_id', currentSeriesId)
             .order('season_number', { ascending: true });
@@ -276,6 +275,7 @@ const FullscreenPlayer = ({
 
                 return {
                   ...ep,
+                  series_id: s.series_id || s.content_id, // Inject series_id
                   watch_percentage: history?.watch_percentage || 0,
                   last_position: history?.last_position || 0,
                   completed: history?.completed || false,
@@ -301,8 +301,10 @@ const FullscreenPlayer = ({
             if (sortedSeasons.length > 0) {
               dispatch(openScreenPlayer({
                 isSeries: true,
-                seriesData: sortedSeasons[0],
-                selectedVideo: enrichedEpisode || selectedContent
+                seriesData: sortedSeasons,
+                selectedVideo: enrichedEpisode || selectedContent,
+                contentId: currentSeriesId,
+                poster_url: seriesPosterUrl || poster_url
               }));
             }
 
@@ -333,9 +335,9 @@ const FullscreenPlayer = ({
     if (seasons && seasons.length > 0 && !selectedSeasonId) {
       const firstSeason = seasons[0];
       const firstEpisode = firstSeason.episodes?.[0];
-      if (firstEpisode) {
+      if (firstSeason && firstEpisode) {
         setSelectedSeasonId(firstSeason.id);
-        if (!currentEpisode || currentEpisode.series_id !== firstSeason.series_id) {
+        if (!currentEpisode || (currentEpisode as any).series_id !== firstSeason.series_id) {
           setCurrentEpisode(firstEpisode);
           setMovieid(firstEpisode.id);
           setActualVideoUrl(firstEpisode.video_url || firstEpisode.videoUrl);
@@ -668,6 +670,8 @@ const FullscreenPlayer = ({
                                   last_position: progress.last_position
                                 } : episode;
 
+                                const isSameEpisode = currentEpisode?.id === episode.id;
+
                                 setCurrentEpisode(updatedEpisode);
                                 setActualVideoUrl(updatedEpisode.video_url || updatedEpisode.videoUrl);
                                 setVideoEnded(false);
@@ -675,15 +679,26 @@ const FullscreenPlayer = ({
                                 setMovies([updatedEpisode])
                                 playerRef.current?.scrollIntoView({ behavior: "smooth" });
 
-                                // Get all episodes from the current season for autoplay
-                                const allEpisodes = currentSeasonEpisodes || [];
+                                // If user clicks the SAME episode that's currently loaded (e.g. to replay it), 
+                                // force a replay via the ref since props won't trigger a reload.
+                                if (isSameEpisode && parentRef.current && (parentRef.current as any).replay) {
+                                  console.log("Replaying current episode...");
+                                  (parentRef.current as any).replay();
+                                }
+
+                                // Calculate global index for seamless playback across all seasons
+                                const currentSeasonIndex = seasons.findIndex(s => s.id === selectedSeasonId);
+                                const episodesBefore = seasons.slice(0, currentSeasonIndex).reduce((sum, s) => sum + (s.episodes?.length || 0), 0);
+                                const globalIndex = episodesBefore + index;
+
                                 dispatch(openScreenPlayer({
                                   isOpen: true,
                                   selectedVideo: updatedEpisode,
-                                  currentVideoIndex: index,
+                                  currentVideoIndex: globalIndex,
                                   isSeries: true,
-                                  seriesData: { episodes: allEpisodes },
-                                  poster_url: seriesPosterUrl
+                                  seriesData: seasons,
+                                  poster_url: seriesPosterUrl || poster_url,
+                                  contentId: seriesContentId || movieId || updatedEpisode.series_id
                                 }))
                               }}
                             >
