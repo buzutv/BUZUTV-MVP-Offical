@@ -235,20 +235,20 @@ const FullscreenPlayer = ({
   }, [season, isSeries]);
 
   // Sync with Redux seriesData and poster_url
-  // useEffect(() => {
-  //   if (isSeries && seriesDataFromRedux) {
-  //     const seasonsToSet = Array.isArray(seriesDataFromRedux) ? seriesDataFromRedux : [seriesDataFromRedux];
-  //     setSeasons(seasonsToSet);
+  useEffect(() => {
+    if (isSeries && seriesDataFromRedux) {
+      const seasonsToSet = Array.isArray(seriesDataFromRedux) ? seriesDataFromRedux : [seriesDataFromRedux];
+      setSeasons(seasonsToSet);
 
-  //     if (seasonsToSet.length > 0) {
-  //       // Check if current selected season is actually in the new list, if not select the first one
-  //       const seasonExists = seasonsToSet.find(s => s.id === selectedSeasonId);
-  //       if (!seasonExists) {
-  //         setSelectedSeasonId(seasonsToSet[0].id);
-  //       }
-  //     }
-  //   }
-  // }, [seriesDataFromRedux, isSeries]);
+      if (seasonsToSet.length > 0) {
+        // Check if current selected season is actually in the new list, if not select the first one
+        const seasonExists = seasonsToSet.find(s => s.id === selectedSeasonId);
+        if (!seasonExists) {
+          setSelectedSeasonId(seasonsToSet[0].id);
+        }
+      }
+    }
+  }, [seriesDataFromRedux, isSeries]);
 
   // Fetch seasons when switching to a different series via Related/Recommended
   useEffect(() => {

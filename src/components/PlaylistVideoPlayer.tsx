@@ -315,7 +315,6 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
 
                 // Handle transition TO a series from a movie in a playlist
                 if (!isSeries && nextVideoData.type === 'series') {
-                    // ... (Logic for handling series transition remains same)
                     const seasonsData = await fetchSeriesSeasons(nextVideoData.id);
                     if (seasonsData && seasonsData.length > 0) {
                         const firstSeason = seasonsData[0] as any;
@@ -326,7 +325,9 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
                                 currentVideoIndex: 0,
                                 selectedVideo: firstEpisode,
                                 isSeries: true,
-                                seriesData: firstSeason,
+                                seriesData: seasonsData,
+                                contentId: nextVideoData.id,
+                                poster_url: nextVideoData.poster_url,
                             }));
                             if (setCurrentMovie) setCurrentMovie(firstEpisode);
                             return;
@@ -340,6 +341,8 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
                     selectedVideo: nextVideoData,
                     isSeries: isSeries,
                     seriesData: isSeries ? seriesDataRef.current : undefined,
+                    contentId: isSeries ? (seriesDataRef.current?.content_id || seriesDataRef.current?.series_id || selectedVideoRef.current?.series_id) : nextVideoData.id,
+                    poster_url: isSeries ? (seriesDataRef.current?.poster_url || selectedVideoRef.current?.poster_url) : nextVideoData.poster_url,
                 }));
 
                 if (setCurrentMovie) {
@@ -368,7 +371,6 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
                     const nextContent = nextPlaylistItem.content || nextPlaylistItem;
 
                     if (nextContent.type === 'series') {
-                        // ... similar transition logic
                         const seasonsData = await fetchSeriesSeasons(nextContent.id);
                         if (seasonsData && seasonsData.length > 0) {
                             const firstSeason = seasonsData[0] as any;
@@ -379,7 +381,9 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
                                     currentVideoIndex: 0,
                                     selectedVideo: firstEpisode,
                                     isSeries: true,
-                                    seriesData: firstSeason,
+                                    seriesData: seasonsData,
+                                    contentId: nextContent.id,
+                                    poster_url: nextContent.poster_url,
                                 }));
                                 if (setCurrentMovie) setCurrentMovie(firstEpisode);
                             }
@@ -390,6 +394,8 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
                             currentVideoIndex: currentIndexInPlaylist + 1,
                             selectedVideo: nextContent,
                             isSeries: false,
+                            contentId: nextContent.id,
+                            poster_url: nextContent.poster_url,
                         }));
                         if (setCurrentMovie) setCurrentMovie(nextContent);
                     }
@@ -566,7 +572,7 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
             playerInstanceRef.current?.playVideo();
         };
 
-        const playPrevious = () => {
+        const playPrevious = async () => {
             if (!currentQueue || currentVideoIndex <= 0) return;
 
             clearCountdownTimer();
@@ -576,16 +582,45 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
 
             const prevIndex = currentVideoIndex - 1;
             const prevItem = currentQueue[prevIndex];
+            const isSeries = isSeriesRef.current;
             const prevVideoData = isSeries ? prevItem : (prevItem?.content || prevItem);
 
             if (!prevVideoData) return;
+
+            // Handle transition TO a series from a movie in a playlist
+            if (!isSeries && prevVideoData.type === 'series') {
+                const seasonsData = await fetchSeriesSeasons(prevVideoData.id);
+                if (seasonsData && seasonsData.length > 0) {
+                    const firstSeason = seasonsData[0] as any;
+                    const lastEpisode = firstSeason.episodes?.[firstSeason.episodes.length - 1]; // Or maybe first episode? usually people expect first?
+                    // Actually, if moving "back" to a series, maybe we should play the LAST episode?
+                    // But for simplicity let's stick to first or whatever is standard.
+                    const targetEpisode = lastEpisode || firstSeason.episodes?.[0];
+
+                    if (targetEpisode) {
+                        dispatch(openScreenPlayer({
+                            isOpen: true,
+                            currentVideoIndex: (firstSeason.episodes?.length || 1) - 1,
+                            selectedVideo: targetEpisode,
+                            isSeries: true,
+                            seriesData: seasonsData,
+                            contentId: prevVideoData.id,
+                            poster_url: prevVideoData.poster_url,
+                        }));
+                        if (setCurrentMovie) setCurrentMovie(targetEpisode);
+                        return;
+                    }
+                }
+            }
 
             dispatch(openScreenPlayer({
                 isOpen: true,
                 currentVideoIndex: prevIndex,
                 selectedVideo: prevVideoData,
-                isSeries: prevVideoData.type === 'series' || isSeries,
+                isSeries: isSeries, // Keep current mode if traversing episodes
                 seriesData: isSeries ? seriesData : undefined,
+                contentId: isSeries ? (seriesData?.content_id || seriesData?.series_id || selectedVideo?.series_id) : prevVideoData.id,
+                poster_url: isSeries ? (seriesData?.poster_url || selectedVideo?.poster_url) : prevVideoData.poster_url,
             }));
 
             if (setCurrentMovie) {
