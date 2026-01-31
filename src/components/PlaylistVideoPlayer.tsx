@@ -710,12 +710,12 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
                 {videoEnded && countdown === 0 && !hasNextVideo && (
                     <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 backdrop-blur-3xl text-white animate-in fade-in zoom-in duration-500">
                         <h2 className="text-5xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">Thanks for watching!</h2>
-                        <button
+                        {/* <button
                             onClick={handleReplay}
                             className="px-8 py-3 bg-white text-black font-semibold rounded-full hover:bg-zinc-200 transition transform hover:scale-110 shadow-lg hover:shadow-xl hover:shadow-white/20"
                         >
                             Replay Video
-                        </button>
+                        </button> */}
                     </div>
                 )}
 

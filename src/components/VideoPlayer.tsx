@@ -1,8 +1,8 @@
 import React, { useEffect, useImperativeHandle, forwardRef, useRef, useState, memo, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { getYouTubeEmbedUrl, normalizer, onReadyVideoLoader, saveWatchHistory } from "@/utils/youtubeUtils";
+import { getYouTubeEmbedUrl } from "@/utils/youtubeUtils";
 import { useDispatch, useSelector } from "react-redux";
-import { openScreenPlayer, setCurrentVideoIndex } from "@/store/screenPlayerSlice";
+import { openScreenPlayer } from "@/store/screenPlayerSlice";
 import { useUpsertWatchHistoryMutation } from "@/store/userWatchHistorySlice";
 
 declare global {
@@ -607,12 +607,12 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
         {videoEnded && countdown === 0 && (
           <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 backdrop-blur-3xl text-white animate-in fade-in zoom-in duration-500">
             <h2 className="text-5xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">Thanks for watching!</h2>
-            <button
+            {/* <button
               onClick={handleReplay}
               className="px-8 py-3 bg-white text-black font-semibold rounded-full hover:bg-zinc-200 transition transform hover:scale-110 shadow-lg hover:shadow-xl hover:shadow-white/20"
             >
               Replay Video
-            </button>
+            </button> */}
           </div>
         )}
 
