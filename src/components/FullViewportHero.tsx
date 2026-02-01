@@ -11,12 +11,10 @@ import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
 import { ArrowLeft, ArrowRight, Info, Play } from "lucide-react";
 import ContentModal from "./ContentModal";
-import FullscreenPlayer from "./FullscreenPlayer";
 import ChannelCard from "./ChannelCard";
 import BrandButton from "./ui/BrandButton";
 import { Channel } from "@/data/mockMovies";
 import { useDispatch } from "react-redux";
-import { openScreenPlayer, closeScreenPlayer } from "@/store/screenPlayerSlice";
 import { useLazyGetSeasonWithEpisodesQuery } from "@/store/seasonSlice";
 
 
@@ -60,71 +58,14 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
   const [recommendedContent, setRecommendedContent] = useState<
     HeroCarouselItem[]
   >([]);
-  const [fullscreenOpen, setFullscreenOpen] = useState(false);
-  const [fullscreenUrl, setFullscreenUrl] = useState<string | null>(null);
-  const [fullscreenTitle, setFullscreenTitle] = useState<string | null>(null);
-  const [seasons, setSeasons] = useState<any[]>([]);
   const [triggerSeasonWithEpisodesandWatchHistory] = useLazyGetSeasonWithEpisodesQuery()
 
-  // Play video in fullscreen
+  // Play button now opens ContentModal (user requirement)
   const handlePlay = async (item: HeroCarouselItem) => {
-    const currentBackendItem = content.find((c) => c.id === item.id);
-    console.log("Handle Play Item", item, currentBackendItem)
-    if (item.type === "series") {
-      const seasonWithEpisodes = await triggerSeasonWithEpisodesandWatchHistory({ contentId: currentBackendItem?.id, userId: user?.id }).unwrap()
-      let videoUrl = "";
-      let title = item.title;
-      // let seasonsData = seasonWithEpisodes?.seasons_data || currentBackendItem?.seasons_data;
-
-      if (seasonWithEpisodes) {
-        // if (typeof seasonsData === "string") {
-        //   try {
-        //     seasonsData = JSON.parse(seasonsData);
-        //   } catch {
-        //     // Parsing failed
-        //   }
-        // }
-
-        const firstEpisode = seasonWithEpisodes[0].episodes[0]
-        videoUrl = firstEpisode.videoUrl || firstEpisode.video_url;
-        title = `${item.title} - ${firstEpisode.title}`;
-
-        dispatch(openScreenPlayer({
-          isOpen: true,
-          selectedVideo: firstEpisode,
-          currentVideoIndex: 0,
-          videoUrl: videoUrl,
-          contentId: item.id,
-          poster_url: item.posterUrl || currentBackendItem?.poster_url,
-          isSeries: true,
-          seriesData: seasonWithEpisodes[0]
-        }));
-
-
-        setFullscreenUrl(videoUrl);
-        setFullscreenTitle(title);
-        setSeasons(seasonWithEpisodes);
-        setFullscreenOpen(true);
-      }
-
-      return;
-    }
-
-    const videoToPlay = item.videoUrl || currentBackendItem?.video_url;
-    if (!videoToPlay) return;
-
-    dispatch(openScreenPlayer({
-      isOpen: true,
-      selectedVideo: currentBackendItem || item,
-      selectedVideoTitle: item.title,
-      videoUrl: videoToPlay,
-      contentId: item.id,
-      poster_url: item.posterUrl || currentBackendItem?.poster_url
-    }));
-
-    setFullscreenUrl(videoToPlay);
-    setFullscreenTitle(item.title);
-    setFullscreenOpen(true);
+    setModalType(item.type || "movie");
+    setModalItem(item);
+    setRecommendedContent([]);
+    setModalOpen(true);
   };
 
   // Open modal for more info
@@ -141,16 +82,9 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
     setModalItem(null);
     setModalType(null);
     setRecommendedContent([]);
+    refetchContent();
   };
 
-  const handleCloseFullscreen = () => {
-    refetchContent();
-    dispatch(closeScreenPlayer());
-    setFullscreenOpen(false);
-    setFullscreenUrl(null);
-    setFullscreenTitle(null);
-    setSeasons([]);
-  };
 
   // Handle save/unsave for favorites
   const handleSaveItem = (itemId: string) => {
@@ -213,7 +147,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent md:hidden" />
 
                 {/* Content */}
-                <div className="relative bottom-[4rem] z-10 flex flex-col h-full px-4 md:px-16 lg:px-24 max-w-4xl pb-48">
+                <div className="relative bottom-[4rem] z-10 flex flex-col h-full px-4 md:px-16 lg:px-24_max-w-4xl pb-48">
                   <div className="space-y-4 md:space-y-6 mt-auto md: pb-8">
                     {/* Movie Title */}
                     <h1 className="text-3xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
@@ -309,7 +243,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
                             variant="primary"
                             onClick={() => handlePlay(slide)}
                             disabled={
-                              !slide.videoUrl && slide.type !== "series"
+                              !slide.videoUrl && slide.type !== "series" && !content.find(c => c.id === slide.id)?.video_url
                             }
                           >
                             <Play className="w-fit h-6 fill-current" />
@@ -394,20 +328,6 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
         </div>
       </div>
 
-      {/* Fullscreen Player */}
-      {fullscreenOpen && (
-        <FullscreenPlayer
-          isOpen={fullscreenOpen}
-          onClose={handleCloseFullscreen}
-          videoUrl={fullscreenUrl || ""}
-          title={fullscreenTitle || ""}
-          userId={user?.id}
-          movieId={modalItem?.id || items.find(i => i.videoUrl === fullscreenUrl || i.title === fullscreenTitle)?.id}
-          type={modalItem?.type || (items.find(i => i.videoUrl === fullscreenUrl || i.title === fullscreenTitle)?.type as any) || "movie"}
-          poster_url={modalItem?.posterUrl || items.find(i => i.videoUrl === fullscreenUrl || i.title === fullscreenTitle)?.posterUrl}
-          season={seasons}
-        />
-      )}
 
       {/* Modals */}
       {modalOpen && modalItem && (() => {
@@ -423,9 +343,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
             variant={modalType || "auto"}
             autoDetectKids={true}
             onPlayEpisode={(url, episodeTitle) => {
-              setFullscreenUrl(url);
-              setFullscreenTitle(episodeTitle);
-              setFullscreenOpen(true);
+              // Internal to ContentModal now
             }}
             videoUrl={backendContentItem?.video_url || modalItem.videoUrl}
             movieId={modalItem.id}

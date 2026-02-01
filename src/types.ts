@@ -109,6 +109,7 @@ export interface Season {
   release_date?: string | null; // date
   created_at?: string | null;
   updated_at?: string | null;
+  episodes?: any[];
 }
 
 export interface RelatedContentFilterProps {

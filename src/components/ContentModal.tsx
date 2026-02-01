@@ -86,7 +86,7 @@ export interface ContentModalProps {
   channel?: Channel; // Channel information
   seasons?: Season[]; // Season data for series
   customBackground?: string; // Custom background styling
-  movieId,
+  movieId;
   // Deprecated props - kept for backward compatibility but ignored
   isSaved?: boolean;
   onSave?: () => void;
@@ -405,7 +405,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
         isSeries: true,
         selectedVideo: firstEpisode,
         currentVideoIndex: 0,
-        seriesData: firstSeason,
+        seriesData: seasonWithEpisodes,
         contentId: currentItem,
         poster_url: currentContentItem?.poster_url || normalizedItem.posterUrl
       }))
@@ -417,14 +417,25 @@ const ContentModal: React.FC<ContentModalProps> = ({
   };
 
   const handlePlayEpisode = (episode: Episode, seasonNumber: number, index: number, seasonData: any) => {
-    console.log("Play first episode", index)
+    // Calculate global index across all seasons to ensure PlaylistVideoPlayer 
+    // picks the correct video and supports autoplay correctly
+    let globalIndex = 0;
+    for (const season of seasonWithEpisodes) {
+      if (season.season_number === seasonNumber) {
+        globalIndex += index;
+        break;
+      }
+      globalIndex += season.episodes?.length || 0;
+    }
+
+    console.log("Play episode at global index:", globalIndex);
     if (episode.video_url && seasonWithEpisodes.length > 0) {
       dispatch(openScreenPlayer({
         isOpen: true,
         isSeries: true,
         selectedVideo: episode,
-        currentVideoIndex: index,
-        seriesData: seasonData,
+        currentVideoIndex: globalIndex,
+        seriesData: seasonWithEpisodes,
         contentId: currentItem,
         poster_url: currentContentItem?.poster_url || normalizedItem.posterUrl
       }))
@@ -782,42 +793,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
         </ScrollArea>
       </DialogContent>
     </Dialog>
-  )
-  {/* {currentEpisode && seasons && (
-        <div className="bg-black fixed inset-0 z-[99999] bg-black flex flex-col">
-          <FullscreenPlayer
-            isOpen={true}
-            onClose={handleCloseSeriesPlayer}
-            videoUrl={currentEpisode?.video_url}
-            type="series"
-            title={currentEpisode.title}
-            userId="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3"
-            poster_url = {currentContentItem?.poster_url || normalizedItem.posterUrl}
-            // logic for when an episode finishes
-            onVideoEnd={() => {
-              // 1. Check if there is another episode in this series
-              // 2. If no more episodes, trigger the PLAYLIST'S onNext
-              if (onNext) {
-                handleCloseSeriesPlayer();
-                onNext();
-              }
-            }}
-            movieId={movieId}
-            // Pass playlist navigation through to the player
-            hasNext={hasNext()} 
-            onNext={onNext}
-            onPrevious={() => {}}
-            season={seasons}
-          />
-        </div>
-      )} */}
-
-
-
-
-
-
-
+  );
 };
 
 export default ContentModal;

@@ -1,10 +1,9 @@
-import React, { useEffect, useImperativeHandle, forwardRef, useRef, useState, memo, useCallback, useMemo } from "react";
+import React, { useEffect, useImperativeHandle, forwardRef, useRef, useState, memo, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { getYouTubeEmbedUrl, saveWatchHistory, fetchSeriesSeasons } from "@/utils/youtubeUtils";
+import { getYouTubeEmbedUrl } from "@/utils/youtubeUtils";
 import { useDispatch, useSelector } from "react-redux";
-import { openScreenPlayer, setSeriesData } from "@/store/screenPlayerSlice";
+import { openScreenPlayer } from "@/store/screenPlayerSlice";
 import { useUpsertWatchHistoryMutation } from "@/store/userWatchHistorySlice";
-import { useGetPlaylistContentWithWatchHistoryQuery } from "@/store/contentSlice";
 
 declare global {
     interface Window {
@@ -13,7 +12,7 @@ declare global {
     }
 }
 
-interface PlaylistVideoPlayerProps {
+interface VideoPlayerProps {
     videoId: string;
     setActualVideoUrl?: (videoId: string) => void;
     setCurrentMovie?: (movie: any) => void;
@@ -27,12 +26,11 @@ interface PlaylistVideoPlayerProps {
     onProgressUpdate?: (data: { id: string, watch_percentage: number, last_position: number }) => void;
     localProgress?: Record<string, { watch_percentage: number, last_position: number }>;
     onPlaylistAdvance?: () => void;
-    playlistId?: string;
     completionThreshold?: number | null;
 }
 
-const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
-    ({ videoId, playlistItems, setCurrentMovie, movieId, episodeId, setFinal, type, userid, playlistInfo, onProgressUpdate, localProgress, onPlaylistAdvance, playlistId, completionThreshold }, ref) => {
+const VideoPlayer = forwardRef<any, VideoPlayerProps>(
+    ({ videoId, playlistItems, setCurrentMovie, movieId, episodeId, setFinal, type, userid, playlistInfo, onProgressUpdate, localProgress, onPlaylistAdvance, completionThreshold }, ref) => {
         const playerContainerRef = useRef<HTMLDivElement>(null);
         const playerInstanceRef = useRef<any>(null);
 
@@ -45,6 +43,7 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
         const completionThresholdRef = useRef(completionThreshold);
         const wasThresholdReachedRef = useRef(false);
         const wasCompletedSavedRef = useRef(false);
+        const handlersRef = useRef<any>(null);
 
         // Redux State
         const selectedVideo = useSelector((state: any) => state.screenPlayer.selectedVideo);
@@ -52,10 +51,9 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
         const playlistFullObject = useSelector((state: any) => state?.screenPlayer?.playlistInfo) || {};
         const seriesData = useSelector((state: any) => state?.screenPlayer?.seriesData);
         const isSeries = useSelector((state: any) => state?.screenPlayer?.isSeries) || false;
-        const currentVideoIndex = useSelector((state: any) => state?.screenPlayer?.currentVideoIndex) || 0;
 
         // Flatten episodes if seriesData is an array of seasons
-        const episodes = useMemo(() => {
+        const episodes = React.useMemo(() => {
             if (!isSeries || !seriesData) return [];
             if (Array.isArray(seriesData)) {
                 return seriesData.flatMap(s => (s.episodes || []).map((ep: any) => ({
@@ -65,115 +63,38 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
             }
             return seriesData.episodes || [];
         }, [seriesData, isSeries]);
-
-        // Refs for playlist data to avoid stale closures in callbacks
-        const playlistItemsRef = useRef<any[]>([]);
-        const episodesRef = useRef<any[]>([]);
-        const currentQueueRef = useRef<any[]>([]);
-        const isSeriesRef = useRef(isSeries);
-        const currentVideoIndexRef = useRef(currentVideoIndex);
-        const seriesDataRef = useRef(seriesData);
-
-        const [countdown, setCountdown] = useState(0); // Initialize at 0 so it doesn't trigger effect initially
-        const [videoEnded, setVideoEnded] = useState(false);
-        const [videoRestricted, setVideoRestricted] = useState(false);
-        const [upsertWatchHistory] = useUpsertWatchHistoryMutation();
-
-        // --- SESSION REFS TO PREVENT STALE CLOSURES ---
-        const handlersRef = useRef<any>(null);
-        const sessionPlaylistRef = useRef<any[]>([]);
+        const currentVideoIndex = useSelector((state: any) => state?.screenPlayer?.currentVideoIndex) || 0
 
         // Playlist items from Redux - Handle array or object structure
         const playlist_items = Array.isArray(playlistFullObject)
             ? playlistFullObject[0]?.playlist_items
             : playlistFullObject?.playlist_items || [];
 
-        // RTK Query for playlist contents with history
-        const playlistContentIds = (playlist_items || []).map((item: any) => item.content?.id || item.id);
-        const { data: refreshedItems } = useGetPlaylistContentWithWatchHistoryQuery(
-            { userId: userid, contentIds: playlistContentIds },
-            { skip: !playlistId || !userid || playlistContentIds.length === 0 }
-        );
+        // Determine current queue based on content type
+        const currentQueue = isSeries ? episodes : playlist_items || [];
+
+        // Refs for stable values in callbacks
+        const isSeriesRef = useRef(isSeries);
+        const currentVideoIndexRef = useRef(currentVideoIndex);
+        const seriesDataRef = useRef(seriesData);
+        const currentQueueRef = useRef(currentQueue);
+
+        const [countdown, setCountdown] = useState(5);
+        const [videoEnded, setVideoEnded] = useState(false);
+        const [videoRestricted, setVideoRestricted] = useState(false);
+        const [upsertWatchHistory] = useUpsertWatchHistoryMutation();
 
         const dispatch = useDispatch();
 
-        // Initialize session ref with available items initially
-        useEffect(() => {
-            if (playlist_items && playlist_items.length > 0 && sessionPlaylistRef.current.length === 0) {
-                sessionPlaylistRef.current = playlist_items;
-            }
-        }, [playlist_items]);
+        // If we are in a series, we might have a next episode.
+        // If not, we might have a next PLAYLIST item (handled via onPlaylistAdvance).
+        // So hasNextVideo should form a composite check for UI purposes?
+        // For now, let's keep it based on current queue, but maybe always show 'Next' if onPlaylistAdvance is present?
+        // Actually, UI usually just hides the button if false.
+        // Let's assume if it's the last episode, we can still click next to trigger playlist advance.
+        const hasNextVideo = (currentQueue?.length > 0 && currentVideoIndex < currentQueue.length - 1) || (isSeries && !!onPlaylistAdvance);
 
-        // Sync refreshed items to session ref for stable callback access
-        useEffect(() => {
-            if (refreshedItems && refreshedItems.length > 0) {
-                sessionPlaylistRef.current = refreshedItems;
-                console.log('PlaylistVideoPlayer: Session playlist updated reactively:', refreshedItems.length);
-            }
-        }, [refreshedItems]);
-
-        // Helper to check for next video using ONLY the latest ref values (Reliable in callbacks)
-        const checkHasNextVideo = useCallback(() => {
-            const playlist = sessionPlaylistRef.current;
-            const currentQueue = currentQueueRef.current;
-            const currentIdx = currentVideoIndexRef.current;
-
-            // 1. Check strict queue index first (most reliable source of truth)
-            if (currentQueue && currentQueue.length > 0) {
-                // If we are not at the last item, there is a next video
-                if (currentIdx < currentQueue.length - 1) {
-                    return true;
-                }
-            }
-
-            // 2. If we are at the end of the current queue...
-            // If the current queue is just episodes, check if there's another item in the global playlist
-            // But if the current queue IS the playlist (movies), then we are done.
-            if (!isSeriesRef.current) {
-                // We are at the end of the playlist queue
-                return false;
-            }
-
-            // 3. For Series: Check global playlist session if we are at the end of episodes
-            const currentVidId = selectedVideoRef.current?.id || movieIdRef.current;
-            if (playlist && playlist.length > 0) {
-                // Determine current playlist index rigidly 
-                // Note: contentIds in playlist usually match the "series" ID, not the episode ID.
-                const seriesId = seriesDataRef.current?.series_id;
-                // Fallback to searching playlist for the current series/video
-                const globalIdx = playlist.findIndex((item: any) => {
-                    const itemId = item?.id || item?.content?.id;
-                    const contentIdOfSeries = seriesDataRef.current?.id; // Season ID? No. 
-                    // Best effort to find where we are in the main playlist:
-                    return itemId === currentVidId || (seriesId && itemId === seriesId);
-                });
-
-                return globalIdx !== -1 && globalIdx < playlist.length - 1;
-            }
-
-            return false;
-        }, []);
-
-        // Derive state for UI from the latest ref-based check
-        const hasNextVideo = checkHasNextVideo();
-
-        // Determine current queue based on content type
-        const currentQueue = isSeries ? episodes : playlist_items || [];
-        console.log("Playlist Items", playlist_items)
-        // Sync refs with state/props
-        useEffect(() => {
-            playlistItemsRef.current = playlist_items;
-            episodesRef.current = episodes;
-            currentQueueRef.current = currentQueue;
-            isSeriesRef.current = isSeries;
-            currentVideoIndexRef.current = currentVideoIndex;
-            seriesDataRef.current = seriesData;
-        }, [playlist_items, episodes, currentQueue, isSeries, currentVideoIndex, seriesData]);
-
-        useEffect(() => {
-            completionThresholdRef.current = completionThreshold;
-        }, [completionThreshold]);
-
+        console.log("VideoPlayer State CurrentIndex", currentVideoIndex, currentQueue[currentVideoIndex])
 
         // --- SYNC REFS ---
         useEffect(() => {
@@ -186,15 +107,37 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
 
         useEffect(() => {
             videoIdRef.current = videoId;
+            clearCountdownTimer();
             isCountdownStartedRef.current = false; // Reset when video changes
             wasThresholdReachedRef.current = false;
             wasCompletedSavedRef.current = false;
             setVideoEnded(false); // Ensure UI overlay is cleared
-        }, [videoId]);
+            setCountdown(5); // Reset countdown
+        }, [videoId, selectedVideo]);
 
         useEffect(() => {
             selectedVideoRef.current = selectedVideo;
         }, [selectedVideo]);
+
+        useEffect(() => {
+            isSeriesRef.current = isSeries;
+        }, [isSeries]);
+
+        useEffect(() => {
+            currentVideoIndexRef.current = currentVideoIndex;
+        }, [currentVideoIndex]);
+
+        useEffect(() => {
+            currentQueueRef.current = currentQueue;
+        }, [currentQueue]);
+
+        useEffect(() => {
+            seriesDataRef.current = seriesData;
+        }, [seriesData]);
+
+        useEffect(() => {
+            completionThresholdRef.current = completionThreshold;
+        }, [completionThreshold]);
 
         const handleSaveProgress = async (isCompOverride?: boolean) => {
             if (playerInstanceRef.current && playerInstanceRef.current.getCurrentTime) {
@@ -241,193 +184,195 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
 
         // --- RESUME LOGIC ---
         const getResumePosition = useCallback(() => {
-            const currentVidId = selectedVideoRef.current?.id || movieIdRef.current;
-
-            // Check session ref first (has latest fetched history)
-            if (sessionPlaylistRef.current.length > 0) {
-                const itemFromSession = sessionPlaylistRef.current.find(item => (item.id || item.content?.id) === currentVidId);
-                if (itemFromSession) {
-                    const history = Array.isArray(itemFromSession.user_watch_history)
-                        ? itemFromSession.user_watch_history[0]
-                        : itemFromSession.user_watch_history;
-
-                    // Use flattened values or nested history
-                    const isCompleted = itemFromSession.completed || history?.completed;
-                    const watchPct = itemFromSession.watch_percentage || history?.watch_percentage || 0;
-                    const lastPos = itemFromSession.last_position || history?.last_position || 0;
-
-                    console.log(`Resuming from session ref for ${itemFromSession.title}:`, { lastPos, watchPct, isCompleted });
-
-                    if (isCompleted || watchPct >= 95) {
-                        return 0;
-                    } else if (lastPos > 0) {
-                        return lastPos;
-                    }
-                }
-            }
-
             const currentVidData = selectedVideoRef.current;
-            const vidId = currentVidData?.id || movieIdRef.current;
+            const vidId = currentVidData?.id;
 
+            // 1. Check local session progress first (highest priority)
             if (vidId && localProgress?.[vidId]) {
                 const local = localProgress[vidId];
-                if (local.watch_percentage < 95) {
+                console.log("Resuming from local progress:", local);
+                if (local.watch_percentage < 99) { // Only resume if not almost done
                     return local.last_position;
                 }
-                return 0;
+                return 0; // If they finished it locally, start over
             }
 
-            if (!currentVidData) return 0;
+            // 2. Fallback to Redux state / DB history
+            if (!currentVidData) {
+                console.log("🔍 [VideoPlayer] No video data for resume calculation, using 0");
+                return 0;
+            }
 
             const history = Array.isArray(currentVidData.user_watch_history)
                 ? currentVidData.user_watch_history[0]
                 : currentVidData.user_watch_history;
 
+            // Note: Some sources might have flatten values (watch_percentage) directly on currentVidData
             const isCompleted = currentVidData.completed || history?.completed;
-            const watchPct = currentVidData.watch_percentage || history?.watch_percentage || 0;
-            const lastPos = currentVidData.last_position || history?.last_position || 0;
+            const watchPct = (currentVidData.watch_percentage !== undefined ? currentVidData.watch_percentage : history?.watch_percentage) || 0;
+            const lastPos = (currentVidData.last_position !== undefined ? currentVidData.last_position : history?.last_position) || 0;
+
+            console.log(`🔍 [VideoPlayer] Resume calculation for ${currentVidData.title}:`, {
+                isCompleted,
+                watchPct,
+                lastPos,
+                hasHistory: !!history
+            });
 
             if (isCompleted || watchPct >= 95) {
+                console.log("🔍 [VideoPlayer] Video previously completed or >95%, starting from beginning");
                 return 0;
             } else if (lastPos > 0) {
+                console.log(`🔍 [VideoPlayer] Resuming at ${lastPos}s (${watchPct}%)`);
                 return lastPos;
             }
+
+            console.log("🔍 [VideoPlayer] No previous progress found, starting from 0");
             return 0;
         }, [localProgress, selectedVideo]);
 
-        // --- NAVIGATION (Moved up so it's defined before usage) ---
-        const playNext = useCallback(async () => {
-            const playlist = sessionPlaylistRef.current;
-            const currentVidId = selectedVideoRef.current?.id || movieIdRef.current;
-            const currentQueue = currentQueueRef.current;
-            const isSeries = isSeriesRef.current;
-            const currentIdx = currentVideoIndexRef.current;
+        const resumeVideoPosition = (player: any) => {
+            const startSeconds = getResumePosition();
+            console.log("Resuming to position:", startSeconds);
+            player.seekTo(startSeconds, true);
+            player.playVideo();
+        };
 
-            console.log("PlayNext called. Index:", currentIdx, "Queue length:", currentQueue.length);
+        // --- INITIALIZE & UPDATE PLAYER ---
+        useEffect(() => {
+            if (!videoId) return;
 
-            // 1. Strict Queue Navigation (Most Common)
-            const nextIndexInQueue = currentIdx + 1;
-            if (nextIndexInQueue < currentQueue.length) {
-                console.log("Playing next item in strict queue:", nextIndexInQueue);
+            setVideoRestricted(false);
+            const vid = getVideoId(videoId);
+            console.log("Video Player Id", vid)
+            if (!vid) {
+                console.warn("VideoPlayer: Invalid video ID", videoId);
+                return;
+            }
 
-                clearCountdownTimer();
-                setVideoEnded(false);
-                setVideoRestricted(false);
+            const startPos = getResumePosition();
 
-                const nextItem = currentQueue[nextIndexInQueue];
-
-                // If we have refreshed data in session ref, use it for Correct Resume Position
-                const refreshedNextItem = playlist.find(item => (item.id || item.content?.id) === (nextItem.id || nextItem.content?.id));
-                const nextVideoData = isSeries ? nextItem : (refreshedNextItem || nextItem?.content || nextItem);
-
-                if (!nextVideoData) {
-                    console.error("Next video data missing!");
-                    return;
-                }
-
-                // Handle transition TO a series from a movie in a playlist
-                if (!isSeries && nextVideoData.type === 'series') {
-                    const seasonsData = await fetchSeriesSeasons(nextVideoData.id);
-                    if (seasonsData && seasonsData.length > 0) {
-                        const firstSeason = seasonsData[0] as any;
-                        const firstEpisode = firstSeason.episodes?.[0];
-                        if (firstEpisode) {
-                            dispatch(openScreenPlayer({
-                                isOpen: true,
-                                currentVideoIndex: 0,
-                                selectedVideo: firstEpisode,
-                                isSeries: true,
-                                seriesData: seasonsData,
-                                contentId: nextVideoData.id,
-                                poster_url: nextVideoData.poster_url,
-                            }));
-                            if (setCurrentMovie) setCurrentMovie(firstEpisode);
-                            return;
-                        }
-                    }
-                }
-
-                dispatch(openScreenPlayer({
-                    isOpen: true,
-                    currentVideoIndex: nextIndexInQueue,
-                    selectedVideo: nextVideoData,
-                    isSeries: isSeries,
-                    seriesData: isSeries ? seriesDataRef.current : undefined,
-                    contentId: isSeries ? (
-                        (Array.isArray(seriesDataRef.current) ? seriesDataRef.current[0]?.content_id : seriesDataRef.current?.content_id) ||
-                        (Array.isArray(seriesDataRef.current) ? seriesDataRef.current[0]?.series_id : seriesDataRef.current?.series_id) ||
-                        selectedVideoRef.current?.series_id
-                    ) : nextVideoData.id,
-                    poster_url: isSeries ? (
-                        (Array.isArray(seriesDataRef.current) ? seriesDataRef.current[0]?.poster_url : seriesDataRef.current?.poster_url) ||
-                        selectedVideoRef.current?.poster_url
-                    ) : nextVideoData.poster_url,
-                }));
-
-                if (setCurrentMovie) {
-                    setCurrentMovie(nextVideoData);
+            // If player exists, load new video
+            if (playerInstanceRef.current) {
+                try {
+                    console.log("Loading videoById:", vid, "at position:", startPos);
+                    playerInstanceRef.current.loadVideoById({
+                        videoId: vid,
+                        startSeconds: startPos
+                    });
+                    // Explicitly play to ensure autoplay follows through
+                    setTimeout(() => {
+                        playerInstanceRef.current?.playVideo();
+                    }, 150);
+                } catch (e) {
+                    console.error("Error loading video", e);
                 }
                 return;
             }
 
-            // 2. Logic for Crossing Boundaries (Series finished -> Back to Playlist)
-            // Only applicable if we are in a series and want to go to the next playlist item
-            if (isSeries && playlist && playlist.length > 0) {
-                const seriesId = seriesDataRef.current?.series_id || selectedVideoRef.current?.series_id;
-                const currentIndexInPlaylist = playlist.findIndex((item: any) => {
-                    const itemId = item?.id || item?.content?.id;
-                    return itemId === seriesId || itemId === currentVidId;
-                });
-
-                if (currentIndexInPlaylist !== -1 && currentIndexInPlaylist < playlist.length - 1) {
-                    console.log("Series ended, moving to next playlist item at index:", currentIndexInPlaylist + 1);
-
-                    clearCountdownTimer();
-                    setVideoEnded(false);
-                    setVideoRestricted(false);
-
-                    const nextPlaylistItem = playlist[currentIndexInPlaylist + 1];
-                    const nextContent = nextPlaylistItem.content || nextPlaylistItem;
-
-                    if (nextContent.type === 'series') {
-                        const seasonsData = await fetchSeriesSeasons(nextContent.id);
-                        if (seasonsData && seasonsData.length > 0) {
-                            const firstSeason = seasonsData[0] as any;
-                            const firstEpisode = firstSeason.episodes?.[0];
-                            if (firstEpisode) {
-                                dispatch(openScreenPlayer({
-                                    isOpen: true,
-                                    currentVideoIndex: 0,
-                                    selectedVideo: firstEpisode,
-                                    isSeries: true,
-                                    seriesData: seasonsData,
-                                    contentId: nextContent.id,
-                                    poster_url: nextContent.poster_url,
-                                }));
-                                if (setCurrentMovie) setCurrentMovie(firstEpisode);
-                            }
-                        }
-                    } else {
-                        dispatch(openScreenPlayer({
-                            isOpen: true,
-                            currentVideoIndex: currentIndexInPlaylist + 1,
-                            selectedVideo: nextContent,
-                            isSeries: false,
-                            contentId: nextContent.id,
-                            poster_url: nextContent.poster_url,
-                        }));
-                        if (setCurrentMovie) setCurrentMovie(nextContent);
-                    }
-                    return;
-                }
+            // Initialize YouTube API if not loaded
+            if (!window.YT) {
+                const tag = document.createElement("script");
+                tag.src = "https://www.youtube.com/iframe_api";
+                document.body.appendChild(tag);
             }
 
-            // 3. End of Playlist
-            console.log("End of playlist reached. Showing End Screen.");
-            setVideoEnded(true);
-            setCountdown(0);
-        }, [dispatch, setCurrentMovie, onPlaylistAdvance]);
+            const initPlayer = () => {
+                if (playerInstanceRef.current) return;
 
+                console.log("Initializing YouTube Player:", vid, "starting at:", startPos);
+
+                playerInstanceRef.current = new window.YT.Player(playerContainerRef.current, {
+                    height: "100%",
+                    width: "100%",
+                    videoId: vid,
+                    playerVars: {
+                        autoplay: 1,
+                        controls: 1,
+                        rel: 0,
+                        showinfo: 0,
+                        modestbranding: 1,
+                        start: Math.floor(startPos)
+                    },
+                    events: {
+                        onReady: (e: any) => {
+                            console.log(`✅ [VideoPlayer] YouTube Player Ready. Explicitly seeking to ${startPos}s`);
+                            // Double reinforcement: ensure seek happens on ready
+                            if (startPos > 0) {
+                                e.target.seekTo(startPos, true);
+                            }
+                            e.target.playVideo();
+                        },
+                        onStateChange: (e: any) => handlersRef.current?.onStateChange(e),
+                        onError: (e: any) => handlersRef.current?.onError(e),
+                    },
+                });
+            };
+
+            if (window.YT && window.YT.Player) {
+                initPlayer();
+            } else {
+                (window as any).onYouTubeIframeAPIReady = initPlayer;
+            }
+        }, [videoId, getVideoId, userid, getResumePosition, selectedVideo]);
+
+        const checkCompletionThreshold = useCallback(async () => {
+            if (
+                playerInstanceRef.current &&
+                !isCountdownStartedRef.current &&
+                !wasThresholdReachedRef.current
+            ) {
+                const currentTime = playerInstanceRef.current.getCurrentTime();
+                const duration = playerInstanceRef.current.getDuration();
+                const offset = completionThresholdRef.current || 0;
+                const triggerPoint = Math.max(0, duration - offset);
+
+                if (offset > 0 && duration > 0 && currentTime >= triggerPoint) {
+                    console.log(`[VideoPlayer] Completion threshold reached: ${currentTime}s >= ${triggerPoint}s (Duration: ${duration}s, Offset: ${offset}s). Triggering end.`);
+
+                    wasThresholdReachedRef.current = true;
+                    wasCompletedSavedRef.current = true;
+
+                    // Save as completed
+                    await handleSaveProgress(true);
+
+                    if (onProgressUpdate) {
+                        onProgressUpdate({
+                            id: episodeIdRef.current || movieIdRef.current,
+                            watch_percentage: 100,
+                            last_position: 0
+                        });
+                    }
+
+                    if (currentVideoIndexRef.current < currentQueueRef.current.length - 1) {
+                        playerInstanceRef.current.seekTo(duration, true);
+                        startCountdown();
+                    } else {
+                        // End of single video or playlist - pause to prevent flicker/grid
+                        if (playerInstanceRef.current && playerInstanceRef.current.pauseVideo) {
+                            playerInstanceRef.current.pauseVideo();
+                        }
+                        playerInstanceRef.current.seekTo(duration, true);
+                        setVideoEnded(true);
+                        setCountdown(0);
+                    }
+                }
+            }
+        }, [onProgressUpdate]);
+
+        // --- EARLY COUNTDOWN POLLING ---
+        useEffect(() => {
+            const checkInterval = setInterval(async () => {
+                if (
+                    playerInstanceRef.current &&
+                    playerInstanceRef.current.getPlayerState() === window.YT.PlayerState.PLAYING
+                ) {
+                    await checkCompletionThreshold();
+                }
+            }, 500);
+
+            return () => clearInterval(checkInterval);
+        }, [checkCompletionThreshold]);
 
         // --- COUNTDOWN HELPERS ---
         const clearCountdownTimer = () => {
@@ -447,147 +392,26 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
 
             countdownRef.current = setInterval(() => {
                 setCountdown((prev) => {
-                    // Just decrement here, handle logic in useEffect
-                    if (prev <= 0) return 0;
+                    if (prev <= 1) {
+                        clearCountdownTimer();
+                        // Don't set isCountdownStartedRef.current = false here yet, 
+                        // the video change effect will reset it.
+                        setVideoEnded(false);
+                        // Use setTimeout to avoid calling playNext inside setState
+                        setTimeout(() => playNext(), 0);
+                        return 0;
+                    }
                     return prev - 1;
                 });
             }, 1000);
+
         };
 
-        // --- COUNTDOWN COMPLETION EFFECT (FIXED) ---
-        // This ensures playNext fires cleanly when countdown hits 0
-        useEffect(() => {
-            if (isCountdownStartedRef.current && countdown === 0 && videoEnded) {
-                clearCountdownTimer();
-                isCountdownStartedRef.current = false;
-                // Use setTimeout to allow state updates to settle
-                setTimeout(() => {
-                    playNext();
-                }, 0);
-            }
-        }, [countdown, videoEnded, playNext]);
-
-
-        // --- EARLY COUNTDOWN POLLING ---
-        useEffect(() => {
-            const checkThreshold = setInterval(async () => {
-                if (
-                    playerInstanceRef.current &&
-                    playerInstanceRef.current.getPlayerState() === window.YT.PlayerState.PLAYING &&
-                    !isCountdownStartedRef.current
-                ) {
-                    const currentTime = playerInstanceRef.current.getCurrentTime();
-                    const duration = playerInstanceRef.current.getDuration();
-                    const offset = completionThresholdRef.current || 0;
-                    const triggerPoint = Math.max(0, duration - offset);
-
-                    if (offset > 0 && duration > 0 && currentTime >= triggerPoint) {
-                        console.log(`[PlaylistVideoPlayer] Completion threshold reached: ${currentTime}s >= ${triggerPoint}s (Duration: ${duration}s, Offset: ${offset}s). Triggering end.`);
-
-                        wasThresholdReachedRef.current = true;
-                        wasCompletedSavedRef.current = true;
-
-                        // Save as completed
-                        await handleSaveProgress(true);
-
-                        if (onProgressUpdate) {
-                            onProgressUpdate({
-                                id: episodeIdRef.current || movieIdRef.current,
-                                watch_percentage: 100,
-                                last_position: 0
-                            });
-                        }
-
-                        if (checkHasNextVideo()) {
-                            playerInstanceRef.current.seekTo(duration, true);
-                            startCountdown();
-                        } else {
-                            if (playerInstanceRef.current && playerInstanceRef.current.pauseVideo) {
-                                playerInstanceRef.current.pauseVideo();
-                            }
-                            playerInstanceRef.current.seekTo(duration, true);
-                            setVideoEnded(true);
-                            setCountdown(0);
-                        }
-                    }
-                }
-            }, 1000);
-
-            return () => clearInterval(checkThreshold);
-        }, [checkHasNextVideo, type, userid]);
-
-        // --- INITIALIZE & UPDATE PLAYER ---
-        useEffect(() => {
-            if (!videoId) return;
-
-            setVideoRestricted(false);
-            const vid = getVideoId(videoId);
-
-            if (!vid) return;
-
-            const startPos = getResumePosition();
-
-            if (playerInstanceRef.current) {
-                try {
-                    playerInstanceRef.current.loadVideoById({
-                        videoId: vid,
-                        startSeconds: startPos
-                    });
-                    // FIX: Explicitly play video when loading a new one to ensure autoplay works
-                    // despite overlay state changes
-                    setTimeout(() => {
-                        playerInstanceRef.current?.playVideo();
-                    }, 100);
-                } catch (e) {
-                    console.error("Error loading video", e);
-                }
-                return;
-            }
-
-            if (!window.YT) {
-                const tag = document.createElement("script");
-                tag.src = "https://www.youtube.com/iframe_api";
-                document.body.appendChild(tag);
-            }
-
-            const initPlayer = () => {
-                if (playerInstanceRef.current) return;
-
-                playerInstanceRef.current = new window.YT.Player(playerContainerRef.current, {
-                    height: "100%",
-                    width: "100%",
-                    videoId: vid,
-                    playerVars: {
-                        autoplay: 1,
-                        controls: 1,
-                        rel: 0,
-                        showinfo: 0,
-                        modestbranding: 1,
-                        start: Math.floor(startPos)
-                    },
-                    events: {
-                        onReady: (e: any) => {
-                            e.target.playVideo();
-                        },
-                        // INTERCEPT: Use a stable handler that delegates to the latest ref'd handler
-                        onStateChange: (e: any) => handlersRef.current?.onStateChange(e),
-                        onError: (e: any) => handlersRef.current?.onError(e),
-                    },
-                });
-            };
-
-            if (window.YT && window.YT.Player) {
-                initPlayer();
-            } else {
-                (window as any).onYouTubeIframeAPIReady = initPlayer;
-            }
-        }, [videoId, getVideoId, userid, getResumePosition]);
-
         const handleReplay = () => {
-            console.log("PlaylistVideoPlayer: handleReplay called");
+            console.log("VideoPlayer: handleReplay called");
             clearCountdownTimer();
             setVideoEnded(false);
-            setCountdown(0);
+            setCountdown(5); // Reset for next time
             isCountdownStartedRef.current = false;
             wasThresholdReachedRef.current = false;
             wasCompletedSavedRef.current = false;
@@ -597,62 +421,93 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
             }
         };
 
-        const playPrevious = async () => {
-            if (!currentQueue || currentVideoIndex <= 0) return;
+        // --- NAVIGATION ---
+        const playNext = () => {
+            const currentIdx = currentVideoIndexRef.current;
+            const queue = currentQueueRef.current;
+
+            const nextIndex = currentIdx + 1;
+
+            console.log("playNext triggering:", { currentIdx, nextIndex, queueLength: queue?.length });
+
+            if (!queue || nextIndex >= queue.length) {
+                if (isSeriesRef.current && onPlaylistAdvance) {
+                    console.log("Attempting to advance playlist context...");
+                    clearCountdownTimer();
+                    setVideoEnded(false);
+                    isCountdownStartedRef.current = false;
+                    onPlaylistAdvance();
+                } else {
+                    setVideoEnded(true);
+                    setCountdown(0);
+                    isCountdownStartedRef.current = false;
+                }
+                return;
+            }
+
+            clearCountdownTimer();
+            setVideoEnded(false);
+            setVideoRestricted(false);
+            isCountdownStartedRef.current = false; // Allow next countdown for new video
+
+            // Get next item from queue
+            const nextItem = queue[nextIndex];
+            const isSer = isSeriesRef.current;
+
+            // For series: episode object directly has video_url
+            // For playlist: need to access .content
+            const nextVideoData = isSer ? nextItem : nextItem?.content;
+
+            if (!nextVideoData) {
+                console.error("No video data found for next item");
+                return;
+            }
+
+            console.log("Playing next in queue:", { nextIndex, nextVideoData, isSeries: isSer });
+
+            // Update Redux with new video
+            dispatch(openScreenPlayer({
+                isOpen: true,
+                currentVideoIndex: nextIndex,
+                selectedVideo: nextVideoData,
+                isSeries: isSer,
+                seriesData: isSer ? seriesDataRef.current : undefined,
+            }));
+
+            if (setCurrentMovie) {
+                setCurrentMovie(nextVideoData);
+            }
+        };
+
+        const playPrevious = () => {
+            const currentIdx = currentVideoIndexRef.current;
+            const queue = currentQueueRef.current;
+
+            if (!queue || currentIdx <= 0) return;
 
             clearCountdownTimer();
             setVideoEnded(false);
             setVideoRestricted(false);
             isCountdownStartedRef.current = false;
 
-            const prevIndex = currentVideoIndex - 1;
-            const prevItem = currentQueue[prevIndex];
-            const isSeries = isSeriesRef.current;
-            const prevVideoData = isSeries ? prevItem : (prevItem?.content || prevItem);
+            const prevIndex = currentIdx - 1;
+            const prevItem = queue[prevIndex];
+            const isSer = isSeriesRef.current;
+            const prevVideoData = isSer ? prevItem : prevItem?.content;
 
-            if (!prevVideoData) return;
-
-            // Handle transition TO a series from a movie in a playlist
-            if (!isSeries && prevVideoData.type === 'series') {
-                const seasonsData = await fetchSeriesSeasons(prevVideoData.id);
-                if (seasonsData && seasonsData.length > 0) {
-                    const firstSeason = seasonsData[0] as any;
-                    const lastEpisode = firstSeason.episodes?.[firstSeason.episodes.length - 1]; // Or maybe first episode? usually people expect first?
-                    // Actually, if moving "back" to a series, maybe we should play the LAST episode?
-                    // But for simplicity let's stick to first or whatever is standard.
-                    const targetEpisode = lastEpisode || firstSeason.episodes?.[0];
-
-                    if (targetEpisode) {
-                        dispatch(openScreenPlayer({
-                            isOpen: true,
-                            currentVideoIndex: (firstSeason.episodes?.length || 1) - 1,
-                            selectedVideo: targetEpisode,
-                            isSeries: true,
-                            seriesData: seasonsData,
-                            contentId: prevVideoData.id,
-                            poster_url: prevVideoData.poster_url,
-                        }));
-                        if (setCurrentMovie) setCurrentMovie(targetEpisode);
-                        return;
-                    }
-                }
+            if (!prevVideoData) {
+                console.error("No video data found for previous item");
+                return;
             }
+
+            console.log("Playing previous:", { prevIndex, prevVideoData });
 
             dispatch(openScreenPlayer({
                 isOpen: true,
                 currentVideoIndex: prevIndex,
                 selectedVideo: prevVideoData,
-                isSeries: isSeries, // Keep current mode if traversing episodes
-                seriesData: isSeries ? seriesData : undefined,
-                contentId: isSeries ? (
-                    (Array.isArray(seriesData) ? seriesData[0]?.content_id : seriesData?.content_id) ||
-                    (Array.isArray(seriesData) ? seriesData[0]?.series_id : seriesData?.series_id) ||
-                    selectedVideo?.series_id
-                ) : prevVideoData.id,
-                poster_url: isSeries ? (
-                    (Array.isArray(seriesData) ? seriesData[0]?.poster_url : seriesData?.poster_url) ||
-                    selectedVideo?.poster_url
-                ) : prevVideoData.poster_url,
+                isSeries: isSer,
+                seriesData: isSer ? seriesDataRef.current : undefined,
             }));
 
             if (setCurrentMovie) {
@@ -664,12 +519,25 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
         const handlePlayerStateChange = async (e: any) => {
             const state = e.data;
 
+            if (state === window.YT.PlayerState.PLAYING) {
+                setVideoEnded(false);
+                clearCountdownTimer();
+                isCountdownStartedRef.current = false;
+            }
+
             if (state === window.YT.PlayerState.ENDED) {
+                // If we already handled this via threshold polling, don't repeat the logic
                 if (wasThresholdReachedRef.current) return;
 
+                // Prevent any auto-replay edge cases when the iframe reports ENDED
+                // Save watch history
                 await handleSaveProgress(true);
 
-                if (checkHasNextVideo()) {
+                const currentIdx = currentVideoIndexRef.current;
+                const queueSize = currentQueueRef.current.length;
+
+                // Check if there's a next video
+                if (currentIdx < queueSize - 1) {
                     startCountdown();
                 } else {
                     setVideoEnded(true);
@@ -677,8 +545,12 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
                 }
             }
 
+            // Always check threshold on state changes (handles seeks past threshold)
+            if (state === window.YT.PlayerState.PAUSED || state === window.YT.PlayerState.ENDED) {
+                await checkCompletionThreshold();
+            }
+
             if (state === window.YT.PlayerState.PAUSED && !wasThresholdReachedRef.current && !wasCompletedSavedRef.current) {
-                // ... (Existing logic same as before)
                 await handleSaveProgress(false);
                 if (onProgressUpdate && !wasThresholdReachedRef.current) {
                     const currentTime = e.target.getCurrentTime();
@@ -693,7 +565,6 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
             }
 
             if (state === window.YT.PlayerState.BUFFERING && !wasThresholdReachedRef.current && !wasCompletedSavedRef.current) {
-                // ... (Existing logic same as before)
                 const currentTime = e.target.getCurrentTime();
                 if (currentTime > 1) {
                     if (setFinal) setFinal(currentTime);
@@ -711,15 +582,6 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
             }
         };
 
-        const handlePlayerError = (err: any) => {
-            if (err.data === 150 || err.data === 101) {
-                setVideoRestricted(true);
-                if (hasNextVideo) {
-                    startCountdown();
-                }
-            }
-        };
-
         // Update handlersRef on every render to ensure YouTube event handlers always call the latest logic
         useEffect(() => {
             handlersRef.current = {
@@ -728,14 +590,27 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
             };
         });
 
+        const handlePlayerError = (err: any) => {
+            console.error("YouTube Player Error:", err.data);
+
+            if (err.data === 150 || err.data === 101) {
+                setVideoRestricted(true);
+
+                if (currentVideoIndex < currentQueue.length - 1) {
+                    startCountdown();
+                }
+            }
+        };
+
+        // --- CLEANUP ---
         useEffect(() => {
             return () => {
-                // Cleanup player on unmount only if strictly necessary, 
-                // but usually better to leave it unless component is fully destroyed
                 if (playerInstanceRef.current) {
                     try {
                         playerInstanceRef.current.destroy();
-                    } catch (e) { }
+                    } catch (e) {
+                        console.error("Error destroying player", e);
+                    }
                     playerInstanceRef.current = null;
                 }
                 clearCountdownTimer();
@@ -747,6 +622,7 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
 
         return (
             <div className="relative w-full h-full bg-black">
+                {/* Restricted Video Overlay */}
                 {videoRestricted && (
                     <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/90 text-white">
                         <p className="text-xl mb-4">This video is restricted or unavailable</p>
@@ -756,6 +632,7 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
                     </div>
                 )}
 
+                {/* Countdown Overlay */}
                 {videoEnded && countdown > 0 && (
                     <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 backdrop-blur-3xl text-white">
                         <div className="text-6xl font-bold mb-4">{countdown}</div>
@@ -765,7 +642,8 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
                             onClick={() => {
                                 clearCountdownTimer();
                                 setCountdown(0);
-                                // Logic handled in useEffect now
+                                setVideoEnded(false);
+                                playNext();
                             }}
                             className="px-6 py-3 bg-white text-black rounded-lg hover:bg-gray-200 transition"
                         >
@@ -774,22 +652,25 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
                     </div>
                 )}
 
-                {videoEnded && countdown === 0 && !hasNextVideo && (
+                {/* Replay Overlay (End of Content) */}
+                {videoEnded && countdown === 0 && (
                     <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 backdrop-blur-3xl text-white animate-in fade-in zoom-in duration-500">
                         <h2 className="text-5xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">Thanks for watching!</h2>
                         {/* <button
-                            onClick={handleReplay}
-                            className="px-8 py-3 bg-white text-black font-semibold rounded-full hover:bg-zinc-200 transition transform hover:scale-110 shadow-lg hover:shadow-xl hover:shadow-white/20"
-                        >
-                            Replay Video
-                        </button> */}
+              onClick={handleReplay}
+              className="px-8 py-3 bg-white text-black font-semibold rounded-full hover:bg-zinc-200 transition transform hover:scale-110 shadow-lg hover:shadow-xl hover:shadow-white/20"
+            >
+              Replay Video
+            </button> */}
                     </div>
                 )}
 
+                {/* Player Container */}
                 <div className="w-full h-full">
                     <div ref={playerContainerRef} className="w-full h-full" />
                 </div>
 
+                {/* Navigation Controls */}
                 {((isSeries && currentQueue.length > 0) || hasPlaylist) && (
                     <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 flex items-center gap-4 bg-black/70 px-6 py-3 rounded-full">
                         <button
@@ -818,8 +699,10 @@ const PlaylistVideoPlayer = forwardRef<any, PlaylistVideoPlayerProps>(
     }
 );
 
-function propsAreEqual(prev: any, next: any) {
+function propsAreEqual(prev: VideoPlayerProps, next: VideoPlayerProps) {
+    // Re-render if video ID changes
     if (prev.videoId !== next.videoId) return false;
+
     return (
         prev.movieId === next.movieId &&
         prev.episodeId === next.episodeId &&
@@ -827,4 +710,4 @@ function propsAreEqual(prev: any, next: any) {
     );
 }
 
-export default memo(PlaylistVideoPlayer, propsAreEqual);
+export default memo(VideoPlayer, propsAreEqual);
