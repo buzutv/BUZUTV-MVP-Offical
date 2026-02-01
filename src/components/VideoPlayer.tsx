@@ -708,16 +708,16 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
 
         {/* Navigation Controls */}
         {((isSeries && currentQueue.length > 0) || hasPlaylist) && (
-          <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 flex items-center gap-4 bg-black/70 px-6 py-3 rounded-full">
+          <div className="absolute bottom-10 sm:bottom-16 left-1/2 transform -translate-x-1/2 flex items-center gap-2 md:gap-4 bg-black/70 px-3 py-1.5 md:px-6 md:py-3 rounded-full backdrop-blur-sm border border-white/10">
             <button
               onClick={playPrevious}
               disabled={!hasPreviousVideo}
-              className="p-2 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition"
+              className="p-1 md:p-2 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 text-white" />
             </button>
 
-            <span className="text-white text-sm font-medium">
+            <span className="text-white text-xs md:text-sm font-medium whitespace-nowrap">
               {seasonInfo ? (
                 <>{seasonInfo.episodeIndex} / {seasonInfo.totalInSeason}</>
               ) : (
@@ -728,9 +728,9 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
             <button
               onClick={playNext}
               disabled={!hasNextVideo}
-              className="p-2 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition"
+              className="p-1 md:p-2 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition"
             >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-white" />
             </button>
           </div>
         )}

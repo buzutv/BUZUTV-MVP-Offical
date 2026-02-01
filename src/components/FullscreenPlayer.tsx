@@ -533,8 +533,8 @@ const FullscreenPlayer = ({
       }}>
 
 
-        <div className="w-full mx-auto p-8 h-full overflow-y-auto">
-          <div className="max-w-6xl mx-auto px-4 py-12">
+        <div className="w-full mx-auto p-2 sm:p-8 h-full overflow-y-auto">
+          <div className="max-w-7xl mx-auto px-0 sm:px-4 py-6 sm:py-12">
             <div className="flex justify-center items-center gap-4 mb-4">
               <div className="flex items-center justify-start gap-4 cursor-pointer flex-1" onClick={async () => {
                 console.log("🔙 [FullscreenPlayer] Back button clicked, saving and refetching...");
@@ -567,7 +567,7 @@ const FullscreenPlayer = ({
             /> */}
             </div>
 
-            <div className="flex items-center mx-auto justify-center aspect-video w-full bg-black rounded-2xl overflow-hidden mb-8 relative shadow-2xl border border-white/10">
+            <div className="flex items-center mx-auto justify-center aspect-[4/3] sm:aspect-video w-full bg-black rounded-lg sm:rounded-2xl overflow-hidden mb-8 relative shadow-2xl border border-white/10">
               {/* <div ref={playerContainerRef} className="w-full h-full" /> */}
               <div ref={playerRef} className="flex items-center justify-center h-full w-full sm:min-w-full md:sm:min-w-full">
                 {
