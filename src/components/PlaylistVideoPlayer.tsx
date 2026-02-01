@@ -1,6 +1,6 @@
 import React, { useEffect, useImperativeHandle, forwardRef, useRef, useState, memo, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { getYouTubeEmbedUrl } from "@/utils/youtubeUtils";
+import { getYouTubeEmbedUrl, fetchSeriesSeasons } from "@/utils/youtubeUtils";
 import { useDispatch, useSelector } from "react-redux";
 import { openScreenPlayer } from "@/store/screenPlayerSlice";
 import { useUpsertWatchHistoryMutation } from "@/store/userWatchHistorySlice";
@@ -51,6 +51,8 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
         const playlistFullObject = useSelector((state: any) => state?.screenPlayer?.playlistInfo) || {};
         const seriesData = useSelector((state: any) => state?.screenPlayer?.seriesData);
         const isSeries = useSelector((state: any) => state?.screenPlayer?.isSeries) || false;
+        const seriesPosterUrlFromRedux = useSelector((state: any) => state.screenPlayer.poster_url);
+        const seriesContentIdFromRedux = useSelector((state: any) => state.screenPlayer.contentId);
 
         // Flatten episodes if seriesData is an array of seasons
         const episodes = React.useMemo(() => {
@@ -73,11 +75,46 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
         // Determine current queue based on content type
         const currentQueue = isSeries ? episodes : playlist_items || [];
 
+        // Calculate season-specific positioning for series
+        const seasonInfo = React.useMemo(() => {
+            if (!isSeries || !seriesData) return null;
+
+            // If seriesData is an array of seasons
+            if (Array.isArray(seriesData)) {
+                let count = 0;
+                for (const season of seriesData) {
+                    const seasonEpisodes = season.episodes || [];
+                    if (currentVideoIndex < count + seasonEpisodes.length) {
+                        return {
+                            seasonNumber: season.season_number,
+                            episodeIndex: currentVideoIndex - count + 1,
+                            totalInSeason: seasonEpisodes.length,
+                            isLastInSeason: currentVideoIndex === count + seasonEpisodes.length - 1
+                        };
+                    }
+                    count += seasonEpisodes.length;
+                }
+            }
+            // If seriesData is a single season object
+            else if (seriesData.episodes) {
+                return {
+                    seasonNumber: seriesData.season_number,
+                    episodeIndex: currentVideoIndex + 1,
+                    totalInSeason: seriesData.episodes.length,
+                    isLastInSeason: currentVideoIndex === seriesData.episodes.length - 1
+                };
+            }
+
+            return null;
+        }, [isSeries, seriesData, currentVideoIndex]);
+
         // Refs for stable values in callbacks
         const isSeriesRef = useRef(isSeries);
         const currentVideoIndexRef = useRef(currentVideoIndex);
         const seriesDataRef = useRef(seriesData);
         const currentQueueRef = useRef(currentQueue);
+        const seriesPosterUrlRef = useRef(seriesPosterUrlFromRedux);
+        const seriesContentIdRef = useRef(seriesContentIdFromRedux);
 
         const [countdown, setCountdown] = useState(5);
         const [videoEnded, setVideoEnded] = useState(false);
@@ -92,7 +129,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
         // For now, let's keep it based on current queue, but maybe always show 'Next' if onPlaylistAdvance is present?
         // Actually, UI usually just hides the button if false.
         // Let's assume if it's the last episode, we can still click next to trigger playlist advance.
-        const hasNextVideo = (currentQueue?.length > 0 && currentVideoIndex < currentQueue.length - 1) || (isSeries && !!onPlaylistAdvance);
+        const hasNextVideo = (currentQueue?.length > 0 && currentVideoIndex < currentQueue.length - 1) && !seasonInfo?.isLastInSeason;
 
         console.log("VideoPlayer State CurrentIndex", currentVideoIndex, currentQueue[currentVideoIndex])
 
@@ -138,6 +175,14 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
         useEffect(() => {
             completionThresholdRef.current = completionThreshold;
         }, [completionThreshold]);
+
+        useEffect(() => {
+            if (seriesPosterUrlFromRedux) seriesPosterUrlRef.current = seriesPosterUrlFromRedux;
+        }, [seriesPosterUrlFromRedux]);
+
+        useEffect(() => {
+            if (seriesContentIdFromRedux) seriesContentIdRef.current = seriesContentIdFromRedux;
+        }, [seriesContentIdFromRedux]);
 
         const handleSaveProgress = async (isCompOverride?: boolean) => {
             if (playerInstanceRef.current && playerInstanceRef.current.getCurrentTime) {
@@ -344,7 +389,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
                         });
                     }
 
-                    if (currentVideoIndexRef.current < currentQueueRef.current.length - 1) {
+                    if (currentVideoIndexRef.current < currentQueueRef.current.length - 1 && !seasonInfo?.isLastInSeason) {
                         playerInstanceRef.current.seekTo(duration, true);
                         startCountdown();
                     } else {
@@ -417,12 +462,11 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
             wasCompletedSavedRef.current = false;
             if (playerInstanceRef.current) {
                 playerInstanceRef.current.seekTo(0, true);
-                playerInstanceRef.current.playVideo();
             }
         };
 
         // --- NAVIGATION ---
-        const playNext = () => {
+        const playNext = async () => {
             const currentIdx = currentVideoIndexRef.current;
             const queue = currentQueueRef.current;
 
@@ -430,7 +474,9 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
 
             console.log("playNext triggering:", { currentIdx, nextIndex, queueLength: queue?.length });
 
-            if (!queue || nextIndex >= queue.length) {
+            if (!queue || nextIndex >= queue.length || (isSeriesRef.current && seasonInfo?.isLastInSeason)) {
+                // Commented out the auto-jump to next season logic as requested
+                /*
                 if (isSeriesRef.current && onPlaylistAdvance) {
                     console.log("Attempting to advance playlist context...");
                     clearCountdownTimer();
@@ -438,10 +484,11 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
                     isCountdownStartedRef.current = false;
                     onPlaylistAdvance();
                 } else {
-                    setVideoEnded(true);
-                    setCountdown(0);
-                    isCountdownStartedRef.current = false;
-                }
+                */
+                setVideoEnded(true);
+                setCountdown(0);
+                isCountdownStartedRef.current = false;
+                // }
                 return;
             }
 
@@ -456,11 +503,35 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
 
             // For series: episode object directly has video_url
             // For playlist: need to access .content
-            const nextVideoData = isSer ? nextItem : nextItem?.content;
+            let nextVideoData = isSer ? nextItem : nextItem?.content;
 
             if (!nextVideoData) {
                 console.error("No video data found for next item");
                 return;
+            }
+
+            // Transition logic: if next item is a series and we are currently in a movie playlist
+            if (!isSer && nextVideoData.type === 'series') {
+                console.log("Next item is a series, fetching seasons...");
+                const seasonsData = await fetchSeriesSeasons(nextVideoData.id) as any[];
+                if (seasonsData && seasonsData.length > 0) {
+                    const firstSeason = seasonsData[0];
+                    const firstEpisode = firstSeason.episodes?.[0];
+                    if (firstEpisode) {
+                        dispatch(openScreenPlayer({
+                            isOpen: true,
+                            isSeries: true,
+                            selectedVideo: firstEpisode,
+                            currentVideoIndex: 0,
+                            seriesData: seasonsData,
+                            contentId: nextVideoData.id,
+                            poster_url: nextVideoData.poster_url,
+                            playlistInfo: playlistFullObject // Pass through playlist info to maintain context
+                        }));
+                        if (setCurrentMovie) setCurrentMovie(firstEpisode);
+                        return;
+                    }
+                }
             }
 
             console.log("Playing next in queue:", { nextIndex, nextVideoData, isSeries: isSer });
@@ -471,7 +542,11 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
                 currentVideoIndex: nextIndex,
                 selectedVideo: nextVideoData,
                 isSeries: isSer,
+                videoUrl: nextVideoData.video_url || nextVideoData.videoUrl,
                 seriesData: isSer ? seriesDataRef.current : undefined,
+                contentId: isSer ? (seriesContentIdRef.current || nextVideoData.series_id) : nextVideoData.id,
+                poster_url: isSer ? seriesPosterUrlRef.current : nextVideoData.poster_url,
+                playlistInfo: playlistFullObject
             }));
 
             if (setCurrentMovie) {
@@ -479,7 +554,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
             }
         };
 
-        const playPrevious = () => {
+        const playPrevious = async () => {
             const currentIdx = currentVideoIndexRef.current;
             const queue = currentQueueRef.current;
 
@@ -493,11 +568,37 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
             const prevIndex = currentIdx - 1;
             const prevItem = queue[prevIndex];
             const isSer = isSeriesRef.current;
-            const prevVideoData = isSer ? prevItem : prevItem?.content;
+            let prevVideoData = isSer ? prevItem : prevItem?.content;
 
             if (!prevVideoData) {
                 console.error("No video data found for previous item");
                 return;
+            }
+
+            // Transition logic: if previous item is a series and we are currently in a movie playlist
+            if (!isSer && prevVideoData.type === 'series') {
+                const seasonsData = await fetchSeriesSeasons(prevVideoData.id) as any[];
+                if (seasonsData && seasonsData.length > 0) {
+                    const lastSeason = seasonsData[seasonsData.length - 1];
+                    const lastEpisode = lastSeason.episodes?.[lastSeason.episodes.length - 1];
+                    if (lastEpisode) {
+                        // Calculate global index for last episode
+                        const globalIndex = seasonsData.reduce((sum, s) => sum + (s.episodes?.length || 0), 0) - 1;
+
+                        dispatch(openScreenPlayer({
+                            isOpen: true,
+                            isSeries: true,
+                            selectedVideo: lastEpisode,
+                            currentVideoIndex: globalIndex,
+                            seriesData: seasonsData,
+                            contentId: prevVideoData.id,
+                            poster_url: prevVideoData.poster_url,
+                            playlistInfo: playlistFullObject
+                        }));
+                        if (setCurrentMovie) setCurrentMovie(lastEpisode);
+                        return;
+                    }
+                }
             }
 
             console.log("Playing previous:", { prevIndex, prevVideoData });
@@ -507,7 +608,11 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
                 currentVideoIndex: prevIndex,
                 selectedVideo: prevVideoData,
                 isSeries: isSer,
+                videoUrl: prevVideoData.video_url || prevVideoData.videoUrl,
                 seriesData: isSer ? seriesDataRef.current : undefined,
+                contentId: isSer ? (seriesContentIdRef.current || prevVideoData.series_id) : prevVideoData.id,
+                poster_url: isSer ? seriesPosterUrlRef.current : prevVideoData.poster_url,
+                playlistInfo: playlistFullObject
             }));
 
             if (setCurrentMovie) {
@@ -536,8 +641,8 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
                 const currentIdx = currentVideoIndexRef.current;
                 const queueSize = currentQueueRef.current.length;
 
-                // Check if there's a next video
-                if (currentIdx < queueSize - 1) {
+                // Check if there's a next video and not end of season
+                if (currentIdx < queueSize - 1 && !seasonInfo?.isLastInSeason) {
                     startCountdown();
                 } else {
                     setVideoEnded(true);
@@ -656,12 +761,12 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
                 {videoEnded && countdown === 0 && (
                     <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 backdrop-blur-3xl text-white animate-in fade-in zoom-in duration-500">
                         <h2 className="text-5xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">Thanks for watching!</h2>
-                        {/* <button
-              onClick={handleReplay}
-              className="px-8 py-3 bg-white text-black font-semibold rounded-full hover:bg-zinc-200 transition transform hover:scale-110 shadow-lg hover:shadow-xl hover:shadow-white/20"
-            >
-              Replay Video
-            </button> */}
+                        <button
+                            onClick={handleReplay}
+                            className="px-8 py-3 bg-white text-black font-semibold rounded-full hover:bg-zinc-200 transition transform hover:scale-110 shadow-lg hover:shadow-xl hover:shadow-white/20"
+                        >
+                            Replay Video
+                        </button>
                     </div>
                 )}
 
@@ -682,7 +787,11 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
                         </button>
 
                         <span className="text-white text-sm font-medium">
-                            {currentVideoIndex + 1} / {currentQueue.length}
+                            {seasonInfo ? (
+                                <>{seasonInfo.episodeIndex} / {seasonInfo.totalInSeason}</>
+                            ) : (
+                                <>{currentVideoIndex + 1} / {currentQueue.length}</>
+                            )}
                         </span>
 
                         <button

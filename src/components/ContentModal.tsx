@@ -14,7 +14,7 @@ import SeriesPlayer from "@/components/SeriesPlayer";
 import { fetchSeriesSeasons, getOptimizedImageUrl } from "@/utils/youtubeUtils";
 import FullscreenPlayer from "./FullscreenPlayer";
 import { useGetSeasonWithEpisodesQuery, useLazyGetSeasonWithEpisodesQuery } from "@/store/seasonSlice";
-import { openScreenPlayer, setContentId, setisSeries, setSeriesData } from "@/store/screenPlayerSlice";
+import { openScreenPlayer, closeScreenPlayer, setContentId, setisSeries, setSeriesData } from "@/store/screenPlayerSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { useLazyGetPlaylistContentWithWatchHistoryQuery } from "@/store/contentSlice";
 import { useAuth } from "@/contexts/AuthContext";
@@ -450,8 +450,9 @@ const ContentModal: React.FC<ContentModalProps> = ({
     setIsSeriesPlayerOpen(false);
     setCurrentEpisode(null);
     setIsMovieOpen(false);
-    // refetch()
-    // onClose(false) // Don't close the modal, just the player
+
+    dispatch(closeScreenPlayer());
+
     const data = await triggerGetContentWithWatchHistory({
       userId: user?.id,
       contentIds: content.map(item => item.id)

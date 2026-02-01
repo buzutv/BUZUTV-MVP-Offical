@@ -99,7 +99,8 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
             return {
               seasonNumber: season.season_number,
               episodeIndex: currentVideoIndex - count + 1,
-              totalInSeason: seasonEpisodes.length
+              totalInSeason: seasonEpisodes.length,
+              isLastInSeason: currentVideoIndex === count + seasonEpisodes.length - 1
             };
           }
           count += seasonEpisodes.length;
@@ -110,7 +111,8 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
         return {
           seasonNumber: seriesData.season_number,
           episodeIndex: currentVideoIndex + 1,
-          totalInSeason: seriesData.episodes.length
+          totalInSeason: seriesData.episodes.length,
+          isLastInSeason: currentVideoIndex === seriesData.episodes.length - 1
         };
       }
 
@@ -123,7 +125,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
     // For now, let's keep it based on current queue, but maybe always show 'Next' if onPlaylistAdvance is present?
     // Actually, UI usually just hides the button if false.
     // Let's assume if it's the last episode, we can still click next to trigger playlist advance.
-    const hasNextVideo = (currentQueue?.length > 0 && currentVideoIndex < currentQueue.length - 1) || (isSeries && !!onPlaylistAdvance);
+    const hasNextVideo = (currentQueue?.length > 0 && currentVideoIndex < currentQueue.length - 1) && !seasonInfo?.isLastInSeason;
 
     console.log("VideoPlayer State CurrentIndex", currentVideoIndex, currentQueue[currentVideoIndex])
 
@@ -375,7 +377,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
             });
           }
 
-          if (currentVideoIndexRef.current < currentQueueRef.current.length - 1) {
+          if (currentVideoIndexRef.current < currentQueueRef.current.length - 1 && !seasonInfo?.isLastInSeason) {
             playerInstanceRef.current.seekTo(duration, true);
             startCountdown();
           } else {
@@ -461,7 +463,9 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
 
       console.log("playNext triggering:", { currentIdx, nextIndex, queueLength: queue?.length });
 
-      if (!queue || nextIndex >= queue.length) {
+      if (!queue || nextIndex >= queue.length || (isSeriesRef.current && seasonInfo?.isLastInSeason)) {
+        // Commented out the auto-jump to next season logic as requested
+        /*
         if (isSeriesRef.current && onPlaylistAdvance) {
           console.log("Attempting to advance playlist context...");
           clearCountdownTimer();
@@ -469,10 +473,11 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
           isCountdownStartedRef.current = false;
           onPlaylistAdvance();
         } else {
-          setVideoEnded(true);
-          setCountdown(0);
-          isCountdownStartedRef.current = false;
-        }
+        */
+        setVideoEnded(true);
+        setCountdown(0);
+        isCountdownStartedRef.current = false;
+        // }
         return;
       }
 
@@ -567,8 +572,8 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
         const currentIdx = currentVideoIndexRef.current;
         const queueSize = currentQueueRef.current.length;
 
-        // Check if there's a next video
-        if (currentIdx < queueSize - 1) {
+        // Check if there's a next video and not end of season
+        if (currentIdx < queueSize - 1 && !seasonInfo?.isLastInSeason) {
           startCountdown();
         } else {
           setVideoEnded(true);
@@ -713,7 +718,11 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
             </button>
 
             <span className="text-white text-sm font-medium">
-              {currentVideoIndex + 1} / {currentQueue.length}
+              {seasonInfo ? (
+                <>{seasonInfo.episodeIndex} / {seasonInfo.totalInSeason}</>
+              ) : (
+                <>{currentVideoIndex + 1} / {currentQueue.length}</>
+              )}
             </span>
 
             <button
