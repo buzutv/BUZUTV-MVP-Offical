@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { EllipsisVertical, ListMinus, Play } from "lucide-react";
+import { EllipsisVertical, Heart, ListMinus, Play } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { Movie } from "@/data/mockMovies";
 import { useAuth } from "@/contexts/AuthContext";
@@ -66,10 +66,8 @@ const ContentCard = ({
   // State for playlist creation form
   const [playlistForm, setPlaylistForm] = useState<{
     title: string;
-    description: string;
   }>({
     title: '',
-    description: ''
   });
 
   console.log("Content Card", item)
@@ -119,9 +117,9 @@ const ContentCard = ({
     return Array.isArray(history) ? history[0] : history;
   }, [normalizedItem.user_watch_history]);
 
-  const effectiveShowProgress = showProgress || (watchHistory && watchHistory.watch_percentage > 0 && watchHistory.watch_percentage < 95);
+  const effectiveShowProgress = showProgress || (watchHistory && watchHistory.watch_percentage > 0 && watchHistory.watch_percentage < 100);
   const effectiveProgressPercent = progressPercent || watchHistory?.watch_percentage || 0;
-  const effectiveShowResumeButton = showResumeButton || (watchHistory && watchHistory.watch_percentage > 0 && watchHistory.watch_percentage < 95);
+  const effectiveShowResumeButton = showResumeButton || (watchHistory && watchHistory.watch_percentage > 0 && watchHistory.watch_percentage < 100);
 
   const handleSave = useCallback(
     (e: React.MouseEvent) => {
@@ -213,15 +211,11 @@ const ContentCard = ({
   const handleSubmitPlaylist = async (e) => {
     console.log('Submitting playlist form', playlistForm);
     e.preventDefault();
-    const form = e.target;
-    // const title = form.title.value; // Using state instead
-    // const description = form.description.value; // Using state instead
 
     const payload = {
       id: crypto.randomUUID(),
       title: playlistForm.title,
-      description: playlistForm.description,
-      created_by: user?.id// Ideally use user.id from auth context
+      created_by: user?.id
     }
 
     console.log('Playlist payload:', user);
@@ -234,9 +228,8 @@ const ContentCard = ({
     }
     else {
       console.log('Playlist created:', data);
-      // Close the dialog and reset form
       setIsCreatePlaylistOpen(false);
-      setPlaylistForm({ title: '', description: '' });
+      setPlaylistForm({ title: '' });
     }
   }
 
@@ -359,20 +352,30 @@ const ContentCard = ({
               </Button>
             </PopoverTrigger>
 
-            <PopoverContent className="min-w-[200px] p-3 flex flex-col gap-3" onInteractOutside={(e) => e.stopPropagation()}>
+            <PopoverContent className="min-w-[220px] p-2 flex flex-col gap-2 bg-[#120222] border-white/10 text-white backdrop-blur-xl" onInteractOutside={(e) => e.stopPropagation()}>
               <div className="flex flex-col gap-2">
-                <span className="text-xs font-semibold text-gray-500 uppercase px-2">Add to Playlist</span>
-                <div className="flex flex-col gap-1 max-h-[200px] overflow-y-auto">
+                <button
+                  onClick={handleSave}
+                  className="flex items-center gap-3 w-full p-2 hover:bg-white/10 rounded-md transition-colors text-sm font-medium"
+                >
+                  <Heart className={`w-4 h-4 ${isSaved ? "fill-red-500 text-red-500" : "text-gray-400"}`} />
+                  {isSaved ? "Remove from Favorites" : "Add to Favorites"}
+                </button>
+
+                <div className="h-px bg-white/10 my-1" />
+
+                <span className="text-[10px] font-bold text-gray-400 uppercase px-2 tracking-wider">Add to Playlist</span>
+                <div className="flex flex-col gap-1 max-h-[160px] overflow-y-auto custom-scrollbar">
                   {playlists?.map((playlist) => (
                     <div
                       key={playlist.id}
-                      className="flex items-center justify-between p-2 hover:bg-gray-100 rounded-md transition-colors"
+                      className="flex items-center justify-between p-2 hover:bg-white/10 rounded-md transition-colors group/pl"
                     >
-                      <span className="text-sm truncate max-w-[120px]" title={playlist.title}>{playlist.title}</span>
+                      <span className="text-sm truncate max-w-[130px] text-gray-200" title={playlist.title}>{playlist.title}</span>
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-7 px-2"
+                        className="h-7 px-2 text-brand-400 hover:text-brand-300 hover:bg-transparent"
                         onClick={() => handleAddtoPlaylist(playlist?.id)}
                       >
                         Add
@@ -380,7 +383,7 @@ const ContentCard = ({
                     </div>
                   ))}
                   {(!playlists || playlists.length === 0) && (
-                    <div className="text-sm text-gray-400 p-2 italic">No playlists found</div>
+                    <div className="text-sm text-gray-500 p-2 italic">No playlists found</div>
                   )}
                 </div>
               </div>
@@ -399,7 +402,7 @@ const ContentCard = ({
                   <form className="grid gap-4 py-4" onSubmit={handleSubmitPlaylist}>
                     <div className="grid gap-2">
                       <label htmlFor="playlist-title" className="text-sm font-medium">
-                        Playlist Title
+                        Playlist Name
                       </label>
                       <input
                         type="text"
@@ -407,26 +410,12 @@ const ContentCard = ({
                         name="title"
                         value={playlistForm.title}
                         onChange={handleChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter playlist title"
+                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-md focus:outline-none focus:ring-1 focus:ring-brand-500 text-white"
+                        placeholder="My Awesome Playlist"
                         required
                       />
                     </div>
-                    <div className="grid gap-2">
-                      <label htmlFor="playlist-description" className="text-sm font-medium">
-                        Description
-                      </label>
-                      <textarea
-                        id="playlist-description"
-                        name="description"
-                        value={playlistForm.description}
-                        onChange={handleChange}
-                        rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter playlist description (optional)"
-                      />
-                    </div>
-                    <Button type="submit" className="w-full bg-slate-800 hover:bg-slate-700 text-white">
+                    <Button type="submit" className="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold">
                       Create Playlist
                     </Button>
                   </form>
@@ -471,30 +460,31 @@ const ContentCard = ({
               </h3>
             </div>
 
-            {/* {effectiveShowResumeButton && (
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+            {effectiveShowResumeButton && (
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-auto">
                 <button
                   className="bg-white text-black px-4 py-2 rounded-lg font-semibold flex items-center space-x-2 hover:scale-105 transition-transform"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log("▶️ [ContentCard] Resume clicked, playing immediately");
+                    console.log("▶️ [ContentCard] Continue Watching clicked, playing immediately");
                     handleModalPlayClick();
                   }}
                 >
-                  <Play className="w-4 h-4" />
-                  <span>Resume</span>
+                  <Play className="w-4 h-4 fill-current" />
+                  <span>Continue Watching</span>
                 </button>
               </div>
-            )} */}
+            )}
 
-            {isMoreLikeThis && (
+            {/* Remove the blocking button for isMoreLikeThis to allow context menu clicks */}
+            {/* {isMoreLikeThis && (
               <button
                 className="absolute inset-0 z-20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
                 onClick={handleCardClick}
                 aria-label={`View ${item?.title} details`}
               />
-            )}
+            )} */}
           </div>
         </div>
       </div>

@@ -23,7 +23,7 @@ import { Button } from '@/components/ui/button'
 const PlaylistDetail = () => {
   const { id } = useParams()
   // Ensure triggerPlaylistWithItemsById is destructured here
-  const { playlistWithItems, triggerPlaylistWithItemsById } = usePlaylists()
+  const { playlistWithItems, triggerPlaylistWithItemsById, triggerResult } = usePlaylists()
   const { searchContentData } = useContent()
 
   const [currentVideoIndex, setCurrentVideoIndex] = useState<number | null>(null)
@@ -292,13 +292,13 @@ const PlaylistDetail = () => {
             // className="flex items-center gap-2 px-6 py-3 bg-white rounded-lg hover:bg-foreground/90 hover:text-white transition font-semibold shadow-lg"
             onClick={() => setOpenDialog(true)}>
             <Plus className="w-5 h-5" />
-            Add More Movies
+            Add more content
           </Button>
 
           <Dialog open={openDialog} onOpenChange={setOpenDialog}>
             <DialogPortal>
               <DialogOverlay className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50" />
-              <DialogContent className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl bg-[#120222] border border-white/10 rounded-3xl shadow-2xl z-[60] overflow-hidden">
+              <DialogContent className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl bg-[#120222] border border-white/10 rounded-3xl shadow-2xl z-[60] overflow-hidden text-white">
                 <div className="absolute inset-0 -z-10 opacity-50"
                   style={{
                     background: `radial-gradient(circle at top left, #311066 0%, transparent 70%)`,
@@ -390,38 +390,12 @@ const PlaylistDetail = () => {
               </DialogContent>
             </DialogPortal>
           </Dialog>
-
-          {/* {content?.length > 0 && (
-            <button
-              onClick={playPlaylist}
-              className="flex items-center gap-2 px-6 py-3 bg-white rounded-lg hover:bg-foreground/90 hover:text-white transition font-semibold shadow-lg"
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-              </svg>
-              Play All ({content.length})
-            </button>
-          )} */}
         </div>
       </div>
 
-      {/* Autoplay Toggle */}
-      {/* <div className="flex items-center gap-3 mb-4 p-4 rounded-lg border-2 border-muted-foreground bg-foreground z-150">
-        <input
-          type="checkbox"
-          id="autoplay-toggle"
-          checked={isAutoPlay}
-          onChange={(e) => setIsAutoPlay(e.target.checked)}
-          className="w-4 h-4 accent-primary cursor-pointer"
-        />
-        <label htmlFor="autoplay-toggle" className="cursor-pointer text-sm text-white font-medium">
-          Autoplay next video in playlist
-        </label>
-      </div> */}
-
       {/* Loading State */}
-      <div className='flex items-center gap-8 justify-start w-full'>
-        {user_watch_history.length === 0 && content.length === 0 && (
+      <div className='flex items-center gap-8 justify-start w-full relative z-10'>
+        {triggerResult?.isFetching && content.length === 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 gap-6 w-full">
             {Array.from({ length: 10 }).map((_, idx) => (
               <div key={idx} className="rounded-xl overflow-hidden bg-white/5 backdrop-blur-md border border-white/10 shadow-md">
@@ -436,13 +410,31 @@ const PlaylistDetail = () => {
         )}
       </div>
 
+      {/* Empty Playlist State */}
+      {!triggerResult?.isFetching && content.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in zoom-in duration-500 relative z-10">
+          <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mb-6 border border-white/10 shadow-[0_0_30px_rgba(255,255,255,0.05)]">
+            <Plus className="w-10 h-10 text-white/20" />
+          </div>
+          <h2 className="text-3xl font-bold text-white mb-3">Your playlist is empty</h2>
+          <p className="text-white/40 mb-8 max-w-sm leading-relaxed">
+            Ready to build your collection? Click the button below to start adding your favorite movies and series.
+          </p>
+          <Button
+            onClick={() => setOpenDialog(true)}
+            className="bg-blue-600 hover:bg-blue-500 text-white px-10 py-7 rounded-2xl text-lg font-bold shadow-[0_20px_40px_rgba(37,99,235,0.25)] transition-all active:scale-95 hover:-translate-y-1 flex items-center gap-2"
+          >
+            <Plus className="w-6 h-6" />
+            Add Content Now
+          </Button>
+        </div>
+      )}
+
       {/* Video Grid */}
-      {/* Video Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-2 xl:grid-cols-4 gap-6 relative z-10">
         {displayItems?.map((item, idx) => (
           <div
             key={item.id}
-            // Added 'group' class here
             className={`group z-10 md:w-full cursor-pointer rounded-xl overflow-hidden shadow-md hover:shadow-lg transition bg-white text-zinc-900 border-2 ${currentVideoIndex === idx ? 'border-primary ring-2 ring-primary/50' : 'border-transparent'
               }`}
             onClick={() => {
@@ -575,7 +567,7 @@ const PlaylistDetail = () => {
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <DialogPortal>
           <DialogOverlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]" />
-          <DialogContent className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-[#1a0b2e] border border-white/10 rounded-3xl shadow-2xl p-8 z-[110] outline-none">
+          <DialogContent className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-[#1a0b2e] border border-white/10 rounded-3xl shadow-2xl p-8 z-[110] outline-none text-white">
             <div className="text-center">
               <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Trash className="w-8 h-8 text-red-500" />

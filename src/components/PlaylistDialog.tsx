@@ -22,60 +22,50 @@ export default function PlaylistDialog({ onSubmit, triggerLabel = "Add Playlist"
   const [description, setDescription] = useState("");
 
   // validation state
-  const [touched, setTouched] = useState({ title: false, description: false });
-  const [errors, setErrors] = useState<{ title?: string; description?: string }>({});
+  const [touched, setTouched] = useState({ title: false });
+  const [errors, setErrors] = useState<{ title?: string }>({});
 
   useEffect(() => {
-    const next: { title?: string; description?: string } = {};
+    const next: { title?: string } = {};
 
     // Title: required, 3-100 chars
     if (!title || title.trim().length === 0) next.title = "Title is required.";
     else if (title.trim().length < 3) next.title = "Title must be at least 3 characters.";
     else if (title.trim().length > 100) next.title = "Title must be 100 characters or less.";
 
-    // Description: optional but if provided min 10 and max 1000
-    if (description && description.trim().length > 0) {
-      if (description.trim().length < 10) next.description = "Description must be at least 10 characters.";
-      else if (description.trim().length > 1000) next.description = "Description must be 1000 characters or less.";
-    }
-
     setErrors(next);
-  }, [title, description]);
+  }, [title]);
 
   const isValid = Object.keys(errors).length === 0;
 
   function handleClose() {
     setOpen(false);
     // reset touched so next open starts fresh but keep values (optional)
-    setTouched({ title: false, description: false });
+    setTouched({ title: false });
   }
 
   async function handleSubmit(e?: React.FormEvent) {
     e?.preventDefault();
-    setTouched({ title: true, description: true });
+    setTouched({ title: true });
 
     if (!isValid) return;
 
-    const payload = { title: title.trim(), description: description.trim() };
-    onSubmit?.(payload);
+    const payload = { title: title.trim() };
+    onSubmit?.(payload as any);
     const id = crypto.randomUUID();
-    const {data, error} = await supabase.from('playlists').insert([{
-         id:id,
-         title: payload.title, 
-         description: payload.description,
-        //  createdBy: User Context here from auth context
-         created_by:"03fa9a91-4281-4bd4-9e60-4da2ba72b0f3",
-         created_at: new Date().toISOString(),
-         updated_at: new Date().toISOString(),
-        
-        }]);
+    const { data, error } = await supabase.from('playlists').insert([{
+      id: id,
+      title: payload.title,
+      //  createdBy: User Context here from auth context
+      created_by: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+
+    }]);
     console.log(data, error);
-
-
 
     // simple UX: close and reset fields
     setTitle("");
-    setDescription("");
     handleClose();
   }
 
@@ -83,8 +73,8 @@ export default function PlaylistDialog({ onSubmit, triggerLabel = "Add Playlist"
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="rounded-xl">
-            <Plus size={16}  />
-            {triggerLabel}
+          <Plus size={16} />
+          {triggerLabel}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
@@ -104,13 +94,13 @@ export default function PlaylistDialog({ onSubmit, triggerLabel = "Add Playlist"
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div>
-            <Label htmlFor="title">Title</Label>
+            <Label htmlFor="title">Playlist Name</Label>
             <Input
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               onBlur={() => setTouched((s) => ({ ...s, title: true }))}
-              placeholder="Write a clear, concise title"
+              placeholder="e.g. My Favorite Movies"
               aria-invalid={!!errors.title}
               aria-describedby={errors.title ? "title-error" : undefined}
               className="mt-1"
@@ -119,25 +109,6 @@ export default function PlaylistDialog({ onSubmit, triggerLabel = "Add Playlist"
             {touched.title && errors.title ? (
               <p id="title-error" className="text-sm text-red-600 mt-1">
                 {errors.title}
-              </p>
-            ) : null}
-          </div>
-
-          <div>
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              onBlur={() => setTouched((s) => ({ ...s, description: true }))}
-              placeholder="Optional — add more details (min 10 characters if used)"
-              aria-invalid={!!errors.description}
-              aria-describedby={errors.description ? "description-error" : undefined}
-              className="mt-1 h-32"
-            />
-            {touched.description && errors.description ? (
-              <p id="description-error" className="text-sm text-red-600 mt-1">
-                {errors.description}
               </p>
             ) : null}
           </div>

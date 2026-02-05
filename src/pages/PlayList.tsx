@@ -37,7 +37,6 @@ const PlayList = () => {
     const isDeleteDialogOpen = !!playlistToDelete
     const [playlistForm, setPlaylistForm] = useState({
         title: '',
-        description: ''
     })
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -91,7 +90,7 @@ const PlayList = () => {
 
         if (!error) {
             setIsCreatePlaylistOpen(false)
-            setPlaylistForm({ title: '', description: '' })
+            setPlaylistForm({ title: '' })
             refetch()
         }
     }
@@ -150,15 +149,20 @@ const PlayList = () => {
             <div className="grid grid-cols-1 gap-10 mb-14 sm:grid-cols-2">
                 <h2 className="text-3xl font-bold text-white">Your Playlists</h2>
                 <div className="flex justify-end gap-4">
-                    <Button className="bg-slate-800 hover:bg-slate-700 text-white gap-2 px-6 py-3 animate" onClick={() => refetch()}>
+
+                    <Button
+                        variant="outline"
+                        className="bg-white/5 border-white/10 hover:bg-white/10 text-white gap-2 px-6 py-3 transition-all duration-300"
+                        onClick={() => refetch()}
+                    >
                         <RefreshCcw className="w-4 h-4" />
-                        Refresh Playlists
+                        Refresh
                     </Button>
                     <Dialog open={isCreatePlaylistOpen} onOpenChange={setIsCreatePlaylistOpen}>
                         <DialogTrigger asChild>
-                            <Button className="bg-slate-800 hover:bg-slate-700 text-white gap-2 px-6 py-3">
+                            <Button className="bg-brand-600/80 hover:bg-brand-600 text-white gap-2 px-6 py-3 shadow-lg shadow-brand-500/10 transition-all duration-300">
                                 <Plus className="w-4 h-4" />
-                                Create New Playlist
+                                Create Playlist
                             </Button>
                         </DialogTrigger>
 
@@ -173,33 +177,21 @@ const PlayList = () => {
 
                             <form className="grid gap-4 py-4" onSubmit={handleSubmitPlaylist}>
                                 <div className="grid gap-2">
-                                    <label className="text-sm text-white font-medium">
-                                        Playlist Title
+                                    <label className="text-sm text-white/70 font-medium">
+                                        Playlist Name
                                     </label>
                                     <input
                                         type="text"
                                         name="title"
                                         value={playlistForm.title}
                                         onChange={handleChange}
-                                        className="w-full px-3 py-2 rounded-md"
+                                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
+                                        placeholder="My Awesome Playlist"
                                         required
                                     />
                                 </div>
 
-                                <div className="grid gap-2">
-                                    <label className="text-sm text-white font-medium">
-                                        Description
-                                    </label>
-                                    <textarea
-                                        name="description"
-                                        value={playlistForm.description}
-                                        onChange={handleChange}
-                                        rows={3}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                                    />
-                                </div>
-
-                                <Button type="submit" className="w-full bg-slate-800 hover:bg-slate-700 text-white">
+                                <Button type="submit" className="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold mt-2">
                                     Create Playlist
                                 </Button>
                             </form>
@@ -286,8 +278,18 @@ const PlayList = () => {
 
             {/* EMPTY STATE */}
             {!isFetching && playlists.length === 0 && (
-                <div className="text-center p-20 border border-gray-700 rounded-xl bg-black/50">
-                    <p className="text-xl text-gray-400">You haven't created any playlists yet.</p>
+                <div className="text-center p-20 border border-white/10 rounded-3xl bg-white/5 backdrop-blur-xl animate-in fade-in zoom-in duration-500 max-w-2xl mx-auto shadow-2xl">
+                    <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 border border-white/10">
+                        <Plus className="w-10 h-10 text-white/20" />
+                    </div>
+                    <p className="text-2xl font-bold text-white mb-3">No Playlists Yet</p>
+                    <p className="text-gray-400 mb-8 max-w-sm mx-auto">Start organizing your favorite content by creating your first playlist.</p>
+                    <Button
+                        onClick={() => setIsCreatePlaylistOpen(true)}
+                        className="bg-brand-600 hover:bg-brand-500 text-white px-8 py-6 rounded-2xl text-lg font-bold transition-all active:scale-95"
+                    >
+                        Create Your First Playlist
+                    </Button>
                 </div>
             )}
         </div>

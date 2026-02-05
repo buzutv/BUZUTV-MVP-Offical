@@ -162,7 +162,7 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
                 className="max-w-[90vw] w-full h-[85vh] p-0 bg-black/95 border-white/10 backdrop-blur-xl gap-0 overflow-hidden flex flex-col"
             >
                 {/* Header */}
-                <div className="flex items-center gap-4 px-6 py-4 border-b border-white/10 shrink-0">
+                <div className="flex items-center gap-4 px-6 py-4 border-b border-white/10 shrink-0 relative z-10">
                     <Search className="w-5 h-5 text-gray-400" />
                     <input
                         autoFocus
@@ -173,7 +173,7 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
                     />
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white"
+                        className="p-3 hover:bg-white/10 rounded-full transition-all duration-300 text-gray-400 hover:text-white hover:scale-110 active:scale-95 flex items-center justify-center translate-x-1"
                         aria-label="Close search"
                     >
                         <X className="w-6 h-6" />
@@ -199,20 +199,35 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
                                 {/* Channels */}
                                 {formattedResults.channels.length > 0 && (
                                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                        <div className="flex items-center gap-2 text-xl font-bold text-white mb-4">
-                                            <MonitorPlay className="w-5 h-5 text-brand-500" />
+                                        <div className="flex items-center gap-3 text-xl font-bold text-white mb-6">
+                                            <MonitorPlay className="w-6 h-6 text-brand-500" />
                                             <h2>Channels</h2>
                                         </div>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                                            {formattedResults.channels.map((channel) => (
-                                                <div
-                                                    key={channel.id}
-                                                    onClick={() => handleChannelClick(channel)}
-                                                    className="cursor-pointer transition-transform hover:scale-105"
-                                                >
-                                                    <ChannelCard channel={channel} />
-                                                </div>
-                                            ))}
+                                        <div className="relative group/channels">
+                                            <div className="flex overflow-x-auto pb-4 gap-4 scrollbar-hide snap-x"
+                                                style={{
+                                                    display: 'grid',
+                                                    gridAutoFlow: 'column',
+                                                    gridTemplateRows: formattedResults.channels.length > 5 ? 'repeat(2, minmax(0, 1fr))' : 'repeat(1, minmax(0, 1fr))',
+                                                    scrollSnapType: 'x mandatory'
+                                                }}
+                                            >
+                                                {formattedResults.channels.map((channel) => (
+                                                    <div
+                                                        key={channel.id}
+                                                        onClick={() => handleChannelClick(channel)}
+                                                        className="cursor-pointer transition-all duration-300 hover:scale-[1.03] w-[240px] snap-start"
+                                                    >
+                                                        <ChannelCard channel={channel} />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            {/* Subtitle nudge for orientation */}
+                                            {formattedResults.channels.length > 5 && (
+                                                <p className="text-[10px] text-gray-500 mt-1 flex items-center gap-1 uppercase tracking-widest pl-1">
+                                                    Scroll horizontally to see more channels
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                 )}

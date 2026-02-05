@@ -32,7 +32,7 @@ const Index = React.memo(() => {
   const [activeGenre, setActiveGenre] = useState("all");
 
   const startTime = performance.now();
-  const { homeContent, channels, isLoading, content, kidsContent } = useAppContent();
+  const { homeContent, channels, isLoading, content, kidsContent, movieContent, seriesContent } = useAppContent();
   const { content: rawContent } = useContent();
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
@@ -168,8 +168,31 @@ const Index = React.memo(() => {
         <div className="pt-8 relative pr-6 pl-0 md:pr-8 md:pl-6">
           <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-black to-transparent pointer-events-none" />
 
-          {/* Filter Bar */}
-          <div className="mb-4">
+          {isLoggedIn && (
+            <>
+              {/* Unified Continue Watching for Home */}
+              {(() => {
+                const combinedHistory = [...(movieContent.continueWatching || []), ...(seriesContent.continueWatching || [])]
+                  .sort((a, b) => {
+                    const historyA = Array.isArray(a.user_watch_history) ? a.user_watch_history[0] : a.user_watch_history;
+                    const historyB = Array.isArray(b.user_watch_history) ? b.user_watch_history[0] : b.user_watch_history;
+                    return new Date(historyB?.watched_at || 0).getTime() - new Date(historyA?.watched_at || 0).getTime();
+                  })
+                  .slice(0, 10);
+
+                return combinedHistory.length > 0 && (
+                  <ContentRow
+                    title="Continue Watching"
+                    items={combinedHistory}
+                    onCardClick={handleContentRowCardClick}
+                  />
+                );
+              })()}
+            </>
+          )}
+
+          {/* Filter Bar moved below Continue Watching */}
+          <div className="mb-8 px-6 pt-4">
             <FilterBar
               activeGenre={activeGenre}
               onGenreChange={handleGenreChange}
@@ -178,76 +201,70 @@ const Index = React.memo(() => {
           </div>
 
           <div className="max-w-full">
-            {filteredContent.length > 0 && (
+            {activeGenre === "all" ? (
               <>
-                {/* New content row - Sort filtered content by date */}
-                {(() => {
-                  const newContentFiltered = filteredContent
-                    .filter((item) => item.created_at)
-                    .sort(
-                      (a, b) =>
-                        new Date(b.created_at).getTime() -
-                        new Date(a.created_at).getTime(),
-                    )
-                    .slice(0, 8);
-
-                  return (
-                    newContentFiltered.length > 0 && (
-                      <ContentRow
-                        key={`new-content-${activeGenre}`}
-                        title={
-                          activeGenre === "all"
-                            ? "New Content"
-                            : `New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies and TV Shows`
-                        }
-                        items={newContentFiltered}
-                        onCardClick={handleContentRowCardClick}
-                      />
-                    )
-                  );
-                })()}
+                {/* Trending row */}
+                {homeContent.trending.length > 0 && (
+                  <ContentRow
+                    title="Trending Programs"
+                    items={homeContent.trending.slice(0, 10)}
+                    onCardClick={handleContentRowCardClick}
+                  />
+                )}
 
                 {/* Recommended row */}
                 <ContentRow
                   key={`recommended-content-${activeGenre}`}
-                  title={
-                    activeGenre === "all"
-                      ? "Recommended"
-                      : `Recommended ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies and TV Shows`
-                  }
+                  title="Recommended for You"
+                  items={filteredContent.slice(2, 12)}
+                  onCardClick={handleContentRowCardClick}
+                />
+
+                {/* Individual Genre Rows for All Content */}
+                {[
+                  "Comedy", "Drama", "Sports", "Romance",
+                  "Action", "Lifestyle", "Documentary", "Informational"
+                ].map(genre => {
+                  const genreItems = content.allContent.filter(item => item.genre === genre && !item.isKids);
+                  if (!genreItems || genreItems.length === 0) return null;
+                  return (
+                    <ContentRow
+                      key={genre}
+                      title={genre}
+                      items={genreItems.slice(0, 8)}
+                      onCardClick={handleContentRowCardClick}
+                    />
+                  );
+                })}
+              </>
+            ) : (
+              /* Specific Genre View */
+              <>
+                <ContentRow
+                  key={`new-content-${activeGenre}`}
+                  title={`New ${activeGenre} Content`}
+                  items={filteredContent.slice(0, 8)}
+                  onCardClick={handleContentRowCardClick}
+                />
+                <ContentRow
+                  key={`recommended-${activeGenre}`}
+                  title={`Recommended ${activeGenre}`}
                   items={filteredContent.slice(2, 10)}
                   onCardClick={handleContentRowCardClick}
                 />
+                <div className="mt-8 mb-8 pl-4">
+                  <h2 className="text-2xl mb-4">All {activeGenre}</h2>
+                  {filteredContent.length > 0 ? (
+                    <ContentGrid
+                      items={filteredContent}
+                      onCardClick={handleContentRowCardClick}
+                    />
+                  ) : (
+                    <div className="text-center py-16 text-gray-400 font-medium">No results found for {activeGenre}</div>
+                  )}
+                </div>
               </>
             )}
-
-            {/* Grid Layout for all filtered content */}
-            <div className="sm:mt-0 md:mt-8 mb-8 pl-4">
-              <h2 className="text-2xl mb-4">
-                {activeGenre === "all"
-                  ? "All Content"
-                  : `All ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies and TV Shows`}
-              </h2>
-
-              {filteredContent.length > 0 ? (
-                <ContentGrid
-                  items={filteredContent.slice(0, 10)}
-                  onCardClick={handleContentRowCardClick}
-                />
-              ) : (
-                <div className="text-center py-16">
-                  <h3 className="text-xl font-bold mb-2">
-                    No content found
-                  </h3>
-                  <p className="text-gray-400">
-                    No{" "}
-                    {activeGenre.charAt(0).toUpperCase() +
-                      activeGenre.slice(1)}{" "}
-                    movies and TV shows available at the moment
-                  </p>
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Footer */}

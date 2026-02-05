@@ -122,7 +122,7 @@ export const useAppContent = () => {
         const history = Array.isArray(item.user_watch_history)
           ? item.user_watch_history[0]
           : item.user_watch_history;
-        return history && history.watch_percentage > 0 && history.watch_percentage < 95;
+        return history && history.watch_percentage > 0 && history.watch_percentage < 100;
       }).sort((a, b) => {
         const historyA = Array.isArray(a.user_watch_history) ? a.user_watch_history[0] : a.user_watch_history;
         const historyB = Array.isArray(b.user_watch_history) ? b.user_watch_history[0] : b.user_watch_history;

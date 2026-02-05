@@ -417,32 +417,39 @@ const ContentModal: React.FC<ContentModalProps> = ({
   };
 
   const handlePlayEpisode = (episode: Episode, seasonNumber: number, index: number, seasonData: any) => {
-    // Calculate global index across all seasons to ensure PlaylistVideoPlayer 
-    // picks the correct video and supports autoplay correctly
-    let globalIndex = 0;
-    for (const season of seasonWithEpisodes) {
-      if (season.season_number === seasonNumber) {
-        globalIndex += index;
-        break;
-      }
-      globalIndex += season.episodes?.length || 0;
-    }
+    const epVideoUrl = episode.video_url || (episode as any).videoUrl;
+    console.log("Play episode clicked:", { episodeId: episode.id, videoUrl: epVideoUrl, seasonNumber, index });
 
-    console.log("Play episode at global index:", globalIndex);
-    if (episode.video_url && seasonWithEpisodes.length > 0) {
+    if (epVideoUrl && seasonWithEpisodes.length > 0) {
+      // Calculate global index across all seasons for correct autoplay
+      let globalIndex = 0;
+      for (const season of seasonWithEpisodes) {
+        if (season.season_number < seasonNumber) {
+          globalIndex += season.episodes?.length || 0;
+        } else if (season.season_number === seasonNumber) {
+          globalIndex += index;
+          break;
+        }
+      }
+
+      console.log("Global index calculated:", globalIndex);
+
       dispatch(openScreenPlayer({
         isOpen: true,
         isSeries: true,
-        selectedVideo: episode,
+        selectedVideo: { ...episode, video_url: epVideoUrl }, // Ensure video_url exists for consumer
         currentVideoIndex: globalIndex,
         seriesData: seasonWithEpisodes,
-        contentId: currentItem,
+        contentId: currentItem.id, // Store ID only for consistency
         poster_url: currentContentItem?.poster_url || normalizedItem.posterUrl
-      }))
+      }));
 
-      setCurrentEpisode(episode);
+      // Update local state to trigger FullscreenPlayer early return
+      setCurrentEpisode({ ...episode, video_url: epVideoUrl });
       setCurrentSeasonNumber(seasonNumber);
       setIsSeriesPlayerOpen(true);
+    } else {
+      console.warn("Cannot play episode: video URL missing or seasons not loaded", { episode, hasSeasons: seasonWithEpisodes.length > 0 });
     }
   };
 
@@ -596,7 +603,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
                 <h1
                   className={`text-5xl font-bold text-white mb-6 ${effectiveKidsMode ? "drop-shadow-[2px_2px_4px_rgba(59,130,246,0.8)]" : ""}`}
                 >
-                  {seasonWithEpisodes?.title}
+                  {normalizedItem.title}
                 </h1>
 
                 {/* Action Buttons Row */}

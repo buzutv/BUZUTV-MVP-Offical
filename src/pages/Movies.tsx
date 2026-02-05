@@ -106,43 +106,44 @@ const Movies = React.memo(() => {
                 {/* Top Ranked List */}
                 <div className="flex flex-col h-full px-4 md:px-0">
                   <h2 className="text-2xl font-bold mb-3">Top Ranked Movies</h2>
-                  <div className="flex flex-col space-y-3 w-full overflow-y-auto" style={{ height: "calc(60vh - 2rem)" }}>
+                  <div className="flex flex-col space-y-3 w-full">
                     {movieContent.topRanked.slice(0, 5).map((movie, index) => (
                       <div
                         key={movie.id}
-                        className="relative flex items-center bg-black/40 backdrop-blur-md rounded-lg p-2 border-2 border-white/10 hover:border-brand-500/50 cursor-pointer transition-all duration-300"
+                        className="relative flex items-center bg-white/5 hover:bg-white/10 backdrop-blur-md rounded-2xl p-2 group border border-white/10 hover:border-brand-500/50 transition-all duration-300 min-h-[85px] h-[calc((60vh-2rem)/5-0.5rem)] cursor-pointer overflow-hidden"
                         onClick={() => handleCardClick(movie)}
                       >
-                        {/* Rank Badge */}
-                        <div className="absolute -left-2 top-1/2 -translate-y-1/2 z-10">
-                          <span className="bg-[#131313] text-brand-200 font-bold px-3 py-1 rounded-full border border-brand-500/50 shadow-lg text-sm">
-                            #{index + 1}
-                          </span>
+                        <div className="absolute inset-0 bg-gradient-to-r from-brand-500/0 via-brand-500/0 to-brand-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                        {/* Movie Info */}
+                        <div className="relative w-[25%] h-full flex-shrink-0 ml-6 mr-4">
+                          <img
+                            src={movie.posterUrl}
+                            alt={movie.title}
+                            className="w-full h-full object-cover rounded-xl border border-white/10 group-hover:scale-105 transition-transform"
+                          />
+                          <div className="absolute -top-2 -left-2 bg-brand-500 text-white text-sm font-black w-8 h-8 flex items-center justify-center rounded-xl shadow-[0_0_15px_rgba(139,92,246,0.4)] border-2 border-white/20 group-hover:scale-110 transition-transform z-20">
+                            {index + 1}
+                          </div>
                         </div>
-                        {/* Movie Info (Simplified for brevity) */}
-                        <img
-                          src={movie.posterUrl}
-                          alt={movie.title}
-                          className="w-16 h-20 object-cover rounded-lg ml-6 mr-3"
-                        />
-                        <div>
-                          <h3 className="font-semibold line-clamp-1">{movie.title}</h3>
-                          <p className="text-xs text-gray-300">{movie.year} • ★ {movie.rating}</p>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-white text-[15px] mb-1 line-clamp-1 group-hover:text-brand-400 transition-colors">{movie.title}</h3>
+                          <div className="flex items-center space-x-3 text-xs text-slate-400">
+                            <span className="flex items-center gap-1">
+                              <span className="text-yellow-500 font-bold">★</span>
+                              {movie.rating}
+                            </span>
+                            <span>•</span>
+                            <span className="bg-slate-800/80 px-2 py-0.5 rounded text-[10px] font-bold text-brand-300">
+                              {movie.genre?.split(',')[0]}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* --- Filters --- */}
-            <div className="mb-4 px-6 pt-8">
-              <FilterBar
-                activeGenre={activeGenre}
-                onGenreChange={handleGenreChange}
-                availableGenres={availableMovieGenres}
-              />
             </div>
 
             {/* --- Content Rows --- */}
@@ -154,6 +155,24 @@ const Movies = React.memo(() => {
                     <ContentRow
                       title="Continue Watching"
                       items={movieContent.continueWatching}
+                      onCardClick={handleContentRowCardClick}
+                    />
+                  )}
+
+                  {/* --- Filters Moved below Continue Watching --- */}
+                  <div className="mb-8 px-6 pt-4">
+                    <FilterBar
+                      activeGenre={activeGenre}
+                      onGenreChange={handleGenreChange}
+                      availableGenres={availableMovieGenres}
+                    />
+                  </div>
+
+                  {/* New Movies Row */}
+                  {getNewestMovies(movieContent.all).length > 0 && (
+                    <ContentRow
+                      title="New Movies"
+                      items={getNewestMovies(movieContent.all)}
                       onCardClick={handleContentRowCardClick}
                     />
                   )}
@@ -193,6 +212,15 @@ const Movies = React.memo(() => {
               ) : (
                 /* Filtered View */
                 <>
+                  {/* Filters for specific genre view */}
+                  <div className="mb-8 px-6 pt-4">
+                    <FilterBar
+                      activeGenre={activeGenre}
+                      onGenreChange={handleGenreChange}
+                      availableGenres={availableMovieGenres}
+                    />
+                  </div>
+
                   {getNewestMovies(filteredMovies).length > 0 && (
                     <ContentRow
                       title={`New ${activeGenre} Movies`}
@@ -242,7 +270,7 @@ const Movies = React.memo(() => {
           />
         )}
       </div>
-    </ProtectedRoute>
+    </ProtectedRoute >
   );
 });
 

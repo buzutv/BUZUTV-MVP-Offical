@@ -122,10 +122,10 @@ const Kids = () => {
               background: `
                 linear-gradient(
                   180deg,
-                  #eaf0c2ff 0%,   /* very dark violet */
-                  #ede9b1ff 20%,  /* deep blackish purple */
-                  #e5ee6cff 45%,  /* near-black violet */
-                  #a59cf8ff 100%    /* pure black */
+                  #0F172A 0%,   /* Slate-900 */
+                  #1E293B 25%,  /* Slate-800 */
+                  #0F172A 100%
+                )
               `,
             }}
           ></div>
@@ -143,19 +143,14 @@ const Kids = () => {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gradient-to-tl from-yellow-300 via-blue-300 to-sky-400 text-white">
+      <div className="min-h-screen bg-slate-950 text-white selection:bg-indigo-500/30">
         <div
           className="fixed inset-0"
           style={{
             background: `
-                linear-gradient(
-                  180deg,
-                  #a59cf8ff 0%, 
-                   #8b7ff2ff 10%,/* very dark violet */
-                    
-                  #ede9b1ff 20%,  /* deep blackish purple */
-                  #e5ee6cff 45%,  /* near-black violet */
-                  #ecf8bcff 100%    /* pure black */
+                radial-gradient(circle at top right, rgba(198, 234, 22, 0.15), transparent 400px),
+                radial-gradient(circle at bottom left, rgba(146, 243, 20, 0.1), transparent 400px),
+                linear-gradient(180deg, #0F172A 0%, #020617 100%)
               `,
           }}
         ></div>
@@ -176,9 +171,12 @@ const Kids = () => {
                   </div>
                   {/* Right - Top Ranked */}
                   <div className="px-4 pl-6 md:px-0 md:pl-0">
-                    <h2 className="text-2xl font-bold mb-3 text-blue-800">
-                      Top Kids Shows
-                    </h2>
+                    <div className="flex items-center gap-2 mb-6">
+                      <div className="w-1 h-8 bg-indigo-500 rounded-full" />
+                      <h2 className="text-2xl font-bold text-white tracking-tight">
+                        Top Kids Shows
+                      </h2>
+                    </div>
                     <div
                       className="flex flex-col space-y-3 w-full"
                       style={{ height: "calc(60vh - 2rem)" }}
@@ -188,37 +186,35 @@ const Kids = () => {
                         .map((movie, index) => (
                           <div
                             key={movie.id}
-                            className="relative flex items-center bg-white/20 backdrop-blur-sm rounded-lg shadow-lg p-2 group border-2 border-transparent hover:border-yellow-400 hover:border-opacity-80 min-h-[60px] h-[calc((60vh-2rem)/5-0.5rem)] cursor-pointer"
+                            className="relative flex items-center bg-white/5 hover:bg-white/10 backdrop-blur-md rounded-2xl p-2 group border border-white/10 hover:border-indigo-500/50 transition-all duration-300 min-h-[85px] h-[calc((60vh-2rem)/5-0.5rem)] cursor-pointer overflow-hidden"
                             onClick={() => handleCardClick(movie)}
                           >
-                            {/* Ranking Badge */}
-                            <div className="absolute -left-6 top-1/2 -translate-y-1/2 z-10">
-                              <span className="bg-yellow-500 text-blue-800 text-base font-bold px-3 py-1 rounded-full shadow-lg border-4 border-white">
-                                #{index + 1}
-                              </span>
-                            </div>
+                            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/0 via-indigo-500/0 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+
                             {/* Poster Image */}
-                            <img
-                              src={getOptimizedImageUrl(movie.posterUrl, 400)}
-                              alt={movie.title}
-                              className="w-16 h-20 object-cover rounded-lg mr-3 flex-shrink-0 border-2 border-white/50"
-                            />
+                            <div className="relative w-[25%] h-full flex-shrink-0 ml-6 mr-4">
+                              <img
+                                src={getOptimizedImageUrl(movie.posterUrl, 400)}
+                                alt={movie.title}
+                                className="w-full h-full object-cover rounded-xl border border-white/10 group-hover:scale-105 transition-transform"
+                              />
+                              <div className="absolute -top-2 -left-2 bg-indigo-500 text-white text-sm font-black w-8 h-8 flex items-center justify-center rounded-xl shadow-[0_0_15px_rgba(79,70,229,0.4)] border-2 border-white/20 group-hover:scale-110 transition-transform z-20">
+                                {index + 1}
+                              </div>
+                            </div>
                             {/* Info */}
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-blue-800 text-base mb-0.5 line-clamp-1">
+                            <div className="flex-1 min-w-0 pr-2">
+                              <h3 className="font-bold text-white text-[15px] mb-1 line-clamp-1 group-hover:text-indigo-400 transition-colors">
                                 {movie.title}
                               </h3>
-                              <div className="flex items-center space-x-2 text-xs text-blue-700 mb-0.5">
-                                <span>{movie.year}</span>
-                                <span>•</span>
-                                <span className="flex items-center">
-                                  <span className="text-yellow-500">★</span>{" "}
+                              <div className="flex items-center space-x-3 text-xs text-slate-400">
+                                <span className="flex items-center gap-1">
+                                  <span className="text-yellow-500 font-bold">★</span>
                                   {movie.rating}
                                 </span>
-                              </div>
-                              <div className="flex justify-end">
-                                <span className="inline-block bg-blue-600/60 text-xs text-white px-2 py-0.5 rounded">
-                                  {movie.genre}
+                                <span>•</span>
+                                <span className="bg-slate-800/80 px-2 py-0.5 rounded text-[10px] font-bold text-indigo-300">
+                                  {movie.genre?.split(',')[0]}
                                 </span>
                               </div>
                             </div>
@@ -243,21 +239,29 @@ const Kids = () => {
                 </div>
               </div>
 
-              {/* Filter Bar */}
-              <div className="mb-4 px-6 pt-8">
-                <FilterBar
-                  activeGenre={activeGenre}
-                  onGenreChange={handleGenreChange}
-                  availableGenres={availableKidsGenres}
-                  variant="kids"
-                />
-              </div>
-
               {/* Content Sections */}
               <div className="max-w-full sm:pr-6 sm:pl-4 pr-6 md:pl-6">
                 {activeGenre === "all" ? (
-                  // Show all kids content rows when "All" is selected
+                  // Show "All" View with Genre Rows
                   <>
+                    {/* Continue Watching for Kids */}
+                    {kidsContent.continueWatching?.length > 0 && (
+                      <ContentRow
+                        title="Continue Watching"
+                        items={kidsContent.continueWatching}
+                        onCardClick={handleContentRowCardClick}
+                      />
+                    )}
+
+                    {/* Filter Bar moved below Continue Watching */}
+                    <div className="mb-8 px-6 pt-4">
+                      <FilterBar
+                        activeGenre={activeGenre}
+                        onGenreChange={handleGenreChange}
+                        availableGenres={availableKidsGenres}
+                        variant="kids"
+                      />
+                    </div>
                     {/* New Kids */}
                     {enhancedKidsContent.new.length > 0 && (
                       <ContentRow
@@ -333,10 +337,35 @@ const Kids = () => {
                         )
                       );
                     })()}
+
+                    {/* Individual Genre Rows for Kids */}
+                    {[
+                      "Animation", "Family", "Adventure", "Action"
+                    ].map(genre => {
+                      const genreItems = enhancedKidsContent.byGenre[genre];
+                      if (!genreItems || genreItems.length === 0) return null;
+                      return (
+                        <ContentRow
+                          key={genre}
+                          title={genre}
+                          items={genreItems.slice(0, 8)}
+                          onCardClick={handleContentRowCardClick}
+                        />
+                      );
+                    })}
                   </>
                 ) : (
                   // Show filtered content for specific genre
                   <>
+                    {/* Filter Bar for specific genre view */}
+                    <div className="mb-8 px-6 pt-4">
+                      <FilterBar
+                        activeGenre={activeGenre}
+                        onGenreChange={handleGenreChange}
+                        availableGenres={availableKidsGenres}
+                        variant="kids"
+                      />
+                    </div>
                     {filteredKidsContent.length > 0 && (
                       <>
                         {/* New content row - Sort filtered kids content by date */}

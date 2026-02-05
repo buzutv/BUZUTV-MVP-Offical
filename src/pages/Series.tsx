@@ -191,35 +191,35 @@ const Series = () => {
                         .map((show, index) => (
                           <div
                             key={show.id}
-                            className="relative flex items-center bg-black/40 backdrop-blur-md rounded-lg shadow-lg p-2 group border-2 border-white/10 hover:border-brand-500/50 min-h-[60px] flex-1 cursor-pointer transition-all duration-300"
+                            className="relative flex items-center bg-white/5 hover:bg-white/10 backdrop-blur-md rounded-2xl p-2 group border border-white/10 hover:border-brand-500/50 transition-all duration-300 min-h-[85px] h-[calc((60vh-2rem)/5-0.5rem)] cursor-pointer overflow-hidden"
                             onClick={() => setSelectedSeries(show)}
                           >
-                            {/* Ranking Badge */}
-                            <div className="absolute -left-6 top-1/2 -translate-y-1/2 z-10">
-                              <span className="bg-[#131313] text-white text-base font-bold px-3 py-1 rounded-full border-2 border-brand-500/50 shadow-lg backdrop-blur-sm">
-                                #{index + 1}
-                              </span>
-                            </div>
+                            <div className="absolute inset-0 bg-gradient-to-r from-brand-500/0 via-brand-500/0 to-brand-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+
                             {/* Poster Image */}
-                            <img
-                              src={getOptimizedImageUrl(show.posterUrl, 400)}
-                              alt={show.title}
-                              className="w-16 h-20 object-cover rounded-lg mr-3 flex-shrink-0 border-1 border-brand-500/10 shadow-lg"
-                            />
+                            <div className="relative w-[25%] h-full flex-shrink-0 ml-6 mr-4">
+                              <img
+                                src={getOptimizedImageUrl(show.posterUrl, 400)}
+                                alt={show.title}
+                                className="w-full h-full object-cover rounded-xl border border-white/10 group-hover:scale-105 transition-transform"
+                              />
+                              <div className="absolute -top-2 -left-2 bg-brand-500 text-white text-sm font-black w-8 h-8 flex items-center justify-center rounded-xl shadow-[0_0_15px_rgba(139,92,246,0.4)] border-2 border-white/20 group-hover:scale-110 transition-transform z-20">
+                                {index + 1}
+                              </div>
+                            </div>
                             {/* Info */}
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-white text-base mb-0.5 line-clamp-1">
+                            <div className="flex-1 min-w-0 pr-2">
+                              <h3 className="font-bold text-white text-[15px] mb-1 line-clamp-1 group-hover:text-brand-400 transition-colors">
                                 {show?.title}
                               </h3>
-                              <div className="flex items-center space-x-2 text-xs text-gray-300 mb-0.5">
-                                <span>{show.year}</span>
-                                <span>•</span>
-                                <span className="flex items-center">
-                                  <span className="text-yellow-400">★</span>{" "}
+                              <div className="flex items-center space-x-3 text-xs text-slate-400">
+                                <span className="flex items-center gap-1">
+                                  <span className="text-yellow-500 font-bold">★</span>
                                   {show.rating}
                                 </span>
-                                <span className="inline-block bg-black/60 text-xs text-white px-2 py-0.5 rounded">
-                                  {show.genre}
+                                <span>•</span>
+                                <span className="bg-slate-800/80 px-2 py-0.5 rounded text-[10px] font-bold text-brand-300">
+                                  {show.genre?.split(',')[0]}
                                 </span>
                               </div>
                             </div>
@@ -244,20 +244,28 @@ const Series = () => {
                 </div>
               </div>
 
-              {/* Filter Bar */}
-              <div className="mb-4 px-6 pt-8">
-                <FilterBar
-                  activeGenre={activeGenre}
-                  onGenreChange={handleGenreChange}
-                  availableGenres={availableSeriesGenres}
-                />
-              </div>
-
               {/* Content Sections */}
               <div className="max-w-full sm:pr-6 sm:pl-4 pr-6 md:pl-6">
                 {activeGenre === "all" ? (
-                  // Show "All" View with Grid Layout (Replacing genre sliders)
+                  // Show "All" View with Genre Rows
                   <>
+                    {/* Continue Watching Row */}
+                    {seriesContent.continueWatching?.length > 0 && (
+                      <ContentRow
+                        title="Continue Watching"
+                        items={seriesContent.continueWatching}
+                        onCardClick={handleContentRowCardClick}
+                      />
+                    )}
+
+                    {/* Filter Bar moved below Continue Watching */}
+                    <div className="mb-8 px-6 pt-4">
+                      <FilterBar
+                        activeGenre={activeGenre}
+                        onGenreChange={handleGenreChange}
+                        availableGenres={availableSeriesGenres}
+                      />
+                    </div>
                     {/* New TV Shows - Sort by created_at (newest first) */}
                     {(() => {
                       const newSeries = seriesContent.all
@@ -283,32 +291,40 @@ const Series = () => {
                     {/* Recommended */}
                     {seriesContent.recommended.length > 0 && (
                       <ContentRow
-                        title="Recommended"
+                        title="Recommended TV Shows"
                         items={seriesContent.recommended.slice(0, 8)}
                         onCardClick={handleContentRowCardClick}
                       />
                     )}
 
-                    {/* Grid Layout for ALL series */}
-                    <div className="sm:mt-0 md:mt-8 mb-8 pl-4">
-                      <h2 className="text-2xl mb-4">All TV Shows</h2>
-                      {seriesContent.all.length > 0 ? (
-                        <ContentGrid
-                          items={seriesContent.all}
+                    {/* Mapped Genre Rows for Series */}
+                    {[
+                      "Comedy", "Drama", "Sports", "Romance",
+                      "Action", "Lifestyle", "Documentary", "Informational"
+                    ].map(genre => {
+                      const genreItems = seriesContent.byGenre[genre];
+                      if (!genreItems || genreItems.length === 0) return null;
+                      return (
+                        <ContentRow
+                          key={genre}
+                          title={genre}
+                          items={genreItems.slice(0, 8)}
                           onCardClick={handleContentRowCardClick}
                         />
-                      ) : (
-                        <div className="text-center py-16">
-                          <h3 className="text-xl font-bold mb-2">
-                            No series found
-                          </h3>
-                        </div>
-                      )}
-                    </div>
+                      );
+                    })}
                   </>
                 ) : (
                   // Show filtered content for specific genre
                   <>
+                    {/* Filter Bar for specific genre view */}
+                    <div className="mb-8 px-6 pt-4">
+                      <FilterBar
+                        activeGenre={activeGenre}
+                        onGenreChange={handleGenreChange}
+                        availableGenres={availableSeriesGenres}
+                      />
+                    </div>
                     {filteredSeries.length > 0 && (
                       <>
                         {/* New content row - Sort filtered series by date */}

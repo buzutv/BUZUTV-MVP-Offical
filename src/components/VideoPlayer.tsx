@@ -127,6 +127,25 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
     // Let's assume if it's the last episode, we can still click next to trigger playlist advance.
     const hasNextVideo = (currentQueue?.length > 0 && currentVideoIndex < currentQueue.length - 1) && !seasonInfo?.isLastInSeason;
 
+    const nextItemInfo = React.useMemo(() => {
+      if (!hasNextVideo || !currentQueue) return null;
+      const nextItem = currentQueue[currentVideoIndex + 1];
+      if (!nextItem) return null;
+
+      if (isSeries) {
+        return {
+          title: nextItem.title || `Episode ${currentVideoIndex + 2}`,
+          subtitle: `Next: Season ${nextItem.season_number || seasonInfo?.seasonNumber} • Episode ${nextItem.episode_number || (seasonInfo ? seasonInfo.episodeIndex + 1 : currentVideoIndex + 2)}`
+        };
+      } else {
+        const content = nextItem.content || nextItem;
+        return {
+          title: content.title || "Untitled Content",
+          subtitle: content.type?.toUpperCase() || "NEXT VIDEO"
+        };
+      }
+    }, [hasNextVideo, currentQueue, currentVideoIndex, isSeries, seasonInfo]);
+
     console.log("VideoPlayer State CurrentIndex", currentVideoIndex, currentQueue[currentVideoIndex])
 
     // --- SYNC REFS ---
@@ -671,9 +690,13 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
         {/* Countdown Overlay */}
         {videoEnded && countdown > 0 && (
           <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 backdrop-blur-3xl text-white">
-            <div className="text-6xl font-bold mb-4">{countdown}</div>
-            <p className="text-xl mb-2">Up Next</p>
-            <p className="text-sm mb-6">Playing in {countdown} seconds...</p>
+            <div className="text-6xl font-bold mb-4 bg-white/10 w-24 h-24 flex items-center justify-center rounded-full border-4 border-white/20 animate-pulse">{countdown}</div>
+            <div className="text-center max-w-md px-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <p className="text-indigo-400 font-bold tracking-widest uppercase text-xs mb-2">Up Next</p>
+              <h3 className="text-3xl font-black text-white mb-2 line-clamp-1">{nextItemInfo?.title}</h3>
+              <p className="text-white/60 font-medium mb-8">{nextItemInfo?.subtitle}</p>
+            </div>
+
             <button
               onClick={() => {
                 clearCountdownTimer();
@@ -692,12 +715,15 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
         {videoEnded && countdown === 0 && (
           <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 backdrop-blur-3xl text-white animate-in fade-in zoom-in duration-500">
             <h2 className="text-5xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">Thanks for watching!</h2>
-            {/* <button
+            <button
               onClick={handleReplay}
-              className="px-8 py-3 bg-white text-black font-semibold rounded-full hover:bg-zinc-200 transition transform hover:scale-110 shadow-lg hover:shadow-xl hover:shadow-white/20"
+              className="px-8 py-3 bg-white text-black font-semibold rounded-full hover:bg-zinc-200 transition transform hover:scale-110 shadow-lg hover:shadow-xl hover:shadow-white/20 flex items-center gap-2"
             >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
               Replay Video
-            </button> */}
+            </button>
           </div>
         )}
 
