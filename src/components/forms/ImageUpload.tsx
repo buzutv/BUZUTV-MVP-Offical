@@ -53,11 +53,14 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       // Upload file to Supabase storage
       const { error: uploadError } = await supabase.storage
         .from('movie-images')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
-        toast.error('Failed to upload image');
+        toast.error(`Failed to upload image: ${uploadError.message}`);
         return;
       }
 
@@ -68,9 +71,9 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
       onChange(publicUrl);
       toast.success('Image uploaded successfully');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading image:', error);
-      toast.error('Failed to upload image');
+      toast.error(`Failed to upload image: ${error.message || 'Unknown error'}`);
     } finally {
       setIsUploading(false);
       // Reset file input
@@ -91,7 +94,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   return (
     <div className="space-y-2">
       <Label className="text-white">{label}</Label>
-      
+
       {value ? (
         <div className="space-y-2">
           <div className="relative group">
@@ -124,7 +127,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         </div>
       ) : (
         <div className="space-y-2">
-          <div 
+          <div
             className="w-full h-32 border-2 border-dashed border-gray-600 rounded-lg flex items-center justify-center cursor-pointer hover:border-gray-500 transition-colors"
             onClick={handleButtonClick}
           >
