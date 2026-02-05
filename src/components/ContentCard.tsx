@@ -304,7 +304,7 @@ const ContentCard = ({
     };
 
   const widthClass =
-    isMoreLikeThis ? "w-64 h-64 flex-shrink-0" : width === "auto" ? "" : width;
+    isMoreLikeThis ? "w-64 aspect-video flex-shrink-0" : width === "auto" ? "" : width;
 
   return (
     <>
@@ -322,11 +322,9 @@ const ContentCard = ({
       )}
 
       <div
-        className={`content-card group ${widthClass} w-[360px] h-[220px] border-2 border-transparent hover:scale-105 hover:border-white hover:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:scale-105 focus:border-white focus:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:outline-none rounded-lg transition-all duration-300 overflow-hidden relative ${className}
-          inset-0
+        className={`content-card group ${widthClass} border-2 border-transparent hover:scale-105 hover:border-white hover:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:scale-105 focus:border-white focus:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:outline-none rounded-lg transition-all duration-300 overflow-hidden relative ${className}
           bg-gradient-to-t from-black/90 from-0% via-black/40 via-40% to-transparent to-90%
-          h-[12.25rem]
-        
+          ${!className.includes('aspect-') && !isMoreLikeThis ? "aspect-video" : ""}
         `}
         tabIndex={0}
         aria-label={`${normalizedItem.type === "series" ? "View series" : "View movie"} ${normalizedItem.title

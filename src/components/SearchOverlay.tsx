@@ -74,8 +74,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ searchQuery, isVisible, o
     const channelResults = channels.filter(
       (channel) =>
         channel.name?.toLowerCase().includes(query) ||
-        channel.description?.toLowerCase().includes(query) ||
-        channel.genre?.toLowerCase().includes(query),
+        channel.description?.toLowerCase().includes(query),
     );
 
     // Filter content
@@ -233,13 +232,14 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ searchQuery, isVisible, o
                   <Film className="w-5 h-5 text-brand-500" />
                   <h3>Movies</h3>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                   {formattedResults.movies.map((movie) => (
                     <div key={movie.id} className="group hover:scale-105 transition-transform duration-200">
                       <ContentCard
                         item={movie}
                         variant="movie"
                         autoDetectKids={true}
+                        className="w-full aspect-video"
                         onItemClick={(item) => setSelectedItem(item)}
                       />
                     </div>
@@ -255,13 +255,14 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ searchQuery, isVisible, o
                   <Tv className="w-5 h-5 text-brand-500" />
                   <h3>TV Shows</h3>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                   {formattedResults.series.map((series) => (
                     <div key={series.id} className="group hover:scale-105 transition-transform duration-200">
                       <ContentCard
                         item={series}
                         variant="series"
                         autoDetectKids={true}
+                        className="w-full aspect-video"
                         onItemClick={(item) => setSelectedItem(item)}
                       />
                     </div>
@@ -329,6 +330,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ searchQuery, isVisible, o
               // Playback is handled internally by ContentModal
               console.log("Starting playback from SearchOverlay for:", title);
             }}
+            movieId={selectedItem.id}
             contentItem={contentItem}
             channel={channel}
             recommendedContent={recommendedContent}

@@ -239,14 +239,14 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
                                             <Film className="w-5 h-5 text-brand-500" />
                                             <h2>Movies</h2>
                                         </div>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 flex justify-between items-center flex-wrap">
+                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                                             {formattedResults.movies.map((movie) => (
-                                                <div key={movie.id} className="flex-1 group hover:scale-105 transition-transform duration-200">
+                                                <div key={movie.id} className="group hover:scale-105 transition-transform duration-200">
                                                     <ContentCard
                                                         item={movie}
                                                         variant="movie"
                                                         autoDetectKids={true}
-                                                        className="w-full"
+                                                        className="w-full aspect-video"
                                                         onItemClick={(item) => handleContentClick(item)}
                                                     />
                                                 </div>
@@ -262,13 +262,14 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
                                             <Tv className="w-5 h-5 text-brand-500" />
                                             <h2>TV Shows</h2>
                                         </div>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                                             {formattedResults.series.map((series) => (
                                                 <div key={series.id} className="group hover:scale-105 transition-transform duration-200">
                                                     <ContentCard
                                                         item={series}
                                                         variant="series"
                                                         autoDetectKids={true}
+                                                        className="w-full aspect-video"
                                                         onItemClick={(item) => handleContentClick(item)}
                                                     />
                                                 </div>

@@ -24,6 +24,14 @@ export const useUserChannelFavorites = () => {
   useEffect(() => {
     mountedRef.current = true;
 
+    const handleSync = (event: CustomEvent) => {
+      if (mountedRef.current && event.detail) {
+        setFavoriteChannelIds(event.detail);
+      }
+    };
+
+    window.addEventListener("channel-favorites-updated" as any, handleSync as any);
+
     if (user) {
       // Check cache first
       const cacheKey = user.id || user.email || "anonymous";
@@ -33,10 +41,9 @@ export const useUserChannelFavorites = () => {
       if (cached && now - cached.timestamp < CACHE_DURATION) {
         setFavoriteChannelIds(cached.data);
         setIsLoading(false);
-        return;
+      } else {
+        fetchChannelFavorites();
       }
-
-      fetchChannelFavorites();
     } else {
       setFavoriteChannelIds([]);
       setIsLoading(false);
@@ -44,6 +51,7 @@ export const useUserChannelFavorites = () => {
 
     return () => {
       mountedRef.current = false;
+      window.removeEventListener("channel-favorites-updated" as any, handleSync as any);
     };
   }, [user]);
 
@@ -115,17 +123,28 @@ export const useUserChannelFavorites = () => {
     }
 
     try {
-      // Real user - save to localStorage for now
-      setFavoriteChannelIds(newFavorites);
-      localStorage.setItem(
-        `channel_favorites_${user.id}`,
-        JSON.stringify(newFavorites),
-      );
-      // Update cache immediately
-      channelFavoritesCache.set(cacheKey, {
-        data: newFavorites,
-        timestamp: Date.now(),
+      // Real user - update state using functional update
+      setFavoriteChannelIds(prev => {
+        const next = prev.includes(channelId) ? prev : [...prev, channelId];
+
+        // Update localStorage
+        localStorage.setItem(
+          `channel_favorites_${user.id}`,
+          JSON.stringify(next),
+        );
+
+        // Update cache immediately
+        channelFavoritesCache.set(cacheKey, {
+          data: next,
+          timestamp: Date.now(),
+        });
+
+        // Broadcast to other instances
+        window.dispatchEvent(new CustomEvent("channel-favorites-updated", { detail: next }));
+
+        return next;
       });
+
       toast.success("Channel added to favorites");
     } catch (error) {
       console.error("Error adding channel to favorites:", error);
@@ -155,17 +174,28 @@ export const useUserChannelFavorites = () => {
     }
 
     try {
-      // Real user - update localStorage
-      setFavoriteChannelIds(newFavorites);
-      localStorage.setItem(
-        `channel_favorites_${user.id}`,
-        JSON.stringify(newFavorites),
-      );
-      // Update cache immediately
-      channelFavoritesCache.set(cacheKey, {
-        data: newFavorites,
-        timestamp: Date.now(),
+      // Real user - update state using functional update
+      setFavoriteChannelIds(prev => {
+        const next = prev.filter((id) => id !== channelId);
+
+        // Update localStorage
+        localStorage.setItem(
+          `channel_favorites_${user.id}`,
+          JSON.stringify(next),
+        );
+
+        // Update cache
+        channelFavoritesCache.set(cacheKey, {
+          data: next,
+          timestamp: Date.now(),
+        });
+
+        // Broadcast to other instances
+        window.dispatchEvent(new CustomEvent("channel-favorites-updated", { detail: next }));
+
+        return next;
       });
+
       toast.success("Channel removed from favorites");
     } catch (error) {
       console.error("Error removing channel from favorites:", error);

@@ -22,6 +22,14 @@ export const useUserFavorites = () => {
   useEffect(() => {
     mountedRef.current = true;
 
+    const handleSync = (event: CustomEvent) => {
+      if (mountedRef.current && event.detail) {
+        setFavoriteIds(event.detail);
+      }
+    };
+
+    window.addEventListener("favorites-updated" as any, handleSync as any);
+
     if (user) {
       // Check cache first
       const cacheKey = user.id || user.email || "anonymous";
@@ -31,10 +39,9 @@ export const useUserFavorites = () => {
       if (cached && now - cached.timestamp < CACHE_DURATION) {
         setFavoriteIds(cached.data);
         setIsLoading(false);
-        return;
+      } else {
+        fetchFavorites();
       }
-
-      fetchFavorites();
     } else {
       setFavoriteIds([]);
       setIsLoading(false);
@@ -42,6 +49,7 @@ export const useUserFavorites = () => {
 
     return () => {
       mountedRef.current = false;
+      window.removeEventListener("favorites-updated" as any, handleSync as any);
     };
   }, [user]);
 
@@ -132,23 +140,31 @@ export const useUserFavorites = () => {
 
       if (error) {
         console.error("Error adding to favorites:", error);
-        // Fallback to localStorage
-        setFavoriteIds(newFavorites);
+        // Fallback to localStorage logic
+        const updatedFavorites = [...favoriteIds, contentId];
         localStorage.setItem(
           `favorites_${user.id}`,
-          JSON.stringify(newFavorites),
+          JSON.stringify(updatedFavorites),
         );
-        toast.success("Added to favorites");
-      } else {
-        setFavoriteIds(newFavorites);
-        toast.success("Added to favorites");
       }
-      
-      // Update cache immediately regardless of success/error
-      favoritesCache.set(cacheKey, {
-        data: newFavorites,
-        timestamp: Date.now(),
+
+      // Update state using functional update to prevent race conditions
+      setFavoriteIds(prev => {
+        const next = prev.includes(contentId) ? prev : [...prev, contentId];
+
+        // Update cache immediately
+        favoritesCache.set(cacheKey, {
+          data: next,
+          timestamp: Date.now(),
+        });
+
+        // Broadcast to other hook instances
+        window.dispatchEvent(new CustomEvent("favorites-updated", { detail: next }));
+
+        return next;
       });
+
+      toast.success("Added to favorites");
     } catch (error) {
       console.error("Error adding to favorites:", error);
       toast.error("Failed to add to favorites");
@@ -187,22 +203,30 @@ export const useUserFavorites = () => {
       if (error) {
         console.error("Error removing from favorites:", error);
         // Fallback to localStorage
-        setFavoriteIds(newFavorites);
+        const updatedFavorites = favoriteIds.filter(id => id !== contentId);
         localStorage.setItem(
           `favorites_${user.id}`,
-          JSON.stringify(newFavorites),
+          JSON.stringify(updatedFavorites),
         );
-        toast.success("Removed from favorites");
-      } else {
-        setFavoriteIds(newFavorites);
-        toast.success("Removed from favorites");
       }
-      
-      // Update cache immediately regardless of success/error
-      favoritesCache.set(cacheKey, {
-        data: newFavorites,
-        timestamp: Date.now(),
+
+      // Update state using functional update
+      setFavoriteIds(prev => {
+        const next = prev.filter((id) => id !== contentId);
+
+        // Update cache
+        favoritesCache.set(cacheKey, {
+          data: next,
+          timestamp: Date.now(),
+        });
+
+        // Broadcast
+        window.dispatchEvent(new CustomEvent("favorites-updated", { detail: next }));
+
+        return next;
       });
+
+      toast.success("Removed from favorites");
     } catch (error) {
       console.error("Error removing from favorites:", error);
       toast.error("Failed to remove from favorites");

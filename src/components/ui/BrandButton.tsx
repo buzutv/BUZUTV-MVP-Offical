@@ -5,12 +5,12 @@ interface BrandButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
   variant?:
-    | "primary"
-    | "secondary"
-    | "no-border"
-    | "kids"
-    | "kidsSecondary"
-    | "ghost";
+  | "primary"
+  | "secondary"
+  | "no-border"
+  | "kids"
+  | "kidsSecondary"
+  | "ghost";
   size?: "sm" | "md" | "lg";
 }
 
@@ -67,24 +67,25 @@ const BrandButton: React.FC<BrandButtonProps> = ({
       hover:before:left-full
     `,
     kids: `
-      bg-[linear-gradient(135deg,#1d4ed8,#2563eb,#3b82f6)]
+      bg-[linear-gradient(135deg,#EC4899,#A855F7,#6366F1)]
       text-white
-      border border-[rgba(37,99,235,0.3)]
-      shadow-[0_10px_30px_rgba(37,99,235,0.4)]
-      hover:shadow-[0_20px_50px_rgba(37,99,235,0.6)]
+      border-2 border-white/20
+      shadow-[0_10px_25px_-5px_rgba(236,72,153,0.4)]
+      hover:shadow-[0_20px_40px_-10px_rgba(236,72,153,0.6)]
       hover:brightness-110
       hover:-translate-y-0.5
-      transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]
+      transition-all duration-500
       relative overflow-hidden
       before:content-[''] before:absolute before:top-0 before:-left-full before:w-full before:h-full
-      before:bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)]
-      before:transition-[left] before:duration-500
+      before:bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.4),transparent)]
+      before:transition-[left] before:duration-700
       hover:before:left-full
     `,
     kidsSecondary: `
-      bg-black/20 backdrop-blur-md border-2 border-blue-400 text-white
-      hover:-translate-y-0.5 hover:bg-blue-500/20
-      transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]
+      bg-cyan-500/10 backdrop-blur-xl border-2 border-cyan-400/50 text-cyan-50
+      hover:-translate-y-0.5 hover:bg-cyan-500/20 hover:border-cyan-400
+      shadow-[0_5px_15px_rgba(34,211,238,0.2)]
+      transition-all duration-500
       relative overflow-hidden
       before:content-[''] before:absolute before:top-0 before:-left-full before:w-full before:h-full
       before:bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.1),transparent)]

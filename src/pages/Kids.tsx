@@ -143,17 +143,29 @@ const Kids = () => {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-slate-950 text-white selection:bg-indigo-500/30">
-        <div
-          className="fixed inset-0"
-          style={{
-            background: `
-                radial-gradient(circle at top right, rgba(198, 234, 22, 0.15), transparent 400px),
-                radial-gradient(circle at bottom left, rgba(146, 243, 20, 0.1), transparent 400px),
-                linear-gradient(180deg, #0F172A 0%, #020617 100%)
+      <div className="min-h-screen bg-[#F0F9FF] text-slate-800 selection:bg-pink-200/50 overflow-x-hidden">
+        {/* Magical Sky Background Elements */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          {/* Vibrant Daytime Gradient */}
+          <div
+            className="absolute inset-0 transition-opacity duration-1000"
+            style={{
+              background: `
+                radial-gradient(circle at 10% 20%, rgba(238, 223, 17, 0.92) 0%, transparent 40%),
+                radial-gradient(circle at 90% 10%, rgba(238, 223, 17, 0.92) 0%, transparent 50%),
+                radial-gradient(circle at 50% 90%, rgba(221, 160, 221, 0.3) 0%, transparent 60%),
+                linear-gradient(135deg, #E0F2FE 0%, #F0F9FF 50%, #FAF5FF 100%)
               `,
-          }}
-        ></div>
+            }}
+          />
+          {/* Playful Floating Shapes */}
+          <div className="absolute top-[-5%] left-[-5%] w-[45%] h-[45%] bg-pink-300/20 rounded-full blur-[100px] animate-pulse" />
+          <div className="absolute bottom-[5%] right-[-5%] w-[40%] h-[40%] bg-blue-300/30 rounded-full blur-[100px] animate-[bounce_15s_infinite]" />
+          <div className="absolute top-[30%] right-[10%] w-[25%] h-[25%] bg-yellow-200/20 rounded-full blur-[80px]" />
+
+          {/* Subtle Grid Pattern for Texture */}
+          <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#3B82F6 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+        </div>
         {/* Navigation is now global, do not render Navbar here */}
         <div className="pt-16">
           {/* Main Layout */}
@@ -171,9 +183,9 @@ const Kids = () => {
                   </div>
                   {/* Right - Top Ranked */}
                   <div className="px-4 pl-6 md:px-0 md:pl-0">
-                    <div className="flex items-center gap-2 mb-6">
-                      <div className="w-1 h-8 bg-indigo-500 rounded-full" />
-                      <h2 className="text-2xl font-bold text-white tracking-tight">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-2 h-8 bg-gradient-to-b from-pink-400 to-purple-500 rounded-full shadow-lg shadow-pink-500/30" />
+                      <h2 className="text-2xl font-black text-slate-800 tracking-tight font-serif italic">
                         Top Kids Shows
                       </h2>
                     </div>
@@ -186,34 +198,34 @@ const Kids = () => {
                         .map((movie, index) => (
                           <div
                             key={movie.id}
-                            className="relative flex items-center bg-white/5 hover:bg-white/10 backdrop-blur-md rounded-2xl p-2 group border border-white/10 hover:border-indigo-500/50 transition-all duration-300 min-h-[85px] h-[calc((60vh-2rem)/5-0.5rem)] cursor-pointer overflow-hidden"
+                            className="relative flex items-center bg-white/60 hover:bg-white/80 backdrop-blur-xl rounded-[2rem] p-4 group border border-white transition-all duration-500 min-h-[85px] h-[calc((60vh-2rem)/5-0.4rem)] cursor-pointer overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(236,72,153,0.15)]"
                             onClick={() => handleCardClick(movie)}
                           >
-                            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/0 via-indigo-500/0 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-pink-100/0 via-pink-100/0 to-pink-100/30 opacity-0 group-hover:opacity-100 transition-opacity" />
 
                             {/* Poster Image */}
                             <div className="relative w-[25%] h-full flex-shrink-0 ml-6 mr-4">
                               <img
                                 src={getOptimizedImageUrl(movie.posterUrl, 400)}
                                 alt={movie.title}
-                                className="w-full h-full object-cover rounded-xl border border-white/10 group-hover:scale-105 transition-transform"
+                                className="w-full h-full object-cover rounded-[1.2rem] border border-white/50 group-hover:scale-110 transition-transform duration-500"
                               />
-                              <div className="absolute -top-2 -left-2 bg-indigo-500 text-white text-sm font-black w-8 h-8 flex items-center justify-center rounded-xl shadow-[0_0_15px_rgba(79,70,229,0.4)] border-2 border-white/20 group-hover:scale-110 transition-transform z-20">
+                              <div className="absolute -top-3 -left-3 bg-gradient-to-br from-pink-400 to-purple-500 text-white text-base font-black w-9 h-9 flex items-center justify-center rounded-2xl shadow-lg border-2 border-white group-hover:scale-125 group-hover:rotate-12 transition-all duration-500 z-20">
                                 {index + 1}
                               </div>
                             </div>
                             {/* Info */}
                             <div className="flex-1 min-w-0 pr-2">
-                              <h3 className="font-bold text-white text-[15px] mb-1 line-clamp-1 group-hover:text-indigo-400 transition-colors">
+                              <h3 className="font-black text-slate-800 text-base mb-1 line-clamp-1 group-hover:text-pink-600 transition-colors">
                                 {movie.title}
                               </h3>
-                              <div className="flex items-center space-x-3 text-xs text-slate-400">
-                                <span className="flex items-center gap-1">
-                                  <span className="text-yellow-500 font-bold">★</span>
+                              <div className="flex items-center space-x-3 text-xs text-slate-500">
+                                <span className="flex items-center gap-1 font-bold text-pink-500">
+                                  <span className="text-yellow-400">★</span>
                                   {movie.rating}
                                 </span>
                                 <span>•</span>
-                                <span className="bg-slate-800/80 px-2 py-0.5 rounded text-[10px] font-bold text-indigo-300">
+                                <span className="bg-blue-100 px-2 py-0.5 rounded-full text-[10px] font-black text-blue-600 border border-blue-200">
                                   {movie.genre?.split(',')[0]}
                                 </span>
                               </div>
@@ -411,10 +423,10 @@ const Kids = () => {
 
                     {/* Grid Layout for all filtered kids content */}
                     <div className="sm:mt-0 md:mt-8 pb-4 pl-4">
-                      <h2 className="text-2xl mb-4 text-white">
+                      <h2 className="text-2xl font-black mb-6 text-slate-800 tracking-tight">
                         {activeGenre === "all"
-                          ? "All Kids Content"
-                          : `All ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Kids Content`}
+                          ? "Explore All Magical Stories"
+                          : `The Best ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Adventures`}
                       </h2>
 
                       {filteredKidsContent.length > 0 ? (
@@ -423,18 +435,13 @@ const Kids = () => {
                           onCardClick={handleContentRowCardClick}
                         />
                       ) : (
-                        <div className="text-center py-16">
-                          <h3 className="text-xl font-bold mb-2 text-white">
-                            No kids content found
+                        <div className="text-center py-16 bg-white/40 backdrop-blur-md rounded-[3rem] border border-white/60 shadow-xl">
+                          <div className="text-6xl mb-4 animate-bounce">🎈</div>
+                          <h3 className="text-2xl font-black mb-2 text-slate-800">
+                            Oops! It's Empty
                           </h3>
-                          <p className="text-blue-700">
-                            No{" "}
-                            {activeGenre === "all"
-                              ? ""
-                              : activeGenre.charAt(0).toUpperCase() +
-                              activeGenre.slice(1) +
-                              " "}
-                            kids content available at the moment
+                          <p className="text-slate-500 max-w-xs mx-auto">
+                            No magical stories here yet. Try another adventure category!
                           </p>
                         </div>
                       )}

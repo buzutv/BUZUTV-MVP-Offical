@@ -20,6 +20,7 @@ import { useChannels } from "@/hooks/useChannels";
 // import FullscreenPlayer from "@/components/FullscreenPlayer";
 import { Spinner } from "@/components/ui/spinner";
 import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Series = () => {
   const { seriesContent, isLoading, content } = useAppContent();
@@ -30,6 +31,7 @@ const Series = () => {
     useUserFavorites();
   const { content: rawContent } = useContent();
   const { channels } = useChannels();
+  const { isLoggedIn, setShowLoginModal } = useAuth();
 
 
   console.log("seriesContent", seriesContent)
@@ -67,8 +69,16 @@ const Series = () => {
 
   const filteredSeries = getFilteredSeries();
 
-  const handleContentRowCardClick = () => {
-    return false; // Series page doesn't need login modal for card clicks
+  const handleContentRowCardClick = (item?: any) => {
+    if (!isLoggedIn) {
+      setShowLoginModal(true);
+      return true;
+    }
+    if (item) {
+      setSelectedSeries(item);
+      return true;
+    }
+    return false;
   };
 
   if (isLoading) {
@@ -246,18 +256,20 @@ const Series = () => {
 
               {/* Content Sections */}
               <div className="max-w-full sm:pr-6 sm:pl-4 pr-6 md:pl-6">
+                {/* Global Continue Watching for Series Page */}
+                {isLoggedIn && seriesContent.continueWatching?.length > 0 && (
+                  <div className="mb-4">
+                    <ContentRow
+                      title="Continue Watching"
+                      items={seriesContent.continueWatching}
+                      onCardClick={handleContentRowCardClick}
+                    />
+                  </div>
+                )}
+
                 {activeGenre === "all" ? (
                   // Show "All" View with Genre Rows
                   <>
-                    {/* Continue Watching Row */}
-                    {seriesContent.continueWatching?.length > 0 && (
-                      <ContentRow
-                        title="Continue Watching"
-                        items={seriesContent.continueWatching}
-                        onCardClick={handleContentRowCardClick}
-                      />
-                    )}
-
                     {/* Filter Bar moved below Continue Watching */}
                     <div className="mb-8 px-6 pt-4">
                       <FilterBar

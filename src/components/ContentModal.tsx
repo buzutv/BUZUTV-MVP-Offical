@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { Heart, Play, Star } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -86,7 +86,7 @@ export interface ContentModalProps {
   channel?: Channel; // Channel information
   seasons?: Season[]; // Season data for series
   customBackground?: string; // Custom background styling
-  movieId;
+  movieId: string;
   // Deprecated props - kept for backward compatibility but ignored
   isSaved?: boolean;
   onSave?: () => void;
@@ -137,7 +137,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
   const [isMovieOpen, setIsMovieOpen] = useState(false);
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [currentSeasonNumber, setCurrentSeasonNumber] = useState<number>(1);
-  const { user } = useAuth();
+  // const { user } = useAuth();
   const [triggerGetContentWithWatchHistory, result] = useLazyGetPlaylistContentWithWatchHistoryQuery()
   // const USER_ID = user?.id;
   const dispatch = useDispatch();
@@ -150,12 +150,89 @@ const ContentModal: React.FC<ContentModalProps> = ({
   const playlistId = useSelector((state: any) => state.screenPlayer.playlistId);
   const selectedFromRecommendations = useSelector((state: any) => state.screenPlayer.selectedVideo);
 
+  // Determine content type early so it can be used in hooks
+  const contentType = useMemo(() => {
+    return variant === "auto" ? currentItem.type || "movie" : variant;
+  }, [variant, currentItem.type]);
+
+  // Normalize item early
+  const normalizedItem = useMemo(
+    () => ({
+      id: currentItem?.id,
+      title: currentItem?.title,
+      posterUrl: getPosterUrl(currentItem),
+      type: currentItem?.type || "movie",
+      genre: currentItem?.genre,
+      year: currentItem?.year,
+      rating: currentItem?.rating,
+      channelId: getChannelId(currentItem),
+      isKids: getIsKids(currentItem),
+      duration: getDuration(currentItem),
+      ...currentItem,
+    }),
+    [currentItem],
+  );
+
 
   console.log("Content Modal item", currentItem)
 
   const [triggerSeasonWithEpisode] = useLazyGetSeasonWithEpisodesQuery()
   // console.log("Season with Episode", seasonWithEpisode)
   const isSeries = useSelector((state: any) => state.screenPlayer.isSeries);
+  const { user } = useAuth();
+
+  const continueWatchingEpisodes = useMemo(() => {
+    if (contentType !== "series" || !seasonWithEpisodes || seasonWithEpisodes.length === 0) return [];
+
+    // Flatten all episodes with their season number
+    const allEpisodes = seasonWithEpisodes.flatMap((s) =>
+      (s.episodes || []).map((ep, index) => ({
+        ...ep,
+        seasonNumber: s.season_number,
+        globalIndex: index, // This might not be right if seasons are separate arrays
+      }))
+    );
+
+    // Re-calculate global index correctly
+    let currentGlobalIdx = 0;
+    const allEpisodesWithGlobalIdx = seasonWithEpisodes.flatMap((s) => {
+      const episodesWithIdx = (s.episodes || []).map((ep, idx) => ({
+        ...ep,
+        seasonNumber: s.season_number,
+        withinSeasonIndex: idx,
+        globalIndex: currentGlobalIdx + idx,
+        actualSeasonData: s
+      }));
+      currentGlobalIdx += (s.episodes || []).length;
+      return episodesWithIdx;
+    });
+
+    // Filter for episodes with progress
+    const inProgress = allEpisodesWithGlobalIdx.filter(
+      (ep) => (ep.watch_percentage ?? 0) > 0 && !ep.completed
+    );
+
+    if (inProgress.length > 0) {
+      return inProgress;
+    }
+
+    // Find the first uncompleted episode after the last completed one
+    const lastCompletedIdx = allEpisodesWithGlobalIdx.reduce(
+      (acc, ep, idx) => (ep.completed ? idx : acc),
+      -1
+    );
+
+    if (lastCompletedIdx !== -1 && lastCompletedIdx < allEpisodesWithGlobalIdx.length - 1) {
+      return [allEpisodesWithGlobalIdx[lastCompletedIdx + 1]];
+    }
+
+    // If none watched, return the very first episode
+    if (allEpisodesWithGlobalIdx.length > 0) {
+      return [allEpisodesWithGlobalIdx[0]];
+    }
+
+    return [];
+  }, [contentType, seasonWithEpisodes]);
 
   useEffect(() => {
     async function fetchSeasonData() {
@@ -192,12 +269,12 @@ const ContentModal: React.FC<ContentModalProps> = ({
   // }, [seasonWithEpisodes, dispatch])
   // console.log("Fetched season with episodes:", seasonWithEpisodes);
   // Always find current backend content item dynamically
-  const currentContentItem = React.useMemo(() => {
+  const currentContentItem = useMemo(() => {
     return content.find((c) => c.id === currentItem.id);
   }, [currentItem.id, content]);
 
   // Reset currentItem when item prop changes (new modal opening)
-  React.useEffect(() => {
+  useEffect(() => {
     setCurrentItem(item);
   }, [item]);
 
@@ -233,27 +310,6 @@ const ContentModal: React.FC<ContentModalProps> = ({
 
   console.log("More Like This Content:", currentContentItem);
 
-  // Determine content type
-  const contentType =
-    variant === "auto" ? currentItem.type || "movie" : variant;
-
-  // Normalize item to work with both Movie interface and backend items
-  const normalizedItem = React.useMemo(
-    () => ({
-      id: currentItem?.id,
-      title: currentItem?.title,
-      posterUrl: getPosterUrl(currentItem),
-      type: currentItem?.type || "movie",
-      genre: currentItem?.genre,
-      year: currentItem?.year,
-      rating: currentItem?.rating,
-      channelId: getChannelId(currentItem),
-      isKids: getIsKids(currentItem),
-      duration: getDuration(currentItem),
-      ...currentItem,
-    }),
-    [currentItem],
-  );
 
   // Format duration helper
   const formatDuration = (minutes: number | undefined) => {
@@ -349,7 +405,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
   const seasonsData = getSeasonsData();
   console.log("Seasons Data in ContentModal:", currentContentItem);
   // Get current video URL from the current content item
-  const currentVideoUrl = React.useMemo(() => {
+  const currentVideoUrl = useMemo(() => {
     return (
       currentContentItem?.video_url ||
       (isMovie(currentItem) ? currentItem.videoUrl || currentItem.video_url : undefined)
@@ -710,6 +766,54 @@ const ContentModal: React.FC<ContentModalProps> = ({
               {/* Series Episodes Section */}
               {contentType === "series" && seasonsData.length > 0 && (
                 <div className="mb-8">
+                  {/* Continue Watching Row for Series */}
+                  {continueWatchingEpisodes.length > 0 && (
+                    <div className="mb-8 animate-in fade-in slide-in-from-left-4 duration-500">
+                      <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                        <span className="w-1 h-6 bg-brand-500 rounded-full"></span>
+                        Continue Watching
+                      </h2>
+                      <div className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide">
+                        {continueWatchingEpisodes.map((episode) => (
+                          <div
+                            key={`cw-${episode.id}`}
+                            onClick={() => handlePlayEpisode(episode, episode.seasonNumber, episode.withinSeasonIndex, episode.actualSeasonData)}
+                            className="flex-shrink-0 w-64 group cursor-pointer relative"
+                          >
+                            <div className="aspect-video rounded-lg overflow-hidden bg-white/5 border border-white/10 group-hover:border-white/40 transition-all duration-300">
+                              <img
+                                src={episode.thumbnail_url || episode.poster_url || normalizedItem.posterUrl}
+                                alt={episode.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              />
+                              <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                <div className="w-10 h-10 rounded-full bg-brand-500 flex items-center justify-center scale-0 group-hover:scale-100 transition-transform duration-300">
+                                  <Play className="w-5 h-5 text-white fill-current" />
+                                </div>
+                              </div>
+
+                              {/* Progress Bar */}
+                              <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+                                <div
+                                  className="h-full bg-brand-500"
+                                  style={{ width: `${episode.watch_percentage ?? 0}%` }}
+                                />
+                              </div>
+                            </div>
+                            <div className="mt-2">
+                              <p className="text-xs text-brand-400 font-bold uppercase tracking-wider">
+                                S{episode.seasonNumber} • E{episode.episode_number}
+                              </p>
+                              <h3 className="text-white font-medium truncate group-hover:text-brand-400 transition-colors">
+                                {episode.title}
+                              </h3>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <Tabs defaultValue="season-1" className="w-full">
                     <TabsList
                       className={`flex flex-row gap-2 w-full bg-transparent transition-all duration-300 group ${effectiveKidsMode ? "" : ""}`}
