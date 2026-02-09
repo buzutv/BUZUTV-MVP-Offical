@@ -9,6 +9,13 @@ import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useUserChannelFavorites } from "@/hooks/useUserChannelFavorites";
 import { useAppContent } from "@/hooks/useAppContent";
 import { Spinner } from "@/components/ui/spinner";
+import { useGetPlaylistsWithItemsQuery, useLazyGetPlaylistsWithItemsByIdQuery } from "@/store/playlistSlice";
+import { useAuth } from "@/contexts/AuthContext";
+import { useDispatch } from "react-redux";
+import { setPlaylistInfo } from "@/store/screenPlayerSlice";
+import { useNavigate } from "react-router-dom";
+import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
+import { List } from "lucide-react";
 
 const MyList = React.memo(() => {
   const [selectedChannel, setSelectedChannel] = useState<any>(null);
@@ -23,6 +30,11 @@ const MyList = React.memo(() => {
 
   const appContentStart = performance.now();
   const { movies, channels } = useAppContent();
+  const { user } = useAuth();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [triggerPlaylists] = useLazyGetPlaylistsWithItemsByIdQuery();
+  const { data: playlists = [], isLoading: playlistsLoading } = useGetPlaylistsWithItemsQuery(user?.id);
 
   const savedContent = useMemo(() => {
     const filterStart = performance.now();
@@ -62,11 +74,23 @@ const MyList = React.memo(() => {
     setSelectedChannel(null);
   }, []);
 
+  const handlePlaylistClick = async (playlistId: string) => {
+    navigate(`/playlists/${playlistId}`);
+    try {
+      const fetchedPlaylists = await triggerPlaylists({ userId: user?.id, playlist_id: playlistId }).unwrap();
+      dispatch(setPlaylistInfo({
+        playlistInfo: fetchedPlaylists
+      }));
+    } catch (error) {
+      console.error("Error fetching playlist detail:", error);
+    }
+  };
+
   const isLoading = useMemo(() => {
-    const loading = favoritesLoading || channelFavoritesLoading;
+    const loading = favoritesLoading || channelFavoritesLoading || playlistsLoading;
 
     return loading;
-  }, [favoritesLoading, channelFavoritesLoading]);
+  }, [favoritesLoading, channelFavoritesLoading, playlistsLoading]);
 
   if (isLoading) {
     return (
@@ -131,6 +155,51 @@ const MyList = React.memo(() => {
                 </p>
               </div>
 
+              {/* Playlists Row */}
+              {playlists.length > 0 && (
+                <section className="mb-10">
+                  <h2 className="text-2xl mb-4 px-4 flex items-center gap-2">
+                    <List className="w-6 h-6 text-brand-400" />
+                    My Playlists
+                  </h2>
+                  <div className="flex space-x-6 overflow-x-auto scrollbar-hide px-4 py-2">
+                    {playlists.map((playlist) => {
+                      const items = playlist.playlist_items || [];
+                      const firstItemPoster = items[0]?.content?.poster_url;
+
+                      return (
+                        <div
+                          key={playlist.id}
+                          className="flex-shrink-0 w-48 group cursor-pointer"
+                          onClick={() => handlePlaylistClick(playlist.id)}
+                        >
+                          <div className="relative aspect-[2/3] w-full mb-2 rounded-lg overflow-hidden border border-white/10 group-hover:border-brand-500/50 transition-all duration-300 shadow-lg group-hover:shadow-brand-500/20 group-hover:-translate-y-1">
+                            {firstItemPoster ? (
+                              <img
+                                src={getOptimizedImageUrl(firstItemPoster, 200)}
+                                alt={playlist.title}
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-white/5 flex items-center justify-center">
+                                <List className="w-8 h-8 text-white/20" />
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
+                            <div className="absolute bottom-1 right-1 bg-brand-600/90 text-[10px] px-1.5 py-0.5 rounded font-bold">
+                              {items.length}
+                            </div>
+                          </div>
+                          <p className="text-xs font-medium text-white/90 line-clamp-1 group-hover:text-brand-400 transition-colors text-center">
+                            {playlist.title}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
+
               {/* Favorite Channels */}
               {favoriteChannels.length > 0 && (
                 <section className="mb-8">
@@ -164,7 +233,7 @@ const MyList = React.memo(() => {
               )}
 
               {/* Empty State */}
-              {savedContent.length === 0 && favoriteChannels.length === 0 && (
+              {savedContent.length === 0 && favoriteChannels.length === 0 && playlists.length === 0 && (
                 <div className="text-center py-16">
                   <h2 className="text-2xl mb-4">
                     Your favorites list is empty

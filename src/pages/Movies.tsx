@@ -11,6 +11,7 @@ import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
 import { Spinner } from "@/components/ui/spinner";
+import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
 
 // Background style constant to keep JSX clean
 const BACKGROUND_GRADIENT = {
@@ -110,23 +111,30 @@ const Movies = React.memo(() => {
                     {movieContent.topRanked.slice(0, 5).map((movie, index) => (
                       <div
                         key={movie.id}
-                        className="relative flex items-center bg-white/5 hover:bg-white/10 backdrop-blur-md rounded-2xl p-2 group border border-white/10 hover:border-brand-500/50 transition-all duration-300 min-h-[85px] h-[calc((60vh-2rem)/5-0.5rem)] cursor-pointer overflow-hidden"
+                        className="relative flex items-center bg-white/5 hover:bg-white/10 backdrop-blur-md rounded-2xl p-2 group border border-white/10 hover:border-brand-500/50 transition-all duration-500 min-h-[85px] h-[calc((60vh-2rem)/5-0.5rem)] cursor-pointer overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(124,58,237,0.15)] hover:-translate-y-0.5"
                         onClick={() => handleCardClick(movie)}
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-brand-500/0 via-brand-500/0 to-brand-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                        {/* Movie Info */}
-                        <div className="relative w-[25%] h-full flex-shrink-0 ml-6 mr-4">
-                          <img
-                            src={movie.posterUrl}
-                            alt={movie.title}
-                            className="w-full h-full object-cover rounded-xl border border-white/10 group-hover:scale-105 transition-transform"
-                          />
-                          <div className="absolute -top-2 -left-2 bg-brand-500 text-white text-sm font-black w-8 h-8 flex items-center justify-center rounded-xl shadow-[0_0_15px_rgba(139,92,246,0.4)] border-2 border-white/20 group-hover:scale-110 transition-transform z-20">
-                            {index + 1}
+                        {/* Poster Image with Overlaid Number */}
+                        <div className="relative w-[30%] h-full flex-shrink-0 mr-4">
+                          <div className="absolute bottom-0 z-20 pointer-events-none ">
+                            <span className="relative bottom-10 -left-4 text-2xl md:text-3xl font-bold italic p-2 select-none
+  bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500
+  bg-clip-text text-transparent
+  drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)]">
+                              {index + 1}
+                            </span>
                           </div>
+                          <img
+                            src={getOptimizedImageUrl(movie.posterUrl, 400)}
+                            alt={movie.title}
+                            className="w-full h-full object-cover rounded-xl border border-white/10 group-hover:scale-110 transition-transform duration-500"
+                          />
                         </div>
-                        <div className="flex-1 min-w-0">
+
+                        {/* Info */}
+                        <div className="flex-1 min-w-0 pr-2">
                           <h3 className="font-bold text-white text-[15px] mb-1 line-clamp-1 group-hover:text-brand-400 transition-colors">{movie.title}</h3>
                           <div className="flex items-center space-x-3 text-xs text-slate-400">
                             <span className="flex items-center gap-1">
@@ -223,7 +231,7 @@ const Movies = React.memo(() => {
 
                   {getNewestMovies(filteredMovies).length > 0 && (
                     <ContentRow
-                      title={`New ${activeGenre} Movies`}
+                      title={`New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies`}
                       items={getNewestMovies(filteredMovies)}
                       onCardClick={handleContentRowCardClick}
                     />
@@ -231,18 +239,18 @@ const Movies = React.memo(() => {
 
                   {filteredMovies.length > 2 && (
                     <ContentRow
-                      title={`Recommended ${activeGenre} Movies`}
+                      title={`Recommended ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies`}
                       items={filteredMovies.slice(2, 10)}
                       onCardClick={handleContentRowCardClick}
                     />
                   )}
 
                   <div className="mt-8 mb-8 pl-4">
-                    <h2 className="text-2xl mb-4">All {activeGenre} Movies</h2>
+                    <h2 className="text-2xl mb-4">All {activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Movies</h2>
                     {filteredMovies.length > 0 ? (
                       <ContentGrid items={filteredMovies} onCardClick={handleContentRowCardClick} />
                     ) : (
-                      <div className="text-center py-16 text-gray-400">No movies found</div>
+                      <div className="text-center py-16 text-gray-400">No Movies Found</div>
                     )}
                   </div>
                 </>

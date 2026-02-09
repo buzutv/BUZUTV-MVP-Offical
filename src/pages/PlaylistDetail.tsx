@@ -280,7 +280,7 @@ const PlaylistDetail = () => {
 
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-4 cursor-pointer z-10" onClick={() => navigate('/playlists')}>
+        <div className="flex items-center gap-4 cursor-pointer z-10" onClick={() => navigate('/my-list')}>
           <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>

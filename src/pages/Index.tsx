@@ -215,52 +215,50 @@ const Index = React.memo(() => {
                 {/* Recommended row */}
                 <ContentRow
                   key={`recommended-content-${activeGenre}`}
-                  title="Recommended for You"
+                  title="Recommended For You"
                   items={filteredContent.slice(2, 12)}
                   onCardClick={handleContentRowCardClick}
                 />
 
-                {/* Individual Genre Rows for All Content */}
-                {[
-                  "Comedy", "Drama", "Sports", "Romance",
-                  "Action", "Lifestyle", "Documentary", "Informational"
-                ].map(genre => {
-                  const genreItems = content.allContent.filter(item => item.genre === genre && !item.isKids);
-                  if (!genreItems || genreItems.length === 0) return null;
-                  return (
-                    <ContentRow
-                      key={genre}
-                      title={genre}
-                      items={genreItems.slice(0, 8)}
-                      onCardClick={handleContentRowCardClick}
-                    />
-                  );
-                })}
+                {/* Movies Row */}
+                <ContentRow
+                  title="Movies"
+                  items={content.allContent.filter(item => item.type === 'movie' && !item.isKids).slice(0, 10)}
+                  onCardClick={handleContentRowCardClick}
+                />
+
+                {/* TV Shows Row */}
+                <ContentRow
+                  title="TV Shows"
+                  items={content.allContent.filter(item => item.type === 'series' && !item.isKids).slice(0, 10)}
+                  onCardClick={handleContentRowCardClick}
+                />
+
               </>
             ) : (
               /* Specific Genre View */
               <>
                 <ContentRow
                   key={`new-content-${activeGenre}`}
-                  title={`New ${activeGenre} Content`}
+                  title={`New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Content`}
                   items={filteredContent.slice(0, 8)}
                   onCardClick={handleContentRowCardClick}
                 />
                 <ContentRow
                   key={`recommended-${activeGenre}`}
-                  title={`Recommended ${activeGenre}`}
+                  title={`Recommended ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)}`}
                   items={filteredContent.slice(2, 10)}
                   onCardClick={handleContentRowCardClick}
                 />
                 <div className="mt-8 mb-8 pl-4">
-                  <h2 className="text-2xl mb-4">All {activeGenre}</h2>
+                  <h2 className="text-2xl mb-4">All {activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)}</h2>
                   {filteredContent.length > 0 ? (
                     <ContentGrid
                       items={filteredContent}
                       onCardClick={handleContentRowCardClick}
                     />
                   ) : (
-                    <div className="text-center py-16 text-gray-400 font-medium">No results found for {activeGenre}</div>
+                    <div className="text-center py-16 text-gray-400 font-medium">No Results Found For {activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)}</div>
                   )}
                 </div>
               </>

@@ -362,6 +362,42 @@ const ContentCard = ({
 
                 <div className="h-px bg-white/10 my-1" />
 
+                <Dialog open={isCreatePlaylistOpen} onOpenChange={setIsCreatePlaylistOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="w-full bg-slate-800 hover:bg-slate-700 text-white text-sm p-2">
+                      Create New Playlist
+                    </Button>
+                  </DialogTrigger>
+
+                  <DialogContent className="max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Create New Playlist</DialogTitle>
+                    </DialogHeader>
+                    <form className="grid gap-4 py-4" onSubmit={handleSubmitPlaylist}>
+                      <div className="grid gap-2">
+                        <label htmlFor="playlist-title" className="text-sm font-medium">
+                          Playlist Name
+                        </label>
+                        <input
+                          type="text"
+                          id="playlist-title"
+                          name="title"
+                          value={playlistForm.title}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-md focus:outline-none focus:ring-1 focus:ring-brand-500 text-white"
+                          placeholder="My Awesome Playlist"
+                          required
+                        />
+                      </div>
+                      <Button type="submit" className="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold">
+                        Create Playlist
+                      </Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+
+                <div className="h-px bg-white/10 my-1" />
+
                 <span className="text-[10px] font-bold text-gray-400 uppercase px-2 tracking-wider">Add to Playlist</span>
                 <div className="flex flex-col gap-1 max-h-[160px] overflow-y-auto custom-scrollbar">
                   {playlists?.map((playlist) => (
@@ -386,39 +422,6 @@ const ContentCard = ({
                 </div>
               </div>
 
-              <Dialog open={isCreatePlaylistOpen} onOpenChange={setIsCreatePlaylistOpen}>
-                <DialogTrigger asChild>
-                  <Button className="w-full bg-slate-800 hover:bg-slate-700 text-white text-sm p-2">
-                    Create New Playlist
-                  </Button>
-                </DialogTrigger>
-
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Create New Playlist</DialogTitle>
-                  </DialogHeader>
-                  <form className="grid gap-4 py-4" onSubmit={handleSubmitPlaylist}>
-                    <div className="grid gap-2">
-                      <label htmlFor="playlist-title" className="text-sm font-medium">
-                        Playlist Name
-                      </label>
-                      <input
-                        type="text"
-                        id="playlist-title"
-                        name="title"
-                        value={playlistForm.title}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-md focus:outline-none focus:ring-1 focus:ring-brand-500 text-white"
-                        placeholder="My Awesome Playlist"
-                        required
-                      />
-                    </div>
-                    <Button type="submit" className="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold">
-                      Create Playlist
-                    </Button>
-                  </form>
-                </DialogContent>
-              </Dialog>
             </PopoverContent>
           </Popover>
         )}
@@ -458,22 +461,8 @@ const ContentCard = ({
               </h3>
             </div>
 
-            {effectiveShowResumeButton && (
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-auto">
-                <button
-                  className="bg-white text-black px-4 py-2 rounded-lg font-semibold flex items-center space-x-2 hover:scale-105 transition-transform"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log("▶️ [ContentCard] Continue Watching clicked, playing immediately");
-                    handleModalPlayClick();
-                  }}
-                >
-                  <Play className="w-4 h-4 fill-current" />
-                  <span>Continue Watching</span>
-                </button>
-              </div>
-            )}
+            {/* Removed Continue Watching button as per user request */}
+
 
             {/* Remove the blocking button for isMoreLikeThis to allow context menu clicks */}
             {/* {isMoreLikeThis && (

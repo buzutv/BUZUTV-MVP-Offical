@@ -58,10 +58,12 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
   const [recommendedContent, setRecommendedContent] = useState<
     HeroCarouselItem[]
   >([]);
+  const [isDirectPlay, setIsDirectPlay] = useState(false);
   const [triggerSeasonWithEpisodesandWatchHistory] = useLazyGetSeasonWithEpisodesQuery()
 
   // Play button now opens ContentModal (user requirement)
   const handlePlay = async (item: HeroCarouselItem) => {
+    setIsDirectPlay(false);
     setModalType(item.type || "movie");
     setModalItem(item);
     setRecommendedContent([]);
@@ -70,6 +72,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
 
   // Open modal for more info
   const handleMoreInfo = (item: HeroCarouselItem) => {
+    setIsDirectPlay(false);
     setModalType(item.type || "movie");
     setModalItem(item);
     // Recommendations will be handled internally by ContentModal using useMoreLikeThis hook
@@ -349,6 +352,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
             movieId={modalItem.id}
             contentItem={backendContentItem as any}
             channel={backendChannel}
+            startInPlayerMode={isDirectPlay}
           />
         );
       })()}

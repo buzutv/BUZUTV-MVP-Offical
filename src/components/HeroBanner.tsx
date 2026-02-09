@@ -39,6 +39,7 @@ const getYouTubeEmbedUrl = (url: string): string | null => {
 
 const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
   const [showModal, setShowModal] = useState(false);
+  const [isDirectPlay, setIsDirectPlay] = useState(false);
   const [modalMovie, setModalMovie] = useState<Movie | null>(null);
   const [currentMovie, setCurrentMovie] = useState<Movie | null>(
     movies[0] || null,
@@ -77,12 +78,14 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
 
   const handleWatchNow = () => {
     if (!currentMovie) return;
+    setIsDirectPlay(false);
     setModalMovie(currentMovie);
     setShowModal(true);
   };
 
   const handleMoreInfo = () => {
     if (!currentMovie) return;
+    setIsDirectPlay(false);
     setModalMovie(currentMovie);
     setShowModal(true);
   };
@@ -346,6 +349,7 @@ const HeroBanner = ({ movies, variant = "default" }: HeroBannerProps) => {
           } as any}
           channel={channel}
           seasons={modalSeasonsData}
+          startInPlayerMode={isDirectPlay}
         />
       )}
 

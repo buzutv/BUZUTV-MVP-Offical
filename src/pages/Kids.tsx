@@ -186,7 +186,7 @@ const Kids = () => {
                     <div className="flex items-center gap-3 mb-6">
                       <div className="w-2 h-8 bg-gradient-to-b from-pink-400 to-purple-500 rounded-full shadow-lg shadow-pink-500/30" />
                       <h2 className="text-2xl font-black text-slate-800 tracking-tight font-serif italic">
-                        Top Kids Shows
+                        Top <span className="text-transparent bg-clip-text bg-[linear-gradient(to_right,#ef4444,#facc15,#22c55e)]">Kids</span> Shows
                       </h2>
                     </div>
                     <div
@@ -203,17 +203,20 @@ const Kids = () => {
                           >
                             <div className="absolute inset-0 bg-gradient-to-r from-pink-100/0 via-pink-100/0 to-pink-100/30 opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                            {/* Poster Image */}
-                            <div className="relative w-[25%] h-full flex-shrink-0 ml-6 mr-4">
+                            {/* Poster Image with Overlaid Number */}
+                            <div className="relative w-[30%] h-full flex-shrink-0 mr-4">
+                              <div className="absolute -left-1 bottom-0 z-20 pointer-events-none ">
+                                <span className="relative bottom-4 -left-1 text-2xl md:text-3xl font-bold text-brand-500 drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)] select-none text-white italic p-2 bg-transparent">
+                                  {index + 1}
+                                </span>
+                              </div>
                               <img
                                 src={getOptimizedImageUrl(movie.posterUrl, 400)}
                                 alt={movie.title}
                                 className="w-full h-full object-cover rounded-[1.2rem] border border-white/50 group-hover:scale-110 transition-transform duration-500"
                               />
-                              <div className="absolute -top-3 -left-3 bg-gradient-to-br from-pink-400 to-purple-500 text-white text-base font-black w-9 h-9 flex items-center justify-center rounded-2xl shadow-lg border-2 border-white group-hover:scale-125 group-hover:rotate-12 transition-all duration-500 z-20">
-                                {index + 1}
-                              </div>
                             </div>
+
                             {/* Info */}
                             <div className="flex-1 min-w-0 pr-2">
                               <h3 className="font-black text-slate-800 text-base mb-1 line-clamp-1 group-hover:text-pink-600 transition-colors">

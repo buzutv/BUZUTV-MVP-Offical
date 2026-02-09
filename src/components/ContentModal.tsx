@@ -95,14 +95,7 @@ export interface ContentModalProps {
   onOpenRelatedItem?: (item: Movie | Content) => void;
   skipContentFiltering?: boolean;
   allowNestedModals?: boolean;
-  hasNext?: boolean;
-  hasPrevious?: boolean;
-  onNext?: () => void;
-  onPrevious?: () => void;
-  playlistInfo?: {
-    current: number;
-    total: number;
-  };
+  startInPlayerMode?: boolean;
 }
 
 const ContentModal: React.FC<ContentModalProps> = ({
@@ -127,6 +120,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
   onOpenRelatedItem,
   skipContentFiltering,
   allowNestedModals,
+  startInPlayerMode,
 }) => {
   // State for switching items within the modal
   const [currentItem, setCurrentItem] = useState<Movie | Content>(item);
@@ -310,6 +304,19 @@ const ContentModal: React.FC<ContentModalProps> = ({
 
   console.log("More Like This Content:", currentContentItem);
 
+
+  // Handle startInPlayerMode
+  useEffect(() => {
+    if (isOpen && startInPlayerMode) {
+      if (contentType === "series") {
+        if (seasonWithEpisodes.length > 0) {
+          handlePlayFirstEpisode();
+        }
+      } else {
+        handlePlayMovie();
+      }
+    }
+  }, [isOpen, startInPlayerMode, contentType, seasonWithEpisodes.length]);
 
   // Format duration helper
   const formatDuration = (minutes: number | undefined) => {

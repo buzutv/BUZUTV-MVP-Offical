@@ -201,22 +201,25 @@ const Series = () => {
                         .map((show, index) => (
                           <div
                             key={show.id}
-                            className="relative flex items-center bg-white/5 hover:bg-white/10 backdrop-blur-md rounded-2xl p-2 group border border-white/10 hover:border-brand-500/50 transition-all duration-300 min-h-[85px] h-[calc((60vh-2rem)/5-0.5rem)] cursor-pointer overflow-hidden"
+                            className="relative flex items-center bg-white/5 hover:bg-white/10 backdrop-blur-md rounded-2xl p-2 group border border-white/10 hover:border-brand-500/50 transition-all duration-300 min-h-[85px] h-[calc((60vh-2rem)/5-0.5rem)] cursor-pointer overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(124,58,237,0.15)] hover:-translate-y-0.5"
                             onClick={() => setSelectedSeries(show)}
                           >
                             <div className="absolute inset-0 bg-gradient-to-r from-brand-500/0 via-brand-500/0 to-brand-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                            {/* Poster Image */}
-                            <div className="relative w-[25%] h-full flex-shrink-0 ml-6 mr-4">
+                            {/* Poster Image with Overlaid Number */}
+                            <div className="relative w-[30%] h-full flex-shrink-0 mr-4">
+                              <div className="absolute -left-1 bottom-0 z-20 pointer-events-none ">
+                                <span className="relative bottom-4 -left-1 text-2xl md:text-3xl font-bold text-brand-500 drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)] select-none text-white italic p-2 bg-transparent">
+                                  {index + 1}
+                                </span>
+                              </div>
                               <img
                                 src={getOptimizedImageUrl(show.posterUrl, 400)}
                                 alt={show.title}
-                                className="w-full h-full object-cover rounded-xl border border-white/10 group-hover:scale-105 transition-transform"
+                                className="w-full h-full object-cover rounded-xl border border-white/10 group-hover:scale-110 transition-transform duration-500"
                               />
-                              <div className="absolute -top-2 -left-2 bg-brand-500 text-white text-sm font-black w-8 h-8 flex items-center justify-center rounded-xl shadow-[0_0_15px_rgba(139,92,246,0.4)] border-2 border-white/20 group-hover:scale-110 transition-transform z-20">
-                                {index + 1}
-                              </div>
                             </div>
+
                             {/* Info */}
                             <div className="flex-1 min-w-0 pr-2">
                               <h3 className="font-bold text-white text-[15px] mb-1 line-clamp-1 group-hover:text-brand-400 transition-colors">
@@ -399,7 +402,7 @@ const Series = () => {
                       ) : (
                         <div className="text-center py-16">
                           <h3 className="text-xl font-bold mb-2">
-                            No series found
+                            No Series Found
                           </h3>
                           <p className="text-gray-400">
                             No {activeGenre} series available at the moment

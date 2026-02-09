@@ -104,7 +104,6 @@ const Navbar = React.memo(
         { to: "/series", label: "TV Shows" },
         { to: "/kids", label: "Kids" },
         { to: "/my-list", label: "Favorites" },
-        { to: "/playlists", label: "Playlists" },
       ],
       [],
     );
@@ -150,7 +149,7 @@ const Navbar = React.memo(
           </div>
 
           <div className="hidden min-[1100px]:flex flex-1 justify-center px-4 overflow-hidden mx-4">
-            <div className="flex items-center gap-2 min-[1200px]:gap-4 whitespace-nowrap pr-4">
+            <div className="flex items-center gap-2 min-[1200px]:gap-4 whitespace-nowrap pr-4 py-2">
               {navItems.map(({ to, label }) => (
                 <Link
                   key={to}
