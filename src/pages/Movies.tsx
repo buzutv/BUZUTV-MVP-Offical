@@ -119,7 +119,7 @@ const Movies = React.memo(() => {
                         {/* Poster Image with Overlaid Number */}
                         <div className="relative w-[30%] h-full flex-shrink-0 mr-4">
                           <div className="absolute bottom-0 z-20 pointer-events-none ">
-                            <span className="relative bottom-10 -left-4 text-2xl md:text-3xl font-bold italic p-2 select-none
+                            <span className="relative bottom-6 -left-4 text-2xl md:text-3xl font-bold italic p-2 select-none
   bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500
   bg-clip-text text-transparent
   drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)]">

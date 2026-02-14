@@ -170,7 +170,7 @@ const MyList = React.memo(() => {
                       return (
                         <div
                           key={playlist.id}
-                          className="flex-shrink-0 w-48 group cursor-pointer"
+                          className="flex-shrink-0 w-40 group cursor-pointer"
                           onClick={() => handlePlaylistClick(playlist.id)}
                         >
                           <div className="relative aspect-[2/3] w-full mb-2 rounded-lg overflow-hidden border border-white/10 group-hover:border-brand-500/50 transition-all duration-300 shadow-lg group-hover:shadow-brand-500/20 group-hover:-translate-y-1">
