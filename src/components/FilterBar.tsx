@@ -1,5 +1,6 @@
 import React from "react";
 import BrandButton from "./ui/BrandButton";
+import { cn } from "@/lib/utils";
 
 interface FilterBarProps {
   activeGenre: string;
@@ -38,7 +39,10 @@ const FilterBar: React.FC<FilterBarProps> = ({
                     isActive ? (isKidsVariant ? "kids" : "primary") : "ghost"
                   }
                   size="sm"
-                  className="text-sm min-h-0"
+                  className={cn(
+                    "text-sm min-h-0",
+                    isKidsVariant && !isActive && "text-slate-600 hover:text-slate-800"
+                  )}
                 >
                   {genre}
                 </BrandButton>

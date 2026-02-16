@@ -119,29 +119,61 @@ export const useAppContent = () => {
 
     const filterContinueWatching = (items: any[]) =>
       items.filter((item) => {
-        const history = Array.isArray(item.user_watch_history)
-          ? item.user_watch_history[0]
-          : item.user_watch_history;
-        return history && history.watch_percentage > 0 && history.watch_percentage < 100;
+        const historyArr = Array.isArray(item.user_watch_history)
+          ? [...item.user_watch_history].sort((a, b) =>
+            new Date(b.watched_at || 0).getTime() - new Date(a.watched_at || 0).getTime()
+          )
+          : (item.user_watch_history ? [item.user_watch_history] : []);
+
+        const latestHistory = historyArr[0];
+        if (!latestHistory) return false;
+
+        // For series, show if ANY episode has a recorded last position > 0 or in-progress percentage
+        if (item.type === "series") {
+          return historyArr.some(h => (h.last_position || 0) > 0 || ((h.watch_percentage || 0) > 0 && (h.watch_percentage || 0) < 100));
+        }
+
+        // For movies, only show if started but not completed
+        const isCompleted = latestHistory.completed || (latestHistory.watch_percentage || 0) >= 100;
+        const hasProgress = (latestHistory.last_position || 0) > 0 || (latestHistory.watch_percentage || 0) > 0;
+
+        return hasProgress && !isCompleted;
       }).sort((a, b) => {
-        const historyA = Array.isArray(a.user_watch_history) ? a.user_watch_history[0] : a.user_watch_history;
-        const historyB = Array.isArray(b.user_watch_history) ? b.user_watch_history[0] : b.user_watch_history;
-        return new Date(historyB?.watched_at || 0).getTime() - new Date(historyA?.watched_at || 0).getTime();
+        const getLatestTime = (it: any) => {
+          const h = Array.isArray(it.user_watch_history)
+            ? Math.max(...it.user_watch_history.map((r: any) => new Date(r.watched_at || 0).getTime()))
+            : new Date(it.user_watch_history?.watched_at || 0).getTime();
+          return h;
+        };
+        return getLatestTime(b) - getLatestTime(a);
       });
+
+    const movieContinueWatching = filterContinueWatching(movies);
+    const seriesContinueWatching = filterContinueWatching(series);
+    const kidsContinueWatching = filterContinueWatching(kids);
+
+    const cwIds = new Set([
+      ...movieContinueWatching.map(i => i.id),
+      ...seriesContinueWatching.map(i => i.id),
+      ...kidsContinueWatching.map(i => i.id)
+    ]);
+
+    // Helper to filter out items that are in Continue Watching
+    const excludeCW = (items: any[]) => items.filter(item => !cwIds.has(item.id));
 
     return {
       movies: {
         all: movies,
-        continueWatching: filterContinueWatching(movies),
-        kids: movies.filter((movie) => movie.isKids === true),
-        featured: movies.filter((movie) => movie.isFeatured),
-        trending: movies.filter((movie) => movie.isTrending),
-        topRanked: [...movies].sort((a, b) => b.rating - a.rating).slice(0, 5),
-        recommended: movies.slice(0, 6),
-        new: movies.slice(2, 8),
+        continueWatching: movieContinueWatching,
+        kids: excludeCW(movies.filter((movie) => movie.isKids === true)),
+        featured: excludeCW(movies.filter((movie) => movie.isFeatured)),
+        trending: excludeCW(movies.filter((movie) => movie.isTrending)),
+        topRanked: [...excludeCW(movies)].sort((a, b) => b.rating - a.rating).slice(0, 5),
+        recommended: excludeCW(movies).slice(0, 6),
+        new: excludeCW(movies).slice(2, 8),
         byGenre: genres.reduce(
           (acc, genre) => {
-            const genreMovies = movies.filter((movie) => movie.genre === genre);
+            const genreMovies = excludeCW(movies.filter((movie) => movie.genre === genre));
             acc[genre] = genreMovies;
             return acc;
           },
@@ -150,16 +182,16 @@ export const useAppContent = () => {
       },
       series: {
         all: series,
-        continueWatching: filterContinueWatching(series),
-        kids: series.filter((show) => show.isKids === true),
-        featured: series.filter((show) => show.isFeatured),
-        trending: series.filter((show) => show.isTrending),
-        topRanked: [...series].sort((a, b) => b.rating - a.rating).slice(0, 5),
-        recommended: series.slice(0, 6),
-        new: series.slice(2, 8),
+        continueWatching: seriesContinueWatching,
+        kids: excludeCW(series.filter((show) => show.isKids === true)),
+        featured: excludeCW(series.filter((show) => show.isFeatured)),
+        trending: excludeCW(series.filter((show) => show.isTrending)),
+        topRanked: [...excludeCW(series)].sort((a, b) => b.rating - a.rating).slice(0, 5),
+        recommended: excludeCW(series).slice(0, 6),
+        new: excludeCW(series).slice(2, 8),
         byGenre: genres.reduce(
           (acc, genre) => {
-            const genreSeries = series.filter((show) => show.genre === genre);
+            const genreSeries = excludeCW(series.filter((show) => show.genre === genre));
             acc[genre] = genreSeries;
             return acc;
           },
@@ -168,15 +200,15 @@ export const useAppContent = () => {
       },
       kids: {
         all: kids,
-        continueWatching: filterContinueWatching(kids),
-        movies: kids.filter((item) => item.type === "movie"),
-        series: kids.filter((item) => item.type === "series"),
-        featured: kids.filter((item) => item.isFeatured),
-        trending: kids.filter((item) => item.isTrending),
-        new: kids.slice(0, 8),
+        continueWatching: kidsContinueWatching,
+        movies: excludeCW(kids.filter((item) => item.type === "movie")),
+        series: excludeCW(kids.filter((item) => item.type === "series")),
+        featured: excludeCW(kids.filter((item) => item.isFeatured)),
+        trending: excludeCW(kids.filter((item) => item.isTrending)),
+        new: excludeCW(kids).slice(0, 8),
         byGenre: genres.reduce(
           (acc, genre) => {
-            const genreKids = kids.filter((item) => item.genre === genre);
+            const genreKids = excludeCW(kids.filter((item) => item.genre === genre));
             acc[genre] = genreKids;
             return acc;
           },
@@ -184,27 +216,27 @@ export const useAppContent = () => {
         ),
       },
       home: {
-        trending: transformedContent.filter(
+        trending: excludeCW(transformedContent.filter(
           (item) => item.isTrending && !item.isKids,
-        ),
-        action: transformedContent.filter(
+        )),
+        action: excludeCW(transformedContent.filter(
           (item) => item.genre === "Action" && !item.isKids,
-        ),
-        drama: transformedContent.filter(
+        )),
+        drama: excludeCW(transformedContent.filter(
           (item) => item.genre === "Drama" && !item.isKids,
-        ),
-        romance: transformedContent.filter(
+        )),
+        romance: excludeCW(transformedContent.filter(
           (item) => item.genre === "Romance" && !item.isKids,
-        ),
-        comedy: transformedContent.filter(
+        )),
+        comedy: excludeCW(transformedContent.filter(
           (item) => item.genre === "Comedy" && !item.isKids,
-        ),
-        documentary: transformedContent.filter(
+        )),
+        documentary: excludeCW(transformedContent.filter(
           (item) => item.genre === "Documentary" && !item.isKids,
-        ),
-        informational: transformedContent.filter(
+        )),
+        informational: excludeCW(transformedContent.filter(
           (item) => item.genre === "Informational" && !item.isKids,
-        ),
+        )),
       },
       allContent: transformedContent,
     };
@@ -221,6 +253,15 @@ export const useAppContent = () => {
     seriesContent: content.series,
     kidsContent: content.kids,
     homeContent: content.home,
+    continueWatching: [...(content.movies.continueWatching || []), ...(content.series.continueWatching || [])].sort((a, b) => {
+      const getLatestTime = (it: any) => {
+        const h = Array.isArray(it.user_watch_history)
+          ? Math.max(...it.user_watch_history.map((r: any) => new Date(r.watched_at || 0).getTime()))
+          : new Date(it.user_watch_history?.watched_at || 0).getTime();
+        return h;
+      };
+      return getLatestTime(b) - getLatestTime(a);
+    }),
     refetch,
   };
 };

@@ -25,7 +25,7 @@ const GENRE_ORDER = [
 ];
 
 const Movies = React.memo(() => {
-  const { movieContent, isLoading } = useAppContent();
+  const { movieContent, isLoading, continueWatching } = useAppContent();
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [activeGenre, setActiveGenre] = useState("all");
 
@@ -106,23 +106,22 @@ const Movies = React.memo(() => {
 
                 {/* Top Ranked List */}
                 <div className="flex flex-col h-full px-4 md:px-0">
-                  <h2 className="text-2xl font-bold mb-3">Top Ranked Movies</h2>
+                  <h2 className="text-2xl mb-3">Top Ranked Movies</h2>
                   <div className="flex flex-col space-y-3 w-full">
                     {movieContent.topRanked.slice(0, 5).map((movie, index) => (
                       <div
                         key={movie.id}
-                        className="relative flex items-center bg-white/5 hover:bg-white/10 backdrop-blur-md rounded-2xl p-2 group border border-white/10 hover:border-brand-500/50 transition-all duration-500 min-h-[85px] h-[calc((60vh-2rem)/5-0.5rem)] cursor-pointer overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(124,58,237,0.15)] hover:-translate-y-0.5"
+                        className="relative flex items-center bg-white/5 hover:bg-white/10 backdrop-blur-md rounded-2xl p-2 group border border-white/10 hover:border-brand-500/50 transition-all duration-300 min-h-[85px] h-[calc((60vh-2rem)/5-0.5rem)] cursor-pointer overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(124,58,237,0.15)] hover:-translate-y-0.5 w-full"
                         onClick={() => handleCardClick(movie)}
                       >
-                        <div className="absolute inset-0 bg-gradient-to-r from-brand-500/0 via-brand-500/0 to-brand-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-brand-500/0 via-brand-500/5 to-brand-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
 
                         {/* Poster Image with Overlaid Number */}
                         <div className="relative w-[30%] h-full flex-shrink-0 mr-4">
-                          <div className="absolute bottom-0 z-20 pointer-events-none ">
-                            <span className="relative bottom-6 -left-4 text-2xl md:text-3xl font-bold italic p-2 select-none
-  bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500
-  bg-clip-text text-transparent
-  drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)]">
+                          <div className="absolute -left-1 bottom-0 z-20 pointer-events-none ">
+                            <span className="relative bottom-2 -left-3 text-2xl md:text-3xl font-bold italic p-2 select-none
+                                  text-purple-600
+                                  drop-shadow-[0_4px_8px_rgba(255,255,255,0.4)]">
                               {index + 1}
                             </span>
                           </div>
@@ -158,7 +157,6 @@ const Movies = React.memo(() => {
             <div className="max-w-full relative pr-6 pl-0 md:pr-8 md:pl-6">
               {activeGenre === "all" ? (
                 <>
-                  {/* Continue Watching Row */}
                   {movieContent.continueWatching?.length > 0 && (
                     <ContentRow
                       title="Continue Watching"
@@ -175,15 +173,6 @@ const Movies = React.memo(() => {
                       availableGenres={availableMovieGenres}
                     />
                   </div>
-
-                  {/* New Movies Row */}
-                  {getNewestMovies(movieContent.all).length > 0 && (
-                    <ContentRow
-                      title="New Movies"
-                      items={getNewestMovies(movieContent.all)}
-                      onCardClick={handleContentRowCardClick}
-                    />
-                  )}
 
                   {/* New Movies Row */}
                   {getNewestMovies(movieContent.all).length > 0 && (

@@ -20,6 +20,7 @@ import { useDispatch } from "react-redux";
 import { openScreenPlayer, closeScreenPlayer } from "@/store/screenPlayerSlice";
 import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
 import { Content } from "@/types";
+import { useCreatePlaylistMutation, useAddPlaylistItemMutation } from "@/store/playlistSlice";
 
 export interface ContentCardProps {
   item: Movie | any;
@@ -37,6 +38,7 @@ export interface ContentCardProps {
   isMoreLikeThis?: boolean;
   width?: string;
   playlists?: any[];
+  hideGradient?: boolean;
 }
 
 const ContentCard = ({
@@ -54,7 +56,8 @@ const ContentCard = ({
   className = "",
   isMoreLikeThis = false,
   width = "auto",
-  playlists
+  playlists,
+  hideGradient = false
 }: ContentCardProps) => {
   const dispatch = useDispatch();
   const location = useLocation();
@@ -62,6 +65,11 @@ const ContentCard = ({
   const { favoriteIds, addToFavorites, removeFromFavorites } = useUserFavorites();
   const { content, refetch: refetchContent } = useContent();
   const { channels } = useChannels();
+  const [createPlaylist] = useCreatePlaylistMutation();
+  const [addPlaylistItem] = useAddPlaylistItemMutation();
+  const { playlists: fetchedPlaylists } = usePlaylists();
+
+  const displayPlaylists = playlists || fetchedPlaylists;
 
   // State for playlist creation form
   const [playlistForm, setPlaylistForm] = useState<{
@@ -114,7 +122,12 @@ const ContentCard = ({
   const watchHistory = useMemo(() => {
     const history = normalizedItem.user_watch_history;
     if (!history) return null;
-    return Array.isArray(history) ? history[0] : history;
+    if (Array.isArray(history)) {
+      return [...history].sort((a, b) =>
+        new Date(b.watched_at || 0).getTime() - new Date(a.watched_at || 0).getTime()
+      )[0];
+    }
+    return history;
   }, [normalizedItem.user_watch_history]);
 
   const effectiveShowProgress = showProgress || (watchHistory && watchHistory.watch_percentage > 0 && watchHistory.watch_percentage < 100);
@@ -149,34 +162,27 @@ const ContentCard = ({
   }, [onOpen, onItemClick, actualItem, isLoggedIn, setShowLoginModal]);
 
 
-  const handleAddtoPlaylist = useCallback(async (id) => {
+  const handleAddtoPlaylist = useCallback(async (playlistId: string) => {
     try {
-      const { error } = await supabase.from('playlist_items').insert([
-        {
-          id: crypto.randomUUID(),
-          playlist_id: id,
-          position: 0,
-          content_id: actualItem.id
-        }
-      ]);
+      await addPlaylistItem([{
+        id: crypto.randomUUID(),
+        playlist_id: playlistId,
+        position: 0,
+        content_id: actualItem.id
+      }]).unwrap();
 
-      if (!error) {
-        toast.success("Movie Succesfully added to playlist!");
-      }
-      else {
-        throw (error)
-      }
-
-
+      toast.success("Movie successfully added to playlist!");
     }
-    catch (error) {
-      // const errorMessage = error.message;
+    catch (error: any) {
       console.log("Error adding to playlist:", error);
-      if (error.message.includes('duplicate key value violates unique constraint')) {
+      if (error?.data?.message?.includes('duplicate key value violates unique constraint') ||
+        error?.message?.includes('duplicate key value')) {
         toast.error("This Movie is already in the selected playlist.");
+      } else {
+        toast.error("Failed to add to playlist.");
       }
     }
-  }, [actualItem]);
+  }, [actualItem, addPlaylistItem]);
 
   const handleModalPlayClick = useCallback(() => {
     if (!contentItem?.video_url) return;
@@ -208,28 +214,23 @@ const ContentCard = ({
   }, [contentItem, onPlayFullscreen, actualItem, dispatch]);
 
 
-  const handleSubmitPlaylist = async (e) => {
-    console.log('Submitting playlist form', playlistForm);
+  const handleSubmitPlaylist = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const payload = {
-      id: crypto.randomUUID(),
-      title: playlistForm.title,
-      created_by: user?.id
-    }
+    try {
+      const payload = {
+        title: playlistForm.title,
+        created_by: user?.id
+      };
 
-    console.log('Playlist payload:', user);
-    const { data, error } = await supabase.from('playlists').insert([
-      payload
-    ]);
+      await createPlaylist(payload).unwrap();
 
-    if (error) {
-      console.error('Error creating playlist:', error);
-    }
-    else {
-      console.log('Playlist created:', data);
+      toast.success("Playlist created successfully!");
       setIsCreatePlaylistOpen(false);
       setPlaylistForm({ title: '' });
+    } catch (error) {
+      console.error('Error creating playlist:', error);
+      toast.error("Failed to create playlist.");
     }
   }
 
@@ -323,13 +324,17 @@ const ContentCard = ({
 
       <div
         className={`content-card group ${widthClass} border-2 border-transparent hover:scale-105 hover:border-white hover:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:scale-105 focus:border-white focus:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:outline-none rounded-lg transition-all duration-300 overflow-hidden relative ${className}
-          bg-gradient-to-t from-black/90 from-0% via-black/40 via-40% to-transparent to-90%
+          ${!hideGradient ? "bg-gradient-to-t from-black/90 from-0% via-black/40 via-40% to-transparent to-90%" : ""}
           ${!className.includes('aspect-') && !isMoreLikeThis ? "aspect-video" : ""}
         `}
         tabIndex={0}
         aria-label={`${normalizedItem.type === "series" ? "View series" : "View movie"} ${normalizedItem.title
           }`}
         onKeyDown={(e) => {
+          // Don't trigger card click if we're typing in an input or textarea
+          if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+            return;
+          }
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             handleCardClick();
@@ -369,9 +374,9 @@ const ContentCard = ({
                     </Button>
                   </DialogTrigger>
 
-                  <DialogContent className="max-w-md">
+                  <DialogContent className="max-w-md bg-[#120222] border-white/10 text-white backdrop-blur-xl" onPointerDownCapture={(e) => e.stopPropagation()} onKeyDownCapture={(e) => e.stopPropagation()}>
                     <DialogHeader>
-                      <DialogTitle>Create New Playlist</DialogTitle>
+                      <DialogTitle className="text-white">Create New Playlist</DialogTitle>
                     </DialogHeader>
                     <form className="grid gap-4 py-4" onSubmit={handleSubmitPlaylist}>
                       <div className="grid gap-2">
@@ -384,9 +389,10 @@ const ContentCard = ({
                           name="title"
                           value={playlistForm.title}
                           onChange={handleChange}
-                          className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-md focus:outline-none focus:ring-1 focus:ring-brand-500 text-white"
+                          className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-md focus:outline-none focus:ring-1 focus:ring-brand-500 text-white placeholder:text-gray-500"
                           placeholder="My Awesome Playlist"
                           required
+                          onKeyDown={(e) => e.stopPropagation()}
                         />
                       </div>
                       <Button type="submit" className="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold">
@@ -400,7 +406,7 @@ const ContentCard = ({
 
                 <span className="text-[10px] font-bold text-gray-400 uppercase px-2 tracking-wider">Add to Playlist</span>
                 <div className="flex flex-col gap-1 max-h-[160px] overflow-y-auto custom-scrollbar">
-                  {playlists?.map((playlist) => (
+                  {displayPlaylists?.map((playlist) => (
                     <div
                       key={playlist.id}
                       className="flex items-center justify-between p-2 hover:bg-white/10 rounded-md transition-colors group/pl"
@@ -416,7 +422,7 @@ const ContentCard = ({
                       </Button>
                     </div>
                   ))}
-                  {(!playlists || playlists.length === 0) && (
+                  {(!displayPlaylists || displayPlaylists.length === 0) && (
                     <div className="text-sm text-gray-500 p-2 italic">No playlists found</div>
                   )}
                 </div>
@@ -447,13 +453,15 @@ const ContentCard = ({
               </div>
             )}
 
-            <div className="absolute inset-0 z-0 rounded-lg pointer-events-none">
-              <div className={`absolute bottom-[-1px] left-0 right-0 h-1/2 ${gradientClasses.base}`} />
-              <div
-                className={`absolute bottom-[-1px] left-0 right-0 h-1/2 ${gradientClasses.hover
-                  } opacity-0 group-hover:opacity-50 transition-opacity duration-300`}
-              />
-            </div>
+            {!hideGradient && (
+              <div className="absolute inset-0 z-0 rounded-lg pointer-events-none">
+                <div className={`absolute bottom-[-1px] left-0 right-0 h-1/2 ${gradientClasses.base}`} />
+                <div
+                  className={`absolute bottom-[-1px] left-0 right-0 h-1/2 ${gradientClasses.hover
+                    } opacity-0 group-hover:opacity-50 transition-opacity duration-300`}
+                />
+              </div>
+            )}
 
             <div className="absolute bottom-0 left-0 z-10 p-3 pt-6 pointer-events-none">
               <h3 className="font-medium text-white text-md line-clamp-2 transform transition-transform duration-300 origin-left group-hover:scale-[1.1]">

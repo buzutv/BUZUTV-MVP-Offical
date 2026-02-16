@@ -48,7 +48,10 @@ const SearchBar = ({
     if (setActualVideoUrl) setActualVideoUrl(result.video_url);
     if (onResultSelect) onResultSelect(result.video_url);
     dispatch(openScreenPlayer({
-      selectedVideo: result
+      selectedVideo: result,
+      contentId: result.id,
+      isSeries: result.type === 'series',
+      isOpen: true
     }))
     setIsFocused(false);
     setQuery("");

@@ -130,7 +130,7 @@ const Kids = () => {
             }}
           ></div>
           <div className="relative flex items-center justify-center min-h-screen">
-            <div className="text-2xlold text-white">
+            <div className="text-2xl text-white">
               Loading Kids Content
               <Spinner />
             </div>
@@ -167,7 +167,7 @@ const Kids = () => {
           <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#3B82F6 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
         </div>
         {/* Navigation is now global, do not render Navbar here */}
-        <div className="pt-16">
+        <div className="pt-16 relative z-20">
           {/* Main Layout */}
           {enhancedKidsContent.all.length > 0 ? (
             <>
@@ -185,8 +185,13 @@ const Kids = () => {
                   <div className="px-4 pl-6 md:px-0 md:pl-0">
                     <div className="flex items-center gap-3 mb-6">
                       <div className="w-2 h-8 bg-gradient-to-b from-pink-400 to-purple-500 rounded-full shadow-lg shadow-pink-500/30" />
-                      <h2 className="text-2xl font-black text-slate-800 tracking-tight font-serif italic">
-                        Top <span className="text-transparent bg-clip-text bg-[linear-gradient(to_right,#ef4444,#facc15,#22c55e)]">Kids</span> Shows
+                      <h2 className="text-2xl font-black text-black tracking-tight font-serif italic">
+                        Top <span className="inline-flex gap-0.5">
+                          <span className="text-red-500">K</span>
+                          <span className="text-yellow-400">I</span>
+                          <span className="text-green-500">D</span>
+                          <span className="text-yellow-400">S</span>
+                        </span> Shows
                       </h2>
                     </div>
                     <div
@@ -206,10 +211,9 @@ const Kids = () => {
                             {/* Poster Image with Overlaid Number */}
                             <div className="relative w-[30%] h-full flex-shrink-0 mr-4">
                               <div className="absolute -left-1 bottom-0 z-20 pointer-events-none ">
-                                <span className="relative bottom-2 -left-4 text-2xl md:text-3xl font-bold italic p-2 select-none
-  bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500
-  bg-clip-text text-transparent
-  drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)]">
+                                <span className="relative bottom-2 -left-4 text-3xl md:text-4xl font-black italic p-2 select-none
+  text-purple-600
+  drop-shadow-[0_2px_4px_rgba(255,255,255,0.8)]">
                                   {index + 1}
                                 </span>
                               </div>
@@ -268,6 +272,7 @@ const Kids = () => {
                         title="Continue Watching"
                         items={kidsContent.continueWatching}
                         onCardClick={handleContentRowCardClick}
+                        titleClassName="text-black border-l-4 border-pink-500 pl-3"
                       />
                     )}
 
@@ -286,6 +291,7 @@ const Kids = () => {
                         title="New Kids Content"
                         items={enhancedKidsContent.new}
                         onCardClick={handleContentRowCardClick}
+                        titleClassName="text-black border-l-4 border-pink-500 pl-3"
                       />
                     )}
 
@@ -304,6 +310,7 @@ const Kids = () => {
                         title="Recommended"
                         items={enhancedKidsContent.recommended}
                         onCardClick={handleContentRowCardClick}
+                        titleClassName="text-black border-l-4 border-pink-500 pl-3"
                       />
                     )}
 
@@ -318,6 +325,7 @@ const Kids = () => {
                             title="TV Shows"
                             items={kidsShows.slice(0, 8)}
                             onCardClick={handleContentRowCardClick}
+                            titleClassName="text-black border-l-4 border-pink-500 pl-3"
                           />
                         )
                       );
@@ -334,6 +342,7 @@ const Kids = () => {
                             title="Movies"
                             items={kidsMovies.slice(0, 8)}
                             onCardClick={handleContentRowCardClick}
+                            titleClassName="text-black border-l-4 border-pink-500 pl-3"
                           />
                         )
                       );
@@ -351,6 +360,7 @@ const Kids = () => {
                             title="Educational"
                             items={educationalContent}
                             onCardClick={handleContentRowCardClick}
+                            titleClassName="text-black border-l-4 border-pink-500 pl-3"
                           />
                         )
                       );
@@ -368,6 +378,7 @@ const Kids = () => {
                           title={genre}
                           items={genreItems.slice(0, 8)}
                           onCardClick={handleContentRowCardClick}
+                          titleClassName="text-black border-l-4 border-pink-500 pl-3"
                         />
                       );
                     })}
@@ -384,9 +395,55 @@ const Kids = () => {
                         variant="kids"
                       />
                     </div>
+
                     {filteredKidsContent.length > 0 && (
                       <>
-                        {/* New content row - Sort filtered kids content by date */}
+                        {/* Continue Watching for specific genre */}
+                        {(() => {
+                          const genreCW = kidsContent.continueWatching?.filter(
+                            (item) => item.genre?.toLowerCase() === activeGenre.toLowerCase()
+                          );
+                          return genreCW && genreCW.length > 0 && (
+                            <ContentRow
+                              key={`cw-kids-${activeGenre}`}
+                              title={`Resume ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Adventures`}
+                              items={genreCW}
+                              onCardClick={handleContentRowCardClick}
+                              titleClassName="text-black border-l-4 border-pink-500 pl-3"
+                            />
+                          );
+                        })()}
+
+                        {/* Recommended row */}
+                        <ContentRow
+                          key={`recommended-kids-content-${activeGenre}`}
+                          title={
+                            activeGenre === "all"
+                              ? "Recommended For You"
+                              : `Top ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Picks`
+                          }
+                          items={filteredKidsContent.slice(0, 10)}
+                          onCardClick={handleContentRowCardClick}
+                          titleClassName="text-black border-l-4 border-pink-500 pl-3"
+                        />
+
+                        {/* Educational for specific genre */}
+                        {(() => {
+                          const genreEdu = filteredKidsContent.filter(
+                            (item) => item.genre?.toLowerCase().includes("educational")
+                          );
+                          return genreEdu.length > 0 && (
+                            <ContentRow
+                              key={`edu-kids-${activeGenre}`}
+                              title={`Learn with ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)}`}
+                              items={genreEdu}
+                              onCardClick={handleContentRowCardClick}
+                              titleClassName="text-black border-l-4 border-pink-500 pl-3"
+                            />
+                          );
+                        })()}
+
+                        {/* New content row */}
                         {(() => {
                           const newKidsContentFiltered = filteredKidsContent
                             .filter((item) => item.created_at)
@@ -401,38 +458,23 @@ const Kids = () => {
                             newKidsContentFiltered.length > 0 && (
                               <ContentRow
                                 key={`new-kids-content-${activeGenre}`}
-                                title={
-                                  activeGenre === "all"
-                                    ? "New Kids Content"
-                                    : `New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Kids Content`
-                                }
+                                title={`New ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Content`}
                                 items={newKidsContentFiltered}
                                 onCardClick={handleContentRowCardClick}
+                                titleClassName="text-black border-l-4 border-pink-500 pl-3"
                               />
                             )
                           );
                         })()}
-
-                        {/* Recommended row */}
-                        <ContentRow
-                          key={`recommended-kids-content-${activeGenre}`}
-                          title={
-                            activeGenre === "all"
-                              ? "Recommended"
-                              : `Recommended ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Kids Content`
-                          }
-                          items={filteredKidsContent.slice(2, 10)}
-                          onCardClick={handleContentRowCardClick}
-                        />
                       </>
                     )}
 
                     {/* Grid Layout for all filtered kids content */}
                     <div className="sm:mt-0 md:mt-8 pb-4 pl-4">
-                      <h2 className="text-2xl font-black mb-6 text-slate-800 tracking-tight">
+                      <h2 className="text-2xl font-black mb-6 text-black tracking-tight border-l-4 border-pink-500 pl-3">
                         {activeGenre === "all"
                           ? "Explore All Magical Stories"
-                          : `The Best ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Adventures`}
+                          : `All ${activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)} Adventures`}
                       </h2>
 
                       {filteredKidsContent.length > 0 ? (
@@ -458,7 +500,7 @@ const Kids = () => {
             </>
           ) : (
             <div className="text-center py-16">
-              <h2 className="text-2xlold mb-4 text-blue-800">
+              <h2 className="text-2xl mb-4 text-blue-800">
                 No Kids Content Available
               </h2>
               <div className="text-6xl mb-4">🎈</div>

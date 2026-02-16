@@ -48,7 +48,7 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
 
     const searchResults = useMemo(() => {
         if (!searchQuery.trim())
-            return { channels: [], movies: [], series: [], kids: [] };
+            return { channels: [], content: [] };
 
         const query = searchQuery.toLowerCase().trim();
 
@@ -69,19 +69,9 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
             return titleMatch || genreMatch || channelMatch;
         });
 
-        const movies = contentResults.filter((item) => item.type === "movie");
-        const series = contentResults.filter((item) => item.type === "series");
-
-        // Assuming kids content is a type or a flag, adapting based on usage
-        // If 'kids' is not a dedicated type string in your DB, this might need adjustment.
-        // Based on previous code, it seemed to filter by type="kids" or is_kids=true
-        const kids = contentResults.filter((item) => item.type === "kids" || (item.is_kids && item.type === "movie"));
-
         return {
             channels: channelResults,
-            movies,
-            series,
-            kids,
+            content: contentResults,
         };
     }, [searchQuery, content, channels]);
 
@@ -102,9 +92,7 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
                 genre: "", // Fix for 'genre does not exist' if it's used
                 contentCount: 0,
             })),
-            movies: searchResults.movies.map(formatContentItem),
-            series: searchResults.series.map(formatContentItem),
-            kids: searchResults.kids.map(formatContentItem),
+            content: searchResults.content.map(formatContentItem),
         };
     }, [searchResults]);
 
@@ -136,9 +124,7 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
 
     const hasResults =
         formattedResults.channels.length > 0 ||
-        formattedResults.movies.length > 0 ||
-        formattedResults.series.length > 0 ||
-        formattedResults.kids.length > 0;
+        formattedResults.content.length > 0;
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -204,7 +190,7 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
                                             <h2>Channels</h2>
                                         </div>
                                         <div className="relative group/channels">
-                                            <div className="flex overflow-x-auto pb-4 gap-4 scrollbar-hide snap-x"
+                                            <div className="flex overflow-x-auto pb-4 gap-3 scrollbar-hide snap-x"
                                                 style={{
                                                     display: 'grid',
                                                     gridAutoFlow: 'column',
@@ -232,45 +218,23 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
                                     </div>
                                 )}
 
-                                {/* Movies */}
-                                {formattedResults.movies.length > 0 && (
+                                {/* Combined Content */}
+                                {formattedResults.content.length > 0 && (
                                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-100">
                                         <div className="flex items-center gap-2 text-xl font-bold text-white mb-4">
                                             <Film className="w-5 h-5 text-brand-500" />
-                                            <h2>Movies</h2>
+                                            <h2>Content</h2>
                                         </div>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                                            {formattedResults.movies.map((movie) => (
-                                                <div key={movie.id} className="group hover:scale-105 transition-transform duration-200">
+                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                                            {formattedResults.content.map((item) => (
+                                                <div key={item.id} className="group hover:scale-105 transition-transform duration-200">
                                                     <ContentCard
-                                                        item={movie}
-                                                        variant="movie"
+                                                        item={item}
+                                                        variant={item.type || "movie"}
                                                         autoDetectKids={true}
                                                         className="w-full aspect-video"
                                                         onItemClick={(item) => handleContentClick(item)}
-                                                    />
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Series */}
-                                {formattedResults.series.length > 0 && (
-                                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
-                                        <div className="flex items-center gap-2 text-xl font-bold text-white mb-4">
-                                            <Tv className="w-5 h-5 text-brand-500" />
-                                            <h2>TV Shows</h2>
-                                        </div>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                                            {formattedResults.series.map((series) => (
-                                                <div key={series.id} className="group hover:scale-105 transition-transform duration-200">
-                                                    <ContentCard
-                                                        item={series}
-                                                        variant="series"
-                                                        autoDetectKids={true}
-                                                        className="w-full aspect-video"
-                                                        onItemClick={(item) => handleContentClick(item)}
+                                                        hideGradient={true}
                                                     />
                                                 </div>
                                             ))}

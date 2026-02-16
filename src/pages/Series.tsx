@@ -23,7 +23,7 @@ import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Series = () => {
-  const { seriesContent, isLoading, content } = useAppContent();
+  const { seriesContent, isLoading, content, continueWatching } = useAppContent();
   const [selectedSeries, setSelectedSeries] = useState(null);
 
   const [activeGenre, setActiveGenre] = useState("all");
@@ -109,43 +109,7 @@ const Series = () => {
     );
   }
 
-  const SeriesRow = ({
-    title,
-    series,
-  }: {
-    title: string;
-    series: typeof seriesContent.all;
-  }) => (
-    <section className="mb-8 px-4">
-      <h2 className="text-2xl mb-4">{title}</h2>
-      <Carousel
-        opts={{
-          align: "start",
-          skipSnaps: false,
-        }}
-        className="w-full"
-      >
-        <CarouselContent className="-ml-1">
-          <div className="flex py-2">
-            {series.map((show) => (
-              <CarouselItem key={show.id} className="pl-1 basis-auto">
-                <div className="w-64">
-                  <ContentCard
-                    item={show}
-                    variant="series"
-                    autoDetectKids={true}
-                    width="w-64"
-                  />
-                </div>
-              </CarouselItem>
-            ))}
-          </div>
-        </CarouselContent>
-        <CarouselPrevious />
-        <CarouselNext />
-      </Carousel>
-    </section>
-  );
+
 
   return (
     <ProtectedRoute>
@@ -209,10 +173,9 @@ const Series = () => {
                             {/* Poster Image with Overlaid Number */}
                             <div className="relative w-[30%] h-full flex-shrink-0 mr-4">
                               <div className="absolute -left-1 bottom-0 z-20 pointer-events-none ">
-                                <span className="relative bottom-2 -left-4 text-2xl md:text-3xl font-bold italic p-2 select-none
-  bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500
-  bg-clip-text text-transparent
-  drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)]">
+                                <span className="relative bottom-2 -left-3 text-2xl md:text-3xl font-bold italic p-2 select-none
+                                  text-purple-600
+                                  drop-shadow-[0_4px_8px_rgba(255,255,255,0.4)]">
                                   {index + 1}
                                 </span>
                               </div>
@@ -242,35 +205,19 @@ const Series = () => {
                           </div>
                         ))}
                     </div>
-                    {selectedSeries && (
-                      <ContentModal
-                        isOpen={!!selectedSeries}
-                        onClose={(open) => !open && setSelectedSeries(null)}
-                        item={selectedSeries}
-                        variant="series"
-                        autoDetectKids={true}
-                        onPlayEpisode={() => { }} // Reverts to modal on player close
-                        videoUrl={rawContent.find((i) => i.id === selectedSeries.id)?.video_url}
-                        movieId={selectedSeries.id}
-                        contentItem={rawContent.find((i) => i.id === selectedSeries.id) as any}
-                        channel={channels.find((ch) => ch.id === selectedSeries.channelId) as any}
-                      />
-                    )}
+
                   </div>
                 </div>
               </div>
 
-              {/* Content Sections */}
-              <div className="max-w-full sm:pr-6 sm:pl-4 pr-6 md:pl-6">
-                {/* Global Continue Watching for Series Page */}
-                {isLoggedIn && seriesContent.continueWatching?.length > 0 && (
-                  <div className="mb-4">
-                    <ContentRow
-                      title="Continue Watching"
-                      items={seriesContent.continueWatching}
-                      onCardClick={handleContentRowCardClick}
-                    />
-                  </div>
+              {/* --- Content Rows --- */}
+              <div className="max-w-full relative pr-6 pl-0 md:pr-8 md:pl-6">
+                {seriesContent.continueWatching?.length > 0 && (
+                  <ContentRow
+                    title="Continue Watching"
+                    items={seriesContent.continueWatching}
+                    onCardClick={handleContentRowCardClick}
+                  />
                 )}
 
                 {activeGenre === "all" ? (
@@ -426,6 +373,22 @@ const Series = () => {
             </div>
           )}
         </div>
+
+        {/* --- Modal --- */}
+        {selectedSeries && (
+          <ContentModal
+            isOpen={!!selectedSeries}
+            onClose={() => setSelectedSeries(null)}
+            item={selectedSeries}
+            variant="series"
+            autoDetectKids={true}
+            onPlayEpisode={() => { }}
+            movieId={selectedSeries.id}
+            videoUrl={rawContent.find((i) => i.id === selectedSeries.id)?.video_url}
+            contentItem={rawContent.find((i) => i.id === selectedSeries.id) as any}
+            channel={channels.find((ch) => ch.id === selectedSeries.channelId) as any}
+          />
+        )}
       </div>
     </ProtectedRoute >
   );

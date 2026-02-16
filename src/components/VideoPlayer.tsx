@@ -200,9 +200,11 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
 
         await upsertWatchHistory({
           userId: userid,
-          movieId: episodeIdRef.current ? undefined : movieIdRef.current,
+          movieId: movieIdRef.current,
           episodeId: episodeIdRef.current || undefined,
           data: {
+            movie_id: movieIdRef.current,
+            episode_id: episodeIdRef.current || null,
             watched_at: new Date().toISOString(),
             last_position: isComp ? 0 : Math.floor(current),
             watch_percentage: watchPercentage,
@@ -578,6 +580,8 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
         setVideoEnded(false);
         clearCountdownTimer();
         isCountdownStartedRef.current = false;
+        // Save initial progress to ensure it appears in Continue Watching immediately
+        await handleSaveProgress(false);
       }
 
       if (state === window.YT.PlayerState.ENDED) {

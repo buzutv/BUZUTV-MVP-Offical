@@ -115,15 +115,15 @@ const PlayList = () => {
 
             {/* DELETE DIALOG */}
             <Dialog open={isDeleteDialogOpen} onOpenChange={() => setPlaylistToDelete(null)}>
-                <DialogContent className="sm:max-w-[425px] bg-white text-black">
+                <DialogContent className="sm:max-w-[425px] bg-[#120222] border-white/10 text-white backdrop-blur-xl" onPointerDownCapture={(e) => e.stopPropagation()} onKeyDownCapture={(e) => e.stopPropagation()}>
                     <DialogHeader>
-                        <DialogTitle className="text-xl text-red-600 flex items-center gap-2">
+                        <DialogTitle className="text-xl text-red-500 flex items-center gap-2">
                             <Trash2 className="w-5 h-5" />
                             Confirm Deletion
                         </DialogTitle>
-                        <DialogDescription>
+                        <DialogDescription className="text-gray-300">
                             Delete playlist:
-                            <span className="font-bold"> "{playlistToDelete?.title}"</span>?
+                            <span className="font-bold text-white"> "{playlistToDelete?.title}"</span>?
                             This action is permanent.
                         </DialogDescription>
                     </DialogHeader>
@@ -131,7 +131,7 @@ const PlayList = () => {
                         <Button
                             variant="outline"
                             onClick={() => setPlaylistToDelete(null)}
-                            className="text-gray-600 border-gray-300 hover:bg-gray-100"
+                            className="bg-white/5 border-white/10 hover:bg-white/10 text-white"
                         >
                             Cancel
                         </Button>
@@ -166,11 +166,7 @@ const PlayList = () => {
                             </Button>
                         </DialogTrigger>
 
-                        <DialogContent className="max-w-md  text-black"
-                            style={{
-                                background: `linear-gradient(200deg, #311066 0%, #1D0833 20%, #120222 45%, black 100%)`,
-                            }}
-                        >
+                        <DialogContent className="max-w-md bg-[#120222] border-white/10 text-white backdrop-blur-xl" onPointerDownCapture={(e) => e.stopPropagation()} onKeyDownCapture={(e) => e.stopPropagation()}>
                             <DialogHeader>
                                 <DialogTitle className="text-xl text-white">Create New Playlist</DialogTitle>
                             </DialogHeader>
@@ -185,9 +181,10 @@ const PlayList = () => {
                                         name="title"
                                         value={playlistForm.title}
                                         onChange={handleChange}
-                                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
+                                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-brand-500 placeholder:text-gray-500"
                                         placeholder="My Awesome Playlist"
                                         required
+                                        onKeyDown={(e) => e.stopPropagation()}
                                     />
                                 </div>
 

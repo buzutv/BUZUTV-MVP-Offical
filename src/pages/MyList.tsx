@@ -9,13 +9,23 @@ import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useUserChannelFavorites } from "@/hooks/useUserChannelFavorites";
 import { useAppContent } from "@/hooks/useAppContent";
 import { Spinner } from "@/components/ui/spinner";
-import { useGetPlaylistsWithItemsQuery, useLazyGetPlaylistsWithItemsByIdQuery } from "@/store/playlistSlice";
+import { useGetPlaylistsWithItemsQuery, useLazyGetPlaylistsWithItemsByIdQuery, useDeletePlaylistMutation } from "@/store/playlistSlice";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDispatch } from "react-redux";
 import { setPlaylistInfo } from "@/store/screenPlayerSlice";
 import { useNavigate } from "react-router-dom";
 import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
-import { List } from "lucide-react";
+import { List, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 const MyList = React.memo(() => {
   const [selectedChannel, setSelectedChannel] = useState<any>(null);
@@ -34,7 +44,9 @@ const MyList = React.memo(() => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [triggerPlaylists] = useLazyGetPlaylistsWithItemsByIdQuery();
-  const { data: playlists = [], isLoading: playlistsLoading } = useGetPlaylistsWithItemsQuery(user?.id);
+  const { data: playlists = [], isLoading: playlistsLoading, refetch: refetchPlaylists } = useGetPlaylistsWithItemsQuery(user?.id);
+  const [deletePlaylist] = useDeletePlaylistMutation();
+  const [playlistToDelete, setPlaylistToDelete] = useState<{ id: string, title: string } | null>(null);
 
   const savedContent = useMemo(() => {
     const filterStart = performance.now();
@@ -83,6 +95,25 @@ const MyList = React.memo(() => {
       }));
     } catch (error) {
       console.error("Error fetching playlist detail:", error);
+    }
+  };
+
+  const handleDeletePlaylist = async (e: React.MouseEvent, playlistId: string, title: string) => {
+    e.stopPropagation();
+    setPlaylistToDelete({ id: playlistId, title });
+  };
+
+  const confirmDeletePlaylist = async () => {
+    if (!playlistToDelete) return;
+
+    try {
+      await deletePlaylist(playlistToDelete.id).unwrap();
+      toast.success("Playlist deleted successfully");
+      refetchPlaylists();
+      setPlaylistToDelete(null);
+    } catch (error) {
+      console.error("Error deleting playlist:", error);
+      toast.error("Failed to delete playlist");
     }
   };
 
@@ -144,6 +175,38 @@ const MyList = React.memo(() => {
           channel={selectedChannel}
         />
 
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={!!playlistToDelete} onOpenChange={() => setPlaylistToDelete(null)}>
+          <DialogContent className="sm:max-w-[425px] bg-[#120222] border-white/10 text-white backdrop-blur-xl">
+            <DialogHeader>
+              <DialogTitle className="text-xl text-red-500 flex items-center gap-2">
+                <Trash2 className="w-5 h-5" />
+                Confirm Deletion
+              </DialogTitle>
+              <DialogDescription className="text-gray-300">
+                Are you sure you want to delete the playlist
+                <span className="font-bold text-white"> "{playlistToDelete?.title}"</span>?
+                This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                variant="outline"
+                onClick={() => setPlaylistToDelete(null)}
+                className="bg-white/5 border-white/10 hover:bg-white/10 text-white"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={confirmDeletePlaylist}
+                className="bg-red-600 hover:bg-red-700 text-white border-none"
+              >
+                Delete Permanently
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         <div className="pt-16">
           <div className="pr-6 pl-0 md:pr-8 md:pl-6 py-8">
             <div className="max-w-full pr-3">
@@ -159,7 +222,7 @@ const MyList = React.memo(() => {
               {playlists.length > 0 && (
                 <section className="mb-10">
                   <h2 className="text-2xl mb-4 px-4 flex items-center gap-2">
-                    <List className="w-6 h-6 text-brand-400" />
+                    <List className="w-6 h-6 text-brand-200" />
                     My Playlists
                   </h2>
                   <div className="flex space-x-6 overflow-x-auto scrollbar-hide px-4 py-2">
@@ -170,29 +233,57 @@ const MyList = React.memo(() => {
                       return (
                         <div
                           key={playlist.id}
-                          className="flex-shrink-0 w-40 group cursor-pointer"
+                          className="flex-shrink-0 w-64 group cursor-pointer perspective-1000"
                           onClick={() => handlePlaylistClick(playlist.id)}
                         >
-                          <div className="relative aspect-[2/3] w-full mb-2 rounded-lg overflow-hidden border border-white/10 group-hover:border-brand-500/50 transition-all duration-300 shadow-lg group-hover:shadow-brand-500/20 group-hover:-translate-y-1">
-                            {firstItemPoster ? (
-                              <img
-                                src={getOptimizedImageUrl(firstItemPoster, 200)}
-                                alt={playlist.title}
-                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-white/5 flex items-center justify-center">
-                                <List className="w-8 h-8 text-white/20" />
+                          <div className="relative aspect-[32/9] w-full mb-3 rounded-xl transition-all duration-500 transform-gpu group-hover:-translate-y-2">
+                            {/* Stacked Card Background Decoration */}
+                            <div className="absolute inset-0 bg-brand-500/10 rounded-xl transform translate-x-1 translate-y-1 -z-10 transition-transform duration-500 group-hover:translate-x-2 group-hover:translate-y-2" />
+
+                            {/* Main Card */}
+                            <div className="relative h-full w-full rounded-xl overflow-hidden border border-white/10 bg-white/5 backdrop-blur-md shadow-xl transition-all duration-500 group-hover:border-brand-400/50 group-hover:shadow-brand-500/30">
+                              {firstItemPoster ? (
+                                <img
+                                  src={getOptimizedImageUrl(firstItemPoster, 400)}
+                                  alt={playlist.title}
+                                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-60"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-900/40 to-black/40">
+                                  <List className="w-6 h-6 text-brand-400/40 mr-2" />
+                                  <span className="text-[10px] uppercase tracking-widest text-brand-400/60 font-bold">Empty Playlist</span>
+                                </div>
+                              )}
+
+                              {/* Overlay Gradient */}
+                              <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent opacity-80" />
+
+                              {/* Content Info */}
+                              <div className="absolute inset-0 flex items-center justify-between px-4">
+                                <div className="flex-1 min-w-0 pr-8">
+                                  <h3 className="text-sm font-bold text-white mb-0.5 line-clamp-1 group-hover:text-brand-300 transition-colors">
+                                    {playlist.title}
+                                  </h3>
+                                  <div className="flex items-center gap-2">
+                                    <div className="h-0.5 w-4 bg-brand-500 rounded-full" />
+                                    <span className="text-[9px] text-gray-400 font-medium uppercase tracking-wider">{items.length} items</span>
+                                  </div>
+                                </div>
+                                <div className="bg-brand-500/90 backdrop-blur-sm p-1.5 rounded-lg shadow-lg flex-shrink-0">
+                                  <List className="w-3.5 h-3.5 text-white" />
+                                </div>
                               </div>
-                            )}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
-                            <div className="absolute bottom-1 right-1 bg-brand-600/90 text-[10px] px-1.5 py-0.5 rounded font-bold">
-                              {items.length}
+
+                              {/* Delete Button */}
+                              <button
+                                onClick={(e) => handleDeletePlaylist(e, playlist.id, playlist.title)}
+                                className="absolute top-1/2 -translate-y-1/2 right-2 p-1.5 bg-black/40 hover:bg-red-500 text-white rounded-lg backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-1 group-hover:translate-x-0 z-30 border border-white/10"
+                                title="Delete Playlist"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
                             </div>
                           </div>
-                          <p className="text-xs font-medium text-white/90 line-clamp-1 group-hover:text-brand-400 transition-colors text-center">
-                            {playlist.title}
-                          </p>
                         </div>
                       );
                     })}

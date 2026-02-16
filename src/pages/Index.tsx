@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import ChannelModal from "@/components/ChannelModal";
 import FullViewportHero from "@/components/FullViewportHero";
 import FilterBar from "@/components/FilterBar";
@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import ContentRow from "@/components/ContentRow";
 import { featuredContentIds } from "@/data/featuredContentIds";
 import { Spinner } from "@/components/ui/spinner"
+import { supabase } from "@/integrations/supabase/client";
 interface Channel {
   id: string;
   name: string;
@@ -53,6 +54,14 @@ const Index = React.memo(() => {
     return ["All", ...contentGenres.sort()];
   }, [content.allContent]);
 
+
+  useEffect(() => {
+    async function fetchallusers() {
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log("User", user);
+    }
+    fetchallusers();
+  }, [])
   const { subscriptionIds, toggleSubscription } = useUserSubscriptions();
   const { isLoggedIn, setShowLoginModal } = useAuth();
 

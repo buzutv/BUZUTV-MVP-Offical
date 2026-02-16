@@ -97,6 +97,7 @@ const FullscreenPlayer = ({
   const [triggerGetSearchContentWithWatchHistory, resultGetSearchContentWithWatchHistory] = useLazyGetSearchContentWithWatchHistoryQuery()
   console.log("Selected Content from Redux in FullscreenPlayer:", movieId);
   const [localProgress, setLocalProgress] = useState<Record<string, { watch_percentage: number, last_position: number }>>({});
+  const currentSeriesId = isSeries ? (selectedContent?.series_id || selectedContent?.id || seriesContentId || movieId) : null;
 
   const handleProgressUpdate = (data: { id: string, watch_percentage: number, last_position: number }) => {
     setLocalProgress(prev => ({
@@ -580,8 +581,8 @@ const FullscreenPlayer = ({
                         setFinal={setFinal}
                         setActualVideoUrl={setActualVideoUrl}
                         playlistItems={playlists}
-                        movieId={selectedContent?.id || movieId}
-                        episodeId={seasons?.length > 0 ? (selectedContent?.id || movieId) : undefined}
+                        movieId={isSeries ? (seriesContentId || movieId) : (selectedContent?.id || movieId)}
+                        episodeId={isSeries ? (selectedContent?.id || movieId) : undefined}
                         userid={user?.id}
                         playlistInfo={playlistInfo}
                         ref={parentRef}
@@ -600,8 +601,8 @@ const FullscreenPlayer = ({
                         setFinal={setFinal}
                         setActualVideoUrl={setActualVideoUrl}
                         playlistItems={playlists}
-                        movieId={selectedContent?.id || movieId}
-                        episodeId={seasons?.length > 0 ? (selectedContent?.id || movieId) : undefined}
+                        movieId={isSeries ? (seriesContentId || movieId) : (selectedContent?.id || movieId)}
+                        episodeId={isSeries ? (selectedContent?.id || movieId) : undefined}
                         userid={user?.id}
                         playlistInfo={playlistInfo}
                         ref={parentRef}

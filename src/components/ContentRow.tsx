@@ -12,6 +12,7 @@ interface ContentRowProps {
   isMoreLikeThis?: boolean;
   onOpenRelatedSeries?: (series: any) => void;
   onOpenRelatedMovie?: (movie: any) => void;
+  titleClassName?: string;
 }
 
 const ContentRow = React.memo(
@@ -23,6 +24,7 @@ const ContentRow = React.memo(
     isMoreLikeThis = false,
     onOpenRelatedSeries,
     onOpenRelatedMovie,
+    titleClassName,
   }: ContentRowProps) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -96,7 +98,7 @@ const ContentRow = React.memo(
 
       <section className="pb-6">
         <div className="px-4 mb-2">
-          <h2 className="text-2xl">{title}</h2>
+          <h2 className={`text-2xl font-bold ${titleClassName || "text-white"}`}>{title}</h2>
         </div>
 
         <div className="relative">

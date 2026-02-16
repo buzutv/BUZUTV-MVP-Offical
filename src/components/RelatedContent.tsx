@@ -27,7 +27,7 @@ const RelatedContent = ({
       dispatch(openScreenPlayer({
         selectedVideo: content,
         isSeries: true,
-        contentId: content,
+        contentId: content?.id,
         seriesData: data[0],
         // poster_url: content?.poster_url
       }))
