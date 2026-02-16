@@ -323,7 +323,7 @@ const ContentCard = ({
       )}
 
       <div
-        className={`content-card group ${widthClass} border-2 border-transparent hover:scale-105 hover:border-white hover:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:scale-105 focus:border-white focus:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:outline-none rounded-lg transition-all duration-300 overflow-hidden relative ${className}
+        className={`content-card group ${widthClass} border-2 border-transparent hover:scale-105 hover:border-white transition-transform duration-500 hover:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:scale-105 focus:border-white focus:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:outline-none rounded-lg transition-all duration-300 overflow-hidden relative ${className}
           ${!hideGradient ? "bg-gradient-to-t from-black/90 from-0% via-black/40 via-40% to-transparent to-90%" : ""}
           ${!className.includes('aspect-') && !isMoreLikeThis ? "aspect-video" : ""}
         `}
