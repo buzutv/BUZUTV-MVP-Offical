@@ -205,7 +205,7 @@ const Navbar = React.memo(
                   onClick={(e) => handleNavClick(e, to)}
                 >
                   {label === "Kids" ? (
-                    <span className="inline-flex gap-0 font-black">
+                    <span className="inline-flex gap-0.5 font-black">
                       <span className="text-red-500">K</span>
                       <span className="text-yellow-400">I</span>
                       <span className="text-green-500">D</span>

@@ -33,6 +33,7 @@ import Navbar from "./components/Navbar";
 import FullscreenPlayer from "./components/FullscreenPlayer";
 import PlayList from "./pages/PlayList";
 import PlaylistDetail from "./pages/PlaylistDetail";
+import Privacy from "./pages/Privacy";
 
 const queryClient = new QueryClient();
 
@@ -114,6 +115,7 @@ const App = () => {
               <Route path="*" element={<NotFound />} />
               {/* <Route path="/test" element={<FullscreenPlayer isOpen={true} onClose={() => { }} videoUrl="https://youtu.be/6y9wgK-26Qg?si=yQ_FNCUzAQB6oiPq" title="Test Video" userId="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3" />} /> */}
               <Route path="/playlists" element={<PlayList />} />
+              <Route path="/privacy" element={<Privacy />} />
               <Route path="/playlists/:id" element={<PlaylistDetail />} />
               {/* <Route path="/newadmin" element={<AdminLogin />} /> */}
 

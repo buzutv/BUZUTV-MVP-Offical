@@ -6,13 +6,6 @@ import FilterBar from "@/components/FilterBar";
 import ContentRow from "@/components/ContentRow";
 import ContentGrid from "@/components/ContentGrid";
 import { useAppContent } from "@/hooks/useAppContent";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
 import ContentModal from "@/components/ContentModal";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useContent } from "@/hooks/useContent";

@@ -1,7 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
 import { genres } from "@/data/mockMovies";
+import { useAuth } from "@/contexts/AuthContext";
+import { useGetUserWatchHistoryQuery } from "@/store/userWatchHistorySlice";
+import { useLazyGetSeasonWithEpisodesQuery } from "@/store/seasonSlice";
 
 // Transform database content to match Movie interface
 const transformDatabaseContent = (dbContent: any[]) => {
@@ -46,8 +49,13 @@ const transformDatabaseChannels = (dbChannels: any[]) => {
 };
 
 export const useAppContent = () => {
+  const { user } = useAuth();
   const { content: dbContent, isLoading: dbContentLoading, refetch } = useContent();
   const { channels: dbChannels, isLoading: dbChannelsLoading } = useChannels();
+  const { data: allHistory } = useGetUserWatchHistoryQuery(user?.id ?? "", { skip: !user?.id });
+  const [triggerGetSeasons] = useLazyGetSeasonWithEpisodesQuery();
+  const [seriesDetails, setSeriesDetails] = useState<Record<string, any>>({});
+  const [fetchingIds, setFetchingIds] = useState<Set<string>>(new Set());
 
 
   const transformedContent = useMemo(() => {
@@ -118,19 +126,52 @@ export const useAppContent = () => {
     const kids = transformedContent.filter((item) => item.isKids === true);
 
     const filterContinueWatching = (items: any[]) =>
-      items.filter((item) => {
-        const historyArr = Array.isArray(item.user_watch_history)
-          ? [...item.user_watch_history].sort((a, b) =>
-            new Date(b.watched_at || 0).getTime() - new Date(a.watched_at || 0).getTime()
-          )
+      items.map(item => {
+        // Enrich item with comprehensive history array
+        let historyArr = Array.isArray(item.user_watch_history)
+          ? [...item.user_watch_history]
           : (item.user_watch_history ? [item.user_watch_history] : []);
 
+        if (allHistory) {
+          const matchingHistory = allHistory.filter(h => h.movie_id === item.id);
+          const combined = [...historyArr, ...matchingHistory];
+          historyArr = combined.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
+        }
+
+        return {
+          ...item,
+          user_watch_history: historyArr.sort((a, b) =>
+            new Date(b.watched_at || 0).getTime() - new Date(a.watched_at || 0).getTime()
+          )
+        };
+      }).filter((item) => {
+        const historyArr = item.user_watch_history;
         const latestHistory = historyArr[0];
         if (!latestHistory) return false;
 
-        // For series, show if ANY episode has a recorded last position > 0 or in-progress percentage
+        // For series, use detailed structure if available
         if (item.type === "series") {
-          return historyArr.some(h => (h.last_position || 0) > 0 || ((h.watch_percentage || 0) > 0 && (h.watch_percentage || 0) < 100));
+          console.log("Detailed Seasons", seriesDetails)
+          const detailedSeasons = seriesDetails[item.id];
+          console.log("Detailed Seasons", detailedSeasons)
+          if (detailedSeasons) {
+            const allEpisodes = detailedSeasons.flatMap((s: any) => s.episodes || []);
+
+            // Check if any episode is currently in-progress (last_position > 0)
+            const hasInProgress = allEpisodes.some((ep: any) => (ep.watch_percentage || 0) > 0);
+
+            // Also include if an episode was just finished and there's a next one to play
+            const lastCompletedIdx = allEpisodes.reduce(
+              (acc: number, ep: any, idx: number) => (ep.completed ? idx : acc),
+              -1
+            );
+            const hasNext = lastCompletedIdx !== -1 && lastCompletedIdx < allEpisodes.length - 1;
+
+            return hasInProgress || hasNext;
+          }
+
+          // Fallback while loading detailed data: show if any record has progress
+          return historyArr.some(h => (h.last_position || 0) > 0);
         }
 
         // For movies, only show if started but not completed
@@ -140,10 +181,8 @@ export const useAppContent = () => {
         return hasProgress && !isCompleted;
       }).sort((a, b) => {
         const getLatestTime = (it: any) => {
-          const h = Array.isArray(it.user_watch_history)
-            ? Math.max(...it.user_watch_history.map((r: any) => new Date(r.watched_at || 0).getTime()))
-            : new Date(it.user_watch_history?.watched_at || 0).getTime();
-          return h;
+          const h = it.user_watch_history?.[0];
+          return new Date(h?.watched_at || 0).getTime();
         };
         return getLatestTime(b) - getLatestTime(a);
       });
@@ -240,7 +279,38 @@ export const useAppContent = () => {
       },
       allContent: transformedContent,
     };
-  }, [transformedContent]);
+  }, [transformedContent, allHistory, seriesDetails]);
+
+  // Effect to trigger fetching of series structure for identified candidates
+  useEffect(() => {
+    if (!user?.id || !allHistory) return;
+
+    // Identify series IDs from history
+    const seriesWithHistory = new Set(
+      allHistory
+        .filter(h => h.episode_id) // Only look at episode history records
+        .map(h => h.movie_id) // movie_id contains the series ID for episodes
+        .filter(Boolean) as string[]
+    );
+
+    seriesWithHistory.forEach(async (id) => {
+      if (!seriesDetails[id] && !fetchingIds.has(id)) {
+        setFetchingIds(prev => new Set(prev).add(id));
+        try {
+          const data = await triggerGetSeasons({ contentId: id, userId: user.id }).unwrap();
+          setSeriesDetails(prev => ({ ...prev, [id]: data }));
+        } catch (error) {
+          console.error(`Failed to fetch seasons for series ${id}:`, error);
+        } finally {
+          setFetchingIds(prev => {
+            const next = new Set(prev);
+            next.delete(id);
+            return next;
+          });
+        }
+      }
+    });
+  }, [allHistory, user?.id, triggerGetSeasons, seriesDetails, fetchingIds]);
 
 
 
@@ -255,10 +325,8 @@ export const useAppContent = () => {
     homeContent: content.home,
     continueWatching: [...(content.movies.continueWatching || []), ...(content.series.continueWatching || [])].sort((a, b) => {
       const getLatestTime = (it: any) => {
-        const h = Array.isArray(it.user_watch_history)
-          ? Math.max(...it.user_watch_history.map((r: any) => new Date(r.watched_at || 0).getTime()))
-          : new Date(it.user_watch_history?.watched_at || 0).getTime();
-        return h;
+        const h = it.user_watch_history?.[0];
+        return new Date(h?.watched_at || 0).getTime();
       };
       return getLatestTime(b) - getLatestTime(a);
     }),
