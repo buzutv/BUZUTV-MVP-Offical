@@ -13,6 +13,7 @@ import ContentRow from "@/components/ContentRow";
 import { featuredContentIds } from "@/data/featuredContentIds";
 import { Spinner } from "@/components/ui/spinner"
 import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
 interface Channel {
   id: string;
   name: string;
@@ -278,6 +279,9 @@ const Index = React.memo(() => {
           <footer className=" border-t border-white/10 py-8">
             <div className="max-w-7xl mx-auto px-4 text-center text-gray-400">
               <p>&copy; 2024 BUZUTV. All rights reserved.</p>
+              <div className="p-4">
+                <Link to="/privacy" className="underline leading-4">Privacy Policy</Link>
+              </div>
             </div>
           </footer>
         </div>
