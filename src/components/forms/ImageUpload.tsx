@@ -1,12 +1,11 @@
-
-import { useState, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Upload, X, Image } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { getOptimizedImageUrl } from '@/utils/youtubeUtils';
+import { useState, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Upload, X, Image } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
 
 interface ImageUploadProps {
   label: string;
@@ -21,24 +20,73 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   value,
   onChange,
   disabled = false,
-  accept = "image/*"
+  accept = "image/*",
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  //compression
+  const compressImage = (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d")!;
+      const img = new window.Image();
+      const url = URL.createObjectURL(file);
+
+      img.onload = () => {
+        // Max width/height of 1280px
+        let { width, height } = img;
+        const MAX = 1280;
+        if (width > MAX || height > MAX) {
+          if (width > height) {
+            height = Math.round((height * MAX) / width);
+            width = MAX;
+          } else {
+            width = Math.round((width * MAX) / height);
+            height = MAX;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        ctx.drawImage(img, 0, 0, width, height);
+        URL.revokeObjectURL(url);
+
+        canvas.toBlob(
+          (blob) => {
+            const compressed = new File(
+              [blob!],
+              file.name.replace(/\.[^.]+$/, ".webp"),
+              {
+                type: "image/webp",
+              },
+            );
+            resolve(compressed);
+          },
+          "image/webp",
+          0.82, // quality - 82% is invisible difference but much smaller
+        );
+      };
+
+      img.src = url;
+    });
+  };
+
+  const handleFileSelect = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    let file = event.target.files?.[0];
     if (!file) return;
 
     // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('File size must be less than 5MB');
+      toast.error("File size must be less than 5MB");
       return;
     }
 
@@ -46,45 +94,49 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
     try {
       // Generate unique filename
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      file = await compressImage(file);
+      const fileExt = "webp";
+
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.webp`;
       const filePath = `images/${fileName}`;
 
       // Upload file to Supabase storage
       const { error: uploadError } = await supabase.storage
-        .from('movie-images')
+        .from("movie-images")
         .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
+          cacheControl: "3600",
+          upsert: false,
         });
 
       if (uploadError) {
-        console.error('Upload error:', uploadError);
+        console.error("Upload error:", uploadError);
         toast.error(`Failed to upload image: ${uploadError.message}`);
         return;
       }
 
       // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('movie-images')
-        .getPublicUrl(filePath);
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("movie-images").getPublicUrl(filePath);
 
       onChange(publicUrl);
-      toast.success('Image uploaded successfully');
+      toast.success("Image uploaded successfully");
     } catch (error: any) {
-      console.error('Error uploading image:', error);
-      toast.error(`Failed to upload image: ${error.message || 'Unknown error'}`);
+      console.error("Error uploading image:", error);
+      toast.error(
+        `Failed to upload image: ${error.message || "Unknown error"}`,
+      );
     } finally {
       setIsUploading(false);
       // Reset file input
       if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        fileInputRef.current.value = "";
       }
     }
   };
 
   const handleRemove = () => {
-    onChange('');
+    onChange("");
   };
 
   const handleButtonClick = () => {
@@ -145,7 +197,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             disabled={disabled || isUploading}
           >
             <Upload className="w-4 h-4 mr-2" />
-            {isUploading ? 'Uploading...' : `Upload ${label}`}
+            {isUploading ? "Uploading..." : `Upload ${label}`}
           </Button>
         </div>
       )}
