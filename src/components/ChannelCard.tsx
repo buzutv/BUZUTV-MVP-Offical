@@ -16,9 +16,6 @@ const ChannelCard = ({ channel }: ChannelCardProps) => {
 
   const isFavorite = favoriteChannelIds.includes(channel.id);
 
-
-  console.log("Rendering ChannelCard for:", channel.name, "Is Favorite:", isFavorite);
-
   const handleToggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -30,11 +27,12 @@ const ChannelCard = ({ channel }: ChannelCardProps) => {
   return (
     <div className="group w-10/11 max-w-[320px] h-[200px] cursor-pointer">
       <div className="relative h-full w-full overflow-hidden rounded-xl">
-
         {/* Background image */}
-        <div
-          style={{ backgroundImage: `url(${channel.logoUrl})` }}
-          className="absolute inset-0 h-full w-full bg-cover bg-center rounded-xl transition-transform duration-500 ease-in-out group-hover:scale-110"
+        <img
+          src={channel.logoUrl}
+          alt={channel.name}
+          loading="lazy"
+          className="absolute inset-0 h-full w-full object-cover rounded-xl transition-transform duration-500 ease-in-out group-hover:scale-110"
         />
 
         {/* Top-right ellipsis button */}
@@ -80,10 +78,11 @@ const ChannelCard = ({ channel }: ChannelCardProps) => {
 
               <button
                 onClick={handleToggleFavorite}
-                className={`flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold shadow-md transition-all duration-200 ${isFavorite
-                  ? "bg-green-600 text-white hover:bg-green-500"
-                  : "bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
-                  }`}
+                className={`flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold shadow-md transition-all duration-200 ${
+                  isFavorite
+                    ? "bg-green-600 text-white hover:bg-green-500"
+                    : "bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
+                }`}
               >
                 {isFavorite ? <UserCheck size={16} /> : <UserPlus size={16} />}
                 {isFavorite ? "Added" : "Add to Favorites"}
@@ -91,7 +90,6 @@ const ChannelCard = ({ channel }: ChannelCardProps) => {
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );
