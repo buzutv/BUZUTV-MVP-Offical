@@ -1,7 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useContentCache } from "@/hooks/useContentCache";
-import { useGetContentQuery, useGetContentWithWatchHistoryQuery } from "@/store/contentSlice";
+import {
+  useGetContentQuery,
+  useGetContentWithWatchHistoryQuery,
+} from "@/store/contentSlice";
 import { useAuth } from "@/contexts/AuthContext";
 
 import { Content } from "@/types";
@@ -14,9 +17,6 @@ const fetchContentData = async (): Promise<Content[]> => {
     .from("content")
     .select("*")
     .order("created_at", { ascending: false });
-
-
-
 
   if (error) {
     console.error("❌ [useContent] Error fetching content:", error);
@@ -34,8 +34,6 @@ const fetchContentData = async (): Promise<Content[]> => {
   return transformedData;
 };
 
-
-
 const searchContentData = async (query: string): Promise<Content[]> => {
   const { data, error } = await supabase
     .from("content")
@@ -48,7 +46,7 @@ const searchContentData = async (query: string): Promise<Content[]> => {
     throw error;
   }
   return (data as any) || [];
-}
+};
 export const useContent = () => {
   const { user } = useAuth();
 
@@ -60,17 +58,21 @@ export const useContent = () => {
     data: contentWithWatchHistory,
     isLoading: isContentWithWatchHistoryLoading,
     error: ContentWithWatchHistoryError,
-    refetch: refetchContentWithWatchHistory
-  } = useGetContentWithWatchHistoryQuery(user?.id ?? '', {
+    refetch: refetchContentWithWatchHistory,
+  } = useGetContentWithWatchHistoryQuery(user?.id ?? "", {
     refetchOnFocus: true,
     refetchOnReconnect: true,
-    refetchOnMountOrArgChange: true,
-    skip: !user?.id // Skip if no user
+    refetchOnMountOrArgChange: false,
+    skip: !user?.id, // Skip if no user
   });
 
   // Determine which content to return
-  const finalContent = user?.id ? (contentWithWatchHistory ?? []) : (content ?? []);
-  const isLoading = user?.id ? isContentWithWatchHistoryLoading : isContentLoading;
+  const finalContent = user?.id
+    ? (contentWithWatchHistory ?? [])
+    : (content ?? []);
+  const isLoading = user?.id
+    ? isContentWithWatchHistoryLoading
+    : isContentLoading;
 
   return {
     content: finalContent.length > 0 ? finalContent : (content ?? []),
@@ -78,6 +80,6 @@ export const useContent = () => {
     isLoading,
     error: ContentWithWatchHistoryError,
     refetch: refetchContentWithWatchHistory,
-    searchContentData
+    searchContentData,
   };
 };
