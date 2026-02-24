@@ -126,7 +126,7 @@ export const useAppContent = () => {
     const kids = transformedContent.filter((item) => item.isKids === true);
 
     const filterContinueWatching = (items: any[]) =>
-      items.map(item => {
+      items.flatMap(item => {
         // Enrich item with comprehensive history array
         let historyArr = Array.isArray(item.user_watch_history)
           ? [...item.user_watch_history]
@@ -138,50 +138,97 @@ export const useAppContent = () => {
           historyArr = combined.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
         }
 
-        return {
-          ...item,
-          user_watch_history: historyArr.sort((a, b) =>
-            new Date(b.watched_at || 0).getTime() - new Date(a.watched_at || 0).getTime()
-          )
-        };
-      }).filter((item) => {
-        const historyArr = item.user_watch_history;
-        const latestHistory = historyArr[0];
-        if (!latestHistory) return false;
+        if (historyArr.length === 0) return [];
 
         // For series, use detailed structure if available
         if (item.type === "series") {
-          console.log("Detailed Seasons", seriesDetails)
           const detailedSeasons = seriesDetails[item.id];
-          console.log("Detailed Seasons", detailedSeasons)
           if (detailedSeasons) {
-            const allEpisodes = detailedSeasons.flatMap((s: any) => s.episodes || []);
+            const allEpisodes = detailedSeasons.flatMap((s: any) =>
+              (s.episodes || []).map((ep: any) => ({
+                ...ep,
+                seasonNumber: s.season_number,
+                actualSeasonData: s
+              }))
+            );
 
-            // Check if any episode is currently in-progress (last_position > 0)
-            const hasInProgress = allEpisodes.some((ep: any) => (ep.watch_percentage || 0) > 0);
+            // Find all episodes currently "In Progress" (started but not completed)
+            const inProgress = allEpisodes.filter(
+              (ep: any) => ((ep.watch_percentage || 0) > 0 || (ep.last_position || 0) > 0 || !!ep.watched_at) && !ep.completed
+            );
 
-            // Also include if an episode was just finished and there's a next one to play
+            if (inProgress.length > 0) {
+              // Return a separate entry for each in-progress episode
+              return inProgress.map(ep => ({
+                ...item,
+                id: `${item.id}-ep-${ep.id}`, // Unique ID for the card
+                originalId: item.id,
+                episodeId: ep.id,
+                seasonNumber: ep.seasonNumber,
+                episodeNumber: ep.episode_number,
+                episodeTitle: ep.title,
+                user_watch_history: ep,
+                isEpisodeCard: true
+              }));
+            }
+
+            // If no episodes are in-progress, check if last completed has a next one
             const lastCompletedIdx = allEpisodes.reduce(
               (acc: number, ep: any, idx: number) => (ep.completed ? idx : acc),
               -1
             );
-            const hasNext = lastCompletedIdx !== -1 && lastCompletedIdx < allEpisodes.length - 1;
-
-            return hasInProgress || hasNext;
+            if (lastCompletedIdx !== -1 && lastCompletedIdx < allEpisodes.length - 1) {
+              const nextEp = allEpisodes[lastCompletedIdx + 1];
+              return [{
+                ...item,
+                id: `${item.id}-next-${nextEp.id}`,
+                originalId: item.id,
+                episodeId: nextEp.id,
+                seasonNumber: nextEp.seasonNumber,
+                episodeNumber: nextEp.episode_number,
+                episodeTitle: nextEp.title,
+                user_watch_history: nextEp,
+                isEpisodeCard: true
+              }];
+            }
           }
 
-          // Fallback while loading detailed data: show if any record has progress
-          return historyArr.some(h => (h.last_position || 0) > 0);
+          // Fallback while loading detailed data: show based on latest history record
+          const latestHistory = historyArr.sort((a, b) =>
+            new Date(b.watched_at || 0).getTime() - new Date(a.watched_at || 0).getTime()
+          )[0];
+
+          if (latestHistory && !latestHistory.completed) {
+            return [{
+              ...item,
+              user_watch_history: [latestHistory]
+            }];
+          }
+          return [];
         }
 
-        // For movies, only show if started but not completed
-        const isCompleted = latestHistory.completed || (latestHistory.watch_percentage || 0) >= 100;
-        const hasProgress = (latestHistory.last_position || 0) > 0 || (latestHistory.watch_percentage || 0) > 0;
+        // For movies, show if started (has progress or history) but not completed
+        const latestMovieHistory = historyArr.sort((a, b) =>
+          new Date(b.watched_at || 0).getTime() - new Date(a.watched_at || 0).getTime()
+        )[0];
 
-        return hasProgress && !isCompleted;
+        if (latestMovieHistory) {
+          const isCompleted = latestMovieHistory.completed || (latestMovieHistory.watch_percentage || 0) >= 100;
+          const hasStarted = (latestMovieHistory.last_position || 0) > 0 ||
+            (latestMovieHistory.watch_percentage || 0) > 0 ||
+            !!latestMovieHistory.watched_at;
+
+          if (hasStarted && !isCompleted) {
+            return [{
+              ...item,
+              user_watch_history: [latestMovieHistory]
+            }];
+          }
+        }
+        return [];
       }).sort((a, b) => {
         const getLatestTime = (it: any) => {
-          const h = it.user_watch_history?.[0];
+          const h = Array.isArray(it.user_watch_history) ? it.user_watch_history[0] : it.user_watch_history;
           return new Date(h?.watched_at || 0).getTime();
         };
         return getLatestTime(b) - getLatestTime(a);

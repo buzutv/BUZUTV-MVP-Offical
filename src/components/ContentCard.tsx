@@ -94,7 +94,7 @@ const ContentCard = ({
   const contentType = variant === "auto" ? item.type || "movie" : variant;
   const normalizedItem = useMemo(
     () => ({
-      id: item.id,
+      id: item.originalId || item.id,
       title: item.title || item.name,
       posterUrl: item.posterUrl || item.poster_url || "/placeholder.svg",
       type: item.type || "movie",
@@ -463,7 +463,12 @@ const ContentCard = ({
               </div>
             )}
 
-            <div className="absolute bottom-0 left-0 z-10 p-3 pt-6 pointer-events-none">
+            <div className="absolute bottom-0 left-0 z-10 p-3 pt-6 pointer-events-none w-full">
+              {item.isEpisodeCard && item.seasonNumber && item.episodeNumber && (
+                <p className="text-[10px] md:text-xs text-brand-400 font-bold uppercase tracking-wider mb-1 drop-shadow-md">
+                  Season {item.seasonNumber} . Episode {item.episodeNumber}
+                </p>
+              )}
               <h3 className="font-medium text-white text-md line-clamp-2 transform transition-transform duration-300 origin-left group-hover:scale-[1.1]">
                 {item?.title}
               </h3>

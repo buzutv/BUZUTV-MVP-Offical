@@ -13,6 +13,8 @@ export interface Movie {
   type: 'movie' | 'series';
   channelId?: string;
   duration?: number;
+  videoUrl?: string; // Unified field used in player
+  video_url?: string; // Legacy/Backend field
   // Series-specific fields
   seasons?: number;
   episodes?: number;

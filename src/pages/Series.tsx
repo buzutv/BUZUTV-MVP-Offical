@@ -166,7 +166,7 @@ const Series = () => {
                             {/* Poster Image with Overlaid Number */}
                             <div className="relative w-[30%] h-full flex-shrink-0 mr-4">
                               <div className="absolute -left-1 bottom-0 z-20 pointer-events-none ">
-                                <span className="relative bottom-2 -left-3 text-2xl md:text-3xl font-bold italic p-2 select-none
+                                <span className="relative bottom-6 -left-2 text-3xl md:text-4xl font-black italic p-2 select-none
                                   text-purple-600
                                   drop-shadow-[0_4px_8px_rgba(255,255,255,0.4)]">
                                   {index + 1}

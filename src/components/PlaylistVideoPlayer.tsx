@@ -27,10 +27,11 @@ interface VideoPlayerProps {
     localProgress?: Record<string, { watch_percentage: number, last_position: number }>;
     onPlaylistAdvance?: () => void;
     completionThreshold?: number | null;
+    playlistId?: string;
 }
 
 const VideoPlayer = forwardRef<any, VideoPlayerProps>(
-    ({ videoId, playlistItems, setCurrentMovie, movieId, episodeId, setFinal, type, userid, playlistInfo, onProgressUpdate, localProgress, onPlaylistAdvance, completionThreshold }, ref) => {
+    ({ videoId, playlistItems, setCurrentMovie, movieId, episodeId, setFinal, type, userid, playlistInfo, onProgressUpdate, localProgress, onPlaylistAdvance, completionThreshold, playlistId }, ref) => {
         const playerContainerRef = useRef<HTMLDivElement>(null);
         const playerInstanceRef = useRef<any>(null);
 
@@ -116,6 +117,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
         const seriesPosterUrlRef = useRef(seriesPosterUrlFromRedux);
         const seriesContentIdRef = useRef(seriesContentIdFromRedux);
 
+        const [playProgress, setPlayProgress] = useState(0);
         const [countdown, setCountdown] = useState(5);
         const [videoEnded, setVideoEnded] = useState(false);
         const [videoRestricted, setVideoRestricted] = useState(false);
@@ -215,7 +217,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
                     movieId: movieIdRef.current,
                     episodeId: episodeIdRef.current || undefined,
                     data: {
-                        movie_id: movieIdRef.current,
+                        movie_id: episodeIdRef.current ? null : movieIdRef.current,
                         episode_id: episodeIdRef.current || null,
                         watched_at: new Date().toISOString(),
                         last_position: isComp ? 0 : Math.floor(current),
@@ -434,6 +436,13 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
                     playerInstanceRef.current.getPlayerState() === window.YT.PlayerState.PLAYING
                 ) {
                     await checkCompletionThreshold();
+
+                    // Update live progress
+                    const current = playerInstanceRef.current.getCurrentTime();
+                    const duration = playerInstanceRef.current.getDuration();
+                    if (duration > 0) {
+                        setPlayProgress((current / duration) * 100);
+                    }
                 }
             }, 500);
 
@@ -804,9 +813,17 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
                     <div ref={playerContainerRef} className="w-full h-full" />
                 </div>
 
+                {/* Progress Bar */}
+                {/* <div className="absolute bottom-20 left-6 right-6 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                    <div
+                        className="h-full bg-blue-600 transition-all duration-300 shadow-[0_0_8px_rgba(37,99,235,0.6)]"
+                        style={{ width: `${playProgress}%` }}
+                    />
+                </div> */}
+
                 {/* Navigation Controls */}
                 {((isSeries && currentQueue.length > 0) || hasPlaylist) && (
-                    <div className="absolute bottom-14 sm:bottom-16 left-1/2 transform -translate-x-1/2 flex items-center gap-2 md:gap-4 bg-black/70 px-3 py-1.5 md:px-6 md:py-3 rounded-full backdrop-blur-sm border border-white/10">
+                    <div className="absolute-bottom-10  left-1/2 transform -translate-x-1/2 flex items-center gap-2 md:gap-4 bg-black/70 px-3 py-1.5 md:px-6 md:py-3 rounded-full backdrop-blur-sm border border-white/10">
                         <button
                             onClick={playPrevious}
                             disabled={!hasPreviousVideo}

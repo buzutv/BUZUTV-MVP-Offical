@@ -2,7 +2,7 @@ import { supabaseApi } from "./baseApi";
 import { Season } from "../types";
 
 export const seasonSlice = supabaseApi.injectEndpoints({
-    endpoints: (builder) => ({
+  endpoints: (builder) => ({
     getSeasonsByContent: builder.query<Season[], string>({
       query: (contentId) =>
         `seasons?content_id=eq.${contentId}&order=season_number.asc&select=*`,
@@ -15,28 +15,29 @@ export const seasonSlice = supabaseApi.injectEndpoints({
       providesTags: (_r, _e, id) => [{ type: 'seasons', id }],
     }),
 
-   getSeasonWithEpisodes: builder.query<Season[],{ contentId: string; userId: string }>({
-        query: ({ contentId, userId }) =>
-          `seasons?content_id=eq.${contentId}&order=season_number.asc&select=*,episodes(*,user_watch_history(*))&episodes.user_watch_history.user_id=eq.${userId}`,
-          transformResponse: (res: any[]) =>
-          res.map((season) => ({
-            ...season,
-            episodes: season.episodes.map((ep: any) => {
-              const [history] = ep.user_watch_history ?? [];
-              return {
-                ...ep,
-                watch_percentage: history?.watch_percentage ?? 0,
-                last_position: history?.last_position ?? 0,
-                completed: history?.completed ?? false,
-                user_watch_history: undefined, // optional cleanup
-              };
-            }),
-          })),
+    getSeasonWithEpisodes: builder.query<Season[], { contentId: string; userId: string }>({
+      query: ({ contentId, userId }) =>
+        `seasons?content_id=eq.${contentId}&order=season_number.asc&select=*,episodes(*,user_watch_history(*))&episodes.user_watch_history.user_id=eq.${userId}`,
+      transformResponse: (res: any[]) =>
+        res.map((season) => ({
+          ...season,
+          episodes: (season.episodes || []).map((ep: any) => {
+            const [history] = ep.user_watch_history ?? [];
+            return {
+              ...ep,
+              watch_percentage: history?.watch_percentage ?? 0,
+              last_position: history?.last_position ?? 0,
+              completed: history?.completed ?? false,
+              watched_at: history?.watched_at || null,
+              user_watch_history: undefined, // optional cleanup
+            };
+          }).sort((a: any, b: any) => (a.episode_number || 0) - (b.episode_number || 0)),
+        })),
 
-        providesTags: (_r, _e, { contentId }) => [
-          { type: "seasons", id: contentId },
-        ],
-      }),
+      providesTags: (_r, _e, { contentId }) => [
+        { type: "seasons", id: contentId },
+      ],
+    }),
 
     createSeason: builder.mutation<
       Season,
@@ -79,11 +80,11 @@ export const seasonSlice = supabaseApi.injectEndpoints({
 })
 
 export const {
-    useGetSeasonsByContentQuery,
-    useGetSeasonByIdQuery,
-    useGetSeasonWithEpisodesQuery,
-    useLazyGetSeasonWithEpisodesQuery,
-    useCreateSeasonMutation,
-    useUpdateSeasonMutation,
-    useDeleteSeasonMutation,
+  useGetSeasonsByContentQuery,
+  useGetSeasonByIdQuery,
+  useGetSeasonWithEpisodesQuery,
+  useLazyGetSeasonWithEpisodesQuery,
+  useCreateSeasonMutation,
+  useUpdateSeasonMutation,
+  useDeleteSeasonMutation,
 } = seasonSlice;

@@ -178,18 +178,9 @@ const ContentModal: React.FC<ContentModalProps> = ({
   const continueWatchingEpisodes = useMemo(() => {
     if (contentType !== "series" || !seasonWithEpisodes || seasonWithEpisodes.length === 0) return [];
 
-    // Flatten all episodes with their season number
-    const allEpisodes = seasonWithEpisodes.flatMap((s) =>
-      (s.episodes || []).map((ep, index) => ({
-        ...ep,
-        seasonNumber: s.season_number,
-        globalIndex: index, // This might not be right if seasons are separate arrays
-      }))
-    );
-
-    // Re-calculate global index correctly
+    // Flatten all episodes with their season number and global index
     let currentGlobalIdx = 0;
-    const allEpisodesWithGlobalIdx = seasonWithEpisodes.flatMap((s) => {
+    const allEpisodesWithInfo = seasonWithEpisodes.flatMap((s) => {
       const episodesWithIdx = (s.episodes || []).map((ep, idx) => ({
         ...ep,
         seasonNumber: s.season_number,
@@ -201,57 +192,72 @@ const ContentModal: React.FC<ContentModalProps> = ({
       return episodesWithIdx;
     });
 
-    // Filter for episodes with progress
-    const inProgress = allEpisodesWithGlobalIdx.filter(
-      (ep) => (ep.watch_percentage ?? 0) > 0 && !ep.completed
+    // 1. Find episodes currently "In Progress" (started but not completed)
+    const inProgress = allEpisodesWithInfo.filter(
+      (ep) => ((ep.watch_percentage ?? 0) > 0 || (ep.last_position ?? 0) > 0 || !!ep.watched_at) && !ep.completed
     );
 
+    // If we have in-progress episodes, return all of them sorted by recency
     if (inProgress.length > 0) {
-      return inProgress;
+      return inProgress.sort((a, b) => {
+        const dateA = a.watched_at ? new Date(a.watched_at).getTime() : 0;
+        const dateB = b.watched_at ? new Date(b.watched_at).getTime() : 0;
+        return dateB - dateA; // Newest first
+      });
     }
 
-    // Find the first uncompleted episode after the last completed one
-    const lastCompletedIdx = allEpisodesWithGlobalIdx.reduce(
-      (acc, ep, idx) => (ep.completed ? idx : acc),
-      -1
-    );
+    // 2. If no in-progress, find the last completed episode and suggest the next one
+    const completedEpisodes = allEpisodesWithInfo.filter(ep => ep.completed)
+      .sort((a, b) => {
+        const dateA = a.watched_at ? new Date(a.watched_at).getTime() : 0;
+        const dateB = b.watched_at ? new Date(b.watched_at).getTime() : 0;
+        return dateB - dateA;
+      });
 
-    if (lastCompletedIdx !== -1 && lastCompletedIdx < allEpisodesWithGlobalIdx.length - 1) {
-      return [allEpisodesWithGlobalIdx[lastCompletedIdx + 1]];
+    if (completedEpisodes.length > 0) {
+      const lastCompleted = completedEpisodes[0];
+      const nextEpisodeIdx = lastCompleted.globalIndex + 1;
+
+      if (nextEpisodeIdx < allEpisodesWithInfo.length) {
+        return [allEpisodesWithInfo[nextEpisodeIdx]];
+      }
+
+      // If we finished the last episode, maybe show it again or show nothing?
+      // Usually platforms show the last watched or nothing. Let's return the last completed if none next.
+      return [lastCompleted];
     }
 
-    // If none watched, return the very first episode
-    if (allEpisodesWithGlobalIdx.length > 0) {
-      return [allEpisodesWithGlobalIdx[0]];
+    // 3. Fallback: If no history at all, show the very first episode
+    if (allEpisodesWithInfo.length > 0) {
+      return [allEpisodesWithInfo[0]];
     }
 
     return [];
   }, [contentType, seasonWithEpisodes]);
 
+  // Consolidate season data fetching
   useEffect(() => {
     async function fetchSeasonData() {
-      if (item.type === "series") {
-        const data = await triggerSeasonWithEpisode({ contentId: item.id, userId: user?.id }).unwrap()
-        console.log("Season with Episode in useEffect", data)
-        setSeasonWithEpisodes(data)
+      const activeId = movie || currentItem?.id;
+      if (!activeId || !user?.id) return;
+
+      const isSeriesType = currentItem.type === "series" || (currentItem as any).variant === "series";
+
+      if (isSeriesType) {
+        try {
+          const data = await triggerSeasonWithEpisode({
+            contentId: activeId,
+            userId: user.id
+          }).unwrap();
+          setSeasonWithEpisodes(data);
+        } catch (err) {
+          console.error("Error fetching season data in ContentModal:", err);
+        }
       }
-
     }
-    fetchSeasonData()
-  }, [item, user?.id, contentModalOpen])
 
-
-  useEffect(() => {
-    async function fetchSeasonData() {
-      if (item.type === "series") {
-        const data = await triggerSeasonWithEpisode({ contentId: movie, userId: user?.id }).unwrap()
-        console.log("Season with Episode in useEffect", data)
-        setSeasonWithEpisodes(data)
-      }
-
-    }
-    fetchSeasonData()
-  }, [movie])
+    fetchSeasonData();
+  }, [movie, user?.id, contentModalOpen, currentItem.id]);
   // useEffect(() => {
   //   // Add a check to ensure data exists
   //   if (seasonWithEpisodes && seasonWithEpisodes.length > 0) {
@@ -528,9 +534,9 @@ const ContentModal: React.FC<ContentModalProps> = ({
       contentIds: content.map(item => item.id)
     }).unwrap()
 
-    if (item.type === "series") {
+    if (contentType === "series" || currentItem.type === "series") {
       const seasonData = await triggerSeasonWithEpisode({
-        contentId: item.id,
+        contentId: currentItem.id,
         userId: user?.id
       }).unwrap();
       setSeasonWithEpisodes(seasonData);
@@ -771,7 +777,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
               />
 
               {/* Series Episodes Section */}
-              {contentType === "series" && seasonsData.length > 0 && (
+              {contentType === "series" && (seasonsData.length > 0 || seasonWithEpisodes.length > 0) && (
                 <div className="mb-8">
                   {/* Continue Watching Row for Series */}
                   {continueWatchingEpisodes.length > 0 && (
@@ -809,7 +815,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
                             </div>
                             <div className="mt-2">
                               <p className="text-xs text-brand-400 font-bold uppercase tracking-wider">
-                                S{episode.seasonNumber} • E{episode.episode_number}
+                                Season {episode.seasonNumber} . Episode {episode.episode_number}
                               </p>
                               <h3 className="text-white font-medium truncate group-hover:text-brand-400 transition-colors">
                                 {episode.title}

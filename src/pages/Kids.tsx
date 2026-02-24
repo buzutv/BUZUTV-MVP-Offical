@@ -183,9 +183,9 @@ const Kids = () => {
                   </div>
                   {/* Right - Top Ranked */}
                   <div className="px-4 pl-6 md:px-0 md:pl-0">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-2 h-8 bg-gradient-to-b from-pink-400 to-purple-500 rounded-full shadow-lg shadow-pink-500/30" />
-                      <h2 className="text-2xl font-black text-black tracking-tight font-serif italic">
+                    <div className="flex items-center gap-3 mb-6 align-center">
+                      <div className="w-2 h-6 bg-gradient-to-b from-pink-400 to-purple-500 rounded-full shadow-lg shadow-pink-500/30" />
+                      <h2 className="text-2xl align-center">
                         Top <span className="inline-flex gap-0.5">
                           <span className="text-red-500">K</span>
                           <span className="text-yellow-400">I</span>

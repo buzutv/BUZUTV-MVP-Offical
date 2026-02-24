@@ -534,10 +534,12 @@ const FullscreenPlayer = ({
       }}>
 
 
-        <div className="w-full mx-auto p-2 sm:p-8 h-full overflow-y-auto">
-          <div className="max-w-7xl mx-auto px-0 sm:px-4 py-6 sm:py-12">
-            <div className="flex justify-center items-center gap-4 mb-4">
-              <div className="flex items-center justify-start gap-4 cursor-pointer flex-1" onClick={async () => {
+        <div className="w-full h-full overflow-y-auto scrollbar-hide">
+          <div className="relative w-full aspect-video bg-black shadow-2xl">
+            {/* Floating Back Button */}
+            <div
+              className="absolute top-6 left-6 z-[100] flex items-center gap-3 cursor-pointer group bg-black/40 hover:bg-black/60 px-5 py-2.5 rounded-full backdrop-blur-md border border-white/10 transition-all duration-300"
+              onClick={async () => {
                 console.log("🔙 [FullscreenPlayer] Back button clicked, saving and refetching...");
                 // Ensure we save progress to the DB before fetching fresh data
                 if (parentRef.current && (parentRef.current as any).saveProgress) {
@@ -548,29 +550,19 @@ const FullscreenPlayer = ({
                 refetchContentWithWatchHistory();
 
                 // Close immediately
-                onClose();
+                onClose && onClose();
                 dispatch(closeScreenPlayer());
-              }}>
-                <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                <p className="text-lg font-semibold text-white ">Back</p>
-              </div>
-              {/* <SearchBar
-              onSearch={handleSearch}
-              onResultSelect={setActualVideoUrl}
-              results={searchResults}
-              isLoading={isSearching}
-              placeholder="Search to add movies..."
-              className="flex-[14] z-50"
-              setActualVideoUrl={setActualVideoUrl}
-              setMovieid={setMovieid}
-            /> */}
+              }}
+            >
+              <svg className="w-5 h-5 text-white transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="white" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              <span className="text-sm font-semibold text-white tracking-wide">Back to Browse</span>
             </div>
 
-            <div className="flex items-center mx-auto justify-center aspect-[4/3] sm:aspect-video w-full bg-black rounded-lg sm:rounded-2xl overflow-hidden mb-8 relative shadow-2xl border border-white/10">
+            <div className="w-full h-full relative">
               {/* <div ref={playerContainerRef} className="w-full h-full" /> */}
-              <div ref={playerRef} className="flex items-center justify-center h-full w-full sm:min-w-full md:sm:min-w-full">
+              <div ref={playerRef} className="flex items-center justify-center h-full w-full">
                 {
                   actualVideoUrl && (
                     (playlistId || contentIds) ? (
@@ -616,6 +608,10 @@ const FullscreenPlayer = ({
                 }
               </div>
             </div>
+          </div>
+
+          {/* Centered Content Section Below Player */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-8 py-12">
             {isSeries && (
               <div className="mb-8">
                 {isLoadingEpisodes ? (
