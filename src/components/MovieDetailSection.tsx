@@ -56,7 +56,44 @@ const MovieDetailSection = ({ contents }: { contents?: any }) => {
     // Final derived movie object
     const movie = bestSource || (Array.isArray(currentMovieState) ? currentMovieState[0] : currentMovieState);
 
-    console.log("Current Movie in movie detail section", movie);
+    // Format duration helper
+    const formatDuration = (minutes: number | undefined) => {
+        if (!minutes) return null;
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        if (hours > 0) {
+            return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+        }
+        return `${mins}m`;
+    };
+
+    // Get display text for duration/seasons
+    const getDurationOrSeasonsText = () => {
+        if (movie?.type === "series") {
+            if (movie.seasons_data) {
+                try {
+                    const seasonsData = typeof movie.seasons_data === "string"
+                        ? JSON.parse(movie.seasons_data)
+                        : movie.seasons_data;
+                    if (Array.isArray(seasonsData) && seasonsData.length > 0) {
+                        const count = seasonsData.length;
+                        return count === 1 ? "1 Season" : `${count} Seasons`;
+                    }
+                } catch (error) {
+                    console.error("Error parsing seasons data for duration display:", error);
+                }
+            }
+            if (movie.seasons) {
+                const count = Array.isArray(movie.seasons) ? movie.seasons.length : movie.seasons;
+                return count === 1 ? "1 Season" : `${count} Seasons`;
+            }
+            return "Series";
+        } else {
+            return formatDuration(movie?.duration_minutes || movie?.duration);
+        }
+    };
+
+    const isKids = movie?.is_kids || movie?.isKids;
 
     // Show loading only if we have no data at all (neither from state nor from props)
     if (isLoading && !movie) {
@@ -80,6 +117,8 @@ const MovieDetailSection = ({ contents }: { contents?: any }) => {
 
     if (!movie) return null;
 
+    const durationOrSeasons = getDurationOrSeasonsText();
+
     return (
         <div
             className="relative rounded-lg overflow-hidden mb-12 min-h-[300px] min-w-full"
@@ -97,7 +136,7 @@ const MovieDetailSection = ({ contents }: { contents?: any }) => {
                     <img
                         src={getOptimizedImageUrl(movie.poster_url || movie.posterUrl, 400)}
                         alt={movie.content_title || movie.title}
-                        className="w-48 h-72 object-cover rounded-lg shadow-2xl"
+                        className="w-48 h-72 object-cover rounded-lg shadow-2xl border border-white/10"
                     />
                 </div>
 
@@ -107,34 +146,56 @@ const MovieDetailSection = ({ contents }: { contents?: any }) => {
                         {movie.content_title || movie.title}
                     </h1>
 
-                    <div className="flex items-center gap-4 mb-6 text-sm">
+                    <div className="flex flex-wrap items-center gap-3 mb-6 text-xs md:text-sm font-medium">
+                        {/* Rating */}
+                        <div className="flex items-center gap-1.5 px-3 py-1 bg-yellow-500/10 text-yellow-500 rounded-md border border-yellow-500/20">
+                            <span className="text-md">★</span>
+                            <span className="font-bold">{movie.rating || 0}</span>
+                        </div>
+
+                        {/* Year */}
                         {(movie.year) && (
-                            <span className="px-3 py-1 bg-white/10 rounded">{movie.year}</span>
+                            <span className="px-3 py-1 bg-white/10 text-white/90 rounded-md border border-white/5">
+                                {movie.year}
+                            </span>
                         )}
+
+                        {/* Duration / Seasons */}
+                        {durationOrSeasons && (
+                            <span className="px-3 py-1 bg-white/10 text-white/90 rounded-md border border-white/5">
+                                {durationOrSeasons}
+                            </span>
+                        )}
+
+                        {/* Maturity Rating */}
+                        {isKids ? (
+                            <span className="px-3 py-1 bg-blue-500/10 border border-blue-400/30 text-blue-400 font-black rounded-md uppercase">
+                                KIDS
+                            </span>
+                        ) : (
+                            <span className="px-3 py-1 bg-white/5 border border-white/10 text-white/60 font-black rounded-md uppercase">
+                                TV-MA
+                            </span>
+                        )}
+
+                        {/* Genre */}
                         {(movie.genre) && (
-                            <span className="px-3 py-1 bg-white/10 rounded">{movie.genre}</span>
-                        )}
-                        {(movie.type) && (
-                            <span className="px-3 py-1 bg-white/10 rounded capitalize">{movie.type}</span>
-                        )}
-                        {(movie.duration_minutes || movie.duration) && (
-                            <span className="px-3 py-1 bg-white/10 rounded">{movie.duration_minutes || movie.duration} min</span>
-                        )}
-                        {(movie.rating) && (
-                            <span className="px-3 py-1 bg-yellow-500/20 rounded">⭐ {movie.rating}</span>
+                            <span className="px-3 py-1 bg-brand-500/10 border border-brand-500/20 text-brand-400 font-bold uppercase tracking-wider rounded-md">
+                                {movie.genre}
+                            </span>
                         )}
                     </div>
 
                     {(movie.description) && (
-                        <p className="text-white/80 text-lg leading-relaxed mb-6 max-w-3xl">
+                        <p className="text-white/80 text-lg leading-relaxed mb-6 max-w-3xl line-clamp-4">
                             {movie.description}
                         </p>
                     )}
 
                     {(movie.episodes) && (
-                        <div className="mt-4">
-                            <span className="text-white/60">Episodes: </span>
-                            <span className="text-white font-semibold">{movie.episodes}</span>
+                        <div className="mt-4 flex items-center gap-2">
+                            <span className="text-white/60 text-sm">Episodes: </span>
+                            <span className="text-white font-bold bg-white/10 px-2 py-0.5 rounded text-xs">{movie.episodes}</span>
                         </div>
                     )}
                 </div>
