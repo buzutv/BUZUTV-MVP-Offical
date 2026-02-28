@@ -323,15 +323,15 @@ const ContentCard = ({
 
   const gradientClasses = effectiveKidsMode
     ? {
-        base: "bg-[linear-gradient(to_top,rgba(37,99,235,0.95)_0%,rgba(37,99,235,0.9)_40%,rgba(37,99,235,0.4)_60%,rgba(37,99,235,0.2)_80%,rgba(37,99,235,0.1)_90%,transparent_100%)]",
-        hover:
-          "bg-[linear-gradient(to_top,rgba(37,99,235,0.95)_0%,rgba(37,99,235,0.7)_30%,rgba(37,99,235,0.4)_60%,transparent_90%)]",
-      }
+      base: "bg-[linear-gradient(to_top,rgba(37,99,235,0.95)_0%,rgba(37,99,235,0.9)_40%,rgba(37,99,235,0.4)_60%,rgba(37,99,235,0.2)_80%,rgba(37,99,235,0.1)_90%,transparent_100%)]",
+      hover:
+        "bg-[linear-gradient(to_top,rgba(37,99,235,0.95)_0%,rgba(37,99,235,0.7)_30%,rgba(37,99,235,0.4)_60%,transparent_90%)]",
+    }
     : {
-        base: "bg-[linear-gradient(to_top,rgba(0,0,0,0.95)_0%,rgba(0,0,0,0.7)_30%,rgba(0,0,0,0.4)_60%,rgba(0,0,0,0.2)_80%,rgba(0,0,0,0.1)_90%,transparent_100%)]",
-        hover:
-          "bg-[linear-gradient(to_top,rgba(0,0,0,0.95)_0%,rgba(0,0,0,0.7)_30%,rgba(0,0,0,0.4)_60%,transparent_90%)]",
-      };
+      base: "bg-[linear-gradient(to_top,rgba(0,0,0,0.95)_0%,rgba(0,0,0,0.7)_30%,rgba(0,0,0,0.4)_60%,rgba(0,0,0,0.2)_80%,rgba(0,0,0,0.1)_90%,transparent_100%)]",
+      hover:
+        "bg-[linear-gradient(to_top,rgba(0,0,0,0.95)_0%,rgba(0,0,0,0.7)_30%,rgba(0,0,0,0.4)_60%,transparent_90%)]",
+    };
 
   const widthClass = isMoreLikeThis
     ? "w-64 aspect-video flex-shrink-0"
@@ -354,14 +354,14 @@ const ContentCard = ({
       )}
 
       <div
-        className={`content-card group ${widthClass} border-2 border-transparent hover:scale-105 hover:border-white transition-transform duration-500 hover:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:scale-105 focus:border-white focus:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:outline-none rounded-lg transition-all duration-300 overflow-hidden relative ${className}
-          ${!hideGradient ? "bg-gradient-to-t from-black/90 from-0% via-black/40 via-40% to-transparent to-90%" : ""}
+        className={`content-card group ${widthClass} ${effectiveKidsMode ? "border-0" : "border-2 border-transparent"} hover:scale-105 hover:border-white transition-transform duration-500 hover:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:scale-105 focus:border-white focus:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:outline-none rounded-lg transition-all duration-300 overflow-hidden relative ${className}
+          ${!hideGradient && !effectiveKidsMode ? "bg-gradient-to-t from-black/90 from-0% via-black/40 via-40% to-transparent to-90%" : ""}
+          ${effectiveKidsMode ? "bg-transparent select-none" : ""}
           ${!className.includes("aspect-") && !isMoreLikeThis ? "aspect-video" : ""}
         `}
         tabIndex={0}
-        aria-label={`${normalizedItem.type === "series" ? "View series" : "View movie"} ${
-          normalizedItem.title
-        }`}
+        aria-label={`${normalizedItem.type === "series" ? "View series" : "View movie"} ${normalizedItem.title
+          }`}
         onKeyDown={(e) => {
           // Don't trigger card click if we're typing in an input or textarea
           if (
@@ -525,9 +525,8 @@ const ContentCard = ({
                   className={`absolute bottom-[-1px] left-0 right-0 h-1/2 ${gradientClasses.base}`}
                 />
                 <div
-                  className={`absolute bottom-[-1px] left-0 right-0 h-1/2 ${
-                    gradientClasses.hover
-                  } opacity-0 group-hover:opacity-50 transition-opacity duration-300`}
+                  className={`absolute bottom-[-1px] left-0 right-0 h-1/2 ${gradientClasses.hover
+                    } opacity-0 group-hover:opacity-50 transition-opacity duration-300`}
                 />
               </div>
             )}

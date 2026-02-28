@@ -637,7 +637,7 @@ const FullscreenPlayer = ({
 
 
         <div className="w-full h-full overflow-y-auto scrollbar-hide">
-          <div className="relative w-full aspect-video bg-black shadow-2xl">
+          <div className="relative w-full h-[70vh] min-h-[400px] lg:h-[75vh] bg-black shadow-2xl">
             {/* Floating Back Button */}
             <div
               className="absolute top-6 left-6 z-[100] flex items-center gap-3 cursor-pointer group bg-black/40 hover:bg-black/60 px-5 py-2.5 rounded-full backdrop-blur-md border border-white/10 transition-all duration-300"

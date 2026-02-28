@@ -220,7 +220,7 @@ const Kids = () => {
                               <img
                                 src={getOptimizedImageUrl(movie.posterUrl, 400)}
                                 alt={movie.title}
-                                className="w-full h-full object-cover rounded-[1.2rem] border border-white/50 group-hover:scale-110 transition-transform duration-500"
+                                className="w-full h-full object-cover rounded-[1.2rem] group-hover:scale-110 transition-transform duration-500"
                               />
                             </div>
 
