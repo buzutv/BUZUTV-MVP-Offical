@@ -98,7 +98,7 @@ const ContentRow = React.memo(
 
       <section className="pb-6">
         <div className="px-4 mb-2">
-          <h2 className={`text-2xl font-bold ${titleClassName || "text-white"}`}>{title}</h2>
+          <h2 className={`text-2xl  ${titleClassName || "text-white"}`}>{title}</h2>
         </div>
 
         <div className="relative">

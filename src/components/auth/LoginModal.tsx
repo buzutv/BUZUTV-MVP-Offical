@@ -155,7 +155,7 @@ const LoginModal = () => {
   return (
     <Dialog open={showLoginModal} onOpenChange={handleClose}>
       <DialogContent
-        className="sm:max-w-md bg-black/80 text-white border-brand-500 backdrop-blur-md overflow-hidden"
+        className="sm:max-w-md bg-black/80 text-white border-white/10 backdrop-blur-md overflow-hidden"
         hideCloseButton
       >
         <ScrollArea className="max-h-[90vh] overflow-visible p-0">
@@ -214,7 +214,7 @@ const LoginModal = () => {
                       type="text"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
+                      className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-white/50 transition-colors"
                       placeholder="Enter your full name"
                       required
                     />
@@ -234,7 +234,7 @@ const LoginModal = () => {
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
+                      className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-white/50 transition-colors"
                       placeholder="Enter your phone number"
                       required
                     />
@@ -255,7 +255,7 @@ const LoginModal = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors"
+                  className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-white/50 transition-colors"
                   placeholder="Enter your email"
                   required
                 />
@@ -275,7 +275,7 @@ const LoginModal = () => {
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors pr-10"
+                    className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-white/50 transition-colors pr-10"
                     placeholder="Enter your password"
                     required
                   />
@@ -319,7 +319,7 @@ const LoginModal = () => {
                       type={showPassword ? 'text' : 'password'}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-brand-500 transition-colors pr-10"
+                      className="text-sm w-full px-3 py-1 bg-black/30 border border-white/30 rounded-lg text-white backdrop-blur-sm placeholder:text-white/50 focus:outline-none focus:border-white/50 transition-colors pr-10"
                       placeholder="Confirm your password"
                       required
                     />

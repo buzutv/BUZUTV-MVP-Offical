@@ -147,7 +147,7 @@ const FullscreenPlayer = ({
       setIsLoadingEpisodes(true);
       try {
         // Re-use logic to fetch season with history
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from('seasons')
           .select('*, episodes(*, user_watch_history(*))')
           .eq('series_id', nextContent.id)
@@ -258,8 +258,8 @@ const FullscreenPlayer = ({
       if (isSeries && currentSeriesId && (!seasons.length || seasons[0]?.series_id !== currentSeriesId)) {
         setIsLoadingEpisodes(true);
         try {
-          const { data, error } = await supabase
-            .from('seasons' as any)
+          const { data, error } = await (supabase as any)
+            .from('seasons')
             .select('*, episodes(*, user_watch_history(*))')
             .eq('series_id', currentSeriesId)
             .order('season_number', { ascending: true });
@@ -361,7 +361,7 @@ const FullscreenPlayer = ({
       const queryUrl = actualVideoUrl || videoUrl;
       if (!queryUrl || typeof queryUrl === 'object') return;
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from(`content?select=*,user_watch_history(*,movie_id)&user_watch_history.user_id=eq.${user?.id}`)
         .select("*")
         .eq("video_url", queryUrl);
@@ -557,7 +557,7 @@ const FullscreenPlayer = ({
               <svg className="w-5 h-5 text-white transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="white" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              <span className="text-sm font-semibold text-white tracking-wide">Back to Browse</span>
+              <span className="text-sm font-semibold text-white tracking-wide">Back</span>
             </div>
 
             <div className="w-full h-full relative">
@@ -611,7 +611,7 @@ const FullscreenPlayer = ({
           </div>
 
           {/* Centered Content Section Below Player */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-8 py-12">
+          <div className="w-full px-4 sm:px-12 py-12">
             {isSeries && (
               <div className="mb-8">
                 {isLoadingEpisodes ? (
@@ -626,9 +626,10 @@ const FullscreenPlayer = ({
                   </div>
                 ) : seasons?.length > 0 ? (
                   <>
-                    <div className="flex flex-col items-center mb-8">
-                      {/* Centered Season Tabs */}
-                      <div className="flex flex-wrap justify-center gap-2 p-1 bg-white/5 rounded-xl border border-white/10">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                      <h2 className="text-white text-2xl font-bold">Episodes</h2>
+                      {/* Season Tabs at Top Right */}
+                      <div className="flex flex-wrap gap-2 p-1 bg-white/5 rounded-xl border border-white/10">
                         {seasons.map((season) => {
                           const isActive = selectedSeasonId === season.id;
                           return (
@@ -647,7 +648,6 @@ const FullscreenPlayer = ({
                       </div>
                     </div>
                     <div>
-                      <h2 className="text-white text-2xl font-bold mb-6">Episodes</h2>
                       {/* Episode Grid/List */}
                       <ScrollArea className="w-full pb-4">
                         <div className="flex w-max gap-4 pb-4">

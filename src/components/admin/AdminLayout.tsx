@@ -25,12 +25,15 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     navigate("/admin");
   };
 
+  const isEditorialPath = location.pathname.startsWith("/admin/editorial");
+
   const menuItems = [
     { path: "/admin/dashboard", icon: BarChart3, label: "Dashboard" },
     { path: "/admin/movies", icon: Film, label: "Manage Content" },
     { path: "/admin/channels", icon: PlayCircle, label: "Manage Channels" },
+    { path: "/admin/editorial", icon: Tv, label: "Editorial Queue" },
     { path: "/admin/add-movie", icon: Plus, label: "Add Content" },
-  ];
+  ].filter(item => !isEditorialPath || item.path === "/admin/editorial");
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex">

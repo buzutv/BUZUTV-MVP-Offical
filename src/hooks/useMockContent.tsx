@@ -50,9 +50,9 @@ export const useMockContent = () => {
   const [channelsData, setChannelsData] = useState<typeof channels>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
-  
+
   // Fetch real content from database
-  const { content: dbContent, isLoading: dbContentLoading } = useContent();
+  const { content: dbContent, isLoading: dbContentLoading, refetch } = useContent();
   const { channels: dbChannels, isLoading: dbChannelsLoading } = useChannels();
 
   useEffect(() => {
@@ -60,11 +60,11 @@ export const useMockContent = () => {
       // Transform database content to match mock structure
       const transformedDbContent = transformDatabaseContent(dbContent);
       const transformedDbChannels = transformDatabaseChannels(dbChannels);
-      
+
       if (user) {
         // Check if this is a demo user (for mock content)
         const isDemoUser = user.email && demoUsers.includes(user.email);
-        
+
         if (isDemoUser) {
           // Demo user gets mock content + real content
           setContent([...mockMovies, ...transformedDbContent]);
@@ -86,6 +86,7 @@ export const useMockContent = () => {
   return {
     movies: content,
     channels: channelsData,
-    isLoading: isLoading || dbContentLoading || dbChannelsLoading
+    isLoading: isLoading || dbContentLoading || dbChannelsLoading,
+    refetch
   };
 };

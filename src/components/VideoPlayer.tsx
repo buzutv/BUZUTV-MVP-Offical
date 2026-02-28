@@ -754,29 +754,33 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
 
         {/* Navigation Controls */}
         {((isSeries && currentQueue.length > 0) || hasPlaylist) && (
-          <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 flex items-center gap-2 md:gap-4 bg-black/70 px-3 py-1.5 md:px-6 md:py-3 rounded-full backdrop-blur-sm border border-white/10">
+          <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 flex items-center gap-3 md:gap-6 bg-black/80 px-4 py-2 md:px-8 md:py-4 rounded-full backdrop-blur-md border border-white/10 shadow-2xl">
             <button
               onClick={playPrevious}
               disabled={!hasPreviousVideo}
-              className="p-1 md:p-2 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition"
+              className="flex items-center gap-2 px-3 py-1.5 md:px-5 md:py-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 disabled:opacity-20 disabled:cursor-not-allowed transition-all duration-300 group"
             >
-              <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 text-white" />
+              <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 text-white group-hover:-translate-x-1 transition-transform" />
+              <span className="hidden sm:inline text-[10px] md:text-[11px] font-black uppercase tracking-[0.25em] text-white/40 group-hover:text-white transition-colors">Prev</span>
             </button>
 
-            <span className="text-white text-xs md:text-sm font-medium whitespace-nowrap">
-              {seasonInfo ? (
-                <>{seasonInfo.episodeIndex} / {seasonInfo.totalInSeason}</>
-              ) : (
-                <>{currentVideoIndex + 1} / {currentQueue.length}</>
-              )}
-            </span>
+            <div className="flex flex-col items-center">
+              <span className="text-white text-[10px] md:text-xs font-black tracking-tighter opacity-80">
+                {seasonInfo ? (
+                  <>{seasonInfo.episodeIndex} <span className="mx-1 text-white/30">/</span> {seasonInfo.totalInSeason}</>
+                ) : (
+                  <>{currentVideoIndex + 1} <span className="mx-1 text-white/30">/</span> {currentQueue.length}</>
+                )}
+              </span>
+            </div>
 
             <button
               onClick={playNext}
               disabled={!hasNextVideo}
-              className="p-1 md:p-2 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition"
+              className="flex items-center gap-2 px-3 py-1.5 md:px-5 md:py-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 disabled:opacity-20 disabled:cursor-not-allowed transition-all duration-300 group"
             >
-              <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-white" />
+              <span className="hidden sm:inline text-[10px] md:text-[11px] font-black uppercase tracking-[0.25em] text-white/40 group-hover:text-white transition-colors">Next</span>
+              <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-white group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
         )}

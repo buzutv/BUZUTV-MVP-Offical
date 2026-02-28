@@ -23,6 +23,8 @@ import AdminAddMovie from "./pages/admin/AdminAddMovie";
 import AdminEditMovie from "./pages/admin/AdminEditMovie";
 import AdminAddChannel from "./pages/admin/AdminAddChannel";
 import AdminEditChannel from "./pages/admin/AdminEditChannel";
+import EditorialMovies from "./pages/admin/EditorialMovies";
+import EditorialEditMovie from "./pages/admin/EditorialEditMovie";
 import NotFound from "./pages/NotFound";
 import LoginModal from "./components/auth/LoginModal";
 import { useAuth } from "@/contexts/AuthContext";
@@ -112,6 +114,8 @@ const App = () => {
               <Route path="/admin/add-channel" element={<AdminAddChannel />} />
               <Route path="/admin/edit-movie/:id" element={<AdminEditMovie />} />
               <Route path="/admin/edit-channel/:id" element={<AdminEditChannel />} />
+              <Route path="/admin/editorial" element={<EditorialMovies />} />
+              <Route path="/admin/editorial/edit/:id" element={<EditorialEditMovie />} />
               <Route path="*" element={<NotFound />} />
               {/* <Route path="/test" element={<FullscreenPlayer isOpen={true} onClose={() => { }} videoUrl="https://youtu.be/6y9wgK-26Qg?si=yQ_FNCUzAQB6oiPq" title="Test Video" userId="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3" />} /> */}
               <Route path="/playlists" element={<PlayList />} />
