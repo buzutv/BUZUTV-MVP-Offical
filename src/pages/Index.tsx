@@ -11,7 +11,7 @@ import { useUserSubscriptions } from "@/hooks/useUserSubscriptions";
 import { useAuth } from "@/contexts/AuthContext";
 import ContentRow from "@/components/ContentRow";
 import { featuredContentIds } from "@/data/featuredContentIds";
-import { Spinner } from "@/components/ui/spinner"
+import { Spinner } from "@/components/ui/spinner";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 interface Channel {
@@ -33,8 +33,15 @@ const Index = React.memo(() => {
   const [showChannelModal, setShowChannelModal] = useState(false);
   const [activeGenre, setActiveGenre] = useState("all");
 
-  const startTime = performance.now();
-  const { homeContent, channels, isLoading, content, kidsContent, movieContent, seriesContent } = useAppContent();
+  const {
+    homeContent,
+    channels,
+    isLoading,
+    content,
+    kidsContent,
+    movieContent,
+    seriesContent,
+  } = useAppContent();
   const { content: rawContent } = useContent();
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
@@ -55,14 +62,6 @@ const Index = React.memo(() => {
     return ["All", ...contentGenres.sort()];
   }, [content.allContent]);
 
-
-  useEffect(() => {
-    async function fetchallusers() {
-      const { data: { user } } = await supabase.auth.getUser();
-      console.log("User", user);
-    }
-    fetchallusers();
-  }, [])
   const { subscriptionIds, toggleSubscription } = useUserSubscriptions();
   const { isLoggedIn, setShowLoginModal } = useAuth();
 
@@ -91,17 +90,20 @@ const Index = React.memo(() => {
     setSelectedChannel(null);
   }, []);
 
-  const handleContentRowCardClick = useCallback((item?: any) => {
-    if (!isLoggedIn) {
-      setShowLoginModal(true);
-      return true;
-    }
-    if (item) {
-      setSelectedItem(item);
-      return true; // Prevents the card's internal modal
-    }
-    return false;
-  }, [isLoggedIn, setShowLoginModal]);
+  const handleContentRowCardClick = useCallback(
+    (item?: any) => {
+      if (!isLoggedIn) {
+        setShowLoginModal(true);
+        return true;
+      }
+      if (item) {
+        setSelectedItem(item);
+        return true; // Prevents the card's internal modal
+      }
+      return false;
+    },
+    [isLoggedIn, setShowLoginModal],
+  );
 
   const handleGenreChange = useCallback((genre: string) => {
     setActiveGenre(genre);
@@ -135,7 +137,9 @@ const Index = React.memo(() => {
           }}
         ></div>
         <div className="relative flex items-center justify-center min-h-screen">
-          <div className="text-2xl font-bold text-white"><Spinner /></div>
+          <div className="text-2xl font-bold text-white">
+            <Spinner />
+          </div>
         </div>
       </div>
     );
@@ -182,20 +186,32 @@ const Index = React.memo(() => {
             <>
               {/* Unified Continue Watching for Home */}
               {(() => {
-                const combinedHistory = [...(movieContent.continueWatching || []), ...(seriesContent.continueWatching || [])]
+                const combinedHistory = [
+                  ...(movieContent.continueWatching || []),
+                  ...(seriesContent.continueWatching || []),
+                ]
                   .sort((a, b) => {
-                    const historyA = Array.isArray(a.user_watch_history) ? a.user_watch_history[0] : a.user_watch_history;
-                    const historyB = Array.isArray(b.user_watch_history) ? b.user_watch_history[0] : b.user_watch_history;
-                    return new Date(historyB?.watched_at || 0).getTime() - new Date(historyA?.watched_at || 0).getTime();
+                    const historyA = Array.isArray(a.user_watch_history)
+                      ? a.user_watch_history[0]
+                      : a.user_watch_history;
+                    const historyB = Array.isArray(b.user_watch_history)
+                      ? b.user_watch_history[0]
+                      : b.user_watch_history;
+                    return (
+                      new Date(historyB?.watched_at || 0).getTime() -
+                      new Date(historyA?.watched_at || 0).getTime()
+                    );
                   })
                   .slice(0, 10);
 
-                return combinedHistory.length > 0 && (
-                  <ContentRow
-                    title="Continue Watching"
-                    items={combinedHistory}
-                    onCardClick={handleContentRowCardClick}
-                  />
+                return (
+                  combinedHistory.length > 0 && (
+                    <ContentRow
+                      title="Continue Watching"
+                      items={combinedHistory}
+                      onCardClick={handleContentRowCardClick}
+                    />
+                  )
                 );
               })()}
             </>
@@ -233,17 +249,20 @@ const Index = React.memo(() => {
                 {/* Movies Row */}
                 <ContentRow
                   title="Movies"
-                  items={content.allContent.filter(item => item.type === 'movie' && !item.isKids).slice(0, 10)}
+                  items={content.allContent
+                    .filter((item) => item.type === "movie" && !item.isKids)
+                    .slice(0, 10)}
                   onCardClick={handleContentRowCardClick}
                 />
 
                 {/* TV Shows Row */}
                 <ContentRow
                   title="TV Shows"
-                  items={content.allContent.filter(item => item.type === 'series' && !item.isKids).slice(0, 10)}
+                  items={content.allContent
+                    .filter((item) => item.type === "series" && !item.isKids)
+                    .slice(0, 10)}
                   onCardClick={handleContentRowCardClick}
                 />
-
               </>
             ) : (
               /* Specific Genre View */
@@ -261,14 +280,21 @@ const Index = React.memo(() => {
                   onCardClick={handleContentRowCardClick}
                 />
                 <div className="mt-8 mb-8 pl-4">
-                  <h2 className="text-2xl mb-4">All {activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)}</h2>
+                  <h2 className="text-2xl mb-4">
+                    All{" "}
+                    {activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)}
+                  </h2>
                   {filteredContent.length > 0 ? (
                     <ContentGrid
                       items={filteredContent}
                       onCardClick={handleContentRowCardClick}
                     />
                   ) : (
-                    <div className="text-center py-16 text-gray-400 font-medium">No Results Found For {activeGenre.charAt(0).toUpperCase() + activeGenre.slice(1)}</div>
+                    <div className="text-center py-16 text-gray-400 font-medium">
+                      No Results Found For{" "}
+                      {activeGenre.charAt(0).toUpperCase() +
+                        activeGenre.slice(1)}
+                    </div>
                   )}
                 </div>
               </>
@@ -295,7 +321,7 @@ const Index = React.memo(() => {
           item={selectedItem}
           variant="auto"
           autoDetectKids={true}
-          onPlayEpisode={() => { }} // Enables internal player mode
+          onPlayEpisode={() => {}} // Enables internal player mode
           movieId={selectedItem.id}
           videoUrl={rawContent.find((i) => i.id === selectedItem.id)?.video_url}
           channel={channels.find((c) => c.id === selectedItem.channelId) as any}

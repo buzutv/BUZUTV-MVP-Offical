@@ -9,7 +9,13 @@ import { useChannels } from "@/hooks/useChannels";
 import ContentModal from "@/components/ContentModal";
 import FullscreenPlayer from "@/components/FullscreenPlayer";
 import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
@@ -20,7 +26,10 @@ import { useDispatch } from "react-redux";
 import { openScreenPlayer, closeScreenPlayer } from "@/store/screenPlayerSlice";
 import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
 import { Content } from "@/types";
-import { useCreatePlaylistMutation, useAddPlaylistItemMutation } from "@/store/playlistSlice";
+import {
+  useCreatePlaylistMutation,
+  useAddPlaylistItemMutation,
+} from "@/store/playlistSlice";
 
 export interface ContentCardProps {
   item: Movie | any;
@@ -57,12 +66,13 @@ const ContentCard = ({
   isMoreLikeThis = false,
   width = "auto",
   playlists,
-  hideGradient = false
+  hideGradient = false,
 }: ContentCardProps) => {
   const dispatch = useDispatch();
   const location = useLocation();
   const { isLoggedIn, setShowLoginModal, user } = useAuth();
-  const { favoriteIds, addToFavorites, removeFromFavorites } = useUserFavorites();
+  const { favoriteIds, addToFavorites, removeFromFavorites } =
+    useUserFavorites();
   const { content, refetch: refetchContent } = useContent();
   const { channels } = useChannels();
   const [createPlaylist] = useCreatePlaylistMutation();
@@ -75,15 +85,15 @@ const ContentCard = ({
   const [playlistForm, setPlaylistForm] = useState<{
     title: string;
   }>({
-    title: '',
+    title: "",
   });
-
-  console.log("Content Card", item)
 
   // State to control the create playlist dialog
   const [isCreatePlaylistOpen, setIsCreatePlaylistOpen] = useState(false);
 
-  const [currentModalItem, setCurrentModalItem] = useState<Movie | Content | null>(null);
+  const [currentModalItem, setCurrentModalItem] = useState<
+    Movie | Content | null
+  >(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentVideoUrl, setCurrentVideoUrl] = useState("");
   const [currentVideoTitle, setCurrentVideoTitle] = useState("");
@@ -105,12 +115,10 @@ const ContentCard = ({
       isKids: item.isKids || item.is_kids,
       ...item,
     }),
-    [item]
+    [item],
   );
 
-
   const actualItem = currentModalItem || normalizedItem;
-  console.log("Normalized Item", normalizedItem)
 
   const isSaved = favoriteIds.includes(actualItem.id);
 
@@ -123,16 +131,27 @@ const ContentCard = ({
     const history = normalizedItem.user_watch_history;
     if (!history) return null;
     if (Array.isArray(history)) {
-      return [...history].sort((a, b) =>
-        new Date(b.watched_at || 0).getTime() - new Date(a.watched_at || 0).getTime()
+      return [...history].sort(
+        (a, b) =>
+          new Date(b.watched_at || 0).getTime() -
+          new Date(a.watched_at || 0).getTime(),
       )[0];
     }
     return history;
   }, [normalizedItem.user_watch_history]);
 
-  const effectiveShowProgress = showProgress || (watchHistory && watchHistory.watch_percentage > 0 && watchHistory.watch_percentage < 100);
-  const effectiveProgressPercent = progressPercent || watchHistory?.watch_percentage || 0;
-  const effectiveShowResumeButton = showResumeButton || (watchHistory && watchHistory.watch_percentage > 0 && watchHistory.watch_percentage < 100);
+  const effectiveShowProgress =
+    showProgress ||
+    (watchHistory &&
+      watchHistory.watch_percentage > 0 &&
+      watchHistory.watch_percentage < 100);
+  const effectiveProgressPercent =
+    progressPercent || watchHistory?.watch_percentage || 0;
+  const effectiveShowResumeButton =
+    showResumeButton ||
+    (watchHistory &&
+      watchHistory.watch_percentage > 0 &&
+      watchHistory.watch_percentage < 100);
 
   const handleSave = useCallback(
     (e: React.MouseEvent) => {
@@ -142,7 +161,7 @@ const ContentCard = ({
       if (isSaved) removeFromFavorites(actualItem.id);
       else addToFavorites(actualItem.id);
     },
-    [isSaved, actualItem.id, addToFavorites, removeFromFavorites]
+    [isSaved, actualItem.id, addToFavorites, removeFromFavorites],
   );
 
   const handleCardClick = useCallback(() => {
@@ -161,28 +180,35 @@ const ContentCard = ({
     setCurrentModalItem(actualItem);
   }, [onOpen, onItemClick, actualItem, isLoggedIn, setShowLoginModal]);
 
+  const handleAddtoPlaylist = useCallback(
+    async (playlistId: string) => {
+      try {
+        await addPlaylistItem([
+          {
+            id: crypto.randomUUID(),
+            playlist_id: playlistId,
+            position: 0,
+            content_id: actualItem.id,
+          },
+        ]).unwrap();
 
-  const handleAddtoPlaylist = useCallback(async (playlistId: string) => {
-    try {
-      await addPlaylistItem([{
-        id: crypto.randomUUID(),
-        playlist_id: playlistId,
-        position: 0,
-        content_id: actualItem.id
-      }]).unwrap();
-
-      toast.success("Movie successfully added to playlist!");
-    }
-    catch (error: any) {
-      console.log("Error adding to playlist:", error);
-      if (error?.data?.message?.includes('duplicate key value violates unique constraint') ||
-        error?.message?.includes('duplicate key value')) {
-        toast.error("This Movie is already in the selected playlist.");
-      } else {
-        toast.error("Failed to add to playlist.");
+        toast.success("Movie successfully added to playlist!");
+      } catch (error: any) {
+        console.log("Error adding to playlist:", error);
+        if (
+          error?.data?.message?.includes(
+            "duplicate key value violates unique constraint",
+          ) ||
+          error?.message?.includes("duplicate key value")
+        ) {
+          toast.error("This Movie is already in the selected playlist.");
+        } else {
+          toast.error("Failed to add to playlist.");
+        }
       }
-    }
-  }, [actualItem, addPlaylistItem]);
+    },
+    [actualItem, addPlaylistItem],
+  );
 
   const handleModalPlayClick = useCallback(() => {
     if (!contentItem?.video_url) return;
@@ -190,15 +216,17 @@ const ContentCard = ({
     const vidUrl = contentItem.video_url;
     const vidTitle = actualItem.title;
 
-    dispatch(openScreenPlayer({
-      isOpen: true,
-      selectedVideo: contentItem || actualItem,
-      selectedVideoTitle: vidTitle,
-      videoUrl: vidUrl,
-      contentId: actualItem.id,
-      poster_url: actualItem.poster_url || actualItem.posterUrl,
-      isSeries: actualItem.type === 'series'
-    }));
+    dispatch(
+      openScreenPlayer({
+        isOpen: true,
+        selectedVideo: contentItem || actualItem,
+        selectedVideoTitle: vidTitle,
+        videoUrl: vidUrl,
+        contentId: actualItem.id,
+        poster_url: actualItem.poster_url || actualItem.posterUrl,
+        isSeries: actualItem.type === "series",
+      }),
+    );
 
     if (onPlayFullscreen) {
       onPlayFullscreen(vidUrl);
@@ -213,38 +241,39 @@ const ContentCard = ({
     }
   }, [contentItem, onPlayFullscreen, actualItem, dispatch]);
 
-
   const handleSubmitPlaylist = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
       const payload = {
         title: playlistForm.title,
-        created_by: user?.id
+        created_by: user?.id,
       };
 
       await createPlaylist(payload).unwrap();
 
       toast.success("Playlist created successfully!");
       setIsCreatePlaylistOpen(false);
-      setPlaylistForm({ title: '' });
+      setPlaylistForm({ title: "" });
     } catch (error) {
-      console.error('Error creating playlist:', error);
+      console.error("Error creating playlist:", error);
       toast.error("Failed to create playlist.");
     }
-  }
+  };
 
   const handlePlayEpisode = useCallback(
     (videoUrl: string, episodeTitle: string) => {
-      dispatch(openScreenPlayer({
-        isOpen: true,
-        selectedVideo: actualItem, // Current series
-        selectedVideoTitle: episodeTitle,
-        videoUrl: videoUrl,
-        contentId: actualItem.id,
-        poster_url: actualItem.poster_url || actualItem.posterUrl,
-        isSeries: actualItem.type === 'series'
-      }));
+      dispatch(
+        openScreenPlayer({
+          isOpen: true,
+          selectedVideo: actualItem, // Current series
+          selectedVideoTitle: episodeTitle,
+          videoUrl: videoUrl,
+          contentId: actualItem.id,
+          poster_url: actualItem.poster_url || actualItem.posterUrl,
+          isSeries: actualItem.type === "series",
+        }),
+      );
 
       if (onPlayFullscreen) {
         onPlayFullscreen(videoUrl);
@@ -258,7 +287,7 @@ const ContentCard = ({
         }, 200);
       }
     },
-    [onPlayFullscreen, actualItem, dispatch]
+    [onPlayFullscreen, actualItem, dispatch],
   );
 
   const handleExitFullscreen = () => {
@@ -269,11 +298,10 @@ const ContentCard = ({
     setCurrentVideoTitle("");
   };
 
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setPlaylistForm({ ...playlistForm, [name]: value });
-  }
+  };
 
   const handleSaveModal = useCallback(() => {
     if (isSaved) removeFromFavorites(actualItem.id);
@@ -286,26 +314,30 @@ const ContentCard = ({
         .filter(
           (c) =>
             c.id !== actualItem.id &&
-            (c.genre === actualItem.genre || c.channel_id === actualItem.channelId)
+            (c.genre === actualItem.genre ||
+              c.channel_id === actualItem.channelId),
         )
         .slice(0, 6),
-    [content, actualItem.id, actualItem.genre, actualItem.channelId]
+    [content, actualItem.id, actualItem.genre, actualItem.channelId],
   );
 
   const gradientClasses = effectiveKidsMode
     ? {
-      base: "bg-[linear-gradient(to_top,rgba(37,99,235,0.95)_0%,rgba(37,99,235,0.9)_40%,rgba(37,99,235,0.4)_60%,rgba(37,99,235,0.2)_80%,rgba(37,99,235,0.1)_90%,transparent_100%)]",
-      hover:
-        "bg-[linear-gradient(to_top,rgba(37,99,235,0.95)_0%,rgba(37,99,235,0.7)_30%,rgba(37,99,235,0.4)_60%,transparent_90%)]",
-    }
+        base: "bg-[linear-gradient(to_top,rgba(37,99,235,0.95)_0%,rgba(37,99,235,0.9)_40%,rgba(37,99,235,0.4)_60%,rgba(37,99,235,0.2)_80%,rgba(37,99,235,0.1)_90%,transparent_100%)]",
+        hover:
+          "bg-[linear-gradient(to_top,rgba(37,99,235,0.95)_0%,rgba(37,99,235,0.7)_30%,rgba(37,99,235,0.4)_60%,transparent_90%)]",
+      }
     : {
-      base: "bg-[linear-gradient(to_top,rgba(0,0,0,0.95)_0%,rgba(0,0,0,0.7)_30%,rgba(0,0,0,0.4)_60%,rgba(0,0,0,0.2)_80%,rgba(0,0,0,0.1)_90%,transparent_100%)]",
-      hover:
-        "bg-[linear-gradient(to_top,rgba(0,0,0,0.95)_0%,rgba(0,0,0,0.7)_30%,rgba(0,0,0,0.4)_60%,transparent_90%)]",
-    };
+        base: "bg-[linear-gradient(to_top,rgba(0,0,0,0.95)_0%,rgba(0,0,0,0.7)_30%,rgba(0,0,0,0.4)_60%,rgba(0,0,0,0.2)_80%,rgba(0,0,0,0.1)_90%,transparent_100%)]",
+        hover:
+          "bg-[linear-gradient(to_top,rgba(0,0,0,0.95)_0%,rgba(0,0,0,0.7)_30%,rgba(0,0,0,0.4)_60%,transparent_90%)]",
+      };
 
-  const widthClass =
-    isMoreLikeThis ? "w-64 aspect-video flex-shrink-0" : width === "auto" ? "" : width;
+  const widthClass = isMoreLikeThis
+    ? "w-64 aspect-video flex-shrink-0"
+    : width === "auto"
+      ? ""
+      : width;
 
   return (
     <>
@@ -318,21 +350,24 @@ const ContentCard = ({
           userId={user?.id} // Pass userId prop
           type={item?.type}
           movieId={item?.id}
-
         />
       )}
 
       <div
         className={`content-card group ${widthClass} border-2 border-transparent hover:scale-105 hover:border-white transition-transform duration-500 hover:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:scale-105 focus:border-white focus:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:outline-none rounded-lg transition-all duration-300 overflow-hidden relative ${className}
           ${!hideGradient ? "bg-gradient-to-t from-black/90 from-0% via-black/40 via-40% to-transparent to-90%" : ""}
-          ${!className.includes('aspect-') && !isMoreLikeThis ? "aspect-video" : ""}
+          ${!className.includes("aspect-") && !isMoreLikeThis ? "aspect-video" : ""}
         `}
         tabIndex={0}
-        aria-label={`${normalizedItem.type === "series" ? "View series" : "View movie"} ${normalizedItem.title
-          }`}
+        aria-label={`${normalizedItem.type === "series" ? "View series" : "View movie"} ${
+          normalizedItem.title
+        }`}
         onKeyDown={(e) => {
           // Don't trigger card click if we're typing in an input or textarea
-          if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+          if (
+            e.target instanceof HTMLInputElement ||
+            e.target instanceof HTMLTextAreaElement
+          ) {
             return;
           }
           if (e.key === "Enter" || e.key === " ") {
@@ -342,7 +377,7 @@ const ContentCard = ({
         }}
       >
         {/* ✅ Ellipsis Button in Top-Right Corner - ONLY FOR MOVIES */}
-        {(
+        {
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -355,32 +390,52 @@ const ContentCard = ({
               </Button>
             </PopoverTrigger>
 
-            <PopoverContent className="min-w-[220px] p-2 flex flex-col gap-2 bg-[#120222] border-white/10 text-white backdrop-blur-xl" onInteractOutside={(e) => e.stopPropagation()}>
+            <PopoverContent
+              className="min-w-[220px] p-2 flex flex-col gap-2 bg-[#120222] border-white/10 text-white backdrop-blur-xl"
+              onInteractOutside={(e) => e.stopPropagation()}
+            >
               <div className="flex flex-col gap-2">
                 <button
                   onClick={handleSave}
                   className="flex items-center gap-3 w-full p-2 hover:bg-white/10 rounded-md transition-colors text-sm font-medium"
                 >
-                  <Heart className={`w-4 h-4 ${isSaved ? "fill-red-500 text-red-500" : "text-gray-400"}`} />
+                  <Heart
+                    className={`w-4 h-4 ${isSaved ? "fill-red-500 text-red-500" : "text-gray-400"}`}
+                  />
                   {isSaved ? "Remove from Favorites" : "Add to Favorites"}
                 </button>
 
                 <div className="h-px bg-white/10 my-1" />
 
-                <Dialog open={isCreatePlaylistOpen} onOpenChange={setIsCreatePlaylistOpen}>
+                <Dialog
+                  open={isCreatePlaylistOpen}
+                  onOpenChange={setIsCreatePlaylistOpen}
+                >
                   <DialogTrigger asChild>
                     <Button className="w-full bg-slate-800 hover:bg-slate-700 text-white text-sm p-2">
                       Create New Playlist
                     </Button>
                   </DialogTrigger>
 
-                  <DialogContent className="max-w-md bg-[#120222] border-white/10 text-white backdrop-blur-xl" onPointerDownCapture={(e) => e.stopPropagation()} onKeyDownCapture={(e) => e.stopPropagation()}>
+                  <DialogContent
+                    className="max-w-md bg-[#120222] border-white/10 text-white backdrop-blur-xl"
+                    onPointerDownCapture={(e) => e.stopPropagation()}
+                    onKeyDownCapture={(e) => e.stopPropagation()}
+                  >
                     <DialogHeader>
-                      <DialogTitle className="text-white">Create New Playlist</DialogTitle>
+                      <DialogTitle className="text-white">
+                        Create New Playlist
+                      </DialogTitle>
                     </DialogHeader>
-                    <form className="grid gap-4 py-4" onSubmit={handleSubmitPlaylist}>
+                    <form
+                      className="grid gap-4 py-4"
+                      onSubmit={handleSubmitPlaylist}
+                    >
                       <div className="grid gap-2">
-                        <label htmlFor="playlist-title" className="text-sm font-medium">
+                        <label
+                          htmlFor="playlist-title"
+                          className="text-sm font-medium"
+                        >
                           Playlist Name
                         </label>
                         <input
@@ -395,7 +450,10 @@ const ContentCard = ({
                           onKeyDown={(e) => e.stopPropagation()}
                         />
                       </div>
-                      <Button type="submit" className="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold">
+                      <Button
+                        type="submit"
+                        className="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold"
+                      >
                         Create Playlist
                       </Button>
                     </form>
@@ -404,14 +462,21 @@ const ContentCard = ({
 
                 <div className="h-px bg-white/10 my-1" />
 
-                <span className="text-[10px] font-bold text-gray-400 uppercase px-2 tracking-wider">Add to Playlist</span>
+                <span className="text-[10px] font-bold text-gray-400 uppercase px-2 tracking-wider">
+                  Add to Playlist
+                </span>
                 <div className="flex flex-col gap-1 max-h-[160px] overflow-y-auto custom-scrollbar">
                   {displayPlaylists?.map((playlist) => (
                     <div
                       key={playlist.id}
                       className="flex items-center justify-between p-2 hover:bg-white/10 rounded-md transition-colors group/pl"
                     >
-                      <span className="text-sm truncate max-w-[130px] text-gray-200" title={playlist.title}>{playlist.title}</span>
+                      <span
+                        className="text-sm truncate max-w-[130px] text-gray-200"
+                        title={playlist.title}
+                      >
+                        {playlist.title}
+                      </span>
                       <Button
                         size="sm"
                         variant="ghost"
@@ -423,14 +488,15 @@ const ContentCard = ({
                     </div>
                   ))}
                   {(!displayPlaylists || displayPlaylists.length === 0) && (
-                    <div className="text-sm text-gray-500 p-2 italic">No playlists found</div>
+                    <div className="text-sm text-gray-500 p-2 italic">
+                      No playlists found
+                    </div>
                   )}
                 </div>
               </div>
-
             </PopoverContent>
           </Popover>
-        )}
+        }
 
         <div className="block cursor-pointer h-full" onClick={handleCardClick}>
           <div className="relative overflow-hidden transition-all duration-300 h-full">
@@ -455,10 +521,13 @@ const ContentCard = ({
 
             {!hideGradient && (
               <div className="absolute inset-0 z-0 rounded-lg pointer-events-none">
-                <div className={`absolute bottom-[-1px] left-0 right-0 h-1/2 ${gradientClasses.base}`} />
                 <div
-                  className={`absolute bottom-[-1px] left-0 right-0 h-1/2 ${gradientClasses.hover
-                    } opacity-0 group-hover:opacity-50 transition-opacity duration-300`}
+                  className={`absolute bottom-[-1px] left-0 right-0 h-1/2 ${gradientClasses.base}`}
+                />
+                <div
+                  className={`absolute bottom-[-1px] left-0 right-0 h-1/2 ${
+                    gradientClasses.hover
+                  } opacity-0 group-hover:opacity-50 transition-opacity duration-300`}
                 />
               </div>
             )}
@@ -475,7 +544,6 @@ const ContentCard = ({
             </div>
 
             {/* Removed Continue Watching button as per user request */}
-
 
             {/* Remove the blocking button for isMoreLikeThis to allow context menu clicks */}
             {/* {isMoreLikeThis && (
@@ -512,6 +580,7 @@ const ContentCard = ({
       )}
     </>
   );
-}
+};
 
 export default ContentCard;
+

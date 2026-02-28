@@ -1,4 +1,11 @@
-import { fetchSeriesSeasons, fetchWatchHistory, getOptimizedImageUrl, getRecommendedMovies, getYouTubeEmbedUrl, saveWatchHistory } from "@/utils/youtubeUtils";
+import {
+  fetchSeriesSeasons,
+  fetchWatchHistory,
+  getOptimizedImageUrl,
+  getRecommendedMovies,
+  getYouTubeEmbedUrl,
+  saveWatchHistory,
+} from "@/utils/youtubeUtils";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client";
@@ -7,11 +14,18 @@ import VideoPlayer from "./VideoPlayer";
 import PlaylistVideoPlayer from "./PlaylistVideoPlayer";
 import usePlaylists from "@/hooks/usePlaylists";
 import RecommendedSection from "./RecommendedSection";
-import { useLazyGetRecommendationsWtihContentEmbeddedQuery, useLazyGetUserRecommendationsQuery } from "@/store/recommendationSlice";
+import {
+  useLazyGetRecommendationsWtihContentEmbeddedQuery,
+  useLazyGetUserRecommendationsQuery,
+} from "@/store/recommendationSlice";
 
 import { Episode, FullscreenPlayerProps } from "@/types";
 import MovieDetailSection from "./MovieDetailSection";
-import { useLazyGetContentWithWatchHistoryFiltersQuery, useLazyGetPlaylistContentWithWatchHistoryQuery, useLazyGetSearchContentWithWatchHistoryQuery } from "@/store/contentSlice";
+import {
+  useLazyGetContentWithWatchHistoryFiltersQuery,
+  useLazyGetPlaylistContentWithWatchHistoryQuery,
+  useLazyGetSearchContentWithWatchHistoryQuery,
+} from "@/store/contentSlice";
 import RelatedContent from "./RelatedContent";
 import AdToast from "./AdToast";
 import { useDispatch, useSelector } from "react-redux";
@@ -21,7 +35,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useContent } from "@/hooks/useContent";
 import ProtectedRoute from "./auth/ProtectedRoute";
 //comment
-//comment 
+//comment
 //
 const FullscreenPlayer = ({
   isOpen,
@@ -41,14 +55,13 @@ const FullscreenPlayer = ({
   onNext,
   onPrevious,
   playlistInfo,
-  playlistId
+  playlistId,
 }: FullscreenPlayerProps) => {
-
-  const playerRef = useRef<HTMLDivElement>()
-  const [movieid, setMovieid] = useState<string>(movieId)
+  const playerRef = useRef<HTMLDivElement>();
+  const [movieid, setMovieid] = useState<string>(movieId);
   const [duration, setDuration] = useState(0);
   const [movies, setMovies] = useState<any[]>([]);
-  const [videoEnded, setVideoEnded] = useState(false)
+  const [videoEnded, setVideoEnded] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   // const currentMovie = movies[0];
@@ -60,59 +73,90 @@ const FullscreenPlayer = ({
   const navigate = useNavigate();
   const [final, setFinal] = useState(0);
   const [video_id, setVideoId] = useState<string>("");
-  const { user } = useAuth()
+  const { user } = useAuth();
   // Refs to hold latest values for callbacks to avoid dependency cycles
   const moviesRef = useRef(movies);
   const durationRef = useRef(duration);
   const currentMovieIdRef = useRef<string | null>(null);
-  const playlistRef = useRef<string>("")
-  const { refetch: refetchContentWithWatchHistory } = useContent()
+  const playlistRef = useRef<string>("");
+  const { refetch: refetchContentWithWatchHistory } = useContent();
   // Episode selection state for series
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [showAd, setShowAd] = useState(false);
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [actualVideoUrl, setActualVideoUrl] = useState(videoUrl);
-  const id = useParams()
-  const { triggerPlaylistWithItemsById } = usePlaylists()
-  const [playlists, setPlaylists] = useState<any[]>([])
+  const id = useParams();
+  const { triggerPlaylistWithItemsById } = usePlaylists();
+  const [playlists, setPlaylists] = useState<any[]>([]);
   // const { refetch } = usePlaylists()
-  const [recommended, setRecommended] = useState<any[]>([])
+  const [recommended, setRecommended] = useState<any[]>([]);
   // const [seasons, setSeasons] = useState<any[]>([]);
   const [selectedSeasonId, setSelectedSeasonId] = useState<string>("");
   // Sync refs with state
-  const parentRef = useRef()
+  const parentRef = useRef();
   const dispatch = useDispatch();
   // const navigate = useNavigate();
-  const [triggerRecommendations, resultRecommendations] = useLazyGetRecommendationsWtihContentEmbeddedQuery();
-  const [triggerRelatedContent, resultRelatedContent] = useLazyGetContentWithWatchHistoryFiltersQuery();
-  const selectedContent = useSelector((state: any) => state.screenPlayer.selectedVideo);
-  const reduxVideoUrl = useSelector((state: any) => state.screenPlayer.videoUrl);
-  const [triggerGetContentWithWatchHistory, result] = useLazyGetPlaylistContentWithWatchHistoryQuery()
+  const [triggerRecommendations, resultRecommendations] =
+    useLazyGetRecommendationsWtihContentEmbeddedQuery();
+  const [triggerRelatedContent, resultRelatedContent] =
+    useLazyGetContentWithWatchHistoryFiltersQuery();
+  const selectedContent = useSelector(
+    (state: any) => state.screenPlayer.selectedVideo,
+  );
+  const reduxVideoUrl = useSelector(
+    (state: any) => state.screenPlayer.videoUrl,
+  );
+  const [triggerGetContentWithWatchHistory, result] =
+    useLazyGetPlaylistContentWithWatchHistoryQuery();
   const isSeries = useSelector((state: any) => state.screenPlayer.isSeries);
-  const contentIds = useSelector((state: any) => state.screenPlayer.playlistInfo);
-  const seriesContentId = useSelector((state: any) => state.screenPlayer.contentId);
-  const seriesPosterUrl = useSelector((state: any) => state.screenPlayer.poster_url);
-  const seriesDataFromRedux = useSelector((state: any) => state.screenPlayer.seriesData);
+  const contentIds = useSelector(
+    (state: any) => state.screenPlayer.playlistInfo,
+  );
+  const seriesContentId = useSelector(
+    (state: any) => state.screenPlayer.contentId,
+  );
+  const seriesPosterUrl = useSelector(
+    (state: any) => state.screenPlayer.poster_url,
+  );
+  const seriesDataFromRedux = useSelector(
+    (state: any) => state.screenPlayer.seriesData,
+  );
   const [isLoadingEpisodes, setIsLoadingEpisodes] = useState(false);
-  const [triggerGetSearchContentWithWatchHistory, resultGetSearchContentWithWatchHistory] = useLazyGetSearchContentWithWatchHistoryQuery()
-  console.log("Selected Content from Redux in FullscreenPlayer:", movieId);
-  const [localProgress, setLocalProgress] = useState<Record<string, { watch_percentage: number, last_position: number }>>({});
-  const currentSeriesId = isSeries ? (selectedContent?.series_id || selectedContent?.id || seriesContentId || movieId) : null;
+  const [
+    triggerGetSearchContentWithWatchHistory,
+    resultGetSearchContentWithWatchHistory,
+  ] = useLazyGetSearchContentWithWatchHistoryQuery();
+  //console.log("Selected Content from Redux in FullscreenPlayer:", movieId);
+  const [localProgress, setLocalProgress] = useState<
+    Record<string, { watch_percentage: number; last_position: number }>
+  >({});
+  const currentSeriesId = isSeries
+    ? selectedContent?.series_id ||
+    selectedContent?.id ||
+    seriesContentId ||
+    movieId
+    : null;
 
-  const handleProgressUpdate = (data: { id: string, watch_percentage: number, last_position: number }) => {
-    setLocalProgress(prev => ({
+  const handleProgressUpdate = (data: {
+    id: string;
+    watch_percentage: number;
+    last_position: number;
+  }) => {
+    setLocalProgress((prev) => ({
       ...prev,
       [data.id]: {
         watch_percentage: data.watch_percentage,
-        last_position: data.last_position
-      }
+        last_position: data.last_position,
+      },
     }));
   };
 
   // Callback to advance to the next item in the playlist (e.g. after a series finishes)
   const handlePlaylistAdvance = async () => {
     console.log("Handling playlist advance...");
-    const playlistItems = Array.isArray(contentIds) ? contentIds[0]?.playlist_items : contentIds?.playlist_items || [];
+    const playlistItems = Array.isArray(contentIds)
+      ? contentIds[0]?.playlist_items
+      : contentIds?.playlist_items || [];
 
     if (!playlistItems || playlistItems.length === 0) {
       console.log("No playlist items to advance to.");
@@ -121,7 +165,9 @@ const FullscreenPlayer = ({
 
     // Find current index based on the *parent* content ID (movie ID or series ID)
     // If we are deep in a series, selectedContent might be an episode, so we check series_id
-    const currentId = isSeries ? (selectedContent?.series_id || selectedContent?.id) : selectedContent?.id;
+    const currentId = isSeries
+      ? selectedContent?.series_id || selectedContent?.id
+      : selectedContent?.id;
 
     // Note: playlistItems structure depends on the join. Usually it has 'content' object or is the content object.
     const currentIndex = playlistItems.findIndex((item: any) => {
@@ -129,7 +175,11 @@ const FullscreenPlayer = ({
       return itemId === currentId;
     });
 
-    console.log("Playlist Advance Debug:", { currentId, currentIndex, total: playlistItems.length });
+    console.log("Playlist Advance Debug:", {
+      currentId,
+      currentIndex,
+      total: playlistItems.length,
+    });
 
     if (currentIndex === -1 || currentIndex >= playlistItems.length - 1) {
       console.log("End of playlist or current item not found.");
@@ -142,7 +192,7 @@ const FullscreenPlayer = ({
     if (!nextContent) return;
 
     // Transition to next item
-    if (nextContent.type === 'series') {
+    if (nextContent.type === "series") {
       // Fetch seasons/episodes for the next series
       setIsLoadingEpisodes(true);
       try {
@@ -156,36 +206,42 @@ const FullscreenPlayer = ({
         if (data && data.length > 0) {
           const sortedSeasons = data.map((s: any) => ({
             ...s,
-            episodes: s.episodes?.map((ep: any) => {
-              const history = Array.isArray(ep.user_watch_history)
-                ? ep.user_watch_history.find((h: any) => h.user_id === user?.id)
-                : ep.user_watch_history;
+            episodes: s.episodes
+              ?.map((ep: any) => {
+                const history = Array.isArray(ep.user_watch_history)
+                  ? ep.user_watch_history.find(
+                    (h: any) => h.user_id === user?.id,
+                  )
+                  : ep.user_watch_history;
 
-              return {
-                ...ep,
-                watch_percentage: history?.watch_percentage || 0,
-                last_position: history?.last_position || 0,
-                completed: history?.completed || false,
-                user_watch_history: undefined
-              };
-            }).sort((a: any, b: any) => a.episode_number - b.episode_number)
+                return {
+                  ...ep,
+                  watch_percentage: history?.watch_percentage || 0,
+                  last_position: history?.last_position || 0,
+                  completed: history?.completed || false,
+                  user_watch_history: undefined,
+                };
+              })
+              .sort((a: any, b: any) => a.episode_number - b.episode_number),
           }));
 
           const firstSeason = sortedSeasons[0];
           const firstEpisode = firstSeason?.episodes?.[0];
 
           if (firstSeason && firstEpisode) {
-            dispatch(openScreenPlayer({
-              isOpen: true,
-              isSeries: true,
-              selectedVideo: firstEpisode,
-              currentVideoIndex: 0, // Start at beginning of new series
-              seriesData: sortedSeasons,
-              contentId: nextContent.id, // Set new series ID
-              poster_url: nextContent.poster_url,
-              // Keep playlist info!
-              playlistInfo: contentIds
-            }));
+            dispatch(
+              openScreenPlayer({
+                isOpen: true,
+                isSeries: true,
+                selectedVideo: firstEpisode,
+                currentVideoIndex: 0, // Start at beginning of new series
+                seriesData: sortedSeasons,
+                contentId: nextContent.id, // Set new series ID
+                poster_url: nextContent.poster_url,
+                // Keep playlist info!
+                playlistInfo: contentIds,
+              }),
+            );
             setSeasons(sortedSeasons);
             setSelectedSeasonId(firstSeason.id);
           }
@@ -197,18 +253,20 @@ const FullscreenPlayer = ({
       }
     } else {
       // Next item is a movie
-      dispatch(openScreenPlayer({
-        isOpen: true,
-        isSeries: false,
-        selectedVideo: nextContent,
-        contentId: nextContent.id,
-        poster_url: nextContent.poster_url,
-        // We don't track 'index' for playlist in the same way VideoPlayer tracks episodes, 
-        // but VideoPlayer will see 'isSeries: false' and use playlistItems.
-        // If isSeries=false, queue=playlistItems. So we must set index to currentIndex + 1.
-        currentVideoIndex: currentIndex + 1,
-        playlistInfo: contentIds
-      }));
+      dispatch(
+        openScreenPlayer({
+          isOpen: true,
+          isSeries: false,
+          selectedVideo: nextContent,
+          contentId: nextContent.id,
+          poster_url: nextContent.poster_url,
+          // We don't track 'index' for playlist in the same way VideoPlayer tracks episodes,
+          // but VideoPlayer will see 'isSeries: false' and use playlistItems.
+          // If isSeries=false, queue=playlistItems. So we must set index to currentIndex + 1.
+          currentVideoIndex: currentIndex + 1,
+          playlistInfo: contentIds,
+        }),
+      );
       setSeasons([]);
     }
   };
@@ -224,9 +282,7 @@ const FullscreenPlayer = ({
     if (movies[0] && movies[0].id !== currentMovie?.id) {
       setCurrentMovie(movies[0]);
     }
-
-
-  }, [movies])
+  }, [movies]);
   const [seasons, setSeasons] = useState<any[]>(season || []);
 
   useEffect(() => {
@@ -238,12 +294,16 @@ const FullscreenPlayer = ({
   // Sync with Redux seriesData and poster_url
   useEffect(() => {
     if (isSeries && seriesDataFromRedux) {
-      const seasonsToSet = Array.isArray(seriesDataFromRedux) ? seriesDataFromRedux : [seriesDataFromRedux];
+      const seasonsToSet = Array.isArray(seriesDataFromRedux)
+        ? seriesDataFromRedux
+        : [seriesDataFromRedux];
       setSeasons(seasonsToSet);
 
       if (seasonsToSet.length > 0) {
         // Check if current selected season is actually in the new list, if not select the first one
-        const seasonExists = seasonsToSet.find(s => s.id === selectedSeasonId);
+        const seasonExists = seasonsToSet.find(
+          (s) => s.id === selectedSeasonId,
+        );
         if (!seasonExists) {
           setSelectedSeasonId(seasonsToSet[0].id);
         }
@@ -255,7 +315,11 @@ const FullscreenPlayer = ({
   useEffect(() => {
     const fetchNewSeasons = async () => {
       // Check if we switched to a series that matches selectedContent but differs from current seasons
-      if (isSeries && currentSeriesId && (!seasons.length || seasons[0]?.series_id !== currentSeriesId)) {
+      if (
+        isSeries &&
+        currentSeriesId &&
+        (!seasons.length || seasons[0]?.series_id !== currentSeriesId)
+      ) {
         setIsLoadingEpisodes(true);
         try {
           const { data, error } = await (supabase as any)
@@ -268,21 +332,25 @@ const FullscreenPlayer = ({
             // Sort episodes and flatten history
             const sortedSeasons = data.map((s: any) => ({
               ...s,
-              episodes: s.episodes?.map((ep: any) => {
-                // Find history for this specific user if multiple returned (though RLS/filtering usually handles this)
-                const history = Array.isArray(ep.user_watch_history)
-                  ? ep.user_watch_history.find((h: any) => h.user_id === user?.id)
-                  : ep.user_watch_history;
+              episodes: s.episodes
+                ?.map((ep: any) => {
+                  // Find history for this specific user if multiple returned (though RLS/filtering usually handles this)
+                  const history = Array.isArray(ep.user_watch_history)
+                    ? ep.user_watch_history.find(
+                      (h: any) => h.user_id === user?.id,
+                    )
+                    : ep.user_watch_history;
 
-                return {
-                  ...ep,
-                  series_id: s.series_id || s.content_id, // Inject series_id
-                  watch_percentage: history?.watch_percentage || 0,
-                  last_position: history?.last_position || 0,
-                  completed: history?.completed || false,
-                  user_watch_history: undefined // Cleanup
-                };
-              }).sort((a: any, b: any) => a.episode_number - b.episode_number)
+                  return {
+                    ...ep,
+                    series_id: s.series_id || s.content_id, // Inject series_id
+                    watch_percentage: history?.watch_percentage || 0,
+                    last_position: history?.last_position || 0,
+                    completed: history?.completed || false,
+                    user_watch_history: undefined, // Cleanup
+                  };
+                })
+                .sort((a: any, b: any) => a.episode_number - b.episode_number),
             }));
             setSeasons(sortedSeasons);
 
@@ -291,7 +359,9 @@ const FullscreenPlayer = ({
             let enrichedEpisode = null;
             if (currentId) {
               for (const s of sortedSeasons) {
-                const match = s.episodes?.find((ep: any) => ep.id === currentId);
+                const match = s.episodes?.find(
+                  (ep: any) => ep.id === currentId,
+                );
                 if (match) {
                   enrichedEpisode = match;
                   break;
@@ -300,19 +370,25 @@ const FullscreenPlayer = ({
             }
 
             if (sortedSeasons.length > 0) {
-              dispatch(openScreenPlayer({
-                isSeries: true,
-                seriesData: sortedSeasons,
-                selectedVideo: enrichedEpisode || selectedContent,
-                contentId: currentSeriesId,
-                poster_url: seriesPosterUrl || poster_url
-              }));
+              dispatch(
+                openScreenPlayer({
+                  isSeries: true,
+                  seriesData: sortedSeasons,
+                  selectedVideo: enrichedEpisode || selectedContent,
+                  contentId: currentSeriesId,
+                  poster_url: seriesPosterUrl || poster_url,
+                }),
+              );
             }
 
             // Always select first season when series changes if not already set
             if (sortedSeasons.length > 0) {
               const first = sortedSeasons[0];
-              if (!selectedSeasonId || (enrichedEpisode && enrichedEpisode.season_id !== selectedSeasonId)) {
+              if (
+                !selectedSeasonId ||
+                (enrichedEpisode &&
+                  enrichedEpisode.season_id !== selectedSeasonId)
+              ) {
                 setSelectedSeasonId(enrichedEpisode?.season_id || first.id);
               }
             }
@@ -331,14 +407,16 @@ const FullscreenPlayer = ({
     fetchNewSeasons();
   }, [selectedContent?.id, selectedContent?.type, isSeries]);
 
-
   useEffect(() => {
     if (seasons && seasons.length > 0 && !selectedSeasonId) {
       const firstSeason = seasons[0];
       const firstEpisode = firstSeason.episodes?.[0];
       if (firstSeason && firstEpisode) {
         setSelectedSeasonId(firstSeason.id);
-        if (!currentEpisode || (currentEpisode as any).series_id !== firstSeason.series_id) {
+        if (
+          !currentEpisode ||
+          (currentEpisode as any).series_id !== firstSeason.series_id
+        ) {
           setCurrentEpisode(firstEpisode);
           setMovieid(firstEpisode.id);
           setActualVideoUrl(firstEpisode.video_url || firstEpisode.videoUrl);
@@ -349,17 +427,20 @@ const FullscreenPlayer = ({
   }, [type, seasons, selectedSeasonId, isSeries]);
 
   // Derived state: Get episodes for the currently selected season
-  const currentSeasonEpisodes = seasons?.length > 0 && seasons?.find(s => s.id === selectedSeasonId)?.episodes || [];
+  const currentSeasonEpisodes =
+    (seasons?.length > 0 &&
+      seasons?.find((s) => s.id === selectedSeasonId)?.episodes) ||
+    [];
   // console.log("Current Season Episodes", currentSeasonEpisodes)
   // Fetch movie data from Supabase
   useEffect(() => {
     async function fetchMovies() {
-      // If it's a series and we already have the episode in 'movies' state, 
+      // If it's a series and we already have the episode in 'movies' state,
       // don't fetch from the "content" table (series episodes are usually in the "episodes" or "seasons" data)
-      if (type === 'series') return;
+      if (type === "series") return;
 
       const queryUrl = actualVideoUrl || videoUrl;
-      if (!queryUrl || typeof queryUrl === 'object') return;
+      if (!queryUrl || typeof queryUrl === "object") return;
 
       const { data, error } = await (supabase as any)
         .from(`content?select=*,user_watch_history(*,movie_id)&user_watch_history.user_id=eq.${user?.id}`)
@@ -379,22 +460,28 @@ const FullscreenPlayer = ({
     if (selectedContent) {
       // Merge local progress if available
       const progress = localProgress[selectedContent.id];
-      const updatedContent = progress ? {
-        ...selectedContent,
-        watch_percentage: progress.watch_percentage,
-        last_position: progress.last_position
-      } : selectedContent;
+      const updatedContent = progress
+        ? {
+          ...selectedContent,
+          watch_percentage: progress.watch_percentage,
+          last_position: progress.last_position,
+        }
+        : selectedContent;
 
-      if (type === 'series' || updatedContent.episode_number) {
+      if (type === "series" || updatedContent.episode_number) {
         setCurrentEpisode(updatedContent);
         setMovieid(updatedContent.id);
         setActualVideoUrl(updatedContent.video_url || updatedContent.videoUrl);
-        if (updatedContent.season_id && updatedContent.season_id !== selectedSeasonId) {
+        if (
+          updatedContent.season_id &&
+          updatedContent.season_id !== selectedSeasonId
+        ) {
           setSelectedSeasonId(updatedContent.season_id);
         }
       } else {
         setMovieid(updatedContent.id);
-        const url = updatedContent.video_url || updatedContent.videoUrl || reduxVideoUrl;
+        const url =
+          updatedContent.video_url || updatedContent.videoUrl || reduxVideoUrl;
         setActualVideoUrl(url);
         // Ensure movies state reflects current content for related fetch etc
         if (updatedContent.id !== currentMovie?.id) {
@@ -445,12 +532,14 @@ const FullscreenPlayer = ({
         userId: user?.id,
         genre,
         year,
-        type
+        type,
       });
 
       if (!relatedData) return;
 
-      const filtered = relatedData.filter((item: any) => item.id !== currentMovie.id);
+      const filtered = relatedData.filter(
+        (item: any) => item.id !== currentMovie.id,
+      );
 
       // Merge history (embedded)
       const merged = filtered.map((item: any) => {
@@ -463,7 +552,7 @@ const FullscreenPlayer = ({
           ...item,
           watch_percentage: history?.watch_percentage || 0,
           last_position: history?.last_position || 0,
-          completed: history?.completed || false
+          completed: history?.completed || false,
         };
       });
 
@@ -471,33 +560,38 @@ const FullscreenPlayer = ({
     }
 
     fetchRelatedContent();
-  }, [selectedGenre, selectedYear, selectedType, currentMovie?.id, triggerRelatedContent]);
+  }, [
+    selectedGenre,
+    selectedYear,
+    selectedType,
+    currentMovie?.id,
+    triggerRelatedContent,
+  ]);
 
-
-  console.log("Current Movie in FullscreenPlayer:", selectedContent);
-  console.log("Related Content in FullscreenPlayer:", relatedContent);
-  console.log("Movies in FullscreenPlayer:", movies);
-  console.log("Actual Video URL in FullscreenPlayer:", actualVideoUrl);
-  console.log("Video URL prop in FullscreenPlayer:", videoUrl);
-  console.log("Seasons in FullscreenPlayer:", season);
+  //console.log("Current Movie in FullscreenPlayer:", selectedContent);
+  //console.log("Related Content in FullscreenPlayer:", relatedContent);
+  //console.log("Movies in FullscreenPlayer:", movies);
+  //console.log("Actual Video URL in FullscreenPlayer:", actualVideoUrl);
+  //console.log("Video URL prop in FullscreenPlayer:", videoUrl);
+  //console.log("Seasons in FullscreenPlayer:", season);
 
   useEffect(() => {
     async function fetchRecommendations() {
       const recommend = await triggerRecommendations({ userId: user?.id });
 
-      setRecommended(recommend?.data)
+      setRecommended(recommend?.data);
     }
     fetchRecommendations();
-  }, [])
+  }, []);
 
-
-
-  console.log("Recommended Movies:", recommended);
-
+  //console.log("Recommended Movies:", recommended);
 
   const handleSearch = async (query: string) => {
     if (query.trim().length === 0) return [];
-    const searchResult = await triggerGetSearchContentWithWatchHistory({ userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3", search: query }).unwrap()
+    const searchResult = await triggerGetSearchContentWithWatchHistory({
+      userId: "03fa9a91-4281-4bd4-9e60-4da2ba72b0f3",
+      search: query,
+    }).unwrap();
     // const { data, error } = await supabase
     //   .from("content")
     //   .select("*")
@@ -512,7 +606,7 @@ const FullscreenPlayer = ({
     setSearchResults(searchResult || []);
   };
 
-  console.log("Search Results in FullscreenPlayer:", searchResults);
+  //console.log("Search Results in FullscreenPlayer:", searchResults);
   const handleRelatedClick = (id: string) => {
     setVideoId(id);
 
@@ -521,7 +615,15 @@ const FullscreenPlayer = ({
     }, 50);
   };
 
-  const genres = ["All", "Action", "Comedy", "Drama", "Thriller", "Romance", "Sci-Fi"];
+  const genres = [
+    "All",
+    "Action",
+    "Comedy",
+    "Drama",
+    "Thriller",
+    "Romance",
+    "Sci-Fi",
+  ];
   const years = ["All", "2024", "2023", "2022", "2021", "2020"];
   const types = ["All", "movie", "series"];
 
@@ -617,11 +719,21 @@ const FullscreenPlayer = ({
                 {isLoadingEpisodes ? (
                   <div className="space-y-8 animate-pulse">
                     <div className="flex justify-center gap-2">
-                      {[1, 2, 3].map(i => <div key={i} className="h-10 w-24 bg-white/5 rounded-lg" />)}
+                      {[1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          className="h-10 w-24 bg-white/5 rounded-lg"
+                        />
+                      ))}
                     </div>
                     <div className="h-8 w-32 bg-white/5 rounded mb-6" />
                     <div className="flex gap-4 overflow-hidden">
-                      {[1, 2, 3].map(i => <div key={i} className="flex-shrink-0 w-80 aspect-video bg-white/5 rounded-lg" />)}
+                      {[1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          className="flex-shrink-0 w-80 aspect-video bg-white/5 rounded-lg"
+                        />
+                      ))}
                     </div>
                   </div>
                 ) : seasons?.length > 0 ? (
@@ -637,8 +749,8 @@ const FullscreenPlayer = ({
                               key={season.id}
                               onClick={() => setSelectedSeasonId(season.id)}
                               className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
-                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
-                                : 'text-white/60 hover:text-white hover:bg-white/10'
+                                ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20"
+                                : "text-white/60 hover:text-white hover:bg-white/10"
                                 }`}
                             >
                               {season.title || `Season ${season.season_number}`}
@@ -655,54 +767,84 @@ const FullscreenPlayer = ({
                             <div
                               key={episode.id}
                               className={`flex-shrink-0 w-80 cursor-pointer group snap-start transition-all duration-300 ${currentEpisode?.id === episode.id
-                                ? 'ring-2 ring-blue-500'
-                                : 'hover:ring-2 hover:ring-white/30'
+                                ? "ring-2 ring-blue-500"
+                                : "hover:ring-2 hover:ring-white/30"
                                 }`}
                               onClick={() => {
                                 // Merge local progress if available to ensure player resumes correctly
                                 const progress = localProgress[episode.id];
-                                const updatedEpisode = progress ? {
-                                  ...episode,
-                                  watch_percentage: progress.watch_percentage,
-                                  last_position: progress.last_position
-                                } : episode;
+                                const updatedEpisode = progress
+                                  ? {
+                                    ...episode,
+                                    watch_percentage:
+                                      progress.watch_percentage,
+                                    last_position: progress.last_position,
+                                  }
+                                  : episode;
 
-                                const isSameEpisode = currentEpisode?.id === episode.id;
+                                const isSameEpisode =
+                                  currentEpisode?.id === episode.id;
 
                                 setCurrentEpisode(updatedEpisode);
-                                setActualVideoUrl(updatedEpisode.video_url || updatedEpisode.videoUrl);
+                                setActualVideoUrl(
+                                  updatedEpisode.video_url ||
+                                  updatedEpisode.videoUrl,
+                                );
                                 setVideoEnded(false);
-                                setMovieid(updatedEpisode?.id)
-                                setMovies([updatedEpisode])
-                                playerRef.current?.scrollIntoView({ behavior: "smooth" });
+                                setMovieid(updatedEpisode?.id);
+                                setMovies([updatedEpisode]);
+                                playerRef.current?.scrollIntoView({
+                                  behavior: "smooth",
+                                });
 
-                                // If user clicks the SAME episode that's currently loaded (e.g. to replay it), 
+                                // If user clicks the SAME episode that's currently loaded (e.g. to replay it),
                                 // force a replay via the ref since props won't trigger a reload.
-                                if (isSameEpisode && parentRef.current && (parentRef.current as any).replay) {
+                                if (
+                                  isSameEpisode &&
+                                  parentRef.current &&
+                                  (parentRef.current as any).replay
+                                ) {
                                   console.log("Replaying current episode...");
                                   (parentRef.current as any).replay();
                                 }
 
                                 // Calculate global index for seamless playback across all seasons
-                                const currentSeasonIndex = seasons.findIndex(s => s.id === selectedSeasonId);
-                                const episodesBefore = seasons.slice(0, currentSeasonIndex).reduce((sum, s) => sum + (s.episodes?.length || 0), 0);
+                                const currentSeasonIndex = seasons.findIndex(
+                                  (s) => s.id === selectedSeasonId,
+                                );
+                                const episodesBefore = seasons
+                                  .slice(0, currentSeasonIndex)
+                                  .reduce(
+                                    (sum, s) => sum + (s.episodes?.length || 0),
+                                    0,
+                                  );
                                 const globalIndex = episodesBefore + index;
 
-                                dispatch(openScreenPlayer({
-                                  isOpen: true,
-                                  selectedVideo: updatedEpisode,
-                                  currentVideoIndex: globalIndex,
-                                  isSeries: true,
-                                  seriesData: seasons,
-                                  poster_url: seriesPosterUrl || poster_url,
-                                  contentId: seriesContentId || movieId || updatedEpisode.series_id
-                                }))
+                                dispatch(
+                                  openScreenPlayer({
+                                    isOpen: true,
+                                    selectedVideo: updatedEpisode,
+                                    currentVideoIndex: globalIndex,
+                                    isSeries: true,
+                                    seriesData: seasons,
+                                    poster_url: seriesPosterUrl || poster_url,
+                                    contentId:
+                                      seriesContentId ||
+                                      movieId ||
+                                      updatedEpisode.series_id,
+                                  }),
+                                );
                               }}
                             >
                               <div className="bg-white/5 rounded-lg overflow-hidden">
                                 <div className="relative aspect-video bg-slate-900">
                                   <img
-                                    src={getOptimizedImageUrl(episode.poster_url || seriesPosterUrl || poster_url, 400)}
+                                    src={getOptimizedImageUrl(
+                                      episode.poster_url ||
+                                      seriesPosterUrl ||
+                                      poster_url,
+                                      400,
+                                    )}
                                     alt={episode.title}
                                     className="w-full h-full object-cover transition-transform group-hover:scale-105"
                                   />
@@ -714,20 +856,32 @@ const FullscreenPlayer = ({
                                     </div>
                                   )}
                                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
-                                    <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                                    <svg
+                                      className="w-12 h-12 text-white"
+                                      fill="currentColor"
+                                      viewBox="0 0 20 20"
+                                    >
+                                      <path
+                                        fillRule="evenodd"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
+                                        clipRule="evenodd"
+                                      />
                                     </svg>
                                   </div>
 
                                   {/* Progress Bar with Live Update */}
-                                  {(localProgress[episode.id]?.watch_percentage > 0 || episode.watch_percentage > 0) && (
-                                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
-                                      <div
-                                        className="h-full bg-blue-500 transition-all duration-300"
-                                        style={{ width: `${localProgress[episode.id]?.watch_percentage || episode.watch_percentage}%` }}
-                                      />
-                                    </div>
-                                  )}
+                                  {(localProgress[episode.id]
+                                    ?.watch_percentage > 0 ||
+                                    episode.watch_percentage > 0) && (
+                                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+                                        <div
+                                          className="h-full bg-blue-500 transition-all duration-300"
+                                          style={{
+                                            width: `${localProgress[episode.id]?.watch_percentage || episode.watch_percentage}%`,
+                                          }}
+                                        />
+                                      </div>
+                                    )}
                                 </div>
 
                                 <div className="p-4">
@@ -771,9 +925,7 @@ const FullscreenPlayer = ({
                 setPlaylists={setPlaylists}
                 getOptimizedImageUrl={getOptimizedImageUrl}
               />
-
             </div>
-
 
             {/* Related Content Grid */}
             {/* <RelatedContent
@@ -789,7 +941,7 @@ const FullscreenPlayer = ({
           </div>
         </div>
         <AdToast isVisible={showAd} onClose={() => setShowAd(false)} />
-      </div >
+      </div>
     </ProtectedRoute>
   );
 };

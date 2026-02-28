@@ -17,7 +17,6 @@ import { Channel } from "@/data/mockMovies";
 import { useDispatch } from "react-redux";
 import { useLazyGetSeasonWithEpisodesQuery } from "@/store/seasonSlice";
 
-
 export interface HeroCarouselItem {
   id: string;
   title: string;
@@ -59,7 +58,8 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
     HeroCarouselItem[]
   >([]);
   const [isDirectPlay, setIsDirectPlay] = useState(false);
-  const [triggerSeasonWithEpisodesandWatchHistory] = useLazyGetSeasonWithEpisodesQuery()
+  const [triggerSeasonWithEpisodesandWatchHistory] =
+    useLazyGetSeasonWithEpisodesQuery();
 
   // Play button now opens ContentModal (user requirement)
   const handlePlay = async (item: HeroCarouselItem) => {
@@ -87,7 +87,6 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
     setRecommendedContent([]);
     refetchContent();
   };
-
 
   // Handle save/unsave for favorites
   const handleSaveItem = (itemId: string) => {
@@ -137,13 +136,12 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
             <SwiperSlide key={slide.id || idx}>
               <div className="relative w-full h-full">
                 {/* Background Image */}
-                <div
-                  className="absolute inset-0 w-full h-full bg-no-repeat bg-cover hero-bg-mobile md:bg-cover hero-slide"
-                  style={{
-                    backgroundImage: `url(${slide.posterUrl || "/placeholder.svg"})`,
-                  }}
+                <img
+                  src={slide.posterUrl || "/placeholder.svg"}
+                  alt={slide.title}
+                  loading={idx === 0 ? "eager" : "lazy"}
+                  className="absolute inset-0 w-full h-full object-cover object-center"
                 />
-
                 {/* Gradient Overlays */}
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/70 to-transparent h-[70%]" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
@@ -165,41 +163,48 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
                         </span>
                       )}
                       {slide.year && (
-                        <span className="text-white text-sm">
-                          {slide.year}
-                        </span>
+                        <span className="text-white text-sm">{slide.year}</span>
                       )}
                       {/* Duration/Seasons - only show if available */}
                       {(() => {
-                        const currentContentItem = content.find((c) => c.id === slide.id);
+                        const currentContentItem = content.find(
+                          (c) => c.id === slide.id,
+                        );
 
                         if (slide.type === "series") {
                           // For series, show number of seasons - using same logic as ContentModal
                           if (currentContentItem?.seasons_data) {
                             try {
                               const seasonsData =
-                                typeof currentContentItem.seasons_data === "string"
+                                typeof currentContentItem.seasons_data ===
+                                "string"
                                   ? JSON.parse(currentContentItem.seasons_data)
                                   : currentContentItem.seasons_data;
 
-                              if (Array.isArray(seasonsData) && seasonsData.length > 0) {
+                              if (
+                                Array.isArray(seasonsData) &&
+                                seasonsData.length > 0
+                              ) {
                                 const seasonCount = seasonsData.length;
                                 return (
                                   <span className="text-white text-sm">
-                                    {seasonCount === 1 ? "1 Season" : `${seasonCount} Seasons`}
+                                    {seasonCount === 1
+                                      ? "1 Season"
+                                      : `${seasonCount} Seasons`}
                                   </span>
                                 );
                               }
                             } catch (error) {
-                              console.error("Error parsing seasons data for duration display:", error);
+                              console.error(
+                                "Error parsing seasons data for duration display:",
+                                error,
+                              );
                             }
                           }
 
                           // Fallback for series
                           return (
-                            <span className="text-white text-sm">
-                              Series
-                            </span>
+                            <span className="text-white text-sm">Series</span>
                           );
                         } else {
                           // For movies, show duration
@@ -208,9 +213,12 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
                           if (duration) {
                             const hours = Math.floor(duration / 60);
                             const mins = duration % 60;
-                            const formattedDuration = hours > 0
-                              ? (mins > 0 ? `${hours}h ${mins}m` : `${hours}h`)
-                              : `${mins}m`;
+                            const formattedDuration =
+                              hours > 0
+                                ? mins > 0
+                                  ? `${hours}h ${mins}m`
+                                  : `${hours}h`
+                                : `${mins}m`;
 
                             return (
                               <span className="text-white text-sm">
@@ -246,7 +254,9 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
                             variant="primary"
                             onClick={() => handlePlay(slide)}
                             disabled={
-                              !slide.videoUrl && slide.type !== "series" && !content.find(c => c.id === slide.id)?.video_url
+                              !slide.videoUrl &&
+                              slide.type !== "series" &&
+                              !content.find((c) => c.id === slide.id)?.video_url
                             }
                           >
                             <Play className="w-fit h-6 fill-current" />
@@ -289,7 +299,6 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
             <h2 className="text-white text-xl md:text-2xl">Top Channels</h2>
           </div>
 
-
           {/* Channels Scrollable Row with Side Navigation */}
           <div className="relative">
             {/* Left Arrow */}
@@ -331,31 +340,36 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
         </div>
       </div>
 
-
       {/* Modals */}
-      {modalOpen && modalItem && (() => {
-        // Find the backend content item and channel
-        const backendContentItem = content.find(item => item.id === modalItem.id);
-        const backendChannel = backendChannels.find(ch => ch.id === modalItem.channelId);
+      {modalOpen &&
+        modalItem &&
+        (() => {
+          // Find the backend content item and channel
+          const backendContentItem = content.find(
+            (item) => item.id === modalItem.id,
+          );
+          const backendChannel = backendChannels.find(
+            (ch) => ch.id === modalItem.channelId,
+          );
 
-        return (
-          <ContentModal
-            isOpen={modalOpen}
-            onClose={(open) => !open && handleCloseModal()}
-            item={modalItem as any}
-            variant={modalType || "auto"}
-            autoDetectKids={true}
-            onPlayEpisode={(url, episodeTitle) => {
-              // Internal to ContentModal now
-            }}
-            videoUrl={backendContentItem?.video_url || modalItem.videoUrl}
-            movieId={modalItem.id}
-            contentItem={backendContentItem as any}
-            channel={backendChannel}
-            startInPlayerMode={isDirectPlay}
-          />
-        );
-      })()}
+          return (
+            <ContentModal
+              isOpen={modalOpen}
+              onClose={(open) => !open && handleCloseModal()}
+              item={modalItem as any}
+              variant={modalType || "auto"}
+              autoDetectKids={true}
+              onPlayEpisode={(url, episodeTitle) => {
+                // Internal to ContentModal now
+              }}
+              videoUrl={backendContentItem?.video_url || modalItem.videoUrl}
+              movieId={modalItem.id}
+              contentItem={backendContentItem as any}
+              channel={backendChannel}
+              startInPlayerMode={isDirectPlay}
+            />
+          );
+        })()}
 
       {/* Custom Pagination Styles */}
       <style>{`

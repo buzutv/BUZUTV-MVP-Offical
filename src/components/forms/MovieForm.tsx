@@ -98,7 +98,8 @@ const MovieForm: React.FC<MovieFormProps> = ({
       isFeatured: processedInitialData?.isFeatured ?? false,
       isTrending: processedInitialData?.isTrending ?? false,
       channelId: processedInitialData?.channelId || "",
-      completionThresholdSeconds: processedInitialData?.completionThresholdSeconds || 0
+      completionThresholdSeconds:
+        processedInitialData?.completionThresholdSeconds || 0,
     },
   });
 
@@ -113,8 +114,7 @@ const MovieForm: React.FC<MovieFormProps> = ({
 
   const watchType = form.watch("type");
 
-  const formWatch = form.watch()
-  console.log("watchType", formWatch);
+  //const formWatch = form.watch();
   const addSeason = () => {
     appendSeason({
       seasonNumber: seasonFields.length + 1,
@@ -369,23 +369,25 @@ const MovieForm: React.FC<MovieFormProps> = ({
           />
         </div>
 
-        {watchType === "movie" && <FormField
-          control={form.control}
-          name="videoUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-white">Video URL</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  placeholder="https://example.com/video.mp4"
-                  className="bg-gray-700 border-gray-600 text-white"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />}
+        {watchType === "movie" && (
+          <FormField
+            control={form.control}
+            name="videoUrl"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-white">Video URL</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="https://example.com/video.mp4"
+                    className="bg-gray-700 border-gray-600 text-white"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         {watchType === "movie" && (
           <FormField
@@ -405,36 +407,35 @@ const MovieForm: React.FC<MovieFormProps> = ({
               </FormItem>
             )}
           />
-
         )}
 
-
-        {watchType === "movie" && <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="completionThresholdSeconds"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-white">Completion Offset (seconds before end)</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    type="number"
-                    placeholder="e.g. 10"
-                    className="bg-gray-700 border-gray-600 text-white"
-                  />
-                </FormControl>
-                <div className="text-xs text-gray-400 mt-1">
-                  How many seconds before the end to mark as completed.
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-
-        </div>}
-
+        {watchType === "movie" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField
+              control={form.control}
+              name="completionThresholdSeconds"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-white">
+                    Completion Offset (seconds before end)
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="number"
+                      placeholder="e.g. 10"
+                      className="bg-gray-700 border-gray-600 text-white"
+                    />
+                  </FormControl>
+                  <div className="text-xs text-gray-400 mt-1">
+                    How many seconds before the end to mark as completed.
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
 
         {watchType === "series" && (
           <div className="space-y-6">
@@ -640,7 +641,9 @@ const MovieForm: React.FC<MovieFormProps> = ({
                         name={`seasons.${seasonIndex}.episodes.${episodeIndex}.durationMinutes`}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-white">Duration in Minutes</FormLabel>
+                            <FormLabel className="text-white">
+                              Duration in Minutes
+                            </FormLabel>
                             <FormControl>
                               <Input
                                 {...field}
@@ -658,7 +661,9 @@ const MovieForm: React.FC<MovieFormProps> = ({
                         name={`seasons.${seasonIndex}.episodes.${episodeIndex}.completionThresholdSeconds`}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-white">Completion Offset (seconds before end)</FormLabel>
+                            <FormLabel className="text-white">
+                              Completion Offset (seconds before end)
+                            </FormLabel>
                             <FormControl>
                               <Input
                                 {...field}

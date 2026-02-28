@@ -30,7 +30,10 @@ export const useUserChannelFavorites = () => {
       }
     };
 
-    window.addEventListener("channel-favorites-updated" as any, handleSync as any);
+    window.addEventListener(
+      "channel-favorites-updated" as any,
+      handleSync as any,
+    );
 
     if (user) {
       // Check cache first
@@ -51,7 +54,10 @@ export const useUserChannelFavorites = () => {
 
     return () => {
       mountedRef.current = false;
-      window.removeEventListener("channel-favorites-updated" as any, handleSync as any);
+      window.removeEventListener(
+        "channel-favorites-updated" as any,
+        handleSync as any,
+      );
     };
   }, [user]);
 
@@ -124,7 +130,7 @@ export const useUserChannelFavorites = () => {
 
     try {
       // Real user - update state using functional update
-      setFavoriteChannelIds(prev => {
+      setFavoriteChannelIds((prev) => {
         const next = prev.includes(channelId) ? prev : [...prev, channelId];
 
         // Update localStorage
@@ -140,7 +146,9 @@ export const useUserChannelFavorites = () => {
         });
 
         // Broadcast to other instances
-        window.dispatchEvent(new CustomEvent("channel-favorites-updated", { detail: next }));
+        window.dispatchEvent(
+          new CustomEvent("channel-favorites-updated", { detail: next }),
+        );
 
         return next;
       });
@@ -175,7 +183,7 @@ export const useUserChannelFavorites = () => {
 
     try {
       // Real user - update state using functional update
-      setFavoriteChannelIds(prev => {
+      setFavoriteChannelIds((prev) => {
         const next = prev.filter((id) => id !== channelId);
 
         // Update localStorage
@@ -191,7 +199,9 @@ export const useUserChannelFavorites = () => {
         });
 
         // Broadcast to other instances
-        window.dispatchEvent(new CustomEvent("channel-favorites-updated", { detail: next }));
+        window.dispatchEvent(
+          new CustomEvent("channel-favorites-updated", { detail: next }),
+        );
 
         return next;
       });

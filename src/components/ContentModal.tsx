@@ -13,8 +13,17 @@ import { useMoreLikeThis } from "@/hooks/useMoreLikeThis";
 import SeriesPlayer from "@/components/SeriesPlayer";
 import { fetchSeriesSeasons, getOptimizedImageUrl } from "@/utils/youtubeUtils";
 import FullscreenPlayer from "./FullscreenPlayer";
-import { useGetSeasonWithEpisodesQuery, useLazyGetSeasonWithEpisodesQuery } from "@/store/seasonSlice";
-import { openScreenPlayer, closeScreenPlayer, setContentId, setisSeries, setSeriesData } from "@/store/screenPlayerSlice";
+import {
+  useGetSeasonWithEpisodesQuery,
+  useLazyGetSeasonWithEpisodesQuery,
+} from "@/store/seasonSlice";
+import {
+  openScreenPlayer,
+  closeScreenPlayer,
+  setContentId,
+  setisSeries,
+  setSeriesData,
+} from "@/store/screenPlayerSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { useLazyGetPlaylistContentWithWatchHistoryQuery } from "@/store/contentSlice";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,7 +33,6 @@ import MovieDetailSection from "./MovieDetailSection";
 const isMovie = (item: Movie | Content): item is Movie => {
   return "youtubeId" in item;
 };
-
 
 const isContent = (item: Movie | Content): item is Content => {
   return "video_url" in item;
@@ -125,24 +133,29 @@ const ContentModal: React.FC<ContentModalProps> = ({
   // State for switching items within the modal
   const [currentItem, setCurrentItem] = useState<Movie | Content>(item);
 
-  const contentModalOpen = useSelector((state: any) => state.screenPlayer.contentModalOpen);
+  const contentModalOpen = useSelector(
+    (state: any) => state.screenPlayer.contentModalOpen,
+  );
   // SeriesPlayer state
   const [isSeriesPlayerOpen, setIsSeriesPlayerOpen] = useState(false);
   const [isMovieOpen, setIsMovieOpen] = useState(false);
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [currentSeasonNumber, setCurrentSeasonNumber] = useState<number>(1);
   // const { user } = useAuth();
-  const [triggerGetContentWithWatchHistory, result] = useLazyGetPlaylistContentWithWatchHistoryQuery()
+  const [triggerGetContentWithWatchHistory, result] =
+    useLazyGetPlaylistContentWithWatchHistoryQuery();
   // const USER_ID = user?.id;
   const dispatch = useDispatch();
   const { favoriteIds, addToFavorites, removeFromFavorites } =
     useUserFavorites();
-  const [movie, setMovie] = useState(movieId)
+  const [movie, setMovie] = useState(movieId);
   const { content } = useContent();
   const { channels } = useChannels();
-  const [seasonWithEpisodes, setSeasonWithEpisodes] = useState([])
+  const [seasonWithEpisodes, setSeasonWithEpisodes] = useState([]);
   const playlistId = useSelector((state: any) => state.screenPlayer.playlistId);
-  const selectedFromRecommendations = useSelector((state: any) => state.screenPlayer.selectedVideo);
+  const selectedFromRecommendations = useSelector(
+    (state: any) => state.screenPlayer.selectedVideo,
+  );
 
   // Determine content type early so it can be used in hooks
   const contentType = useMemo(() => {
@@ -167,16 +180,20 @@ const ContentModal: React.FC<ContentModalProps> = ({
     [currentItem],
   );
 
+  //console.log("Content Modal item", currentItem);
 
-  console.log("Content Modal item", currentItem)
-
-  const [triggerSeasonWithEpisode] = useLazyGetSeasonWithEpisodesQuery()
+  const [triggerSeasonWithEpisode] = useLazyGetSeasonWithEpisodesQuery();
   // console.log("Season with Episode", seasonWithEpisode)
   const isSeries = useSelector((state: any) => state.screenPlayer.isSeries);
   const { user } = useAuth();
 
   const continueWatchingEpisodes = useMemo(() => {
-    if (contentType !== "series" || !seasonWithEpisodes || seasonWithEpisodes.length === 0) return [];
+    if (
+      contentType !== "series" ||
+      !seasonWithEpisodes ||
+      seasonWithEpisodes.length === 0
+    )
+      return [];
 
     // Flatten all episodes with their season number and global index
     let currentGlobalIdx = 0;
@@ -186,7 +203,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
         seasonNumber: s.season_number,
         withinSeasonIndex: idx,
         globalIndex: currentGlobalIdx + idx,
-        actualSeasonData: s
+        actualSeasonData: s,
       }));
       currentGlobalIdx += (s.episodes || []).length;
       return episodesWithIdx;
@@ -278,9 +295,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
     setCurrentItem(item);
   }, [item]);
 
-
-
-  console.log("Seasons passed to ContentModal:", seasons);
+  //console.log("Seasons passed to ContentModal:", seasons);
   // Dynamic favorite status based on current item
   const isCurrentItemSaved = favoriteIds.includes(currentItem.id);
 
@@ -308,8 +323,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
     limit: 6,
   });
 
-  console.log("More Like This Content:", currentContentItem);
-
+  //console.log("More Like This Content:", currentContentItem);
 
   // Handle startInPlayerMode
   useEffect(() => {
@@ -416,12 +430,14 @@ const ContentModal: React.FC<ContentModalProps> = ({
   };
 
   const seasonsData = getSeasonsData();
-  console.log("Seasons Data in ContentModal:", currentContentItem);
+  //console.log("Seasons Data in ContentModal:", currentContentItem);
   // Get current video URL from the current content item
   const currentVideoUrl = useMemo(() => {
     return (
       currentContentItem?.video_url ||
-      (isMovie(currentItem) ? currentItem.videoUrl || currentItem.video_url : undefined)
+      (isMovie(currentItem)
+        ? currentItem.videoUrl || currentItem.video_url
+        : undefined)
     );
   }, [currentContentItem?.video_url, currentItem]);
 
@@ -429,15 +445,19 @@ const ContentModal: React.FC<ContentModalProps> = ({
   const handlePlayMovie = () => {
     if (currentVideoUrl && onPlayEpisode) {
       // Use onPlayEpisode for consistency across all components
-      dispatch(openScreenPlayer({
-        isOpen: true,
-        selectedVideo: selectedFromRecommendations || currentContentItem || currentItem,
-        selectedVideoTitle: normalizedItem.title,
-        videoUrl: currentVideoUrl,
-        contentId: normalizedItem.id,
-        poster_url: currentContentItem?.poster_url || normalizedItem.posterUrl
-      }))
-      setIsMovieOpen(true)
+      dispatch(
+        openScreenPlayer({
+          isOpen: true,
+          selectedVideo:
+            selectedFromRecommendations || currentContentItem || currentItem,
+          selectedVideoTitle: normalizedItem.title,
+          videoUrl: currentVideoUrl,
+          contentId: normalizedItem.id,
+          poster_url:
+            currentContentItem?.poster_url || normalizedItem.posterUrl,
+        }),
+      );
+      setIsMovieOpen(true);
 
       onPlayEpisode(currentVideoUrl, normalizedItem.title);
     } else if (currentVideoUrl) {
@@ -454,30 +474,35 @@ const ContentModal: React.FC<ContentModalProps> = ({
   };
 
   const hasNext = (): boolean => {
-    return !!(seasonWithEpisodes && currentEpisode ? (
-      seasonWithEpisodes.some(season =>
-        season.episodes.some(episode =>
-          episode.season_number > currentSeasonNumber ||
-          (episode.season_number === currentSeasonNumber && episode.episode_number > currentEpisode.episode_number)
-        )
+    return !!(seasonWithEpisodes && currentEpisode
+      ? seasonWithEpisodes.some((season) =>
+        season.episodes.some(
+          (episode) =>
+            episode.season_number > currentSeasonNumber ||
+            (episode.season_number === currentSeasonNumber &&
+              episode.episode_number > currentEpisode.episode_number),
+        ),
       )
-    ) : false);
-  }
+      : false);
+  };
 
   const handlePlayFirstEpisode = () => {
     const firstSeason = seasonWithEpisodes[0];
     const firstEpisode = firstSeason?.episodes[0];
 
     if (firstEpisode && firstSeason) {
-      dispatch(openScreenPlayer({
-        isOpen: true,
-        isSeries: true,
-        selectedVideo: firstEpisode,
-        currentVideoIndex: 0,
-        seriesData: seasonWithEpisodes,
-        contentId: currentItem.id,
-        poster_url: currentContentItem?.poster_url || normalizedItem.posterUrl
-      }))
+      dispatch(
+        openScreenPlayer({
+          isOpen: true,
+          isSeries: true,
+          selectedVideo: firstEpisode,
+          currentVideoIndex: 0,
+          seriesData: seasonWithEpisodes,
+          contentId: currentItem.id,
+          poster_url:
+            currentContentItem?.poster_url || normalizedItem.posterUrl,
+        }),
+      );
 
       setCurrentEpisode(firstEpisode);
       setCurrentSeasonNumber(firstSeason.season_number);
@@ -485,9 +510,19 @@ const ContentModal: React.FC<ContentModalProps> = ({
     }
   };
 
-  const handlePlayEpisode = (episode: Episode, seasonNumber: number, index: number, seasonData: any) => {
+  const handlePlayEpisode = (
+    episode: Episode,
+    seasonNumber: number,
+    index: number,
+    seasonData: any,
+  ) => {
     const epVideoUrl = episode.video_url || (episode as any).videoUrl;
-    console.log("Play episode clicked:", { episodeId: episode.id, videoUrl: epVideoUrl, seasonNumber, index });
+    //console.log("Play episode clicked:", {
+    // episodeId: episode.id,
+    // videoUrl: epVideoUrl,
+    // seasonNumber,
+    //index,
+    //});
 
     if (epVideoUrl && seasonWithEpisodes.length > 0) {
       // Calculate global index across all seasons for correct autoplay
@@ -501,24 +536,30 @@ const ContentModal: React.FC<ContentModalProps> = ({
         }
       }
 
-      console.log("Global index calculated:", globalIndex);
+      // console.log("Global index calculated:", globalIndex);
 
-      dispatch(openScreenPlayer({
-        isOpen: true,
-        isSeries: true,
-        selectedVideo: { ...episode, video_url: epVideoUrl }, // Ensure video_url exists for consumer
-        currentVideoIndex: globalIndex,
-        seriesData: seasonWithEpisodes,
-        contentId: currentItem.id, // Store ID only for consistency
-        poster_url: currentContentItem?.poster_url || normalizedItem.posterUrl
-      }));
+      dispatch(
+        openScreenPlayer({
+          isOpen: true,
+          isSeries: true,
+          selectedVideo: { ...episode, video_url: epVideoUrl }, // Ensure video_url exists for consumer
+          currentVideoIndex: globalIndex,
+          seriesData: seasonWithEpisodes,
+          contentId: currentItem.id, // Store ID only for consistency
+          poster_url:
+            currentContentItem?.poster_url || normalizedItem.posterUrl,
+        }),
+      );
 
       // Update local state to trigger FullscreenPlayer early return
       setCurrentEpisode({ ...episode, video_url: epVideoUrl });
       setCurrentSeasonNumber(seasonNumber);
       setIsSeriesPlayerOpen(true);
     } else {
-      console.warn("Cannot play episode: video URL missing or seasons not loaded", { episode, hasSeasons: seasonWithEpisodes.length > 0 });
+      console.warn(
+        "Cannot play episode: video URL missing or seasons not loaded",
+        { episode, hasSeasons: seasonWithEpisodes.length > 0 },
+      );
     }
   };
 
@@ -531,8 +572,8 @@ const ContentModal: React.FC<ContentModalProps> = ({
 
     const data = await triggerGetContentWithWatchHistory({
       userId: user?.id,
-      contentIds: content.map(item => item.id)
-    }).unwrap()
+      contentIds: content.map((item) => item.id),
+    }).unwrap();
 
     if (contentType === "series" || currentItem.type === "series") {
       const seasonData = await triggerSeasonWithEpisode({
@@ -549,21 +590,22 @@ const ContentModal: React.FC<ContentModalProps> = ({
   // Handle More Like This clicks - ALWAYS switch current item within modal
   const handleMoreLikeThisClick = async (clickedItem) => {
     setCurrentItem(clickedItem);
-    setMovie(clickedItem.id)
+    setMovie(clickedItem.id);
 
     const fetchSeasonWithEpisodes = await triggerSeasonWithEpisode({
       contentId: clickedItem?.id,
       userId: user?.id,
-    }).unwrap()
-    dispatch(openScreenPlayer({
-      isOpen: true,
-      isSeries: clickedItem?.type === "series",
-      selectedVideo: clickedItem,
-      seriesData: clickedItem?.type === "series" ? fetchSeasonWithEpisodes[0] : null,
-      contentId: clickedItem.id
-    }))
-
-
+    }).unwrap();
+    dispatch(
+      openScreenPlayer({
+        isOpen: true,
+        isSeries: clickedItem?.type === "series",
+        selectedVideo: clickedItem,
+        seriesData:
+          clickedItem?.type === "series" ? fetchSeasonWithEpisodes[0] : null,
+        contentId: clickedItem.id,
+      }),
+    );
   };
 
   // Background styles
@@ -610,21 +652,37 @@ const ContentModal: React.FC<ContentModalProps> = ({
       heartBorder: "border-brand-500/50 hover:border-brand-500",
     };
 
-
-
-
-  if ((isSeriesPlayerOpen && currentEpisode && seasonWithEpisodes.length > 0) || isMovieOpen) {
+  if (
+    (isSeriesPlayerOpen && currentEpisode && seasonWithEpisodes.length > 0) ||
+    isMovieOpen
+  ) {
     return (
-      <Dialog open={true} onOpenChange={(open) => !open && handleCloseSeriesPlayer()}>
-        <DialogContent className="max-w-[100vw] w-screen h-screen p-0 m-0 border-none overflow-y-hiddenbg-black z-[99999]" onInteractOutside={(e) => e.preventDefault()}>
+      <Dialog
+        open={true}
+        onOpenChange={(open) => !open && handleCloseSeriesPlayer()}
+      >
+        <DialogContent
+          className="max-w-[100vw] w-screen h-screen p-0 m-0 border-none overflow-y-hiddenbg-black z-[99999]"
+          onInteractOutside={(e) => e.preventDefault()}
+        >
           <FullscreenPlayer
             isOpen={true}
             onClose={handleCloseSeriesPlayer} // This returns us to the Modal
-            videoUrl={currentItem?.type === "movie" ? (currentItem as any)?.video_url : currentEpisode?.video_url}
+            videoUrl={
+              currentItem?.type === "movie"
+                ? (currentItem as any)?.video_url
+                : currentEpisode?.video_url
+            }
             type={currentItem?.type}
-            title={currentItem?.type === "movie" ? currentItem?.title : currentEpisode?.title}
+            title={
+              currentItem?.type === "movie"
+                ? currentItem?.title
+                : currentEpisode?.title
+            }
             userId={user?.id}
-            poster_url={currentContentItem?.poster_url || normalizedItem.posterUrl}
+            poster_url={
+              currentContentItem?.poster_url || normalizedItem.posterUrl
+            }
             movieId={currentContentItem?.id}
             season={seasonWithEpisodes}
           />
@@ -679,11 +737,9 @@ const ContentModal: React.FC<ContentModalProps> = ({
                 <div className="flex items-center space-x-4 mb-4">
                   <BrandButton
                     onClick={
-
-                      (contentType === "series")
+                      contentType === "series"
                         ? handlePlayFirstEpisode
                         : handlePlayMovie
-
                     }
                     disabled={
                       !currentVideoUrl &&
@@ -699,7 +755,6 @@ const ContentModal: React.FC<ContentModalProps> = ({
                         ? "!bg-gray-600 !text-gray-400 !cursor-not-allowed !hover:bg-gray-600 !hover:-translate-y-0"
                         : ""
                     }
-
                   >
                     <Play className="w-6 h-6 fill-current" />
                     <span>Play</span>
@@ -753,9 +808,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
                       <span className="border border-brand-500 px-2 py-0.5 text-xs text-gray-300 font-medium">
                         TV-MA
                       </span>
-                      <span className="text-white">
-                        {normalizedItem.genre}
-                      </span>
+                      <span className="text-white">{normalizedItem.genre}</span>
                     </>
                   )}
 
@@ -790,12 +843,23 @@ const ContentModal: React.FC<ContentModalProps> = ({
                         {continueWatchingEpisodes.map((episode) => (
                           <div
                             key={`cw-${episode.id}`}
-                            onClick={() => handlePlayEpisode(episode, episode.seasonNumber, episode.withinSeasonIndex, episode.actualSeasonData)}
+                            onClick={() =>
+                              handlePlayEpisode(
+                                episode,
+                                episode.seasonNumber,
+                                episode.withinSeasonIndex,
+                                episode.actualSeasonData,
+                              )
+                            }
                             className="flex-shrink-0 w-64 group cursor-pointer relative"
                           >
                             <div className="aspect-video rounded-lg overflow-hidden bg-white/5 border border-white/10 group-hover:border-white/40 transition-all duration-300">
                               <img
-                                src={episode.thumbnail_url || episode.poster_url || normalizedItem.posterUrl}
+                                src={
+                                  episode.thumbnail_url ||
+                                  episode.poster_url ||
+                                  normalizedItem.posterUrl
+                                }
                                 alt={episode.title}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                               />
@@ -809,7 +873,9 @@ const ContentModal: React.FC<ContentModalProps> = ({
                               <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
                                 <div
                                   className="h-full bg-brand-500"
-                                  style={{ width: `${episode.watch_percentage ?? 0}%` }}
+                                  style={{
+                                    width: `${episode.watch_percentage ?? 0}%`,
+                                  }}
                                 />
                               </div>
                             </div>
@@ -840,10 +906,14 @@ const ContentModal: React.FC<ContentModalProps> = ({
                               ? "transition-all duration-300 hover:scale-105 will-change-transform transform-gpu leading-5 hover:text-white data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-[2px_19px_31px_rgba(59,130,246,0.35)] data-[state=active]:hover:bg-blue-600 hover:bg-blue-500/20"
                               : "transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:scale-105 will-change-transform transform-gpu leading-5 hover:text-white data-[state=active]:bg-[linear-gradient(135deg,#7c3aed,#8b5cf6,#a855f7)] data-[state=active]:text-white data-[state=active]:border-2 data-[state=active]:border-[rgba(139,92,246,0.3)] data-[state=active]:shadow-[0_10px_30px_rgba(139,92,246,0.4)] data-[state=active]:hover:shadow-[0_20px_50px_rgba(139,92,246,0.6)] data-[state=active]:hover:brightness-110 data-[state=active]:hover:-translate-y-0.5 data-[state=active]:relative data-[state=active]:overflow-hidden before:content-[''] before:absolute before:top-0 before:-left-full before:w-full before:h-full before:bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] before:transition-[left] before:duration-500 data-[state=active]:hover:before:left-full"
                           }
-                          onClick={() => dispatch(setSeriesData({
-                            isSeries: true,
-                            seriesData: season
-                          }))}
+                          onClick={() =>
+                            dispatch(
+                              setSeriesData({
+                                isSeries: true,
+                                seriesData: season,
+                              }),
+                            )
+                          }
                         >
                           Season {season.season_number}
                         </TabsTrigger>
@@ -860,9 +930,13 @@ const ContentModal: React.FC<ContentModalProps> = ({
                           <div
                             key={episode.id}
                             onClick={() => {
-                              handlePlayEpisode(episode, season.season_number, index, season)
-                            }
-                            }
+                              handlePlayEpisode(
+                                episode,
+                                season.season_number,
+                                index,
+                                season,
+                              );
+                            }}
                             className={`border flex items-center space-x-3 rounded-lg p-3 transition-all duration-300 group h-12 cursor-pointer ${effectiveKidsMode
                               ? "border-blue-400/20 bg-blue-500/60 hover:border-white hover:shadow-[0_0_8px_rgba(255,255,255,0.6)]"
                               : "border-brand-500/20 bg-black hover:border-white hover:shadow-[0_0_8px_rgba(255,255,255,0.6)]"
@@ -888,7 +962,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
                                   episode,
                                   season.season_number,
                                   index,
-                                  season
+                                  season,
                                 );
                               }}
                               className="ml-3 p-2 rounded-full transition-colors bg-white/10 hover:bg-white/20 text-white flex-shrink-0"

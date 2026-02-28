@@ -1,11 +1,17 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
+import { lazy, Suspense } from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
+// Load these immediately - users see them first
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Movies from "./pages/Movies";
@@ -44,7 +50,8 @@ function RequireAuth({ children }: { children: JSX.Element }) {
   const { isLoggedIn, isLoading } = useAuth();
   const location = useLocation();
   if (isLoading) return null;
-  if (!isLoggedIn) return <Navigate to="/" state={{ from: location }} replace />;
+  if (!isLoggedIn)
+    return <Navigate to="/" state={{ from: location }} replace />;
   return children;
 }
 
@@ -53,31 +60,13 @@ function RequireAdmin({ children }: { children: JSX.Element }) {
   const { isLoggedIn, user, isLoading } = useAuth();
   const location = useLocation();
   if (isLoading) return null;
-  if (!isLoggedIn || !user?.isAdmin) return <Navigate to="/" state={{ from: location }} replace />;
+  if (!isLoggedIn || !user?.isAdmin)
+    return <Navigate to="/" state={{ from: location }} replace />;
   return children;
 }
 
-// Route change monitor component
-const RouteChangeMonitor = () => {
-  const location = useLocation();
-
-  useEffect(() => {
-    const start = performance.now();
-
-    // Monitor when the route change completes
-    const timer = setTimeout(() => {
-      // Navigation completed
-    }, 0);
-
-    return () => clearTimeout(timer);
-  }, [location]);
-
-  return null;
-};
-
 const App = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const { content, channels, isLoading } = useAppContent();
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -86,9 +75,7 @@ const App = () => {
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <RouteChangeMonitor />
             <LoginModal />
-            {/* Global Search Modal */}
             <SearchModal
               isOpen={isSearchOpen}
               onClose={() => setIsSearchOpen(false)}
