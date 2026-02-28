@@ -194,8 +194,7 @@ const Kids = () => {
                         </span> Shows
                       </h2>
                     </div>
-                    <div
-                      className="flex flex-col space-y-3 w-full"
+                    <div className="flex flex-col space-y-3 w-full"
                       style={{ height: "calc(60vh - 2rem)" }}
                     >
                       {enhancedKidsContent.topRanked
@@ -203,7 +202,7 @@ const Kids = () => {
                         .map((movie, index) => (
                           <div
                             key={movie.id}
-                            className="relative flex items-center bg-white/60 hover:bg-white/80 backdrop-blur-xl rounded-[2rem] p-4 group border border-white transition-all duration-500 min-h-[85px] h-[calc((60vh-2rem)/5-0.4rem)] cursor-pointer overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(236,72,153,0.15)]"
+                            className="relative flex items-center bg-white/60 hover:bg-white/80 backdrop-blur-xl rounded-[2rem] p-4 group transition-all duration-500 min-h-[85px] h-[calc((60vh-2rem)/5-0.4rem)] cursor-pointer overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(236,72,153,0.15)]"
                             onClick={() => handleCardClick(movie)}
                           >
                             <div className="absolute inset-0 bg-gradient-to-r from-pink-100/0 via-pink-100/0 to-pink-100/30 opacity-0 group-hover:opacity-100 transition-opacity" />

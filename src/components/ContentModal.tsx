@@ -157,6 +157,16 @@ const ContentModal: React.FC<ContentModalProps> = ({
     (state: any) => state.screenPlayer.selectedVideo,
   );
 
+  // Carousel Ref
+  const cwScrollRef = React.useRef<HTMLDivElement>(null);
+
+  const scrollCW = (direction: "left" | "right") => {
+    if (cwScrollRef.current) {
+      const scrollAmount = direction === "left" ? -300 : 300;
+      cwScrollRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
+
   // Determine content type early so it can be used in hooks
   const contentType = useMemo(() => {
     return variant === "auto" ? currentItem.type || "movie" : variant;
@@ -690,6 +700,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
       </Dialog>
     );
   }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
@@ -834,61 +845,90 @@ const ContentModal: React.FC<ContentModalProps> = ({
                 <div className="mb-8">
                   {/* Continue Watching Row for Series */}
                   {continueWatchingEpisodes.length > 0 && (
-                    <div className="mb-8 animate-in fade-in slide-in-from-left-4 duration-500">
+                    <div className="mb-8 animate-in fade-in slide-in-from-left-4 duration-500 group/cw relative">
                       <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                         <span className="w-1 h-6 bg-brand-500 rounded-full"></span>
                         Continue Watching
                       </h2>
-                      <div className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide">
-                        {continueWatchingEpisodes.map((episode) => (
-                          <div
-                            key={`cw-${episode.id}`}
-                            onClick={() =>
-                              handlePlayEpisode(
-                                episode,
-                                episode.seasonNumber,
-                                episode.withinSeasonIndex,
-                                episode.actualSeasonData,
-                              )
-                            }
-                            className="flex-shrink-0 w-64 group cursor-pointer relative"
+
+                      <div className="relative">
+                        {/* Scroll Arrows */}
+                        <div className="absolute top-1/2 -left-4 -translate-y-1/2 z-10 opacity-0 group-hover/cw:opacity-100 transition-opacity duration-300">
+                          <button
+                            onClick={() => scrollCW('left')}
+                            className="p-2 rounded-full bg-black/60 hover:bg-black/80 text-white border border-white/10 shadow-xl backdrop-blur-md"
                           >
-                            <div className="aspect-video rounded-lg overflow-hidden bg-white/5 border border-white/10 group-hover:border-white/40 transition-all duration-300">
-                              <img
-                                src={
-                                  episode.thumbnail_url ||
-                                  episode.poster_url ||
-                                  normalizedItem.posterUrl
-                                }
-                                alt={episode.title}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                              />
-                              <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                                <div className="w-10 h-10 rounded-full bg-brand-500 flex items-center justify-center scale-0 group-hover:scale-100 transition-transform duration-300">
-                                  <Play className="w-5 h-5 text-white fill-current" />
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                          </button>
+                        </div>
+
+                        <div className="absolute top-1/2 -right-4 -translate-y-1/2 z-10 opacity-0 group-hover/cw:opacity-100 transition-opacity duration-300">
+                          <button
+                            onClick={() => scrollCW('right')}
+                            className="p-2 rounded-full bg-black/60 hover:bg-black/80 text-white border border-white/10 shadow-xl backdrop-blur-md"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </button>
+                        </div>
+
+                        <div
+                          ref={cwScrollRef}
+                          className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide scroll-smooth snap-x"
+                        >
+                          {continueWatchingEpisodes.map((episode) => (
+                            <div
+                              key={`cw-${episode.id}`}
+                              onClick={() =>
+                                handlePlayEpisode(
+                                  episode,
+                                  episode.seasonNumber,
+                                  episode.withinSeasonIndex,
+                                  episode.actualSeasonData,
+                                )
+                              }
+                              className="flex-shrink-0 w-64 group cursor-pointer relative snap-start"
+                            >
+                              <div className="aspect-video rounded-lg overflow-hidden bg-white/5 border border-white/10 group-hover:border-white/40 transition-all duration-300">
+                                <img
+                                  src={
+                                    episode.thumbnail_url ||
+                                    episode.poster_url ||
+                                    normalizedItem.posterUrl
+                                  }
+                                  alt={episode.title}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                />
+                                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                  <div className="w-10 h-10 rounded-full bg-brand-500 flex items-center justify-center scale-0 group-hover:scale-100 transition-transform duration-300">
+                                    <Play className="w-5 h-5 text-white fill-current" />
+                                  </div>
+                                </div>
+
+                                {/* Progress Bar */}
+                                <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+                                  <div
+                                    className="h-full bg-brand-500"
+                                    style={{
+                                      width: `${episode.watch_percentage ?? 0}%`,
+                                    }}
+                                  />
                                 </div>
                               </div>
-
-                              {/* Progress Bar */}
-                              <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
-                                <div
-                                  className="h-full bg-brand-500"
-                                  style={{
-                                    width: `${episode.watch_percentage ?? 0}%`,
-                                  }}
-                                />
+                              <div className="mt-2">
+                                <p className="text-xs text-brand-400 font-bold uppercase tracking-wider">
+                                  Season {episode.seasonNumber} . Episode {episode.episode_number}
+                                </p>
+                                <h3 className="text-white font-medium truncate group-hover:text-brand-400 transition-colors">
+                                  {episode.title}
+                                </h3>
                               </div>
                             </div>
-                            <div className="mt-2">
-                              <p className="text-xs text-brand-400 font-bold uppercase tracking-wider">
-                                Season {episode.seasonNumber} . Episode {episode.episode_number}
-                              </p>
-                              <h3 className="text-white font-medium truncate group-hover:text-brand-400 transition-colors">
-                                {episode.title}
-                              </h3>
-                            </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
                     </div>
                   )}
