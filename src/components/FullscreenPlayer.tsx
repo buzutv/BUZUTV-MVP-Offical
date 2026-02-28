@@ -530,7 +530,7 @@ const FullscreenPlayer = ({
   return (
     <ProtectedRoute>
       <div className="fixed inset-0 z-[9999] overflow-y-hidden overflow-x-hidden" style={{
-        background: `linear-gradient(200deg, #311066 0%, #1D0833 20%, #120222 45%, black 100%)`,
+        background: `linear-gradient(200deg, #1a1a1a 0%, #121212 45%, black 100%)`,
       }}>
 
 

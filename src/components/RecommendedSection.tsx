@@ -115,31 +115,33 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({
 
         return (
           <div key={key} className="mb-12 w-full">
-            <h2 className="mb-6 inline-block rounded-full bg-white/10 px-4 py-1.5 text-md font-semibold text-white/90 backdrop-blur capitalize">
-              {/* {sectionTitles[key] || sectionTitles.default} */}
+            <h2 className="mb-6 inline-block rounded-full bg-zinc-800/80 px-4 py-1.5 text-md font-semibold text-white/90 backdrop-blur capitalize border border-white/5">
               More Like This
             </h2>
 
-            <div className="grid grid-cols-2 w-full md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-              {recs.map((rec: any) => {
-                if (!rec) return null;
+            <div className="w-full">
+              <div className="flex gap-6 overflow-x-auto pb-6 scrollbar-hide snap-x">
+                {recs.map((rec: any) => {
+                  if (!rec) return null;
 
-                return (
-                  <ContentGridItem
-                    key={rec.id}
-                    item={rec}
-                    onClick={async (item) => {
-                      await fetchSeriesData(item);
-                      handleRelatedClick(item.id);
-                      setMovieid(item.id);
-                      setActualVideoUrl(item.video_url);
-                      setMovies([item]);
-                      setVideoEnded(false);
-                      setPlaylists([]);
-                    }}
-                  />
-                );
-              })}
+                  return (
+                    <div key={rec.id} className="min-w-[180px] md:min-w-[240px] lg:min-w-[280px] snap-start">
+                      <ContentGridItem
+                        item={rec}
+                        onClick={async (item) => {
+                          await fetchSeriesData(item);
+                          handleRelatedClick(item.id);
+                          setMovieid(item.id);
+                          setActualVideoUrl(item.video_url);
+                          setMovies([item]);
+                          setVideoEnded(false);
+                          setPlaylists([]);
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         );

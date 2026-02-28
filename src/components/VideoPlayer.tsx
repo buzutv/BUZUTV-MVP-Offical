@@ -128,6 +128,8 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
     // Actually, UI usually just hides the button if false.
     // Let's assume if it's the last episode, we can still click next to trigger playlist advance.
     const hasNextVideo = (currentQueue?.length > 0 && currentVideoIndex < currentQueue.length - 1) && !seasonInfo?.isLastInSeason;
+    const hasPreviousVideo = currentVideoIndex > 0;
+    const hasPlaylist = currentQueue.length > 1;
 
     const nextItemInfo = React.useMemo(() => {
       if (!hasNextVideo || !currentQueue) return null;
@@ -136,17 +138,36 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
 
       if (isSeries) {
         return {
-          title: nextItem.title || `Episode ${currentVideoIndex + 2}`,
-          subtitle: `Next: Season ${nextItem.season_number || seasonInfo?.seasonNumber} • Episode ${nextItem.episode_number || (seasonInfo ? seasonInfo.episodeIndex + 1 : currentVideoIndex + 2)}`
+          title: nextItem.title || `Episode ${nextItem.episode_number || currentVideoIndex + 2}`,
+          subtitle: `S${nextItem.season_number || seasonInfo?.seasonNumber} E${nextItem.episode_number || (seasonInfo ? seasonInfo.episodeIndex + 1 : currentVideoIndex + 2)}`
         };
       } else {
         const content = nextItem.content || nextItem;
         return {
           title: content.title || "Untitled Content",
-          subtitle: content.type?.toUpperCase() || "NEXT VIDEO"
+          subtitle: content.type?.toUpperCase() || "NEXT"
         };
       }
     }, [hasNextVideo, currentQueue, currentVideoIndex, isSeries, seasonInfo]);
+
+    const prevItemInfo = React.useMemo(() => {
+      if (!hasPreviousVideo || !currentQueue) return null;
+      const prevItem = currentQueue[currentVideoIndex - 1];
+      if (!prevItem) return null;
+
+      if (isSeries) {
+        return {
+          title: prevItem.title || `Episode ${prevItem.episode_number || currentVideoIndex}`,
+          subtitle: `S${prevItem.season_number || seasonInfo?.seasonNumber} E${prevItem.episode_number || (seasonInfo ? seasonInfo.episodeIndex : currentVideoIndex)}`
+        };
+      } else {
+        const content = prevItem.content || prevItem;
+        return {
+          title: content.title || "Untitled Content",
+          subtitle: content.type?.toUpperCase() || "PREV"
+        };
+      }
+    }, [hasPreviousVideo, currentQueue, currentVideoIndex, isSeries, seasonInfo]);
 
     console.log("VideoPlayer State CurrentIndex", currentVideoIndex, currentQueue[currentVideoIndex])
 
@@ -685,8 +706,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
       };
     }, []);
 
-    const hasPreviousVideo = currentVideoIndex > 0;
-    const hasPlaylist = currentQueue.length > 1;
+
 
     return (
       <div className="relative w-full h-full bg-black">
@@ -754,34 +774,55 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
 
         {/* Navigation Controls */}
         {((isSeries && currentQueue.length > 0) || hasPlaylist) && (
-          <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 flex items-center gap-3 md:gap-6 bg-black/80 px-4 py-2 md:px-8 md:py-4 rounded-full backdrop-blur-md border border-white/10 shadow-2xl">
-            <button
-              onClick={playPrevious}
-              disabled={!hasPreviousVideo}
-              className="flex items-center gap-2 px-3 py-1.5 md:px-5 md:py-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 disabled:opacity-20 disabled:cursor-not-allowed transition-all duration-300 group"
-            >
-              <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 text-white group-hover:-translate-x-1 transition-transform" />
-              <span className="hidden sm:inline text-[10px] md:text-[11px] font-black uppercase tracking-[0.25em] text-white/40 group-hover:text-white transition-colors">Prev</span>
-            </button>
+          <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 flex items-center gap-2 md:gap-4 bg-black/90 px-3 py-2 md:px-6 md:py-3.5 rounded-full backdrop-blur-md border border-white/10 shadow-2xl">
+            {/* Prev Button with Content Info */}
+            <div className="flex items-center group relative">
+              <button
+                onClick={playPrevious}
+                disabled={!hasPreviousVideo}
+                className="flex items-center gap-2 px-3 py-1.5 md:px-5 md:py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 disabled:opacity-20 disabled:cursor-not-allowed transition-all duration-300 mr-2"
+              >
+                <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 text-white group-hover:-translate-x-1 transition-transform" />
+                <span className="hidden sm:inline text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] text-white/40 group-hover:text-white transition-colors">Prev</span>
+              </button>
 
-            <div className="flex flex-col items-center">
-              <span className="text-white text-[10px] md:text-xs font-black tracking-tighter opacity-80">
+              {hasPreviousVideo && (
+                <div className="hidden lg:flex flex-col items-end mr-4 pr-4 border-r border-white/10 pointer-events-none transition-all duration-300">
+                  <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest">{prevItemInfo?.subtitle}</span>
+                  <span className="text-[11px] font-bold text-white whitespace-nowrap overflow-hidden max-w-[150px] truncate">{prevItemInfo?.title}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Counter */}
+            <div className="flex items-center px-2">
+              <span className="text-white text-[10px] md:text-xs font-black tracking-tighter tabular-nums flex items-center gap-1.5 px-3 py-1.5 bg-white/5 rounded-lg border border-white/5">
                 {seasonInfo ? (
-                  <>{seasonInfo.episodeIndex} <span className="mx-1 text-white/30">/</span> {seasonInfo.totalInSeason}</>
+                  <>{seasonInfo.episodeIndex} <span className="text-white/20 px-0.5">/</span> {seasonInfo.totalInSeason}</>
                 ) : (
-                  <>{currentVideoIndex + 1} <span className="mx-1 text-white/30">/</span> {currentQueue.length}</>
+                  <>{currentVideoIndex + 1} <span className="text-white/20 px-0.5">/</span> {currentQueue.length}</>
                 )}
               </span>
             </div>
 
-            <button
-              onClick={playNext}
-              disabled={!hasNextVideo}
-              className="flex items-center gap-2 px-3 py-1.5 md:px-5 md:py-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 disabled:opacity-20 disabled:cursor-not-allowed transition-all duration-300 group"
-            >
-              <span className="hidden sm:inline text-[10px] md:text-[11px] font-black uppercase tracking-[0.25em] text-white/40 group-hover:text-white transition-colors">Next</span>
-              <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-white group-hover:translate-x-1 transition-transform" />
-            </button>
+            {/* Next Button with Content Info */}
+            <div className="flex items-center group relative">
+              {hasNextVideo && (
+                <div className="hidden lg:flex flex-col items-start ml-4 pl-4 border-l border-white/10 pointer-events-none transition-all duration-300">
+                  <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest">{nextItemInfo?.subtitle}</span>
+                  <span className="text-[11px] font-bold text-white whitespace-nowrap overflow-hidden max-w-[150px] truncate">{nextItemInfo?.title}</span>
+                </div>
+              )}
+
+              <button
+                onClick={playNext}
+                disabled={!hasNextVideo}
+                className="flex items-center gap-2 px-3 py-1.5 md:px-5 md:py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 disabled:opacity-20 disabled:cursor-not-allowed transition-all duration-300 ml-2"
+              >
+                <span className="hidden sm:inline text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] text-white/40 group-hover:text-white transition-colors">Next</span>
+                <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-white group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
           </div>
         )}
       </div>
