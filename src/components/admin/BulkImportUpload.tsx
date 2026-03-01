@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const ALLOWED_COLUMNS = [
   "title",
+  "description",
   "type",
   "genre",
   "year",
@@ -23,12 +24,17 @@ const ALLOWED_COLUMNS = [
   "episode_duration",
 ];
 
+// ✅ Fix 1: handles Excel numeric TRUE (1/0), actual booleans, and all string variants
 const parseBool = (val: any): boolean =>
-  val === true || val === "TRUE" || val === "true";
+  val === true || val === 1 || String(val).toUpperCase() === "TRUE";
 
+// ✅ Fix 2: trim before Number() so whitespace-only strings don't coerce to 0
 const parseNum = (val: any): number | null => {
-  const n = Number(val);
-  return val !== null && val !== "" && !isNaN(n) ? n : null;
+  if (val === null || val === undefined) return null;
+  const str = String(val).trim();
+  if (str === "") return null;
+  const n = Number(str);
+  return isNaN(n) ? null : n;
 };
 
 type Row = Record<string, any>;
@@ -53,17 +59,34 @@ const BulkImportUpload = () => {
         const workbook = XLSX.read(data, { type: "array" });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
 
-        // Convert to array-of-arrays first so we can detect whether row 1
-        // is a hint row or the actual header row.
         const raw: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
 
-        // If the first cell of row 0 does NOT match a known column name it is
-        // a hint/note row — skip it and treat row 1 as the header row.
-        const firstCellRow0 = String(raw[0]?.[0] ?? "").toLowerCase().trim();
-        const isHintRow = !ALLOWED_COLUMNS.includes(firstCellRow0);
+        if (!raw.length) {
+          setError("The spreadsheet appears to be empty.");
+          setRows([]);
+          return;
+        }
+
+        // ✅ Fix 3: count how many cells in row 0 match known columns instead of
+        // only checking cell 0. A real header row should match multiple columns.
+        // A hint/note row will match none or very few.
+        // Threshold of 2 avoids false positives from a single accidental match.
+        const row0Matches = (raw[0] ?? []).filter((cell: any) =>
+          ALLOWED_COLUMNS.includes(String(cell ?? "").toLowerCase().trim())
+        ).length;
+
+        const isHintRow = row0Matches < 2;
         const headerRowIndex = isHintRow ? 1 : 0;
+
+        if (headerRowIndex >= raw.length) {
+          setError("Could not detect a valid header row in the spreadsheet.");
+          setRows([]);
+          return;
+        }
+
+        // ✅ Normalize headers to lowercase so column matching is case-insensitive
         const headerRow: string[] = (raw[headerRowIndex] ?? []).map((h: any) =>
-          String(h ?? "").trim()
+          String(h ?? "").toLowerCase().trim()
         );
         const dataRows = raw.slice(headerRowIndex + 1);
 
@@ -86,6 +109,12 @@ const BulkImportUpload = () => {
           return filtered;
         });
 
+        if (!parsed.length) {
+          setError("No data rows found after the header row.");
+          setRows([]);
+          return;
+        }
+
         setRows(parsed);
       } catch {
         setError("Failed to parse Excel file. Please use the provided template.");
@@ -105,140 +134,158 @@ const BulkImportUpload = () => {
     let successContent = 0;
     let failContent = 0;
 
-    // Split rows by type
-    const movieRows = rows.filter((r) => r.type === "movie");
-    const seriesRows = rows.filter((r) => r.type === "series");
+    try {
+      const movieRows = rows.filter((r) => String(r.type || "").toLowerCase().trim() === "movie");
+      const seriesRows = rows.filter((r) => String(r.type || "").toLowerCase().trim() === "series");
 
-    // ── 1. Insert movies ────────────────────────────────────────────────────
-    for (const row of movieRows) {
-      const { error: err } = await supabase.from("content").insert([
-        {
-          title: row.title || null,
-          type: "movie",
-          genre: row.genre || null,
-          year: parseNum(row.year),
-          rating: parseNum(row.rating),
-          poster_url: row["poster url"] || null,
-          backdrop_url: row["backdrop url"] || null,
-          video_url: row.videourl || null,
-          duration_minutes: parseNum(row.duration),
-          is_featured: parseBool(row.featured),
-          is_trending: parseBool(row.trending),
-          is_kids: parseBool(row.is_kids),
-        },
-      ]);
-
-      if (err) {
-        console.error("Movie insert error:", err);
-        failContent++;
-      } else {
-        successContent++;
-      }
-    }
-
-    // ── 2. Insert series (grouped by title) ─────────────────────────────────
-    // Group all series rows by title
-    const seriesMap = new Map<string, Row[]>();
-    for (const row of seriesRows) {
-      const title = (row.title || "").trim();
-      if (!title) continue;
-      if (!seriesMap.has(title)) seriesMap.set(title, []);
-      seriesMap.get(title)!.push(row);
-    }
-
-    for (const [title, episodeRows] of seriesMap.entries()) {
-      const sample = episodeRows[0]; // Use first row for series-level data
-
-      // 2a. Insert content row for the series
-      const { data: contentData, error: contentErr } = await supabase
-        .from("content")
-        .insert([
+      // ── 1. Insert movies ────────────────────────────────────────────────────
+      for (const row of movieRows) {
+        const { error: err } = await supabase.from("content").insert([
           {
-            title,
-            type: "series",
-            genre: sample.genre || null,
-            year: parseNum(sample.year),
-            rating: parseNum(sample.rating),
-            poster_url: sample["poster url"] || null,
-            backdrop_url: sample["backdrop url"] || null,
-            video_url: null,
-            is_featured: parseBool(sample.featured),
-            is_trending: parseBool(sample.trending),
-            is_kids: parseBool(sample.is_kids),
+            title: row.title || null,
+            description: row.description || null,
+            type: "movie",
+            genre: row.genre || null,
+            year: parseNum(row.year),
+            rating: parseNum(row.rating),
+            poster_url: row["poster url"] || null,
+            backdrop_url: row["backdrop url"] || null,
+            video_url: row.videourl || null,
+            duration_minutes: parseNum(row.duration),
+            is_featured: parseBool(row.featured),
+            is_trending: parseBool(row.trending),
+            is_kids: parseBool(row.is_kids),
           },
-        ])
-        .select("id")
-        .single();
+        ]);
 
-      if (contentErr || !contentData) {
-        console.error("Series content insert error:", contentErr);
-        failContent++;
-        continue;
-      }
-      successContent++;
-
-      const contentId = contentData.id;
-
-      // 2b. Group episodes by season_number
-      const seasonMap = new Map<number, Row[]>();
-      for (const row of episodeRows) {
-        const seasonNum = parseNum(row.season_number);
-        if (seasonNum === null) continue;
-        if (!seasonMap.has(seasonNum)) seasonMap.set(seasonNum, []);
-        seasonMap.get(seasonNum)!.push(row);
+        if (err) {
+          console.error("Movie insert error:", err);
+          failContent++;
+        } else {
+          successContent++;
+        }
       }
 
-      for (const [seasonNumber, eps] of seasonMap.entries()) {
-        // 2c. Insert season row
-        const { data: seasonData, error: seasonErr } = await supabase
-          .from("seasons")
+      // ── 2. Insert series (grouped by title) ─────────────────────────────────
+      const seriesMap = new Map<string, Row[]>();
+      for (const row of seriesRows) {
+        const titleKey = (row.title || "").trim().toLowerCase();
+        if (!titleKey) continue;
+        if (!seriesMap.has(titleKey)) seriesMap.set(titleKey, []);
+        seriesMap.get(titleKey)!.push(row);
+      }
+
+      for (const [, episodeRows] of seriesMap.entries()) {
+        const sample = episodeRows[0];
+        const title = (sample.title || "").trim();
+
+        // Group episodes by season upfront so we can set counts at insert time
+        const seasonMap = new Map<number, Row[]>();
+        for (const row of episodeRows) {
+          const seasonNum = parseNum(row.season_number);
+          if (seasonNum === null) continue;
+          if (!seasonMap.has(seasonNum)) seasonMap.set(seasonNum, []);
+          seasonMap.get(seasonNum)!.push(row);
+        }
+
+        const totalEpisodes = episodeRows.filter(
+          (ep) =>
+            ep.episode_title &&
+            parseNum(ep.season_number) !== null &&
+            parseNum(ep.episode_number) !== null
+        ).length;
+
+        // 2a. Insert content row for the series
+        const { data: contentData, error: contentErr } = await supabase
+          .from("content")
           .insert([
             {
-              content_id: contentId,
-              season_number: seasonNumber,
-              title: `Season ${seasonNumber}`,
+              title,
+              description: sample.description || null,
+              type: "series",
+              genre: sample.genre || null,
+              year: parseNum(sample.year),
+              rating: parseNum(sample.rating),
+              poster_url: sample["poster url"] || null,
+              backdrop_url: sample["backdrop url"] || null,
+              video_url: null,
+              is_featured: parseBool(sample.featured),
+              is_trending: parseBool(sample.trending),
+              is_kids: parseBool(sample.is_kids),
+              seasons: seasonMap.size,
+              episodes: totalEpisodes,
             },
           ])
           .select("id")
           .single();
 
-        if (seasonErr || !seasonData) {
-          console.error("Season insert error:", seasonErr);
+        if (contentErr || !contentData) {
+          console.error("Series content insert error:", contentErr);
+          failContent++;
           continue;
         }
+        successContent++;
 
-        const seasonId = seasonData.id;
+        const contentId = contentData.id;
 
-        // 2d. Insert episodes for this season
-        const episodeInserts = eps
-          .filter((ep) => ep.episode_title)
-          .map((ep) => ({
-            season_id: seasonId,
-            episode_number: parseNum(ep.episode_number) ?? 0,
-            title: ep.episode_title || null,
-            description: ep.episode_description || null,
-            video_url: ep.episode_videourl || null,
-            duration_minutes: parseNum(ep.episode_duration),
-          }));
+        // 2b. Insert seasons and their episodes
+        for (const [seasonNumber, eps] of seasonMap.entries()) {
+          const { data: seasonData, error: seasonErr } = await supabase
+            .from("seasons")
+            .insert([
+              {
+                content_id: contentId,
+                season_number: seasonNumber,
+                title: `Season ${seasonNumber}`,
+              },
+            ])
+            .select("id")
+            .single();
 
-        if (episodeInserts.length) {
-          const { error: epErr } = await supabase
-            .from("episodes")
-            .insert(episodeInserts);
-          if (epErr) console.error("Episodes insert error:", epErr);
+          if (seasonErr || !seasonData) {
+            console.error("Season insert error:", seasonErr);
+            continue;
+          }
+
+          const seasonId = seasonData.id;
+
+          const episodeInserts = eps
+            .filter((ep) => ep.episode_title && parseNum(ep.episode_number) !== null)
+            .map((ep) => ({
+              season_id: seasonId,
+              episode_number: parseNum(ep.episode_number) as number,
+              title: ep.episode_title || null,
+              description: ep.episode_description || null,
+              video_url: ep.episode_videourl || null,
+              duration_minutes: parseNum(ep.episode_duration),
+            }));
+
+          if (episodeInserts.length) {
+            const { error: epErr } = await supabase
+              .from("episodes")
+              .insert(episodeInserts);
+            if (epErr) {
+              console.error("Episodes insert error:", epErr);
+              failContent++;
+            }
+          }
         }
       }
-    }
 
-    setLoading(false);
-    setSuccess(
-      `Import complete — ${successContent} content item(s) added.${
-        failContent ? ` ${failContent} failed (check console).` : ""
-      }`
-    );
+      setSuccess(
+        `Import complete — ${successContent} content item(s) added.${
+          failContent ? ` ${failContent} failed (check console).` : ""
+        }`
+      );
+    } catch (err) {
+      console.error("Unexpected import error:", err);
+      setError("An unexpected error occurred during import. Check the console for details.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // ── Preview columns (split into two groups for readability) ───────────────
+  // ── Preview columns ───────────────────────────────────────────────────────
   const previewCols = [
     "title", "type", "genre", "year", "rating",
     "season_number", "episode_number", "episode_title",
@@ -304,9 +351,9 @@ const BulkImportUpload = () => {
             </table>
           </div>
           <p className="text-gray-500 text-xs mt-1">
-            {rows.filter((r) => r.type === "movie").length} movie row(s) ·{" "}
-            {[...new Set(rows.filter((r) => r.type === "series").map((r) => r.title))].length} unique series ·{" "}
-            {rows.filter((r) => r.type === "series").length} episode row(s)
+            {rows.filter((r) => String(r.type || "").toLowerCase().trim() === "movie").length} movie row(s) ·{" "}
+            {[...new Set(rows.filter((r) => String(r.type || "").toLowerCase().trim() === "series").map((r) => (r.title || "").trim().toLowerCase()))].length} unique series ·{" "}
+            {rows.filter((r) => String(r.type || "").toLowerCase().trim() === "series").length} episode row(s)
           </p>
         </div>
       )}
