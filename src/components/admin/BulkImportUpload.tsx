@@ -16,12 +16,16 @@ const ALLOWED_COLUMNS = [
   "trending",
   "is_kids",
   "duration",
+  "completion_threshold_seconds",  // movie-level: seconds before end to mark complete
+  "channel_id",                    // assign content to a channel
   "season_number",
   "episode_number",
   "episode_title",
   "episode_description",
   "episode_videourl",
   "episode_duration",
+  "episode_thumbnail_url",         // episode thumbnail image URL
+  "episode_completion_threshold",  // per-episode completion offset in seconds
 ];
 
 // ✅ Fix 1: handles Excel numeric TRUE (1/0), actual booleans, and all string variants
@@ -155,6 +159,8 @@ const BulkImportUpload = () => {
             is_featured: parseBool(row.featured),
             is_trending: parseBool(row.trending),
             is_kids: parseBool(row.is_kids),
+            channel_id: row.channel_id || null,
+            completion_threshold_seconds: parseNum(row.completion_threshold_seconds),
           },
         ]);
 
@@ -212,6 +218,8 @@ const BulkImportUpload = () => {
               is_featured: parseBool(sample.featured),
               is_trending: parseBool(sample.trending),
               is_kids: parseBool(sample.is_kids),
+              channel_id: sample.channel_id || null,
+              completion_threshold_seconds: parseNum(sample.completion_threshold_seconds),
               seasons: seasonMap.size,
               episodes: totalEpisodes,
             },
@@ -258,6 +266,8 @@ const BulkImportUpload = () => {
               description: ep.episode_description || null,
               video_url: ep.episode_videourl || null,
               duration_minutes: parseNum(ep.episode_duration),
+              thumbnail_url: ep.episode_thumbnail_url || null,
+              completion_threshold_seconds: parseNum(ep.episode_completion_threshold),
             }));
 
           if (episodeInserts.length) {
@@ -301,9 +311,10 @@ const BulkImportUpload = () => {
       {/* Rules reminder */}
       <div className="bg-gray-700 rounded p-3 mb-4 text-xs text-gray-300 space-y-1">
         <p className="font-semibold text-white text-sm mb-1">How to fill the template:</p>
-        <p>🎬 <strong>Movies:</strong> Fill in <code>title, type=movie, duration, videourl</code> — leave season/episode columns empty.</p>
-        <p>📺 <strong>Series:</strong> Repeat series info (title, genre, poster…) on <em>every episode row</em>. Fill in <code>season_number, episode_number, episode_title, episode_videourl</code>.</p>
+        <p>🎬 <strong>Movies:</strong> Fill in <code>title, type=movie, duration, videourl</code>. Optional: <code>completion_threshold_seconds, channel_id</code>. Leave season/episode columns empty.</p>
+        <p>📺 <strong>Series:</strong> Repeat series info (title, genre, poster…) on <em>every episode row</em>. Fill in <code>season_number, episode_number, episode_title, episode_videourl</code>. Optional per episode: <code>episode_thumbnail_url, episode_completion_threshold</code>.</p>
         <p>✅ <code>featured</code>, <code>trending</code>, <code>is_kids</code> must be <strong>TRUE</strong> or <strong>FALSE</strong>.</p>
+        <p>📡 <code>channel_id</code> must be the exact UUID of an existing channel (optional).</p>
       </div>
 
       {/* File input */}
