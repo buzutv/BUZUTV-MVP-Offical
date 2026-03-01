@@ -52,7 +52,30 @@ const BulkImportUpload = () => {
         const data = new Uint8Array(evt.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: "array" });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        let parsed: Row[] = XLSX.utils.sheet_to_json(sheet, { defval: null });
+
+        // Convert to array-of-arrays first so we can detect whether row 1
+        // is a hint row or the actual header row.
+        const raw: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
+
+        // If the first cell of row 0 does NOT match a known column name it is
+        // a hint/note row — skip it and treat row 1 as the header row.
+        const firstCellRow0 = String(raw[0]?.[0] ?? "").toLowerCase().trim();
+        const isHintRow = !ALLOWED_COLUMNS.includes(firstCellRow0);
+        const headerRowIndex = isHintRow ? 1 : 0;
+        const headerRow: string[] = (raw[headerRowIndex] ?? []).map((h: any) =>
+          String(h ?? "").trim()
+        );
+        const dataRows = raw.slice(headerRowIndex + 1);
+
+        let parsed: Row[] = dataRows
+          .filter((r) => r.some((cell) => cell !== null && cell !== ""))
+          .map((r) => {
+            const obj: Row = {};
+            headerRow.forEach((key, i) => {
+              obj[key] = r[i] ?? null;
+            });
+            return obj;
+          });
 
         // Keep only known columns
         parsed = parsed.map((row) => {
