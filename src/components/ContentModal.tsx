@@ -713,7 +713,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
         onOpenChange={(open) => !open && handleCloseSeriesPlayer()}
       >
         <DialogContent
-          className="max-w-[100vw] w-screen h-screen p-0 m-0 border-none overflow-y-hiddenbg-black z-[99999]"
+          className="max-w-[100vw] w-screen h-screen p-0 m-0 border-none overflow-y-hidden bg-black z-[99999]"
           onInteractOutside={(e) => e.preventDefault()}
         >
           <FullscreenPlayer
@@ -759,8 +759,8 @@ const ContentModal: React.FC<ContentModalProps> = ({
         style={getDefaultBackgroundStyle()}
       >
         <DialogTitle className="sr-only">{normalizedItem.title}</DialogTitle>
-        <ScrollArea className="h-[90vh] scroll-smooth">
-          <div className="relative min-h-full">
+        <ScrollArea className="max-h-[90vh] h-full scroll-smooth w-full">
+          <div className="relative min-h-full w-full">
             {/* Hero Section */}
             <div className="relative w-full h-[60vh] overflow-hidden">
               {/* Background Image */}
@@ -876,14 +876,14 @@ const ContentModal: React.FC<ContentModalProps> = ({
             </div>
 
             {/* Content Section */}
-            <div className="p-4 md:p-8 pt-6 pb-0 relative">
+            <div className="max-w-7xl mx-auto w-full  md:p-8 pt-6 pb-0 relative">
               <div
                 className={`absolute top-0 left-0 right-0 h-4 ${gradientStyles.contentGradient} pointer-events-none`}
               />
 
               {/* Series Episodes Section */}
               {contentType === "series" && (seasonsData.length > 0 || seasonWithEpisodes.length > 0) && (
-                <div className="mb-8">
+                <div className="max-w-9xl mx-auto w-full mb-12 px-2 md:px-0">
                   {/* Continue Watching Row for Series */}
                   {continueWatchingEpisodes.length > 0 && (
                     <div className="mb-8 animate-in fade-in slide-in-from-left-4 duration-500 group/cw relative">
@@ -976,7 +976,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
 
                   <Tabs defaultValue="season-1" className="w-full">
                     <TabsList
-                      className={`flex flex-row gap-2 w-full bg-transparent transition-all duration-300 group ${effectiveKidsMode ? "" : ""}`}
+                      className={`flex flex-row flex-wrap justify-center items-center gap-3 w-full bg-transparent transition-all duration-300 group mb-8 ${effectiveKidsMode ? "" : ""}`}
                     >
                       {seasonWithEpisodes?.map((season) => (
                         <TabsTrigger
@@ -1001,61 +1001,60 @@ const ContentModal: React.FC<ContentModalProps> = ({
                       ))}
                     </TabsList>
 
-                    {seasonWithEpisodes?.map((season) => (
-                      <TabsContent
-                        key={`season-${season.season_number}`}
-                        value={`season-${season.season_number}`}
-                        className="space-y-2"
-                      >
-                        {season.episodes.map((episode, index) => (
-                          <div
-                            key={episode.id}
-                            onClick={() => {
-                              handlePlayEpisode(
-                                episode,
-                                season.season_number,
-                                index,
-                                season,
-                              );
-                            }}
-                            className={`border flex items-center space-x-3 rounded-lg p-3 transition-all duration-300 group h-12 cursor-pointer ${effectiveKidsMode
-                              ? "border-blue-400/20 bg-blue-500/60 hover:border-white hover:shadow-[0_0_8px_rgba(255,255,255,0.6)]"
-                              : "border-brand-500/20 bg-black hover:border-white hover:shadow-[0_0_8px_rgba(255,255,255,0.6)]"
-                              }`}
-                          >
-                            <div className="flex items-center space-x-3 flex-1 min-w-0">
-                              <span className="text-white font-medium text-sm">
-                                {episode.episode_number}
-                              </span>
-                              <div className="flex-1 min-w-0">
-                                <h3 className="text-white font-medium text-sm line-clamp-1">
-                                  {episode.title}
-                                </h3>
-                              </div>
-                              {/* <span className="text-gray-300 text-xs flex-shrink-0">
-                                {formatDuration(episode?.duration_minutes)}
-                              </span> */}
-                            </div>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
+                    <div className="min-w-7xl mx-auto w-full">
+                      {seasonWithEpisodes?.map((season) => (
+                        <TabsContent
+                          key={`season-${season.season_number}`}
+                          value={`season-${season.season_number}`}
+                          className="space-y-1"
+                        >
+                          {season.episodes.map((episode, index) => (
+                            <div
+                              key={episode.id}
+                              onClick={() => {
                                 handlePlayEpisode(
                                   episode,
                                   season.season_number,
                                   index,
                                   season,
                                 );
-                                dispatch(setShowAd(true));
                               }}
-                              className="ml-3 p-2 rounded-full transition-colors bg-white/10 hover:bg-white/20 text-white flex-shrink-0"
-                              aria-label={`Play ${episode.title}`}
+                              className={`border flex items-center space-x-3 rounded-lg p-3 transition-all duration-300 group min-h-[4rem] cursor-pointer ${effectiveKidsMode
+                                ? "border-blue-400/20 bg-blue-500/60 hover:border-white hover:shadow-[0_0_8px_rgba(255,255,255,0.6)]"
+                                : "border-brand-500/20 bg-black/60 hover:border-white hover:shadow-[0_0_8px_rgba(255,255,255,0.6)]"
+                                }`}
                             >
-                              <Play className="w-4 h-4 fill-current" />
-                            </button>
-                          </div>
-                        ))}
-                      </TabsContent>
-                    ))}
+                              <div className="flex items-center space-x-3 flex-1 min-w-0">
+                                <span className="text-white/60 font-medium text-sm w-6">
+                                  {episode.episode_number}
+                                </span>
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="text-white font-medium text-sm line-clamp-1">
+                                    {episode.title}
+                                  </h3>
+                                </div>
+                              </div>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePlayEpisode(
+                                    episode,
+                                    season.season_number,
+                                    index,
+                                    season,
+                                  );
+                                  dispatch(setShowAd(true));
+                                }}
+                                className="ml-3 p-2 rounded-full transition-colors bg-brand-500 hover:bg-brand-600 text-white flex-shrink-0"
+                                aria-label={`Play ${episode.title}`}
+                              >
+                                <Play className="w-4 h-4 fill-current" />
+                              </button>
+                            </div>
+                          ))}
+                        </TabsContent>
+                      ))}
+                    </div>
                   </Tabs>
                 </div>
               )}
@@ -1072,7 +1071,6 @@ const ContentModal: React.FC<ContentModalProps> = ({
             </div>
           </div>
         </ScrollArea>
-        {/* <AdToast isVisible={showAd} onClose={() => dispatch(setShowAd(false))} /> */}
       </DialogContent>
     </Dialog>
   );
