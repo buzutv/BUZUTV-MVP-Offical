@@ -151,6 +151,13 @@ const ContentModal: React.FC<ContentModalProps> = ({
   const { favoriteIds, addToFavorites, removeFromFavorites } =
     useUserFavorites();
   const [movie, setMovie] = useState(movieId);
+
+  useEffect(() => {
+    if (movieId) {
+      setMovie(movieId);
+    }
+  }, [movieId]);
+
   const { content } = useContent();
   const { channels } = useChannels();
   const [seasonWithEpisodes, setSeasonWithEpisodes] = useState([]);
@@ -275,7 +282,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
   // Consolidate season data fetching
   useEffect(() => {
     async function fetchSeasonData() {
-      const activeId = movie || currentItem?.id;
+      const activeId = currentItem?.originalId || movie || currentItem?.id;
       if (!activeId || !user?.id) return;
 
       const isSeriesType = currentItem.type === "series" || (currentItem as any).variant === "series";
@@ -307,8 +314,8 @@ const ContentModal: React.FC<ContentModalProps> = ({
   // console.log("Fetched season with episodes:", seasonWithEpisodes);
   // Always find current backend content item dynamically
   const currentContentItem = useMemo(() => {
-    return content.find((c) => c.id === currentItem.id);
-  }, [currentItem.id, content]);
+    return content.find((c) => c.id === ((currentItem as any).originalId || currentItem.id));
+  }, [currentItem.id, (currentItem as any).originalId, content]);
 
   // Reset currentItem when item prop changes (new modal opening)
   useEffect(() => {
@@ -518,7 +525,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
           selectedVideo: firstEpisode,
           currentVideoIndex: 0,
           seriesData: seasonWithEpisodes,
-          contentId: currentItem.id,
+          contentId: (currentItem as any).originalId || currentItem.id,
           poster_url:
             currentContentItem?.poster_url || normalizedItem.posterUrl,
         }),
@@ -527,6 +534,20 @@ const ContentModal: React.FC<ContentModalProps> = ({
       setCurrentEpisode(firstEpisode);
       setCurrentSeasonNumber(firstSeason.season_number);
       setIsSeriesPlayerOpen(true);
+    }
+  };
+
+  const handleResumeSeries = () => {
+    if (continueWatchingEpisodes.length > 0) {
+      const episode = continueWatchingEpisodes[0];
+      handlePlayEpisode(
+        episode,
+        episode.seasonNumber,
+        episode.withinSeasonIndex,
+        episode.actualSeasonData,
+      );
+    } else {
+      handlePlayFirstEpisode();
     }
   };
 
@@ -759,7 +780,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
                   <BrandButton
                     onClick={
                       contentType === "series"
-                        ? handlePlayFirstEpisode
+                        ? handleResumeSeries
                         : handlePlayMovie
                     }
                     disabled={

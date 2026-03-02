@@ -73,8 +73,11 @@ export const useAppContent = () => {
         .map((ep: any) => ({
           ...season.content,   // merge content fields
           ...ep,               // merge episode fields
+          originalId: season.content.id, // Preserve series ID
+          id: `${season.content.id}-ep-${ep.id}`, // Unique ID for key/grid
           season_number: season.season_number,
           season_title: season.title,
+          type: 'series'
         }))
     );
   };
