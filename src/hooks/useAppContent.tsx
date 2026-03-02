@@ -4,7 +4,12 @@ import { useChannels } from "@/hooks/useChannels";
 import { genres } from "@/data/mockMovies";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGetUserWatchHistoryQuery } from "@/store/userWatchHistorySlice";
-import { useGetSeasonWithEpisodesSeriesQuery, useLazyGetSeasonWithEpisodesQuery, useLazyGetSeasonWithEpisodesSeriesQuery } from "@/store/seasonSlice";
+import {
+  useGetSeasonWithEpisodesKidsSeriesQuery,
+  useGetSeasonWithEpisodesSeriesQuery,
+  useLazyGetSeasonWithEpisodesQuery,
+  useLazyGetSeasonWithEpisodesSeriesQuery,
+} from "@/store/seasonSlice";
 import { closeScreenPlayer } from "@/store/screenPlayerSlice";
 
 // Transform database content to match Movie interface
@@ -58,27 +63,32 @@ export const useAppContent = () => {
   const [seriesDetails, setSeriesDetails] = useState<Record<string, any>>({});
   const [fetchingIds, setFetchingIds] = useState<Set<string>>(new Set());
   const [triggerSeriesWithEpisodes] = useLazyGetSeasonWithEpisodesSeriesQuery();
-  const {
-    data: serieswithEpisodes
-  } = useGetSeasonWithEpisodesSeriesQuery({ userId: user?.id ?? "" });
+  const { data: serieswithEpisodes } = useGetSeasonWithEpisodesSeriesQuery({
+    userId: user?.id ?? "",
+  });
 
-  console.log("serieswithEpisodes", serieswithEpisodes)
+  const { data: kidsSerieswithEpisodes } = useGetSeasonWithEpisodesKidsSeriesQuery(
+    { userId: user?.id ?? "" },
+  );
 
-  const filterForSeriesContinueWatching = (): any[] => {
-    if (!serieswithEpisodes) return [];
+  console.log("serieswithEpisodes", serieswithEpisodes);
+  console.log("kidsSerieswithEpisodes", kidsSerieswithEpisodes);
 
-    return serieswithEpisodes.flatMap((season) =>
+  const filterSeriesContinueWatching = (dataSource: any[] | undefined): any[] => {
+    if (!dataSource) return [];
+
+    return dataSource.flatMap((season) =>
       season.episodes
         .filter((ep: any) => ep.watch_percentage > 0 && !ep.completed)
         .map((ep: any) => ({
-          ...season.content,   // merge content fields
-          ...ep,               // merge episode fields
+          ...season.content, // merge content fields
+          ...ep, // merge episode fields
           originalId: season.content.id, // Preserve series ID
           id: `${season.content.id}-ep-${ep.id}`, // Unique ID for key/grid
           season_number: season.season_number,
           season_title: season.title,
-          type: 'series'
-        }))
+          type: "series",
+        })),
     );
   };
 
@@ -262,8 +272,26 @@ export const useAppContent = () => {
       });
 
     const movieContinueWatching = filterContinueWatching(movies);
-    const seriesContinueWatching = filterForSeriesContinueWatching();
-    const kidsContinueWatching = filterContinueWatching(kids);
+    const seriesContinueWatching = filterSeriesContinueWatching(serieswithEpisodes);
+
+    const kidsMovies = kids.filter((item) => item.type === "movie");
+    const kidsMovieContinueWatching = filterContinueWatching(kidsMovies);
+    const kidsSeriesContinueWatching = filterSeriesContinueWatching(
+      kidsSerieswithEpisodes,
+    );
+
+    const kidsContinueWatching = [
+      ...kidsMovieContinueWatching,
+      ...kidsSeriesContinueWatching,
+    ].sort((a, b) => {
+      const getLatestTime = (it: any) => {
+        const h = Array.isArray(it.user_watch_history)
+          ? it.user_watch_history[0]
+          : it.user_watch_history;
+        return new Date(h?.watched_at || 0).getTime();
+      };
+      return getLatestTime(b) - getLatestTime(a);
+    });
 
     const cwIds = new Set([
       ...movieContinueWatching.map(i => i.id),
@@ -409,10 +437,16 @@ export const useAppContent = () => {
     seriesContent: content.series,
     kidsContent: content.kids,
     homeContent: content.home,
-    continueWatching: [...(content.movies.continueWatching || []), ...(content.series.continueWatching || [])].sort((a, b) => {
+    continueWatching: [
+      ...(content.movies.continueWatching || []),
+      ...(content.series.continueWatching || []),
+      ...(content.kids.continueWatching || []),
+    ].sort((a, b) => {
       const getLatestTime = (it: any) => {
-        const h = it.user_watch_history?.[0];
-        return new Date(h?.watched_at || 0).getTime();
+        const history = Array.isArray(it.user_watch_history)
+          ? it.user_watch_history[0]
+          : it.user_watch_history;
+        return new Date(history?.watched_at || 0).getTime();
       };
       return getLatestTime(b) - getLatestTime(a);
     }),
