@@ -4,7 +4,8 @@ import { useChannels } from "@/hooks/useChannels";
 import { genres } from "@/data/mockMovies";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGetUserWatchHistoryQuery } from "@/store/userWatchHistorySlice";
-import { useLazyGetSeasonWithEpisodesQuery } from "@/store/seasonSlice";
+import { useGetSeasonWithEpisodesSeriesQuery, useLazyGetSeasonWithEpisodesQuery, useLazyGetSeasonWithEpisodesSeriesQuery } from "@/store/seasonSlice";
+import { closeScreenPlayer } from "@/store/screenPlayerSlice";
 
 // Transform database content to match Movie interface
 const transformDatabaseContent = (dbContent: any[]) => {
@@ -56,6 +57,27 @@ export const useAppContent = () => {
   const [triggerGetSeasons] = useLazyGetSeasonWithEpisodesQuery();
   const [seriesDetails, setSeriesDetails] = useState<Record<string, any>>({});
   const [fetchingIds, setFetchingIds] = useState<Set<string>>(new Set());
+  const [triggerSeriesWithEpisodes] = useLazyGetSeasonWithEpisodesSeriesQuery();
+  const {
+    data: serieswithEpisodes
+  } = useGetSeasonWithEpisodesSeriesQuery({ userId: user?.id ?? "" });
+
+  console.log("serieswithEpisodes", serieswithEpisodes)
+
+  const filterForSeriesContinueWatching = (): any[] => {
+    if (!serieswithEpisodes) return [];
+
+    return serieswithEpisodes.flatMap((season) =>
+      season.episodes
+        .filter((ep: any) => ep.watch_percentage > 0 && !ep.completed)
+        .map((ep: any) => ({
+          ...season.content,   // merge content fields
+          ...ep,               // merge episode fields
+          season_number: season.season_number,
+          season_title: season.title,
+        }))
+    );
+  };
 
 
   const transformedContent = useMemo(() => {
@@ -67,7 +89,7 @@ export const useAppContent = () => {
 
   const transformedChannels = useMemo(() => {
     if (dbChannelsLoading || !dbChannels?.length) {
-      return [];
+      return []
     }
     return transformDatabaseChannels(dbChannels);
   }, [dbChannels, dbChannelsLoading]);
@@ -126,6 +148,7 @@ export const useAppContent = () => {
     const kids = transformedContent.filter((item) => item.isKids === true);
 
     const filterContinueWatching = (items: any[]) =>
+
       items.flatMap(item => {
         // Enrich item with comprehensive history array
         let historyArr = Array.isArray(item.user_watch_history)
@@ -142,6 +165,7 @@ export const useAppContent = () => {
 
         // For series, use detailed structure if available
         if (item.type === "series") {
+          console.log("Series Items", item)
           const detailedSeasons = seriesDetails[item.id];
           if (detailedSeasons) {
             const allEpisodes = detailedSeasons.flatMap((s: any) =>
@@ -235,7 +259,7 @@ export const useAppContent = () => {
       });
 
     const movieContinueWatching = filterContinueWatching(movies);
-    const seriesContinueWatching = filterContinueWatching(series);
+    const seriesContinueWatching = filterForSeriesContinueWatching();
     const kidsContinueWatching = filterContinueWatching(kids);
 
     const cwIds = new Set([
@@ -332,13 +356,25 @@ export const useAppContent = () => {
   useEffect(() => {
     if (!user?.id || !allHistory) return;
 
-    // Identify series IDs from history
+    // Identify series IDs from history table
     const seriesWithHistory = new Set(
       allHistory
-        .filter(h => h.episode_id) // Only look at episode history records
+        .filter(h => h.episode_id) // Look at episode history records
         .map(h => h.movie_id) // movie_id contains the series ID for episodes
         .filter(Boolean) as string[]
     );
+
+    // Also scan transformedContent for joined history (which might use movie_id)
+    transformedContent.forEach(item => {
+      if (item.type === 'series' && item.user_watch_history) {
+        const historyArr = Array.isArray(item.user_watch_history)
+          ? item.user_watch_history
+          : [item.user_watch_history];
+        if (historyArr.some((h: any) => h.episode_id || h.movie_id)) {
+          seriesWithHistory.add(item.id);
+        }
+      }
+    });
 
     seriesWithHistory.forEach(async (id) => {
       if (!seriesDetails[id] && !fetchingIds.has(id)) {
@@ -357,7 +393,7 @@ export const useAppContent = () => {
         }
       }
     });
-  }, [allHistory, user?.id, triggerGetSeasons, seriesDetails, fetchingIds]);
+  }, [allHistory, user?.id, triggerGetSeasons, seriesDetails, fetchingIds, transformedContent]);
 
 
 

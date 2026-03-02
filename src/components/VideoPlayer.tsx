@@ -226,7 +226,7 @@ const VideoPlayer = forwardRef<any, VideoPlayerProps>(
           movieId: movieIdRef.current,
           episodeId: episodeIdRef.current || undefined,
           data: {
-            movie_id: episodeIdRef.current ? null : movieIdRef.current,
+            movie_id: movieIdRef.current || null,
             episode_id: episodeIdRef.current || null,
             watched_at: new Date().toISOString(),
             last_position: isComp ? 0 : Math.floor(current),

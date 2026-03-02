@@ -39,6 +39,36 @@ export const seasonSlice = supabaseApi.injectEndpoints({
       ],
     }),
 
+    getSeasonWithEpisodesSeries: builder.query<any[], { userId: string }>(
+      {
+        query: ({ userId }) =>
+          `seasons?order=season_number.asc&select=*,content!inner(*),episodes(*,user_watch_history(*))&content.type=eq.series&episodes.user_watch_history.user_id=eq.${userId}`,
+        transformResponse: (res: any[]) =>
+          res.map((season) => ({
+            ...season,
+            episodes: (season.episodes || [])
+              .map((ep: any) => {
+                const [history] = ep.user_watch_history ?? [];
+                return {
+                  ...ep,
+                  watch_percentage: history?.watch_percentage ?? 0,
+                  last_position: history?.last_position ?? 0,
+                  completed: history?.completed ?? false,
+                  watched_at: history?.watched_at || null,
+                  user_watch_history: history,
+                };
+              })
+              .sort(
+                (a: any, b: any) =>
+                  (a.episode_number || 0) - (b.episode_number || 0)
+              ),
+          })),
+
+        providesTags: (_r, _e) => [
+          { type: "seasons" },
+        ],
+      }),
+
     createSeason: builder.mutation<
       Season,
       Pick<Season, 'content_id' | 'season_number' | 'title' | 'release_date'>
@@ -83,7 +113,9 @@ export const {
   useGetSeasonsByContentQuery,
   useGetSeasonByIdQuery,
   useGetSeasonWithEpisodesQuery,
+  useGetSeasonWithEpisodesSeriesQuery,
   useLazyGetSeasonWithEpisodesQuery,
+  useLazyGetSeasonWithEpisodesSeriesQuery,
   useCreateSeasonMutation,
   useUpdateSeasonMutation,
   useDeleteSeasonMutation,

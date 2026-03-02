@@ -28,6 +28,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useLazyGetPlaylistContentWithWatchHistoryQuery } from "@/store/contentSlice";
 import { useAuth } from "@/contexts/AuthContext";
 import MovieDetailSection from "./MovieDetailSection";
+import AdToast from "./AdToast";
 
 // Type guards to safely access properties
 const isMovie = (item: Movie | Content): item is Movie => {
@@ -141,6 +142,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
   const [isMovieOpen, setIsMovieOpen] = useState(false);
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [currentSeasonNumber, setCurrentSeasonNumber] = useState<number>(1);
+  const [showAd, setShowAd] = useState(false);
   // const { user } = useAuth();
   const [triggerGetContentWithWatchHistory, result] =
     useLazyGetPlaylistContentWithWatchHistoryQuery();
@@ -171,6 +173,14 @@ const ContentModal: React.FC<ContentModalProps> = ({
   const contentType = useMemo(() => {
     return variant === "auto" ? currentItem.type || "movie" : variant;
   }, [variant, currentItem.type]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setShowAd(true);
+      const timer = setTimeout(() => setShowAd(false), 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
 
   // Normalize item early
   const normalizedItem = useMemo(
@@ -1030,6 +1040,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
             </div>
           </div>
         </ScrollArea>
+        <AdToast isVisible={showAd} onClose={() => setShowAd(false)} />
       </DialogContent>
     </Dialog>
   );

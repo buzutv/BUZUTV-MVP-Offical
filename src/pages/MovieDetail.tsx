@@ -6,6 +6,8 @@ import FullscreenPlayer from "@/components/FullscreenPlayer";
 import React, { useState } from "react";
 import { useContent } from "@/hooks/useContent";
 import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
+import { useEffect } from "react";
+import AdToast from "@/components/AdToast";
 
 const MovieDetail = () => {
   const { id } = useParams();
@@ -13,6 +15,13 @@ const MovieDetail = () => {
   const [isFavorited, setIsFavorited] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { content } = useContent();
+  const [showAd, setShowAd] = useState(false);
+
+  useEffect(() => {
+    setShowAd(true);
+    const timer = setTimeout(() => setShowAd(false), 8000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const movie = mockMovies.find((m) => m.id === id);
 
@@ -140,11 +149,10 @@ const MovieDetail = () => {
                 <button
                   onClick={handlePlay}
                   disabled={!videoUrl}
-                  className={`p-6 rounded-full transition-all duration-200 hover:scale-110 ${
-                    videoUrl
-                      ? "bg-white/90 hover:bg-white text-black"
-                      : "bg-gray-600 text-gray-400 cursor-not-allowed"
-                  }`}
+                  className={`p-6 rounded-full transition-all duration-200 hover:scale-110 ${videoUrl
+                    ? "bg-white/90 hover:bg-white text-black"
+                    : "bg-gray-600 text-gray-400 cursor-not-allowed"
+                    }`}
                 >
                   <Play className="w-12 h-12 fill-current" />
                 </button>
@@ -184,11 +192,10 @@ const MovieDetail = () => {
                   <button
                     onClick={handlePlay}
                     disabled={!videoUrl}
-                    className={`flex items-center space-x-3 px-8 py-3 rounded-lg font-semibold transition-colors ${
-                      videoUrl
-                        ? "bg-white text-black hover:bg-gray-200"
-                        : "bg-gray-600 text-gray-400 cursor-not-allowed"
-                    }`}
+                    className={`flex items-center space-x-3 px-8 py-3 rounded-lg font-semibold transition-colors ${videoUrl
+                      ? "bg-white text-black hover:bg-gray-200"
+                      : "bg-gray-600 text-gray-400 cursor-not-allowed"
+                      }`}
                   >
                     <Play className="w-6 h-6 fill-current" />
                     <span>Play</span>
@@ -230,6 +237,7 @@ const MovieDetail = () => {
           </div>
         </div>
       </div>
+      <AdToast isVisible={showAd} onClose={() => setShowAd(false)} />
     </div>
   );
 };

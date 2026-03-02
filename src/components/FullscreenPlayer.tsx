@@ -499,13 +499,16 @@ const FullscreenPlayer = ({
 
   // Ad Timer
   useEffect(() => {
+    // Show immediately when opened
+    setShowAd(true);
+
     // Start interval
     const interval = setInterval(() => {
       setShowAd(true);
     }, 60000); // 1 minute
 
     return () => clearInterval(interval);
-  }, []);
+  }, [actualVideoUrl]);
 
   // Ad Auto-dismiss
   useEffect(() => {

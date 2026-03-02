@@ -207,7 +207,7 @@ const Series = () => {
               <div className="max-w-full relative pr-6 pl-0 md:pr-8 md:pl-6">
                 {seriesContent.continueWatching?.length > 0 && (
                   <ContentRow
-                    title="Continue Watching"
+                    title="Continue TV Show"
                     items={seriesContent.continueWatching}
                     onCardClick={handleContentRowCardClick}
                   />
