@@ -1,10 +1,14 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 
 const NotFound = () => {
   const location = useLocation();
-
+  const navigate = useNavigate()
+  console.log('Location', location.pathname)
   useEffect(() => {
+    if (location.pathname === '/admin') {
+      navigate("/admin/dashboard");
+    }
     console.error(
       "404 Error: User attempted to access non-existent route:",
       location.pathname

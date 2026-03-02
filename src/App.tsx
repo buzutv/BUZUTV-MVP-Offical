@@ -60,7 +60,7 @@ function RequireAdmin({ children }: { children: JSX.Element }) {
   const { isLoggedIn, user, isLoading } = useAuth();
   const location = useLocation();
   if (isLoading) return null;
-  if (!isLoggedIn || !user?.isAdmin)
+  if (isLoggedIn && !user?.isAdmin)
     return <Navigate to="/" state={{ from: location }} replace />;
   return children;
 }
@@ -93,13 +93,13 @@ const App = () => {
               <Route path="/my-list" element={<RequireAuth><MyList /></RequireAuth>} />
               <Route path="/settings" element={<RequireAuth><Settings /></RequireAuth>} />
               <Route path="/movie/:id" element={<RequireAuth><MovieDetail /></RequireAuth>} />
-              <Route path="/admin" element={<AdminLogin />} />
-              <Route path="/admin/dashboard" element={<AdminDashboard />} />
-              <Route path="/admin/movies" element={<AdminMovies />} />
-              <Route path="/admin/channels" element={<AdminChannels />} />
-              <Route path="/admin/add-movie" element={<AdminAddMovie />} />
-              <Route path="/admin/add-channel" element={<AdminAddChannel />} />
-              <Route path="/admin/edit-movie/:id" element={<AdminEditMovie />} />
+              {/* <Route path="/admin" element={<AdminLogin />} /> */}
+              <Route path="/admin/dashboard" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
+              <Route path="/admin/movies" element={<RequireAdmin><AdminMovies /></RequireAdmin>} />
+              <Route path="/admin/channels" element={<RequireAdmin><AdminChannels /></RequireAdmin>} />
+              <Route path="/admin/add-movie" element={<RequireAdmin><AdminAddMovie /></RequireAdmin>} />
+              <Route path="/admin/add-channel" element={<RequireAdmin><AdminAddChannel /></RequireAdmin>} />
+              <Route path="/admin/edit-movie/:id" element={<RequireAdmin><AdminEditMovie /></RequireAdmin>} />
               <Route path="/admin/edit-channel/:id" element={<AdminEditChannel />} />
               <Route path="/admin/editorial" element={<EditorialMovies />} />
               <Route path="/admin/editorial/edit/:id" element={<EditorialEditMovie />} />

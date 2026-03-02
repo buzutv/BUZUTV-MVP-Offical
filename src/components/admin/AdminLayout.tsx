@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Home, Film, Plus, LogOut, BarChart3, Tv, PlayCircle } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -11,11 +12,19 @@ interface AdminLayoutProps {
 const AdminLayout = ({ children }: AdminLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth()
 
+
+  console.log("User", user)
   useEffect(() => {
     const isLoggedIn = localStorage.getItem("isAdminLoggedIn");
-    if (!isLoggedIn) {
-      navigate("/admin");
+    if (!isLoggedIn && user?.isAdmin) {
+      if (location.pathname === '/admin') {
+        navigate("/admin/dashboard");
+      }
+    }
+    else if (isLoggedIn && !user?.isAdmin) {
+      navigate('/')
     }
   }, [navigate]);
 
