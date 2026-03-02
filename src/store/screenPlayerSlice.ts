@@ -15,8 +15,8 @@ const initialState = {
     currentVideoIndex: 0,
     isSeries: false,
     seriesData: [],
-    contentModalOpen: false
-
+    contentModalOpen: false,
+    showAd: false
 }
 export const screenPlayer = createSlice({
     initialState: initialState,
@@ -65,6 +65,9 @@ export const screenPlayer = createSlice({
         },
         setContentId: (state, action) => {
             state.contentId = action.payload.contentId
+        },
+        setShowAd: (state, action) => {
+            state.showAd = action.payload
         }
 
 
@@ -72,6 +75,6 @@ export const screenPlayer = createSlice({
 
 })
 
-export const { openScreenPlayer, setPlaylistInfo, closeScreenPlayer, setCurrentVideoIndex, setisSeries, setSeriesData, setContentId } = screenPlayer.actions;
+export const { openScreenPlayer, setPlaylistInfo, closeScreenPlayer, setCurrentVideoIndex, setisSeries, setSeriesData, setContentId, setShowAd } = screenPlayer.actions;
 
 export default screenPlayer.reducer;

@@ -23,12 +23,13 @@ import {
   setContentId,
   setisSeries,
   setSeriesData,
+  setShowAd,
 } from "@/store/screenPlayerSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { useLazyGetPlaylistContentWithWatchHistoryQuery } from "@/store/contentSlice";
 import { useAuth } from "@/contexts/AuthContext";
 import MovieDetailSection from "./MovieDetailSection";
-import AdToast from "./AdToast";
+
 
 // Type guards to safely access properties
 const isMovie = (item: Movie | Content): item is Movie => {
@@ -142,7 +143,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
   const [isMovieOpen, setIsMovieOpen] = useState(false);
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [currentSeasonNumber, setCurrentSeasonNumber] = useState<number>(1);
-  const [showAd, setShowAd] = useState(false);
+  const showAd = useSelector((state: any) => state.screenPlayer.showAd);
   // const { user } = useAuth();
   const [triggerGetContentWithWatchHistory, result] =
     useLazyGetPlaylistContentWithWatchHistoryQuery();
@@ -180,14 +181,19 @@ const ContentModal: React.FC<ContentModalProps> = ({
   const contentType = useMemo(() => {
     return variant === "auto" ? currentItem.type || "movie" : variant;
   }, [variant, currentItem.type]);
-
   useEffect(() => {
     if (isOpen) {
-      setShowAd(true);
-      const timer = setTimeout(() => setShowAd(false), 8000);
+      dispatch(setShowAd(true));
+      const timer = setTimeout(() => dispatch(setShowAd(false)), 8000);
       return () => clearTimeout(timer);
     }
-  }, [isOpen]);
+  }, [isOpen, dispatch]);
+
+  useEffect(() => {
+    if (isMovieOpen || isSeriesPlayerOpen) {
+      dispatch(setShowAd(false));
+    }
+  }, [isMovieOpen, isSeriesPlayerOpen, dispatch]);
 
   // Normalize item early
   const normalizedItem = useMemo(
@@ -485,6 +491,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
         }),
       );
       setIsMovieOpen(true);
+      dispatch(setShowAd(true));
 
       onPlayEpisode(currentVideoUrl, normalizedItem.title);
     } else if (currentVideoUrl) {
@@ -534,6 +541,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
       setCurrentEpisode(firstEpisode);
       setCurrentSeasonNumber(firstSeason.season_number);
       setIsSeriesPlayerOpen(true);
+      dispatch(setShowAd(true));
     }
   };
 
@@ -596,6 +604,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
       setCurrentEpisode({ ...episode, video_url: epVideoUrl });
       setCurrentSeasonNumber(seasonNumber);
       setIsSeriesPlayerOpen(true);
+      dispatch(setShowAd(true));
     } else {
       console.warn(
         "Cannot play episode: video URL missing or seasons not loaded",
@@ -647,6 +656,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
         contentId: clickedItem.id,
       }),
     );
+    dispatch(setShowAd(true));
   };
 
   // Background styles
@@ -1035,6 +1045,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
                                   index,
                                   season,
                                 );
+                                dispatch(setShowAd(true));
                               }}
                               className="ml-3 p-2 rounded-full transition-colors bg-white/10 hover:bg-white/20 text-white flex-shrink-0"
                               aria-label={`Play ${episode.title}`}
@@ -1061,7 +1072,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
             </div>
           </div>
         </ScrollArea>
-        <AdToast isVisible={showAd} onClose={() => setShowAd(false)} />
+        {/* <AdToast isVisible={showAd} onClose={() => dispatch(setShowAd(false))} /> */}
       </DialogContent>
     </Dialog>
   );

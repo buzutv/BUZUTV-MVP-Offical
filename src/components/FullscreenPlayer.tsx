@@ -29,7 +29,7 @@ import {
 import RelatedContent from "./RelatedContent";
 import AdToast from "./AdToast";
 import { useDispatch, useSelector } from "react-redux";
-import { openScreenPlayer, closeScreenPlayer } from "@/store/screenPlayerSlice";
+import { openScreenPlayer, closeScreenPlayer, setShowAd } from "@/store/screenPlayerSlice";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useAuth } from "@/contexts/AuthContext";
 import { useContent } from "@/hooks/useContent";
@@ -82,7 +82,6 @@ const FullscreenPlayer = ({
   const { refetch: refetchContentWithWatchHistory } = useContent();
   // Episode selection state for series
   const [episodes, setEpisodes] = useState<Episode[]>([]);
-  const [showAd, setShowAd] = useState(false);
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [actualVideoUrl, setActualVideoUrl] = useState(videoUrl);
   const id = useParams();
@@ -122,6 +121,7 @@ const FullscreenPlayer = ({
     (state: any) => state.screenPlayer.seriesData,
   );
   const [isLoadingEpisodes, setIsLoadingEpisodes] = useState(false);
+  const showAd = useSelector((state: any) => state.screenPlayer.showAd);
   const [
     triggerGetSearchContentWithWatchHistory,
     resultGetSearchContentWithWatchHistory,
@@ -497,28 +497,14 @@ const FullscreenPlayer = ({
     }
   }, [selectedContent, reduxVideoUrl, localProgress]);
 
-  // Ad Timer
-  useEffect(() => {
-    // Show immediately when opened
-    setShowAd(true);
-
-    // Start interval
-    const interval = setInterval(() => {
-      setShowAd(true);
-    }, 60000); // 1 minute
-
-    return () => clearInterval(interval);
-  }, [actualVideoUrl]);
-
-  // Ad Auto-dismiss
   useEffect(() => {
     if (showAd) {
       const timer = setTimeout(() => {
-        setShowAd(false);
-      }, 10000); // 10 seconds duration
+        dispatch(setShowAd(false));
+      }, 8000);
       return () => clearTimeout(timer);
     }
-  }, [showAd]);
+  }, [showAd, dispatch]);
 
   // Fetch related content
   // 1. OPTIMIZED FETCH (N+1 Fix)
@@ -656,6 +642,7 @@ const FullscreenPlayer = ({
 
                 // Close immediately
                 onClose && onClose();
+                dispatch(setShowAd(true));
                 dispatch(closeScreenPlayer());
               }}
             >
@@ -837,6 +824,7 @@ const FullscreenPlayer = ({
                                       updatedEpisode.series_id,
                                   }),
                                 );
+                                dispatch(setShowAd(true));
                               }}
                             >
                               <div className="bg-white/5 rounded-lg overflow-hidden">
@@ -943,7 +931,7 @@ const FullscreenPlayer = ({
           /> */}
           </div>
         </div>
-        <AdToast isVisible={showAd} onClose={() => setShowAd(false)} />
+        <AdToast isVisible={showAd} onClose={() => dispatch(setShowAd(false))} />
       </div>
     </ProtectedRoute>
   );
