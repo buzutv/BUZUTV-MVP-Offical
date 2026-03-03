@@ -288,7 +288,7 @@ const ContentModal: React.FC<ContentModalProps> = ({
   // Consolidate season data fetching
   useEffect(() => {
     async function fetchSeasonData() {
-      const activeId = currentItem?.originalId || movie || currentItem?.id;
+      const activeId = (currentItem as any)?.originalId || movie || currentItem?.id;
       if (!activeId || !user?.id) return;
 
       const isSeriesType = currentItem.type === "series" || (currentItem as any).variant === "series";
