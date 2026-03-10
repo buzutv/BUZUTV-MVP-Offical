@@ -87,9 +87,9 @@ const App = () => {
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/movies" element={<RequireAuth><Movies /></RequireAuth>} />
-              <Route path="/series" element={<RequireAuth><Series /></RequireAuth>} />
-              <Route path="/kids" element={<RequireAuth><Kids /></RequireAuth>} />
+              <Route path="/movies" element={<Movies />} />
+              <Route path="/series" element={<Series />} />
+              <Route path="/kids" element={<Kids />} />
               <Route path="/my-list" element={<RequireAuth><MyList /></RequireAuth>} />
               <Route path="/settings" element={<RequireAuth><Settings /></RequireAuth>} />
               <Route path="/movie/:id" element={<RequireAuth><MovieDetail /></RequireAuth>} />

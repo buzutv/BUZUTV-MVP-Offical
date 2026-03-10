@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import ContentCard from "@/components/ContentCard";
 import HeroBanner from "@/components/HeroBanner";
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import FilterBar from "@/components/FilterBar";
 import ContentRow from "@/components/ContentRow";
 import ContentGrid from "@/components/ContentGrid";
@@ -13,7 +12,6 @@ import { useChannels } from "@/hooks/useChannels";
 // import FullscreenPlayer from "@/components/FullscreenPlayer";
 import { Spinner } from "@/components/ui/spinner";
 import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
-import { useAuth } from "@/contexts/AuthContext";
 
 const Series = () => {
   const { seriesContent, isLoading, content, continueWatching } = useAppContent();
@@ -24,7 +22,6 @@ const Series = () => {
     useUserFavorites();
   const { content: rawContent } = useContent();
   const { channels } = useChannels();
-  const { isLoggedIn, setShowLoginModal } = useAuth();
 
 
   console.log("seriesContent", seriesContent)
@@ -63,10 +60,6 @@ const Series = () => {
   const filteredSeries = getFilteredSeries();
 
   const handleContentRowCardClick = (item?: any) => {
-    if (!isLoggedIn) {
-      setShowLoginModal(true);
-      return true;
-    }
     if (item) {
       setSelectedSeries(item);
       return true;
@@ -76,13 +69,12 @@ const Series = () => {
 
   if (isLoading) {
     return (
-      <ProtectedRoute>
-        <div className="min-h-screen text-white">
-          {/* Fixed background gradient */}
-          <div
-            className="fixed inset-0"
-            style={{
-              background: `
+      <div className="min-h-screen text-white">
+        {/* Fixed background gradient */}
+        <div
+          className="fixed inset-0"
+          style={{
+            background: `
                 linear-gradient(
                   200deg,
                   #311066 0%,   /* very dark violet */
@@ -90,22 +82,21 @@ const Series = () => {
                   #120222 45%,  /* near-black violet */
                   black 100%    /* pure black */
                 )`,
-            }}
-          ></div>
-          <div className="relative flex items-center justify-center min-h-screen">
-            <div className="text-2xl text-white">
-              <Spinner className="w-12 h-12" />
-            </div>
+          }}
+        ></div>
+        <div className="relative flex items-center justify-center min-h-screen">
+          <div className="text-2xl text-white">
+            <Spinner className="w-12 h-12" />
           </div>
         </div>
-      </ProtectedRoute>
+      </div>
     );
   }
 
 
 
   return (
-    <ProtectedRoute>
+    <>
       {/* Fixed background gradient */}
       <div
         className="fixed inset-0"
@@ -383,7 +374,7 @@ const Series = () => {
           />
         )}
       </div>
-    </ProtectedRoute >
+    </>
   );
 };
 

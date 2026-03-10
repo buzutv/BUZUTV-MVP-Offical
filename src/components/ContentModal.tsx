@@ -218,7 +218,13 @@ const ContentModal: React.FC<ContentModalProps> = ({
   const [triggerSeasonWithEpisode] = useLazyGetSeasonWithEpisodesQuery();
   // console.log("Season with Episode", seasonWithEpisode)
   const isSeries = useSelector((state: any) => state.screenPlayer.isSeries);
-  const { user } = useAuth();
+  const { user, isLoggedIn, setShowLoginModal } = useAuth();
+
+  const requireAuthToPlay = useCallback(() => {
+    if (isLoggedIn) return true;
+    setShowLoginModal(true);
+    return false;
+  }, [isLoggedIn, setShowLoginModal]);
 
   const continueWatchingEpisodes = useMemo(() => {
     if (
@@ -369,7 +375,13 @@ const ContentModal: React.FC<ContentModalProps> = ({
         handlePlayMovie();
       }
     }
-  }, [isOpen, startInPlayerMode, contentType, seasonWithEpisodes.length]);
+  }, [
+    isOpen,
+    startInPlayerMode,
+    contentType,
+    seasonWithEpisodes.length,
+    requireAuthToPlay,
+  ]);
 
   // Format duration helper
   const formatDuration = (minutes: number | undefined) => {
@@ -476,6 +488,8 @@ const ContentModal: React.FC<ContentModalProps> = ({
 
   // Handle play actions - ALWAYS use current item's data
   const handlePlayMovie = () => {
+    if (!requireAuthToPlay()) return;
+
     if (currentVideoUrl && onPlayEpisode) {
       // Use onPlayEpisode for consistency across all components
       dispatch(
@@ -521,6 +535,8 @@ const ContentModal: React.FC<ContentModalProps> = ({
   };
 
   const handlePlayFirstEpisode = () => {
+    if (!requireAuthToPlay()) return;
+
     const firstSeason = seasonWithEpisodes[0];
     const firstEpisode = firstSeason?.episodes[0];
 
@@ -546,6 +562,8 @@ const ContentModal: React.FC<ContentModalProps> = ({
   };
 
   const handleResumeSeries = () => {
+    if (!requireAuthToPlay()) return;
+
     if (continueWatchingEpisodes.length > 0) {
       const episode = continueWatchingEpisodes[0];
       handlePlayEpisode(
@@ -565,6 +583,8 @@ const ContentModal: React.FC<ContentModalProps> = ({
     index: number,
     seasonData: any,
   ) => {
+    if (!requireAuthToPlay()) return;
+
     const epVideoUrl = episode.video_url || (episode as any).videoUrl;
     //console.log("Play episode clicked:", {
     // episodeId: episode.id,
@@ -787,30 +807,32 @@ const ContentModal: React.FC<ContentModalProps> = ({
 
                 {/* Action Buttons Row */}
                 <div className="flex items-center space-x-4 mb-4">
-                  <BrandButton
-                    onClick={
-                      contentType === "series"
-                        ? handleResumeSeries
-                        : handlePlayMovie
-                    }
-                    disabled={
-                      !currentVideoUrl &&
-                      (!seasonsData.length ||
-                        !seasonsData[0]?.episodes[0]?.video_url)
-                    }
-                    variant={effectiveKidsMode ? "kids" : "primary"}
-                    size="md"
-                    className={
-                      !currentVideoUrl &&
+                  {isLoggedIn && (
+                    <BrandButton
+                      onClick={
+                        contentType === "series"
+                          ? handleResumeSeries
+                          : handlePlayMovie
+                      }
+                      disabled={
+                        !currentVideoUrl &&
                         (!seasonsData.length ||
                           !seasonsData[0]?.episodes[0]?.video_url)
-                        ? "!bg-gray-600 !text-gray-400 !cursor-not-allowed !hover:bg-gray-600 !hover:-translate-y-0"
-                        : ""
-                    }
-                  >
-                    <Play className="w-6 h-6 fill-current" />
-                    <span>Play</span>
-                  </BrandButton>
+                      }
+                      variant={effectiveKidsMode ? "kids" : "primary"}
+                      size="md"
+                      className={
+                        !currentVideoUrl &&
+                          (!seasonsData.length ||
+                            !seasonsData[0]?.episodes[0]?.video_url)
+                          ? "!bg-gray-600 !text-gray-400 !cursor-not-allowed !hover:bg-gray-600 !hover:-translate-y-0"
+                          : ""
+                      }
+                    >
+                      <Play className="w-6 h-6 fill-current" />
+                      <span>Play</span>
+                    </BrandButton>
+                  )}
 
                   <button
                     onClick={handleCurrentItemSave}
@@ -1011,14 +1033,16 @@ const ContentModal: React.FC<ContentModalProps> = ({
                           <div
                             key={episode.id}
                             onClick={() => {
-                              handlePlayEpisode(
-                                episode,
-                                season.season_number,
-                                index,
-                                season,
-                              );
+                              if (isLoggedIn) {
+                                handlePlayEpisode(
+                                  episode,
+                                  season.season_number,
+                                  index,
+                                  season,
+                                );
+                              }
                             }}
-                            className={`border flex items-center space-x-3 rounded-lg p-3 transition-all duration-300 group h-12 cursor-pointer ${effectiveKidsMode
+                            className={`border flex items-center space-x-3 rounded-lg p-3 transition-all duration-300 group h-12 ${isLoggedIn ? "cursor-pointer" : "cursor-default"} ${effectiveKidsMode
                               ? "border-blue-400/20 bg-blue-500/60 hover:border-white hover:shadow-[0_0_8px_rgba(255,255,255,0.6)]"
                               : "border-brand-500/20 bg-black hover:border-white hover:shadow-[0_0_8px_rgba(255,255,255,0.6)]"
                               }`}
@@ -1036,22 +1060,24 @@ const ContentModal: React.FC<ContentModalProps> = ({
                                 {formatDuration(episode?.duration_minutes)}
                               </span> */}
                             </div>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handlePlayEpisode(
-                                  episode,
-                                  season.season_number,
-                                  index,
-                                  season,
-                                );
-                                dispatch(setShowAd(true));
-                              }}
-                              className="ml-3 p-2 rounded-full transition-colors bg-white/10 hover:bg-white/20 text-white flex-shrink-0"
-                              aria-label={`Play ${episode.title}`}
-                            >
-                              <Play className="w-4 h-4 fill-current" />
-                            </button>
+                            {isLoggedIn && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePlayEpisode(
+                                    episode,
+                                    season.season_number,
+                                    index,
+                                    season,
+                                  );
+                                  dispatch(setShowAd(true));
+                                }}
+                                className="ml-3 p-2 rounded-full transition-colors bg-white/10 hover:bg-white/20 text-white flex-shrink-0"
+                                aria-label={`Play ${episode.title}`}
+                              >
+                                <Play className="w-4 h-4 fill-current" />
+                              </button>
+                            )}
                           </div>
                         ))}
                       </TabsContent>

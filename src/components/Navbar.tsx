@@ -46,9 +46,11 @@ const Navbar = React.memo(
     );
     const handleLogout = useCallback(() => logout(), [logout]);
 
+    const publicPaths = useMemo(() => new Set(["/", "/movies", "/series", "/kids"]), []);
+
     const handleNavClick = useCallback(
       (e: React.MouseEvent, path: string) => {
-        if (!isLoggedIn && path !== "/") {
+        if (!isLoggedIn && !publicPaths.has(path)) {
           e.preventDefault();
           setShowLoginModal(true);
           setIsMenuOpen(false);
@@ -58,7 +60,7 @@ const Navbar = React.memo(
         setIsMenuOpen(false);
         navigate(path);
       },
-      [isLoggedIn, setShowLoginModal, navigate],
+      [isLoggedIn, publicPaths, setShowLoginModal, navigate],
     );
 
     useEffect(() => {

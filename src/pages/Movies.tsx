@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useState } from "react";
 import ContentCard from "@/components/ContentCard";
 import HeroBanner from "@/components/HeroBanner";
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import FilterBar from "@/components/FilterBar";
 import ContentRow from "@/components/ContentRow";
 import ContentGrid from "@/components/ContentGrid";
@@ -74,19 +73,17 @@ const Movies = React.memo(() => {
 
   if (isLoading) {
     return (
-      <ProtectedRoute>
-        <div className="min-h-screen text-white">
-          <div className="fixed inset-0" style={BACKGROUND_GRADIENT} />
-          <div className="relative flex items-center justify-center min-h-screen">
-            <Spinner className="w-12 h-12" />
-          </div>
+      <div className="min-h-screen text-white">
+        <div className="fixed inset-0" style={BACKGROUND_GRADIENT} />
+        <div className="relative flex items-center justify-center min-h-screen">
+          <Spinner className="w-12 h-12" />
         </div>
-      </ProtectedRoute>
+      </div>
     );
   }
 
   return (
-    <ProtectedRoute>
+    <>
       <div className="fixed inset-0" style={BACKGROUND_GRADIENT} />
 
       <div className="relative min-h-screen text-white pt-16">
@@ -267,7 +264,7 @@ const Movies = React.memo(() => {
           />
         )}
       </div>
-    </ProtectedRoute >
+    </>
   );
 });
 

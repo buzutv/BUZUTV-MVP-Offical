@@ -92,10 +92,6 @@ const Index = React.memo(() => {
 
   const handleContentRowCardClick = useCallback(
     (item?: any) => {
-      if (!isLoggedIn) {
-        setShowLoginModal(true);
-        return true;
-      }
       if (item) {
         setSelectedItem(item);
         return true; // Prevents the card's internal modal

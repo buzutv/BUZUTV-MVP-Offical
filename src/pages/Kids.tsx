@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from "react";
 import ContentRow from "@/components/ContentRow";
 import HeroBanner from "@/components/HeroBanner";
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import FilterBar from "@/components/FilterBar";
 import ContentGrid from "@/components/ContentGrid";
 import { useAppContent } from "@/hooks/useAppContent";
@@ -113,13 +112,12 @@ const Kids = () => {
 
   if (isLoading) {
     return (
-      <ProtectedRoute>
-        <div className="min-h-screen text-white">
-          {/* Fixed background gradient */}
-          <div
-            className="fixed inset-0"
-            style={{
-              background: `
+      <div className="min-h-screen text-white">
+        {/* Fixed background gradient */}
+        <div
+          className="fixed inset-0"
+          style={{
+            background: `
                 linear-gradient(
                   180deg,
                   #0F172A 0%,   /* Slate-900 */
@@ -127,22 +125,21 @@ const Kids = () => {
                   #0F172A 100%
                 )
               `,
-            }}
-          ></div>
-          <div className="relative flex items-center justify-center min-h-screen">
-            <div className="text-2xl text-white">
-              Loading Kids Content
-              <Spinner />
-            </div>
+          }}
+        ></div>
+        <div className="relative flex items-center justify-center min-h-screen">
+          <div className="text-2xl text-white">
+            Loading Kids Content
+            <Spinner />
           </div>
         </div>
-      </ProtectedRoute>
+      </div>
     );
   }
 
 
   return (
-    <ProtectedRoute>
+    <>
       <div className="min-h-screen bg-[#F0F9FF] text-slate-800 selection:bg-pink-200/50 overflow-x-hidden">
         {/* Magical Sky Background Elements */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -510,7 +507,7 @@ const Kids = () => {
           )}
         </div>
       </div>
-    </ProtectedRoute >
+    </>
   );
 };
 
