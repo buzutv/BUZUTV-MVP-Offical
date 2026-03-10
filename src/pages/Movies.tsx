@@ -158,6 +158,7 @@ const Movies = React.memo(() => {
                     <ContentRow
                       title="Continue Watching"
                       items={movieContent.continueWatching}
+                      progressBarClassName="bg-brand-500"
                       onCardClick={handleContentRowCardClick}
                     />
                   )}

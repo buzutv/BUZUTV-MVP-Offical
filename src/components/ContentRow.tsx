@@ -2,11 +2,11 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import ContentCard from "@/components/ContentCard";
 import usePlaylists from "@/hooks/usePlaylists";
-import ProtectedRoute from "./auth/ProtectedRoute";
 
 interface ContentRowProps {
   title: string;
   items: any[];
+  progressBarClassName?: string;
   onCardClick?: (item: any) => boolean;
   onItemClick?: (movie: any) => void;
   isMoreLikeThis?: boolean;
@@ -19,6 +19,7 @@ const ContentRow = React.memo(
   ({
     title,
     items,
+    progressBarClassName,
     onCardClick,
     onItemClick,
     isMoreLikeThis = false,
@@ -34,6 +35,45 @@ const ContentRow = React.memo(
 
 
     console.log("Playlists in ContentRow:", items);
+
+    const isContinueWatchingRow = /continue\s*watching/i.test(title);
+
+    const getProgressPercent = useCallback((item: any) => {
+      const history = item?.user_watch_history;
+
+      const latest = Array.isArray(history) && history.length > 0
+        ? [...history].sort(
+          (a, b) =>
+            new Date(b?.watched_at || 0).getTime() -
+            new Date(a?.watched_at || 0).getTime(),
+        )[0]
+        : history && typeof history === "object"
+          ? history
+          : null;
+
+      const explicitPercent = Number(
+        latest?.watch_percentage ?? item?.watch_percentage ?? 0,
+      );
+
+      if (explicitPercent > 0) {
+        return Math.min(100, explicitPercent);
+      }
+
+      const lastPosition = Number(latest?.last_position ?? item?.last_position ?? 0);
+      const totalDuration = Number(
+        latest?.total_duration ??
+        latest?.watch_duration ??
+        item?.total_duration ??
+        item?.watch_duration ??
+        ((item?.duration_minutes || item?.duration || 0) * 60),
+      );
+
+      if (lastPosition > 0 && totalDuration > 0) {
+        return Math.min(100, Math.max(2, Math.round((lastPosition / totalDuration) * 100)));
+      }
+
+      return 0;
+    }, []);
 
 
     const checkScrollability = useCallback(() => {
@@ -151,6 +191,9 @@ const ContentRow = React.memo(
                     autoDetectKids={true}
                     isMoreLikeThis={isMoreLikeThis}
                     width="w-96"
+                    showProgress={isContinueWatchingRow}
+                    progressPercent={getProgressPercent(item)}
+                    progressBarClassName={progressBarClassName}
                     onOpen={onCardClick}
                     onItemClick={onItemClick}
                     playlists={playlists}

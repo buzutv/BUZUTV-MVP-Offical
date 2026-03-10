@@ -39,6 +39,7 @@ export interface ContentCardProps {
   showSaveButton?: boolean;
   showProgress?: boolean;
   progressPercent?: number;
+  progressBarClassName?: string;
   showResumeButton?: boolean;
   onPlayFullscreen?: (videoUrl: string) => void;
   onOpen?: (item: any) => boolean;
@@ -58,6 +59,7 @@ const ContentCard = ({
   showSaveButton = true,
   showProgress = false,
   progressPercent = 0,
+  progressBarClassName = "bg-red-600",
   showResumeButton = false,
   onPlayFullscreen,
   onOpen,
@@ -128,9 +130,14 @@ const ContentCard = ({
   const channel = channels.find((ch) => ch.id === actualItem.channelId);
 
   const watchHistory = useMemo(() => {
-    const history = normalizedItem.user_watch_history;
+    // Priority 1: Direct history from item (often enrichment from useAppContent)
+    // Priority 2: normalizedItem.user_watch_history
+    const history = item?.user_watch_history || normalizedItem.user_watch_history;
+    
     if (!history) return null;
+    
     if (Array.isArray(history)) {
+      if (history.length === 0) return null;
       return [...history].sort(
         (a, b) =>
           new Date(b.watched_at || 0).getTime() -
@@ -138,20 +145,53 @@ const ContentCard = ({
       )[0];
     }
     return history;
-  }, [normalizedItem.user_watch_history]);
+  }, [item?.user_watch_history, normalizedItem.user_watch_history]);
+
+  const derivedProgressPercent = useMemo(() => {
+    if (typeof progressPercent === "number" && progressPercent > 0) {
+      return Math.min(100, progressPercent);
+    }
+
+    const explicitPercent = Number(
+      watchHistory?.watch_percentage ?? normalizedItem.watch_percentage ?? 0,
+    );
+
+    if (explicitPercent > 0) {
+      return Math.min(100, explicitPercent);
+    }
+
+    const lastPosition = Number(
+      watchHistory?.last_position ?? normalizedItem.last_position ?? 0,
+    );
+    const totalDuration = Number(
+      watchHistory?.total_duration ??
+        watchHistory?.watch_duration ??
+        normalizedItem.total_duration ??
+        normalizedItem.watch_duration ??
+        ((normalizedItem.duration_minutes || normalizedItem.duration || 0) * 60),
+    );
+
+    if (lastPosition > 0 && totalDuration > 0) {
+      return Math.min(
+        100,
+        Math.max(2, Math.round((lastPosition / totalDuration) * 100)),
+      );
+    }
+
+    if (lastPosition > 0) {
+      return 2;
+    }
+
+    return 0;
+  }, [progressPercent, watchHistory, normalizedItem]);
 
   const effectiveShowProgress =
     showProgress ||
-    (watchHistory &&
-      watchHistory.watch_percentage > 0 &&
-      watchHistory.watch_percentage < 100);
-  const effectiveProgressPercent =
-    progressPercent || watchHistory?.watch_percentage || 0;
+    (derivedProgressPercent > 0 && derivedProgressPercent < 100);
+  const effectiveProgressPercent = derivedProgressPercent;
   const effectiveShowResumeButton =
     showResumeButton ||
-    (watchHistory &&
-      watchHistory.watch_percentage > 0 &&
-      watchHistory.watch_percentage < 100);
+    (derivedProgressPercent > 0 && derivedProgressPercent < 100);
 
   const handleSave = useCallback(
     (e: React.MouseEvent) => {
@@ -513,7 +553,7 @@ const ContentCard = ({
             {effectiveShowProgress && (
               <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-600">
                 <div
-                  className="h-full bg-red-600 transition-all duration-300"
+                  className={`h-full transition-all duration-300 ${progressBarClassName}`}
                   style={{ width: `${effectiveProgressPercent}%` }}
                 />
               </div>
