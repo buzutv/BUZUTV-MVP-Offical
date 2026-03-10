@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import ContentRow from "@/components/ContentRow";
 import HeroBanner from "@/components/HeroBanner";
+import HeroCarousel from "@/components/HeroCarousel";
 import FilterBar from "@/components/FilterBar";
 import ContentGrid from "@/components/ContentGrid";
 import { useAppContent } from "@/hooks/useAppContent";
@@ -170,12 +171,12 @@ const Kids = () => {
             <>
               {/* Top Section */}
               <div className="max-w-full sm:px-0 md:px-2 pt-4 relative">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 sm:px-0 md:px-4">
-                  {/* Left - Hero Banner */}
-                  <div className="lg:col-span-2 relative">
-                    <HeroBanner
-                      movies={enhancedKidsContent.featured}
-                      variant="kids"
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 sm:px-0 md:px-4 items-stretch">
+                  {/* Left - Hero Carousel */}
+                  <div className="lg:col-span-2 relative min-h-[400px] group/kids-hero p-4  ">
+                    <HeroCarousel
+                      items={enhancedKidsContent.all}
+                      allContent={enhancedKidsContent.all}
                     />
                   </div>
                   {/* Right - Top Ranked */}

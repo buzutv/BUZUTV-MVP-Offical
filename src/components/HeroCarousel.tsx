@@ -120,15 +120,19 @@ const HeroCarousel: React.FC<HeroCarouselProps> = React.memo(
     const swiperConfig = useMemo(
       () => ({
         modules: [Navigation, Autoplay],
-        slidesPerView: 1.3 as const,
+        slidesPerView: 1 as const,
         centeredSlides: true,
-        spaceBetween: 30,
+        spaceBetween: 0,
         navigation: true,
-        autoplay: { delay: 5000, disableOnInteraction: false },
+        autoplay: { 
+          delay: 4000, 
+          disableOnInteraction: false,
+          pauseOnMouseEnter: true 
+        },
         loop: true,
         breakpoints: {
-          640: { slidesPerView: 1.1, spaceBetween: 10 },
-          1024: { slidesPerView: 1.3, spaceBetween: 30 },
+          640: { slidesPerView: 1, spaceBetween: 0 },
+          1024: { slidesPerView: 1, spaceBetween: 0 },
         },
       }),
       [],
