@@ -553,7 +553,7 @@ const ContentCard = ({
             {effectiveShowProgress && (
               <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-600 z-10">
                 <div
-                  className={`h-full transition-all duration-300 bg-brand-500 ${progressBarClassName}`}
+                  className={`h-full transition-all duration-300 bg-brand-500`}
                   style={{ width: `${effectiveProgressPercent}%` }}
                 />
               </div>
