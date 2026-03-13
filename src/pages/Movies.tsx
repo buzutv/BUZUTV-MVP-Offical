@@ -90,11 +90,17 @@ const Movies = React.memo(() => {
         {movieContent.all.length > 0 ? (
           <>
             {/* --- Hero & Top Ranked Section --- */}
-            <div className="max-w-full relative pt-4">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:px-4">
+            <div className="max-w-full sm:px-0 md:px-2 pt-4 relative">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 sm:px-0 md:px-4">
                 {/* Hero Banner */}
                 <div className="lg:col-span-2 relative">
-                  <HeroBanner movies={movieContent.featured} />
+                  <HeroBanner
+                    movies={
+                      movieContent.all.length > 0
+                        ? movieContent.all
+                        : movieContent.all.slice(0, 3)
+                    }
+                  />
                   <div
                     className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none"
                     style={{ background: "linear-gradient(to bottom right, black 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.4) 70%, transparent 100%)" }}
