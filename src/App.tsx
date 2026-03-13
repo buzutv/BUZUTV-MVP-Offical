@@ -8,8 +8,9 @@ import {
   Route,
   Navigate,
   useLocation,
+  useNavigate,
 } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useRef } from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
 // Load these immediately - users see them first
 import Index from "./pages/Index";
@@ -48,10 +49,15 @@ const queryClient = new QueryClient();
 // RequireAuth wrapper
 function RequireAuth({ children }: { children: JSX.Element }) {
   const { isLoggedIn, isLoading } = useAuth();
+
+  console.log("User In Local Storage", isLoggedIn)
   const location = useLocation();
-  if (isLoading) return null;
-  if (!isLoggedIn)
-    return <Navigate to="/" state={{ from: location }} replace />;
+  if (isLoading) {
+    return null
+  };
+  if (!isLoggedIn) {
+    return <Navigate to="/auth" state={{ from: location }} replace />;
+  }
   return children;
 }
 
@@ -59,10 +65,15 @@ function RequireAuth({ children }: { children: JSX.Element }) {
 function RequireAdmin({ children }: { children: JSX.Element }) {
   const { isLoggedIn, user, isLoading } = useAuth();
   const location = useLocation();
-  if (isLoading) return null;
-  if (isLoggedIn && !user?.isAdmin)
+  if (isLoading) {
+    return null
+  }
+  if (isLoggedIn && !user?.isAdmin) {
     return <Navigate to="/" state={{ from: location }} replace />;
-  return children;
+  }
+  else {
+    return children
+  }
 }
 
 const App = () => {
@@ -93,7 +104,6 @@ const App = () => {
               <Route path="/my-list" element={<RequireAuth><MyList /></RequireAuth>} />
               <Route path="/settings" element={<RequireAuth><Settings /></RequireAuth>} />
               <Route path="/movie/:id" element={<RequireAuth><MovieDetail /></RequireAuth>} />
-              {/* <Route path="/admin" element={<AdminLogin />} /> */}
               <Route path="/admin/dashboard" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
               <Route path="/admin/movies" element={<RequireAdmin><AdminMovies /></RequireAdmin>} />
               <Route path="/admin/channels" element={<RequireAdmin><AdminChannels /></RequireAdmin>} />
@@ -103,13 +113,10 @@ const App = () => {
               <Route path="/admin/edit-channel/:id" element={<RequireAdmin><AdminEditChannel /></RequireAdmin>} />
               <Route path="/admin/editorial" element={<RequireAdmin><EditorialMovies /></RequireAdmin>} />
               <Route path="/admin/editorial/edit/:id" element={<RequireAdmin><EditorialEditMovie /></RequireAdmin>} />
-              <Route path="*" element={<NotFound />} />
-              {/* <Route path="/test" element={<FullscreenPlayer isOpen={true} onClose={() => { }} videoUrl="https://youtu.be/6y9wgK-26Qg?si=yQ_FNCUzAQB6oiPq" title="Test Video" userId="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3" />} /> */}
               <Route path="/playlists" element={<PlayList />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/playlists/:id" element={<PlaylistDetail />} />
-              {/* <Route path="/newadmin" element={<AdminLogin />} /> */}
-
+              <Route path="*" element={<NotFound />} />
             </Routes>
 
           </BrowserRouter>

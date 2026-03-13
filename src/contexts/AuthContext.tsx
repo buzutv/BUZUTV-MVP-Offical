@@ -49,6 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         .eq("id", userId)
         .single();
 
+
       if (error) {
         console.error("Error fetching user profile:", error);
         return null;
@@ -61,6 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+
   useEffect(() => {
     // Set up auth state listener
     const {
@@ -68,7 +70,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         // Check if this is a demo admin user (legacy support)
-        const isDemoAdmin = session.user.email === "admin@example.com";
+        // const isDemoAdmin = session.user.email === "admin@example.com";
         const userName =
           session.user.user_metadata?.full_name ||
           session.user.user_metadata?.name ||
@@ -79,7 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         setTimeout(async () => {
           const profile = await fetchUserProfile(session.user.id);
           const actualRole = profile?.role || "user";
-          const isActualAdmin = actualRole === "admin" || isDemoAdmin;
+          const isActualAdmin = profile?.role === 'admin';
 
           setUser({
             ...session.user,
@@ -91,12 +93,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }, 0);
 
         // Set user immediately with demo admin check for faster UI response
-        setUser({
-          ...session.user,
-          isAdmin: isDemoAdmin,
-          name: userName,
-          role: isDemoAdmin ? "admin" : "user",
-        });
+        // setUser({
+        //   ...session.user,
+        //   isAdmin: profile?.role === 'admin',
+        //   name: userName,
+        //   role: profile?.role,
+        // });
       } else {
         setUser(null);
       }
@@ -106,7 +108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     // Check for existing session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
-        const isDemoAdmin = session.user.email === "admin@example.com";
+
         const userName =
           session.user.user_metadata?.full_name ||
           session.user.user_metadata?.name ||
@@ -116,7 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         // Fetch user profile to get actual role and phone
         const profile = await fetchUserProfile(session.user.id);
         const actualRole = profile?.role || "user";
-        const isActualAdmin = actualRole === "admin" || isDemoAdmin;
+        const isActualAdmin = profile?.role === 'admin';
 
         setUser({
           ...session.user,
