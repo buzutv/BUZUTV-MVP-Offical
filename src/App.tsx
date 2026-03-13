@@ -100,9 +100,9 @@ const App = () => {
               <Route path="/admin/add-movie" element={<RequireAdmin><AdminAddMovie /></RequireAdmin>} />
               <Route path="/admin/add-channel" element={<RequireAdmin><AdminAddChannel /></RequireAdmin>} />
               <Route path="/admin/edit-movie/:id" element={<RequireAdmin><AdminEditMovie /></RequireAdmin>} />
-              <Route path="/admin/edit-channel/:id" element={<AdminEditChannel />} />
-              <Route path="/admin/editorial" element={<EditorialMovies />} />
-              <Route path="/admin/editorial/edit/:id" element={<EditorialEditMovie />} />
+              <Route path="/admin/edit-channel/:id" element={<RequireAdmin><AdminEditChannel /></RequireAdmin>} />
+              <Route path="/admin/editorial" element={<RequireAdmin><EditorialMovies /></RequireAdmin>} />
+              <Route path="/admin/editorial/edit/:id" element={<RequireAdmin><EditorialEditMovie /></RequireAdmin>} />
               <Route path="*" element={<NotFound />} />
               {/* <Route path="/test" element={<FullscreenPlayer isOpen={true} onClose={() => { }} videoUrl="https://youtu.be/6y9wgK-26Qg?si=yQ_FNCUzAQB6oiPq" title="Test Video" userId="03fa9a91-4281-4bd4-9e60-4da2ba72b0f3" />} /> */}
               <Route path="/playlists" element={<PlayList />} />

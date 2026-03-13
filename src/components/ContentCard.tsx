@@ -185,9 +185,7 @@ const ContentCard = ({
     return 0;
   }, [progressPercent, watchHistory, normalizedItem]);
 
-  const effectiveShowProgress =
-    showProgress ||
-    (derivedProgressPercent > 0 && derivedProgressPercent < 100);
+  const effectiveShowProgress = showProgress;
   const effectiveProgressPercent = derivedProgressPercent;
   const effectiveShowResumeButton =
     showResumeButton ||

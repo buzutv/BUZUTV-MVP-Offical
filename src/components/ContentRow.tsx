@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import ContentCard from "@/components/ContentCard";
 import usePlaylists from "@/hooks/usePlaylists";
 
@@ -31,12 +32,14 @@ const ContentRow = React.memo(
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(false);
     const timeoutRef = useRef<NodeJS.Timeout>();
+    const location = useLocation();
     const { playlists } = usePlaylists()
 
 
     console.log("Playlists in ContentRow:", items);
 
-    const isContinueWatchingRow = /continue\s*watching/i.test(title);
+    const isContinueWatchingRow = /continue\s*watching/i.test(title) || /continue\s*tv\s*show/i.test(title);
+    const shouldShowProgress = isContinueWatchingRow;
 
     const getProgressPercent = useCallback((item: any) => {
       const history = item?.user_watch_history;
@@ -191,7 +194,7 @@ const ContentRow = React.memo(
                     autoDetectKids={true}
                     isMoreLikeThis={isMoreLikeThis}
                     width="w-96"
-                    showProgress={isContinueWatchingRow}
+                    showProgress={shouldShowProgress}
                     progressPercent={getProgressPercent(item)}
                     progressBarClassName={progressBarClassName}
                     onOpen={onCardClick}
