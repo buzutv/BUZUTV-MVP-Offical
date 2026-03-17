@@ -11,6 +11,7 @@ import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
 import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
 import { Spinner } from "@/components/ui/spinner";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Kids = () => {
   const { kidsContent, isLoading } = useAppContent();
@@ -19,6 +20,7 @@ const Kids = () => {
   const { favoriteIds, addToFavorites, removeFromFavorites } = useUserFavorites();
   const { content } = useContent();
   const { channels } = useChannels();
+  const { isLoggedIn, setShowLoginModal } = useAuth();
 
 
   // Enhanced kids content with additional categories
@@ -99,6 +101,10 @@ const Kids = () => {
   const filteredKidsContent = getFilteredKidsContent();
 
   const handleContentRowCardClick = (item?: any) => {
+    if (!isLoggedIn) {
+      setShowLoginModal(true);
+      return true;
+    }
     if (item) {
       setSelectedMovie(item);
       return true;
@@ -108,6 +114,10 @@ const Kids = () => {
 
   // Add click logic for Top Ranked
   const handleCardClick = (movie) => {
+    if (!isLoggedIn) {
+      setShowLoginModal(true);
+      return;
+    }
     setSelectedMovie(movie);
   };
 

@@ -11,6 +11,7 @@ import { useContent } from "@/hooks/useContent";
 import { useChannels } from "@/hooks/useChannels";
 import { Spinner } from "@/components/ui/spinner";
 import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Background style constant to keep JSX clean
 const BACKGROUND_GRADIENT = {
@@ -31,6 +32,7 @@ const Movies = React.memo(() => {
   const { favoriteIds, addToFavorites, removeFromFavorites } = useUserFavorites();
   const { content: rawContent } = useContent();
   const { channels } = useChannels();
+  const { isLoggedIn, setShowLoginModal } = useAuth();
 
   // 1. Memoized Genres
   const availableMovieGenres = useMemo(() => {
@@ -56,7 +58,13 @@ const Movies = React.memo(() => {
   };
 
   const handleGenreChange = useCallback((genre: string) => setActiveGenre(genre), []);
-  const handleCardClick = useCallback((movie) => setSelectedMovie(movie), []);
+  const handleCardClick = useCallback((movie) => {
+    if (!isLoggedIn) {
+      setShowLoginModal(true);
+      return;
+    }
+    setSelectedMovie(movie);
+  }, [isLoggedIn, setShowLoginModal]);
 
   /* --- Modal Actions --- */
   const handlePlayEpisode = useCallback(
@@ -67,9 +75,13 @@ const Movies = React.memo(() => {
   );
 
   const handleContentRowCardClick = useCallback((movie?: any) => {
+    if (!isLoggedIn) {
+      setShowLoginModal(true);
+      return true;
+    }
     if (movie) setSelectedMovie(movie);
     return true;
-  }, []);
+  }, [isLoggedIn, setShowLoginModal]);
 
   if (isLoading) {
     return (

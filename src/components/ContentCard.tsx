@@ -203,15 +203,15 @@ const ContentCard = ({
   );
 
   const handleCardClick = useCallback(() => {
+    if (!isLoggedIn) {
+      setShowLoginModal(true);
+      return;
+    }
+
     if (onOpen && (onOpen as any)(actualItem) === true) return;
 
     if (onItemClick) {
       onItemClick(actualItem);
-      return;
-    }
-
-    if (!isLoggedIn) {
-      setShowLoginModal(true);
       return;
     }
 

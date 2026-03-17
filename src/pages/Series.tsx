@@ -12,6 +12,7 @@ import { useChannels } from "@/hooks/useChannels";
 // import FullscreenPlayer from "@/components/FullscreenPlayer";
 import { Spinner } from "@/components/ui/spinner";
 import { getOptimizedImageUrl } from "@/utils/youtubeUtils";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Series = () => {
   const { seriesContent, isLoading, content, continueWatching } = useAppContent();
@@ -22,6 +23,7 @@ const Series = () => {
     useUserFavorites();
   const { content: rawContent } = useContent();
   const { channels } = useChannels();
+  const { isLoggedIn, setShowLoginModal } = useAuth();
 
 
   console.log("seriesContent", seriesContent)
@@ -60,6 +62,10 @@ const Series = () => {
   const filteredSeries = getFilteredSeries();
 
   const handleContentRowCardClick = (item?: any) => {
+    if (!isLoggedIn) {
+      setShowLoginModal(true);
+      return true;
+    }
     if (item) {
       setSelectedSeries(item);
       return true;
@@ -150,7 +156,13 @@ const Series = () => {
                           <div
                             key={show.id}
                             className="relative flex items-center bg-white/5 hover:bg-white/10 backdrop-blur-md rounded-2xl p-2 group border border-white/10 hover:border-brand-500/50 transition-all duration-300 min-h-[85px] h-[calc((60vh-2rem)/5-0.5rem)] cursor-pointer overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(124,58,237,0.15)] hover:-translate-y-0.5"
-                            onClick={() => setSelectedSeries(show)}
+                            onClick={() => {
+                              if (!isLoggedIn) {
+                                setShowLoginModal(true);
+                                return;
+                              }
+                              setSelectedSeries(show);
+                            }}
                           >
                             <div className="absolute inset-0 bg-gradient-to-r from-brand-500/0 via-brand-500/0 to-brand-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
 

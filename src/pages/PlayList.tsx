@@ -27,7 +27,7 @@ type PlaylistToDelete = {
 
 
 const PlayList = () => {
-    const { user } = useAuth()
+    const { user, isLoggedIn, setShowLoginModal } = useAuth()
     const { data: playlists = [], refetch, isFetching } = useGetPlaylistsWithItemsQuery(user?.id)
     const [triggerPlaylists] = useLazyGetPlaylistsWithItemsByIdQuery()
     const navigate = useNavigate()
@@ -228,7 +228,13 @@ const PlayList = () => {
                             <div
                                 key={playlist.id}
                                 className="cursor-pointer transition-transform duration-300 hover:scale-[1.03] relative group"
-                                onClick={() => handleRoutetoPlaylistDetail(playlist.id)}
+                                onClick={() => {
+                                    if (!isLoggedIn) {
+                                        setShowLoginModal(true);
+                                        return;
+                                    }
+                                    handleRoutetoPlaylistDetail(playlist.id);
+                                }}
                             >
                                 <div className="relative h-[300px] mb-4">
                                     {previews.length > 0 ? (

@@ -44,7 +44,7 @@ const PlaylistDetail = () => {
 
   const [seasons, setSeasons] = useState<any[]>([]);
   const dispatch = useDispatch();
-  const { user } = useAuth()
+  const { user, isLoggedIn, setShowLoginModal } = useAuth();
   const [triggerGetContentWithWatchHistory, result] = useLazyGetPlaylistContentWithWatchHistoryQuery()
   const [addPlaylistItem] = useAddPlaylistItemMutation()
   const [removePlaylistItem] = useRemovePlaylistItemMutation()
@@ -438,6 +438,10 @@ const PlaylistDetail = () => {
             className={`group z-10 md:w-full cursor-pointer rounded-xl overflow-hidden shadow-md hover:shadow-lg transition bg-white text-zinc-900 border-2 ${currentVideoIndex === idx ? 'border-primary ring-2 ring-primary/50' : 'border-transparent'
               }`}
             onClick={() => {
+              if (!isLoggedIn) {
+                setShowLoginModal(true);
+                return;
+              }
               setCurrentVideoIndex(idx);
               const currentPlaylist = playlistWithItems?.find(playlist => playlist.id === id);
               dispatch(openScreenPlayer({
