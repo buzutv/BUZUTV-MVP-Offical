@@ -32,6 +32,10 @@ _(all completed — see Completed section)_
 - [x] Created vercel.json with SPA redirect rules
 - [x] Set up Vercel deployment — live at https://buzutv-mvp-offical.vercel.app/
 - [x] Fixed mobile hero background-size: contain → cover (src/components/FullViewportHero.tsx)
+- [x] Pass 4 Card & Row Redesign (2026-06-29) — 3 files, build passes, zero TS errors:
+  - ContentCard.tsx: portrait card redesign — footer title/duration below image, star rating badge top-left, `overflow-hidden` moved to image wrapper, gradient overlays removed, outer div scale removed (image only scales via group-hover), progress bar color updated to brand-500, Clock icon for duration, human-readable format (1h 30m / N Seasons)
+  - ContentRow.tsx: added `seeAllPath?: string` prop + `Link` "See all" in brand-500, `aria-label="See all {title}"`, memo comparison updated
+  - Index.tsx: 5 ContentRows given seeAllPath — New Content→/movies, Recommended→/movies, Kids→/kids, Featured Movies→/movies, Featured Shows→/series
 - [x] Pass 3 Skeleton & Empty States (2026-06-29) — 7 surgical fixes, build passes, zero TS errors:
   - ContentRow.tsx: added `isLoading` prop + 4-card skeleton (bg-white/10 shimmer, aria-busy, aria-label)
   - ContentGrid.tsx: added `isLoading` prop + 8-card skeleton grid (same aspect ratios as real cards)

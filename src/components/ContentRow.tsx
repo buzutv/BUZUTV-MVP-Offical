@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import ContentCard from "@/components/ContentCard";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -7,6 +8,7 @@ interface ContentRowProps {
   title: string;
   items: any[];
   isLoading?: boolean;
+  seeAllPath?: string;
   onCardClick?: () => boolean;
   onItemClick?: (movie: any) => void;
   isMoreLikeThis?: boolean;
@@ -19,6 +21,7 @@ const ContentRow = React.memo(
     title,
     items,
     isLoading = false,
+    seeAllPath,
     onCardClick,
     onItemClick,
     isMoreLikeThis = false,
@@ -107,8 +110,17 @@ const ContentRow = React.memo(
 
     return (
       <section className="pb-6">
-        <div className="px-4 mb-2">
+        <div className="px-4 mb-2 flex items-center justify-between">
           <h2 className="text-2xl">{title}</h2>
+          {seeAllPath && (
+            <Link
+              to={seeAllPath}
+              className="text-brand-500 text-sm font-medium hover:text-brand-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded"
+              aria-label={`See all ${title}`}
+            >
+              See all
+            </Link>
+          )}
         </div>
 
         <div className="relative">
@@ -176,6 +188,7 @@ const ContentRow = React.memo(
     return (
       prevProps.title === nextProps.title &&
       prevProps.isLoading === nextProps.isLoading &&
+      prevProps.seeAllPath === nextProps.seeAllPath &&
       prevProps.items.length === nextProps.items.length &&
       prevProps.isMoreLikeThis === nextProps.isMoreLikeThis &&
       // Compare actual item IDs to detect content changes

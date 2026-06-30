@@ -194,6 +194,7 @@ const Index = React.memo(() => {
                       <ContentRow
                         title="New Content"
                         items={newContent}
+                        seeAllPath="/movies"
                         onCardClick={handleContentRowCardClick}
                       />
                     )
@@ -205,6 +206,7 @@ const Index = React.memo(() => {
                   <ContentRow
                     title="Recommended"
                     items={homeContent.trending}
+                    seeAllPath="/movies"
                     onCardClick={handleContentRowCardClick}
                   />
                 )}
@@ -220,6 +222,7 @@ const Index = React.memo(() => {
                       <ContentRow
                         title="Kids"
                         items={kidsOnlyContent}
+                        seeAllPath="/kids"
                         onCardClick={handleContentRowCardClick}
                       />
                     )
@@ -242,6 +245,7 @@ const Index = React.memo(() => {
                       <ContentRow
                         title="Featured Movies"
                         items={featuredMovies}
+                        seeAllPath="/movies"
                         onCardClick={handleContentRowCardClick}
                       />
                     )
@@ -264,6 +268,7 @@ const Index = React.memo(() => {
                       <ContentRow
                         title="Featured Shows"
                         items={featuredShows}
+                        seeAllPath="/series"
                         onCardClick={handleContentRowCardClick}
                       />
                     )

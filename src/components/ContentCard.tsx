@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from "react";
-import { Play } from "lucide-react";
+import { Clock, Play } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { Movie } from "@/data/mockMovies";
 import { useAuth } from "@/contexts/AuthContext";
@@ -181,16 +181,32 @@ const ContentCard = React.memo(
       [content, actualItem.id, actualItem.genre, actualItem.channelId]
     );
 
-    // Gradient classes based on kids mode
-    const gradientClasses = effectiveKidsMode
-      ? {
-          base: "bg-[linear-gradient(to_top,_rgba(37,99,235,0.95)_0%,_rgba(37,99,235,0.7)_30%,_rgba(37,99,235,0.4)_60%,_rgba(37,99,235,0.2)_80%,_rgba(37,99,235,0.1)_90%,_transparent_100%)]",
-          hover: "bg-[linear-gradient(to_top,_rgba(37,99,235,0.95)_0%,_rgba(37,99,235,0.7)_30%,_rgba(37,99,235,0.4)_60%,_transparent_90%)]",
+    // Human-readable duration or season count for card footer
+    const durationText = useMemo(() => {
+      if (contentType === "series") {
+        const rawSeasons = contentItem?.seasons_data ?? (normalizedItem as any).seasons_data;
+        if (rawSeasons) {
+          try {
+            const parsed = typeof rawSeasons === "string" ? JSON.parse(rawSeasons) : rawSeasons;
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              return parsed.length === 1 ? "1 Season" : `${parsed.length} Seasons`;
+            }
+          } catch {
+            // ignore parse errors
+          }
         }
-      : {
-          base: "bg-[linear-gradient(to_top,_rgba(0,0,0,0.95)_0%,_rgba(0,0,0,0.7)_30%,_rgba(0,0,0,0.4)_60%,_rgba(0,0,0,0.2)_80%,_rgba(0,0,0,0.1)_90%,_transparent_100%)]",
-          hover: "bg-[linear-gradient(to_top,_rgba(0,0,0,0.95)_0%,_rgba(0,0,0,0.7)_30%,_rgba(0,0,0,0.4)_60%,_transparent_90%)]",
-        };
+        const seasons = contentItem?.seasons ?? (normalizedItem as any).seasons;
+        if (seasons) return seasons === 1 ? "1 Season" : `${seasons} Seasons`;
+        return null;
+      }
+      const mins = contentItem?.duration_minutes ?? (normalizedItem as any).duration_minutes;
+      if (!mins) return null;
+      const h = Math.floor(mins / 60);
+      const m = mins % 60;
+      if (h > 0 && m > 0) return `${h}h ${m}m`;
+      if (h > 0) return `${h}h`;
+      return `${m}m`;
+    }, [contentType, contentItem, normalizedItem]);
 
     // Width classes
     const widthClass = isMoreLikeThis ? "w-64 flex-shrink-0" : width === "auto" ? "" : width;
@@ -207,7 +223,7 @@ const ContentCard = React.memo(
         )}
 
         <div
-          className={`content-card group ${widthClass} border-2 border-transparent hover:scale-105 hover:border-white hover:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:scale-105 focus:border-white focus:shadow-[0_0_4px_rgba(255,255,255,0.6)] focus:outline-none rounded-lg transition-all duration-300 overflow-hidden ${className}`}
+          className={`content-card group ${widthClass} border-2 border-transparent hover:border-white/40 hover:shadow-[0_0_8px_rgba(255,255,255,0.2)] focus:border-white/40 focus:shadow-[0_0_8px_rgba(255,255,255,0.2)] focus:outline-none rounded-lg transition-all duration-300 ${className}`}
           tabIndex={0}
           role="button"
           aria-label={`${normalizedItem.type === 'series' ? 'View series' : 'View movie'} ${normalizedItem.title}`}
@@ -219,40 +235,35 @@ const ContentCard = React.memo(
           }}
         >
           <div className="block cursor-pointer" onClick={handleCardClick}>
-            <div
-              className="relative overflow-hidden transition-all duration-300 aspect-[2/3] sm:aspect-video"
-            >
-              <div className="w-full h-full">
-                <img
-                  src={normalizedItem.posterUrl}
-                  alt={`${normalizedItem.title} - ${normalizedItem.type === 'series' ? 'TV Series' : 'Movie'} poster`}
-                  className="w-full h-full rounded-lg object-cover transform transition-transform duration-300 hover:scale-[1.1]"
-                  loading="lazy"
-                  decoding="async"
-                />
-              </div>
+            {/* Image section */}
+            <div className="relative overflow-hidden rounded-lg aspect-[2/3] sm:aspect-video transition-all duration-300">
+              <img
+                src={normalizedItem.posterUrl}
+                alt={`${normalizedItem.title} - ${normalizedItem.type === 'series' ? 'TV Series' : 'Movie'} poster`}
+                className="w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-[1.05]"
+                loading="lazy"
+                decoding="async"
+              />
 
               {showProgress && (
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-600">
                   <div
-                    className="h-full bg-red-600 transition-all duration-300"
+                    className="h-full bg-brand-500 transition-all duration-300"
                     style={{ width: `${progressPercent}%` }}
                   />
                 </div>
               )}
 
-              <div className="absolute inset-0 z-0 rounded-lg pointer-events-none">
-                <div className={`absolute bottom-[-1px] left-0 right-0 h-1/2 ${gradientClasses.base}`} />
+              {/* Star rating badge */}
+              {normalizedItem.rating && (
                 <div
-                  className={`absolute bottom-[-1px] left-0 right-0 h-1/2 ${gradientClasses.hover} opacity-0 group-hover:opacity-50 transition-opacity duration-300`}
-                />
-              </div>
-
-              <div className="absolute bottom-0 left-0 right-0 z-10 p-3 pt-6 pointer-events-none">
-                <h3 className="font-medium text-white text-md line-clamp-2 transform transition-transform duration-300 origin-left group-hover:scale-[1.1]">
-                  {normalizedItem.title}
-                </h3>
-              </div>
+                  className="absolute top-2 left-2 z-10 flex items-center gap-0.5 bg-black/60 backdrop-blur-sm rounded-full px-2 py-0.5 text-xs text-yellow-400"
+                  aria-label={`Rating: ${normalizedItem.rating}`}
+                >
+                  <span aria-hidden="true">★</span>
+                  <span>{normalizedItem.rating}</span>
+                </div>
+              )}
 
               {showResumeButton && (
                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
@@ -264,11 +275,24 @@ const ContentCard = React.memo(
               )}
 
               {isMoreLikeThis && (
-                <button 
-                  className="absolute inset-0 z-20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black" 
+                <button
+                  className="absolute inset-0 z-20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
                   onClick={handleCardClick}
                   aria-label={`View ${normalizedItem.title} details`}
                 />
+              )}
+            </div>
+
+            {/* Card footer — title and metadata below image */}
+            <div className="px-1 pt-1.5 pb-1">
+              <h3 className="font-semibold text-white text-sm line-clamp-1">
+                {normalizedItem.title}
+              </h3>
+              {durationText && (
+                <div className="flex items-center gap-1 mt-0.5">
+                  <Clock className="w-3 h-3 text-gray-400 flex-shrink-0" aria-hidden="true" />
+                  <span className="text-gray-400 text-xs">{durationText}</span>
+                </div>
               )}
             </div>
           </div>
