@@ -176,7 +176,7 @@ const Series = () => {
                     />
                   </div>
 
-                  <div className="flex flex-col h-full px-4 pl-6 md:px-0 md:pl-0">
+                  <div className="flex flex-col h-full px-4 pl-4 md:px-0 md:pl-0">
                     <h2 className="text-2xl mb-3">Top Ranked Series</h2>
                     <div
                       className="flex flex-col space-y-3 w-full"
@@ -191,7 +191,7 @@ const Series = () => {
                             onClick={() => setSelectedSeries(show)}
                           >
                             {/* Ranking Badge */}
-                            <div className="absolute -left-6 top-1/2 -translate-y-1/2 z-10">
+                            <div className="absolute -left-4 top-1/2 -translate-y-1/2 z-10">
                               <span className="bg-[#131313] text-white text-base font-bold px-3 py-1 rounded-full border-2 border-brand-500/50 shadow-lg backdrop-blur-sm">
                                 #{index + 1}
                               </span>
@@ -432,22 +432,8 @@ const Series = () => {
                       <>
                         {/* New content row - Sort filtered series by date */}
                         {(() => {
-                          console.log("🆕 NEW SERIES ROW DEBUG:");
-                          console.log(
-                            "Filtered series count:",
-                            filteredSeries.length,
-                          );
-                          console.log(
-                            "Active genre for new series:",
-                            activeGenre,
-                          );
-
                           const withDates = filteredSeries.filter(
                             (series) => series.created_at,
-                          );
-                          console.log(
-                            "Series with created_at:",
-                            withDates.length,
                           );
 
                           const newSeriesFiltered = withDates
@@ -457,15 +443,6 @@ const Series = () => {
                                 new Date(a.created_at).getTime(),
                             )
                             .slice(0, 8);
-
-                          console.log(
-                            "Final new series for display:",
-                            newSeriesFiltered.map((s) => ({
-                              title: s.title,
-                              genre: s.genre,
-                              created_at: s.created_at,
-                            })),
-                          );
 
                           return (
                             newSeriesFiltered.length > 0 && (

@@ -159,12 +159,14 @@ const Auth = () => {
             {!isSignUp && (
               <div className="text-center mb-6 flex items-center">
                 <p className="text-gray-400">Don't have an account?</p>
-                <button
+                <BrandButton
                   onClick={() => setIsSignUp(true)}
-                  className="flex items-center justify-center gap-2 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-4 py-1 text-xs bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 hover:from-brand-700 hover:via-brand-800 hover:to-brand-900 ml-2 mt-1"
+                  variant="primary"
+                  size="sm"
+                  className="ml-2"
                 >
                   Sign Up
-                </button>
+                </BrandButton>
               </div>
             )}
 
@@ -274,13 +276,14 @@ const Auth = () => {
                 </div>
               )}
 
-              <button
+              <BrandButton
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex items-center justify-center gap-2 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-6 py-2 text-sm bg-brand-500 hover:bg-brand-600 whitespace-nowrap"
+                variant="primary"
+                className="w-full"
               >
                 {isLoading ? "Please wait..." : isSignUp ? "Sign Up" : "Log In"}
-              </button>
+              </BrandButton>
             </form>
 
             {/* Toggle between log in and sign up */}
@@ -290,12 +293,14 @@ const Auth = () => {
                   <p className="text-gray-400 text-sm">
                     Already have an account?
                   </p>
-                  <button
+                  <BrandButton
                     onClick={() => setIsSignUp(false)}
-                    className="flex items-center justify-center gap-2 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 will-change-transform transform-gpu px-4 py-1 text-xs bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 hover:from-brand-700 hover:via-brand-800 hover:to-brand-900 ml-2 mt-1"
+                    variant="primary"
+                    size="sm"
+                    className="ml-2"
                   >
                     Log In
-                  </button>
+                  </BrandButton>
                 </div>
               )}
             </div>

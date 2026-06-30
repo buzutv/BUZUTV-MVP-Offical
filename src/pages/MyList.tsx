@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import BrandButton from "@/components/ui/BrandButton";
 import { Heart } from "lucide-react";
 import ChannelCard from "@/components/ChannelCard";
 import ChannelModal from "@/components/ChannelModal";
@@ -10,6 +11,7 @@ import { useUserChannelFavorites } from "@/hooks/useUserChannelFavorites";
 import { useAppContent } from "@/hooks/useAppContent";
 
 const MyList = React.memo(() => {
+  const navigate = useNavigate();
   const [selectedChannel, setSelectedChannel] = useState<any>(null);
   const [showChannelModal, setShowChannelModal] = useState(false);
 
@@ -169,12 +171,12 @@ const MyList = React.memo(() => {
                   <p className="text-white mb-8">
                     Start adding movies, series, and channels to your favorites
                   </p>
-                  <Link
-                    to="/"
-                    className="inline-flex items-center justify-center gap-3 rounded-full font-medium text-white transition-all duration-300 hover:scale-105 px-6 py-3 text-sm bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 hover:from-brand-700 hover:via-brand-800 hover:to-brand-900"
+                  <BrandButton
+                    variant="primary"
+                    onClick={() => navigate("/")}
                   >
                     Browse Content
-                  </Link>
+                  </BrandButton>
                 </div>
               )}
             </div>

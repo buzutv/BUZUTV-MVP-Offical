@@ -173,7 +173,7 @@ const Movies = React.memo(() => {
                     />
                   </div>
                   {/* Right - Top Ranked */}
-                  <div className="flex flex-col h-full px-4 pl-6 md:px-0 md:pl-0">
+                  <div className="flex flex-col h-full px-4 pl-4 md:px-0 md:pl-0">
                     <h2 className="text-2xl font-bold mb-3">
                       Top Ranked Movies
                     </h2>
@@ -190,7 +190,7 @@ const Movies = React.memo(() => {
                             onClick={() => handleCardClick(movie)}
                           >
                             {/* Ranking Badge */}
-                            <div className="absolute -left-6 top-1/2 -translate-y-1/2 z-10">
+                            <div className="absolute -left-4 top-1/2 -translate-y-1/2 z-10">
                               <span className="bg-[#131313] text-brand-200 text-base font-bold px-3 py-1 rounded-full border-2 border-brand-500/50 shadow-lg backdrop-blur-sm">
                                 #{index + 1}
                               </span>
@@ -429,22 +429,8 @@ const Movies = React.memo(() => {
                       <>
                         {/* New content row - Sort filtered movies by date */}
                         {(() => {
-                          console.log("🆕 NEW MOVIES ROW DEBUG:");
-                          console.log(
-                            "Filtered movies count:",
-                            filteredMovies.length,
-                          );
-                          console.log(
-                            "Active genre for new movies:",
-                            activeGenre,
-                          );
-
                           const withDates = filteredMovies.filter(
                             (movie) => movie.created_at,
-                          );
-                          console.log(
-                            "Movies with created_at:",
-                            withDates.length,
                           );
 
                           const newMoviesFiltered = withDates
@@ -454,15 +440,6 @@ const Movies = React.memo(() => {
                                 new Date(a.created_at).getTime(),
                             )
                             .slice(0, 8);
-
-                          console.log(
-                            "Final new movies for display:",
-                            newMoviesFiltered.map((m) => ({
-                              title: m.title,
-                              genre: m.genre,
-                              created_at: m.created_at,
-                            })),
-                          );
 
                           return (
                             newMoviesFiltered.length > 0 && (

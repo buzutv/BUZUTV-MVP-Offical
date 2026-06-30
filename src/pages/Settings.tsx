@@ -411,7 +411,7 @@ const Settings = () => {
                     onClick={() => handleFieldToggle("fullName")}
                     variant={fieldStates.fullName ? "secondary" : "primary"}
                     size="sm"
-                    className="w-[170px] transition-all duration-300 ease-in-out text-xs sm:text-sm"
+                    className="w-full sm:w-auto transition-all duration-300 ease-in-out text-xs sm:text-sm"
                   >
                     {fieldStates.fullName ? "Cancel" : "Change Full Name"}
                   </BrandButton>
@@ -459,7 +459,7 @@ const Settings = () => {
                     onClick={() => handleFieldToggle("email")}
                     variant={fieldStates.email ? "secondary" : "primary"}
                     size="sm"
-                    className="w-[190px] transition-all duration-300 ease-in-out text-xs sm:text-sm"
+                    className="w-full sm:w-auto transition-all duration-300 ease-in-out text-xs sm:text-sm"
                   >
                     {fieldStates.email ? "Cancel" : "Change Email Address"}
                   </BrandButton>
@@ -507,7 +507,7 @@ const Settings = () => {
                     onClick={() => handleFieldToggle("phone")}
                     variant={fieldStates.phone ? "secondary" : "primary"}
                     size="sm"
-                    className="w-[195px] transition-all duration-300 ease-in-out text-xs sm:text-sm"
+                    className="w-full sm:w-auto transition-all duration-300 ease-in-out text-xs sm:text-sm"
                   >
                     {fieldStates.phone ? "Cancel" : "Change Phone Number"}
                   </BrandButton>

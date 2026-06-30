@@ -128,7 +128,7 @@ const Kids = () => {
             }}
           ></div>
           <div className="relative flex items-center justify-center min-h-screen">
-            <div className="text-2xlold text-white">
+            <div className="text-2xl text-white">
               Loading Kids Content...
             </div>
           </div>
@@ -156,8 +156,8 @@ const Kids = () => {
                     />
                   </div>
                   {/* Right - Top Ranked */}
-                  <div className="px-4 pl-6 md:px-0 md:pl-0">
-                    <h2 className="text-2xlold mb-3 text-blue-800">
+                  <div className="px-4 pl-4 md:px-0 md:pl-0">
+                    <h2 className="text-2xl mb-3 text-blue-800">
                       Top Kids Shows
                     </h2>
                     <div
@@ -173,7 +173,7 @@ const Kids = () => {
                             onClick={() => handleCardClick(movie)}
                           >
                             {/* Ranking Badge */}
-                            <div className="absolute -left-6 top-1/2 -translate-y-1/2 z-10">
+                            <div className="absolute -left-4 top-1/2 -translate-y-1/2 z-10">
                               <span className="bg-yellow-500 text-blue-800 text-base font-bold px-3 py-1 rounded-full shadow-lg border-4 border-white">
                                 #{index + 1}
                               </span>
@@ -445,7 +445,7 @@ const Kids = () => {
             </>
           ) : (
             <div className="text-center py-16">
-              <h2 className="text-2xlold mb-4 text-blue-800">
+              <h2 className="text-2xl mb-4 text-blue-800">
                 No Kids Content Available
               </h2>
               <div className="text-6xl mb-4">🎈</div>

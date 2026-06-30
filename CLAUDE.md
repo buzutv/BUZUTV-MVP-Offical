@@ -3,6 +3,8 @@
 ## Overview
 BuzuTV is a streaming platform for Ethiopian movies and TV shows. Built as a React SPA, deployed on Vercel, with Supabase for auth and data. Users browse content, watch videos, manage favorites, and subscribe to channels.
 
+**Live URL:** https://buzutv-mvp-offical.vercel.app/
+
 ## Tech Stack
 - **Framework:** React 18 + TypeScript
 - **Build:** Vite 5 (dev server on port 8080)
@@ -128,3 +130,76 @@ linear-gradient(200deg, #311066 0%, #1D0833 20%, #120222 45%, black 100%)
 4. **Never touch** files in `supabase/migrations/`.
 5. Keep `RequireAdmin` on all `/admin` routes.
 6. Mobile-first breakpoints: 375px (base) / 768px (`md`) / 1280px (`xl`).
+
+---
+
+## Active Skills and How to Apply Them
+
+### Frontend Design
+- Every UI change must feel intentional and specific to BuzuTV — 
+  not generic
+- Typography, spacing, and color must follow the brand system
+- Take one deliberate design risk per new feature
+- Mobile first — design at 375px before desktop
+- The hero is a thesis — open with the most characteristic thing
+- Motion should be deliberate — one orchestrated moment beats 
+  scattered effects
+- Critique your own work before marking a task done
+
+### Code Review (apply before every merge to main)
+- Check for security issues — no exposed keys, no unprotected routes
+- Check for N+1 queries — especially in hooks that fetch Supabase data
+- Check for missing error handling on all async operations
+- Check for unused imports and dead code
+- Check that admin routes are protected with RequireAdmin
+- Check that no console.log statements remain in production code
+
+### Accessibility
+- All interactive elements need keyboard focus states
+- Images need descriptive alt text — not just the title
+- Color contrast must pass WCAG AA (4.5:1 for text)
+- Touch targets must be at least 44x44px on mobile
+- Never rely on color alone to convey information
+- Test with reduced motion preference respected
+
+### UX Copy
+- Button labels say exactly what happens: "Save changes" not "Submit"
+- Error messages explain what went wrong and how to fix it
+- Empty states are invitations to act — not dead ends
+- Keep labels in sentence case
+- Never use "click here" — name the action
+
+### Design Critique (apply before shipping any UI change)
+- Does it work at 375px without scrolling horizontally?
+- Does every CTA use BrandButton?
+- Does the brand gradient appear correctly?
+- Does the glass effect (bg-black/40 backdrop-blur-md) apply to 
+  all overlays?
+- Is the typography consistent with the brand fonts?
+- Would a new user understand what to do on this page?
+
+### Testing Strategy
+- Every new feature needs at least one happy path test
+- Auth flows must be tested — login, logout, Google OAuth, 
+  password reset
+- Video player must be tested — play, pause, fullscreen, close
+- Admin routes must be tested — verify non-admins cannot access
+- Mobile breakpoints must be verified at 375px and 768px
+
+### ui-ux-pro-max
+- Use this skill's domain search and pre-delivery checklist when building or reviewing any BuzuTV component — especially for glassmorphism overlays, touch target sizes, animation timing, and contrast on the dark brand palette.
+
+### design
+- Use this skill when BuzuTV needs brand identity assets — logos, banners, social images, or icons — routing through its logo/CIP/banner sub-skills as appropriate.
+
+### ui-styling
+- All BuzuTV UI is built on shadcn/ui + Tailwind; use this skill's component catalog and accessibility patterns as the reference for any new component or layout work.
+
+### brand
+- Use this skill to keep BuzuTV's purple brand system (#712AFF / #311066 / #1D0833), voice, and asset naming consistent across every page and marketing touchpoint.
+
+### design-system
+- Use this skill's three-layer token architecture (primitive → semantic → component) when extending or auditing BuzuTV's Tailwind theme and CSS variables.
+
+### karpathy-guidelines
+- Apply these guidelines on every code task: state assumptions before implementing, make surgical changes only, and define a verifiable success check before marking any fix or feature done.

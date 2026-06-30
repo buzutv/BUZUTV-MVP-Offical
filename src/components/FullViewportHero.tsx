@@ -325,19 +325,21 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
             {/* Left Arrow */}
             <button
               onClick={scrollChannelsLeft}
-              className="absolute left-0 top-1/2 transform -translate-y-1/2 z-30 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm"
+              className="hidden sm:flex absolute left-0 top-1/2 transform -translate-y-1/2 z-30 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm"
               style={{ marginLeft: "-20px" }}
+              aria-label="Scroll channels left"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-5 h-5" aria-hidden="true" />
             </button>
 
             {/* Right Arrow */}
             <button
               onClick={scrollChannelsRight}
-              className="absolute right-0 top-1/2 transform -translate-y-1/2 z-30 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm"
+              className="hidden sm:flex absolute right-0 top-1/2 transform -translate-y-1/2 z-30 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm"
               style={{ marginRight: "-20px" }}
+              aria-label="Scroll channels right"
             >
-              <ArrowRight className="w-5 h-5" />
+              <ArrowRight className="w-5 h-5" aria-hidden="true" />
             </button>
 
             {/* Channels Container */}

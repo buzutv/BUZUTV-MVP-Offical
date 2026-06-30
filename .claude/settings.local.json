@@ -17,7 +17,20 @@
       "Bash(grep:*)",
       "mcp__jetbrains__get_current_file_errors",
       "mcp__jetbrains__open_file_in_editor",
-      "mcp__jetbrains__replace_current_file_text"
+      "mcp__jetbrains__replace_current_file_text",
+      "Bash(git checkout *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(npx plugins *)",
+      "mcp__Claude_in_Chrome__navigate",
+      "mcp__Claude_in_Chrome__read_console_messages",
+      "mcp__Claude_in_Chrome__javascript_tool",
+      "Read(//mnt/**)",
+      "Read(//mnt/skills/**)",
+      "Read(//Users/kaleb/.claude/**)",
+      "Bash(find / -name \"SKILL.md\" -maxdepth 8)",
+      "Read(//Users/kaleb/**)",
+      "Read(//Users/kaleb/.cache/plugins/**)"
     ],
     "deny": []
   }
