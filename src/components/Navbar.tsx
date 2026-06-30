@@ -366,26 +366,15 @@ const Navbar = React.memo(
               : "opacity-0 -translate-y-4 pointer-events-none"
           }`}
         >
-          {/* Mobile search */}
-          <div className="pb-3 border-b border-white/10">
-            <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-black/20 border border-white/10">
-              <Search className="text-gray-300 w-5 h-5 flex-shrink-0" />
-              <input
-                type="text"
-                placeholder="Search"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                onClick={handleSearchClick}
-                className="bg-transparent text-white placeholder-gray-300 w-full focus:outline-none text-base"
-              />
-            </div>
-          </div>
-
           {navItems.map(({ to, label }) => (
             <Link
               key={to}
               to={to}
-              className="block text-white text-base font-medium hover:text-brand-400 transition"
+              className={`block text-base font-medium transition py-3 pl-3 border-l-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-sm ${
+                isActivePath(to)
+                  ? "text-brand-400 border-brand-500"
+                  : "text-white hover:text-brand-400 border-transparent"
+              }`}
               onClick={(e) => handleNavClick(e, to)}
             >
               {label}

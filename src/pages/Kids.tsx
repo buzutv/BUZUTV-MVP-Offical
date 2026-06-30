@@ -139,7 +139,8 @@ const Kids = () => {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gradient-to-tl from-yellow-300 via-blue-300 to-sky-400 text-white">
+      <div className="min-h-screen text-white">
+        <div className="fixed inset-0 -z-10 bg-gradient-to-tl from-yellow-300 via-blue-300 to-sky-400" />
         {/* Navigation is now global, do not render Navbar here */}
         <div className="pt-16">
           {/* Main Layout */}

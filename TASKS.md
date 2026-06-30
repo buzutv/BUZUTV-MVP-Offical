@@ -7,11 +7,8 @@ _(nothing in progress)_
 _(all completed — see Completed section)_
 
 ## UX/UI
-- Navbar active-state indicator for current route
 - Loading skeleton for ContentRow (avoid layout shift)
 - Smooth scroll restoration between page navigations
-- Add `aria-label` to hero channel strip left/right arrow buttons (Lighthouse button-name failure)
-- Fix color contrast: `#9ca3af` on white = 2.53 ratio (requires 4.5:1, WCAG AA) — seen in Lighthouse
 
 ## Performance
 - Lazy-load ContentModal (dynamic import) to shrink initial bundle (currently 1,286 KB)
@@ -36,6 +33,17 @@ _(all completed — see Completed section)_
 - [x] Created vercel.json with SPA redirect rules
 - [x] Set up Vercel deployment — live at https://buzutv-mvp-offical.vercel.app/
 - [x] Fixed mobile hero background-size: contain → cover (src/components/FullViewportHero.tsx)
+- [x] Pass 2 Polish Fixes (2026-06-29) — 7 surgical fixes, build passes, zero TS errors:
+  - Index.tsx: `pr-6 pl-0` → `px-4` for consistent mobile padding on content wrapper
+  - Index.tsx: footer `py-8` → `pt-8 pb-[max(2rem,env(safe-area-inset-bottom))]` for iPhone safe area
+  - FullViewportHero.tsx: hero content `pb-48` → `pb-40 sm:pb-48` to prevent overlap on short screens
+  - Kids.tsx: extracted kids gradient into `fixed inset-0 -z-10` div so it covers full scroll height
+  - Settings.tsx: `pt-24` → `pt-16 sm:pt-24` to bring content above fold on mobile
+  - Navbar.tsx: added left-border active state indicator (`border-brand-500`) to mobile menu nav links
+  - Navbar.tsx: removed non-functional search input from hamburger menu; desktop search unchanged
+- [x] Accessibility fixes (2026-06-29) — 2 fixes:
+  - FullViewportHero.tsx: `aria-label` on both channel strip arrow buttons + `aria-hidden` on icons
+  - index.css: `background-color: #000` on body to fix `#9ca3af on white` Lighthouse contrast failure
 - [x] Pass 1 Mobile Fixes (2026-06-29) — 8 surgical fixes, build passes, zero TS errors:
   - Fixed 3× `text-2xlold` → `text-2xl` in Kids.tsx (invalid Tailwind class)
   - Removed `aspect-[16/9]` outer wrapper and `absolute inset-0` inner div from ContentGrid.tsx

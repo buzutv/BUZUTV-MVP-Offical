@@ -354,7 +354,7 @@ const Settings = () => {
           </div>
         </nav>
 
-        <div className="pt-24 max-w-4xl mx-auto px-4 py-8 relative z-10">
+        <div className="pt-16 sm:pt-24 max-w-4xl mx-auto px-4 py-8 relative z-10">
           <Card className="bg-black/40 border-white/20 backdrop-blur-md">
             <CardHeader>
               <CardTitle className="flex items-center space-x-4 text-white">

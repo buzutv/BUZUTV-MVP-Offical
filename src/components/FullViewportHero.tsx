@@ -181,7 +181,7 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent md:hidden" />
 
                 {/* Content */}
-                <div className="relative z-10 flex flex-col h-full px-4 md:px-16 lg:px-24 max-w-4xl pb-48">
+                <div className="relative z-10 flex flex-col h-full px-4 md:px-16 lg:px-24 max-w-4xl pb-40 sm:pb-48">
                   <div className="space-y-4 md:space-y-6 mt-auto md: pb-8">
                     {/* Movie Title */}
                     <h1 className="text-3xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">

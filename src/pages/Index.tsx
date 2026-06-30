@@ -153,7 +153,7 @@ const Index = React.memo(() => {
         />
 
         {/* Content Sections Below Hero */}
-        <div className=" pt-8 relative pr-6 pl-0 md:pr-8 md:pl-6">
+        <div className="pt-8 relative px-4 md:pr-8 md:pl-6">
           <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-black to-transparent pointer-events-none" />
 
           {/* Filter Bar */}
@@ -348,7 +348,7 @@ const Index = React.memo(() => {
           </div>
 
           {/* Footer */}
-          <footer className=" border-t border-white/10 py-8">
+          <footer className="border-t border-white/10 pt-8 pb-[max(2rem,env(safe-area-inset-bottom))]">
             <div className="max-w-7xl mx-auto px-4 text-center text-gray-400">
               <p>&copy; 2025 BUZUTV. All rights reserved.</p>
             </div>
