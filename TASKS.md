@@ -7,7 +7,6 @@ _(nothing in progress)_
 _(all completed — see Completed section)_
 
 ## UX/UI
-- Loading skeleton for ContentRow (avoid layout shift)
 - Smooth scroll restoration between page navigations
 
 ## Performance
@@ -33,6 +32,14 @@ _(all completed — see Completed section)_
 - [x] Created vercel.json with SPA redirect rules
 - [x] Set up Vercel deployment — live at https://buzutv-mvp-offical.vercel.app/
 - [x] Fixed mobile hero background-size: contain → cover (src/components/FullViewportHero.tsx)
+- [x] Pass 3 Skeleton & Empty States (2026-06-29) — 7 surgical fixes, build passes, zero TS errors:
+  - ContentRow.tsx: added `isLoading` prop + 4-card skeleton (bg-white/10 shimmer, aria-busy, aria-label)
+  - ContentGrid.tsx: added `isLoading` prop + 8-card skeleton grid (same aspect ratios as real cards)
+  - FullViewportHero.tsx: skeleton hero when `items.length === 0` — title bar, 2 desc bars, 2 button pills
+  - MyList.tsx: improved empty state — Bookmark icon, "Your list is empty", subtext, BrandButton
+  - Movies.tsx: improved empty state — Film icon, "No movies found", subtext, "Show all movies" CTA
+  - Series.tsx: improved empty state — Tv icon, "No shows found", subtext, "Show all shows" CTA
+  - SearchOverlay.tsx: replaced bare text with Search icon, quoted search term headline, "Try different keywords"
 - [x] Pass 2 Polish Fixes (2026-06-29) — 7 surgical fixes, build passes, zero TS errors:
   - Index.tsx: `pr-6 pl-0` → `px-4` for consistent mobile padding on content wrapper
   - Index.tsx: footer `py-8` → `pt-8 pb-[max(2rem,env(safe-area-inset-bottom))]` for iPhone safe area

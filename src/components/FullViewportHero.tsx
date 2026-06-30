@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Navigation, Pagination } from "swiper/modules";
 import "swiper/css";
@@ -143,6 +144,27 @@ const FullViewportHero: React.FC<FullViewportHeroProps> = ({
       container.scrollBy({ left: 320, behavior: "smooth" });
     }
   };
+
+  if (items.length === 0) {
+    return (
+      <div
+        className="relative w-full h-screen overflow-hidden bg-black"
+        aria-busy="true"
+        aria-label="Loading featured content"
+      >
+        <Skeleton className="absolute inset-0 w-full h-full bg-white/5 rounded-none" />
+        <div className="absolute bottom-0 left-0 right-0 px-4 md:px-16 pb-40 sm:pb-48 space-y-4">
+          <Skeleton className="h-10 w-64 bg-white/10 rounded" />
+          <Skeleton className="h-4 w-96 max-w-full bg-white/10 rounded" />
+          <Skeleton className="h-4 w-80 max-w-full bg-white/10 rounded" />
+          <div className="flex gap-4 pt-2">
+            <Skeleton className="h-11 w-28 bg-white/10 rounded-full" />
+            <Skeleton className="h-11 w-28 bg-white/10 rounded-full" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full h-screen overflow-hidden">

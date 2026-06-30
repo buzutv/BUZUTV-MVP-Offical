@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import ContentCard from "@/components/ContentCard";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ContentRowProps {
   title: string;
   items: any[];
+  isLoading?: boolean;
   onCardClick?: () => boolean;
   onItemClick?: (movie: any) => void;
   isMoreLikeThis?: boolean;
@@ -16,6 +18,7 @@ const ContentRow = React.memo(
   ({
     title,
     items,
+    isLoading = false,
     onCardClick,
     onItemClick,
     isMoreLikeThis = false,
@@ -82,6 +85,23 @@ const ContentRow = React.memo(
         scrollContainerRef.current.scrollBy({ left: 320, behavior: "smooth" });
       }
     }, []);
+
+    if (isLoading) {
+      return (
+        <section className="pb-6" aria-busy="true" aria-label={`Loading ${title}`}>
+          <div className="px-4 mb-2">
+            <Skeleton className="h-7 w-40 bg-white/10 rounded" />
+          </div>
+          <div className="flex space-x-2 px-4 py-2 overflow-hidden">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex-shrink-0 w-64">
+                <Skeleton className="w-64 aspect-[2/3] sm:aspect-video bg-white/10 rounded-lg" />
+              </div>
+            ))}
+          </div>
+        </section>
+      );
+    }
 
     if (items.length === 0) return null;
 
@@ -155,6 +175,7 @@ const ContentRow = React.memo(
   (prevProps, nextProps) => {
     return (
       prevProps.title === nextProps.title &&
+      prevProps.isLoading === nextProps.isLoading &&
       prevProps.items.length === nextProps.items.length &&
       prevProps.isMoreLikeThis === nextProps.isMoreLikeThis &&
       // Compare actual item IDs to detect content changes

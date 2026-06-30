@@ -222,7 +222,13 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
           )}
         </div>
         {!hasResults && internalSearchQuery && (
-          <div className="text-gray-400 text-lg">No results found.</div>
+          <div className="text-center py-12">
+            <Search className="w-12 h-12 text-brand-500 mx-auto mb-4" aria-hidden="true" />
+            <h3 className="text-xl font-bold text-white mb-2">
+              No results for &ldquo;{internalSearchQuery}&rdquo;
+            </h3>
+            <p className="text-gray-400">Try different keywords</p>
+          </div>
         )}
         {formattedResults?.channels?.length > 0 && (
           <div className="mb-8">

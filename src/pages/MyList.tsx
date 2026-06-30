@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BrandButton from "@/components/ui/BrandButton";
-import { Heart } from "lucide-react";
+import { Bookmark, Heart } from "lucide-react";
 import ChannelCard from "@/components/ChannelCard";
 import ChannelModal from "@/components/ChannelModal";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
@@ -164,18 +164,17 @@ const MyList = React.memo(() => {
 
               {/* Empty State */}
               {savedContent.length === 0 && favoriteChannels.length === 0 && (
-                <div className="text-center py-16">
-                  <h2 className="text-2xl mb-4">
-                    Your favorites list is empty
-                  </h2>
-                  <p className="text-white mb-8">
-                    Start adding movies, series, and channels to your favorites
+                <div className="text-center py-16 px-4">
+                  <Bookmark className="w-16 h-16 text-brand-500 mx-auto mb-6" aria-hidden="true" />
+                  <h2 className="text-2xl font-bold mb-3">Your list is empty</h2>
+                  <p className="text-gray-400 mb-8 max-w-sm mx-auto">
+                    Save movies and shows to watch later
                   </p>
                   <BrandButton
                     variant="primary"
                     onClick={() => navigate("/")}
                   >
-                    Browse Content
+                    Browse content
                   </BrandButton>
                 </div>
               )}

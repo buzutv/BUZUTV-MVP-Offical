@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { Tv } from "lucide-react";
+import BrandButton from "@/components/ui/BrandButton";
 import ContentCard from "@/components/ContentCard";
 import HeroBanner from "@/components/HeroBanner";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
@@ -488,13 +490,18 @@ const Series = () => {
                           onCardClick={handleContentRowCardClick}
                         />
                       ) : (
-                        <div className="text-center py-16">
-                          <h3 className="text-xl font-bold mb-2">
-                            No series found
-                          </h3>
-                          <p className="text-gray-400">
-                            No {activeGenre} series available at the moment
+                        <div className="text-center py-16 px-4">
+                          <Tv className="w-16 h-16 text-brand-500 mx-auto mb-6" aria-hidden="true" />
+                          <h3 className="text-xl font-bold mb-3">No shows found</h3>
+                          <p className="text-gray-400 mb-8 max-w-sm mx-auto">
+                            Try a different genre or check back later
                           </p>
+                          <BrandButton
+                            variant="secondary"
+                            onClick={() => handleGenreChange("all")}
+                          >
+                            Show all shows
+                          </BrandButton>
                         </div>
                       )}
                     </div>
